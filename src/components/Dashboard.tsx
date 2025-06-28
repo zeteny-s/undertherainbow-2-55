@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity } from 'lucide-react';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart, Line, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../lib/supabase';
 
@@ -30,8 +30,15 @@ interface ChartData {
   monthlyData: Array<{ month: string; alapitvany: number; ovoda: number; total: number; amount: number }>;
   organizationData: Array<{ name: string; value: number; amount: number; color: string }>;
   paymentTypeData: Array<{ name: string; value: number; amount: number; color: string }>;
-  weeklyTrend: Array<{ day: string; invoices: number; amount: number }>;
+  weeklyTrend: Array<{ day: string; date: string; invoices: number; amount: number }>;
   processingTimeData: Array<{ month: string; avgTime: number; count: number }>;
+}
+
+interface WeekData {
+  weekStart: Date;
+  weekEnd: Date;
+  weekLabel: string;
+  data: Array<{ day: string; date: string; invoices: number; amount: number }>;
 }
 
 export const Dashboard: React.FC = () => {
@@ -54,6 +61,9 @@ export const Dashboard: React.FC = () => {
     processingTimeData: []
   });
   const [loading, setLoading] = useState(true);
+  const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
+  const [showWeekHistory, setShowWeekHistory] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -75,13 +85,19 @@ export const Dashboard: React.FC = () => {
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Calculate average processing time in seconds
-      const processedInvoices = invoices?.filter(inv => inv.processed_at && inv.uploaded_at) || [];
+      // Calculate average processing time in seconds (only for completed invoices)
+      const processedInvoices = invoices?.filter(inv => 
+        inv.processed_at && 
+        inv.uploaded_at && 
+        inv.status === 'completed'
+      ) || [];
+      
       const totalProcessingTime = processedInvoices.reduce((sum, inv) => {
         const uploadTime = new Date(inv.uploaded_at).getTime();
         const processTime = new Date(inv.processed_at).getTime();
         return sum + (processTime - uploadTime);
       }, 0);
+      
       const averageProcessingTime = processedInvoices.length > 0 
         ? Math.round(totalProcessingTime / processedInvoices.length / 1000) // Convert to seconds
         : 0;
@@ -97,11 +113,15 @@ export const Dashboard: React.FC = () => {
         averageProcessingTime
       };
 
+      // Generate week history and current week data
+      const weekHistoryData = generateWeekHistory(invoices || []);
+      setWeekHistory(weekHistoryData);
+
       // Prepare chart data
       const monthlyData = generateMonthlyData(invoices || []);
       const organizationData = generateOrganizationData(invoices || []);
       const paymentTypeData = generatePaymentTypeData(invoices || []);
-      const weeklyTrend = generateWeeklyTrend(invoices || []);
+      const weeklyTrend = weekHistoryData[currentWeekIndex]?.data || [];
       const processingTimeData = generateProcessingTimeData(invoices || []);
 
       setStats(calculatedStats);
@@ -118,6 +138,43 @@ export const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateWeekHistory = (invoices: any[]): WeekData[] => {
+    const weeks: WeekData[] = [];
+    const now = new Date();
+    
+    // Generate last 12 weeks
+    for (let i = 0; i < 12; i++) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay() + 1 - (i * 7)); // Monday of the week
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6); // Sunday of the week
+      weekEnd.setHours(23, 59, 59, 999);
+      
+      const weekLabel = `${formatDateShort(weekStart)}-${formatDateShort(weekEnd)}`;
+      
+      const weekData = generateWeeklyTrend(invoices, weekStart, weekEnd);
+      
+      weeks.push({
+        weekStart,
+        weekEnd,
+        weekLabel,
+        data: weekData
+      });
+    }
+    
+    return weeks;
+  };
+
+  const formatDateShort = (date: Date) => {
+    return new Intl.DateTimeFormat('hu-HU', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(date).replace(/\./g, '.');
   };
 
   const generateMonthlyData = (invoices: any[]) => {
@@ -183,10 +240,8 @@ export const Dashboard: React.FC = () => {
     ];
   };
 
-  const generateWeeklyTrend = (invoices: any[]) => {
+  const generateWeeklyTrend = (invoices: any[], weekStart: Date, weekEnd: Date) => {
     const days = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
-    const now = new Date();
-    const weekStart = new Date(now.setDate(now.getDate() - now.getDay() + 1));
     
     return days.map((day, index) => {
       const dayDate = new Date(weekStart);
@@ -194,11 +249,12 @@ export const Dashboard: React.FC = () => {
       
       const dayInvoices = invoices.filter(inv => {
         const invDate = new Date(inv.uploaded_at);
-        return invDate.toDateString() === dayDate.toDateString();
+        return invDate >= dayDate && invDate < new Date(dayDate.getTime() + 24 * 60 * 60 * 1000);
       });
       
       return {
         day,
+        date: formatDateShort(dayDate),
         invoices: dayInvoices.length,
         amount: dayInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
       };
@@ -215,7 +271,8 @@ export const Dashboard: React.FC = () => {
         return date.getFullYear() === currentYear && 
                date.getMonth() === index && 
                inv.processed_at && 
-               inv.uploaded_at;
+               inv.uploaded_at &&
+               inv.status === 'completed';
       });
       
       if (monthInvoices.length === 0) {
@@ -234,6 +291,33 @@ export const Dashboard: React.FC = () => {
         count: monthInvoices.length
       };
     });
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentWeekIndex < weekHistory.length - 1) {
+      const newIndex = currentWeekIndex + 1;
+      setCurrentWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyTrend: weekHistory[newIndex]?.data || []
+      }));
+    } else if (direction === 'next' && currentWeekIndex > 0) {
+      const newIndex = currentWeekIndex - 1;
+      setCurrentWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyTrend: weekHistory[newIndex]?.data || []
+      }));
+    }
+  };
+
+  const selectWeek = (index: number) => {
+    setCurrentWeekIndex(index);
+    setChartData(prev => ({
+      ...prev,
+      weeklyTrend: weekHistory[index]?.data || []
+    }));
+    setShowWeekHistory(false);
   };
 
   const formatCurrency = (amount: number) => {
@@ -320,6 +404,28 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
+  // Custom tooltip for weekly activity
+  const WeeklyTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{label}</p>
+          <p className="text-sm text-gray-600">{data.date}</p>
+          <p className="text-sm text-green-600">
+            Számlák: {data.invoices}
+          </p>
+          {data.amount > 0 && (
+            <p className="text-sm text-gray-500">
+              Összeg: {formatCurrency(data.amount)}
+            </p>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -330,6 +436,8 @@ export const Dashboard: React.FC = () => {
       </div>
     );
   }
+
+  const currentWeek = weekHistory[currentWeekIndex];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -569,14 +677,72 @@ export const Dashboard: React.FC = () => {
             <Activity className="h-5 w-5 mr-2 text-green-600" />
             Heti aktivitás
           </h3>
+          <div className="flex items-center space-x-4">
+            {currentWeek && (
+              <span className="text-sm font-medium text-gray-600">
+                {currentWeek.weekLabel}
+              </span>
+            )}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => navigateWeek('prev')}
+                disabled={currentWeekIndex >= weekHistory.length - 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Előző hét"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setShowWeekHistory(!showWeekHistory)}
+                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+              >
+                <History className="h-4 w-4" />
+                <span>Előzmények</span>
+              </button>
+              <button
+                onClick={() => navigateWeek('next')}
+                disabled={currentWeekIndex <= 0}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Következő hét"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Week History Dropdown */}
+        {showWeekHistory && (
+          <div className="mb-6 bg-gray-50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {weekHistory.map((week, index) => (
+                <button
+                  key={index}
+                  onClick={() => selectWeek(index)}
+                  className={`p-3 text-sm rounded-lg border transition-colors ${
+                    index === currentWeekIndex
+                      ? 'bg-blue-100 border-blue-300 text-blue-800'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="font-medium">{week.weekLabel}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData.weeklyTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="day" stroke="#6b7280" fontSize={12} />
               <YAxis stroke="#6b7280" fontSize={12} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<WeeklyTooltip />} />
               <Area 
                 type="monotone" 
                 dataKey="invoices" 
