@@ -11,7 +11,7 @@ interface Stats {
   bankTransferCount: number;
   cardCashCount: number;
   thisMonthCount: number;
-  averageProcessingTime: number; // in minutes
+  averageProcessingTime: number; // in seconds
 }
 
 interface Invoice {
@@ -23,13 +23,15 @@ interface Invoice {
   status: string;
   partner: string;
   amount: number;
+  invoice_type: string;
 }
 
 interface ChartData {
-  monthlyData: Array<{ month: string; alapitvany: number; ovoda: number; total: number }>;
-  organizationData: Array<{ name: string; value: number; color: string }>;
-  paymentTypeData: Array<{ name: string; value: number; color: string }>;
+  monthlyData: Array<{ month: string; alapitvany: number; ovoda: number; total: number; amount: number }>;
+  organizationData: Array<{ name: string; value: number; amount: number; color: string }>;
+  paymentTypeData: Array<{ name: string; value: number; amount: number; color: string }>;
   weeklyTrend: Array<{ day: string; invoices: number; amount: number }>;
+  processingTimeData: Array<{ month: string; avgTime: number; count: number }>;
 }
 
 export const Dashboard: React.FC = () => {
@@ -48,7 +50,8 @@ export const Dashboard: React.FC = () => {
     monthlyData: [],
     organizationData: [],
     paymentTypeData: [],
-    weeklyTrend: []
+    weeklyTrend: [],
+    processingTimeData: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -72,7 +75,7 @@ export const Dashboard: React.FC = () => {
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Calculate average processing time
+      // Calculate average processing time in seconds
       const processedInvoices = invoices?.filter(inv => inv.processed_at && inv.uploaded_at) || [];
       const totalProcessingTime = processedInvoices.reduce((sum, inv) => {
         const uploadTime = new Date(inv.uploaded_at).getTime();
@@ -80,7 +83,7 @@ export const Dashboard: React.FC = () => {
         return sum + (processTime - uploadTime);
       }, 0);
       const averageProcessingTime = processedInvoices.length > 0 
-        ? Math.round(totalProcessingTime / processedInvoices.length / (1000 * 60)) // Convert to minutes
+        ? Math.round(totalProcessingTime / processedInvoices.length / 1000) // Convert to seconds
         : 0;
 
       const calculatedStats: Stats = {
@@ -96,15 +99,10 @@ export const Dashboard: React.FC = () => {
 
       // Prepare chart data
       const monthlyData = generateMonthlyData(invoices || []);
-      const organizationData = [
-        { name: 'Alapítvány', value: calculatedStats.alapitvanyCount, color: '#1e40af' },
-        { name: 'Óvoda', value: calculatedStats.ovodaCount, color: '#ea580c' }
-      ];
-      const paymentTypeData = [
-        { name: 'Banki átutalás', value: calculatedStats.bankTransferCount, color: '#059669' },
-        { name: 'Kártya/Készpénz', value: calculatedStats.cardCashCount, color: '#7c3aed' }
-      ];
+      const organizationData = generateOrganizationData(invoices || []);
+      const paymentTypeData = generatePaymentTypeData(invoices || []);
       const weeklyTrend = generateWeeklyTrend(invoices || []);
+      const processingTimeData = generateProcessingTimeData(invoices || []);
 
       setStats(calculatedStats);
       setRecentInvoices(invoices?.slice(0, 5) || []);
@@ -112,7 +110,8 @@ export const Dashboard: React.FC = () => {
         monthlyData,
         organizationData,
         paymentTypeData,
-        weeklyTrend
+        weeklyTrend,
+        processingTimeData
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -131,16 +130,57 @@ export const Dashboard: React.FC = () => {
         return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
-      const alapitvanyCount = monthInvoices.filter(inv => inv.organization === 'alapitvany').length;
-      const ovodaCount = monthInvoices.filter(inv => inv.organization === 'ovoda').length;
+      const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
+      const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
       
       return {
         month,
-        alapitvany: alapitvanyCount,
-        ovoda: ovodaCount,
-        total: alapitvanyCount + ovodaCount
+        alapitvany: alapitvanyInvoices.length,
+        ovoda: ovodaInvoices.length,
+        total: monthInvoices.length,
+        amount: monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
       };
     });
+  };
+
+  const generateOrganizationData = (invoices: any[]) => {
+    const alapitvanyInvoices = invoices.filter(inv => inv.organization === 'alapitvany');
+    const ovodaInvoices = invoices.filter(inv => inv.organization === 'ovoda');
+    
+    return [
+      { 
+        name: 'Feketerigó Alapítvány', 
+        value: alapitvanyInvoices.length, 
+        amount: alapitvanyInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#1e40af' 
+      },
+      { 
+        name: 'Feketerigó Alapítványi Óvoda', 
+        value: ovodaInvoices.length, 
+        amount: ovodaInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#ea580c' 
+      }
+    ];
+  };
+
+  const generatePaymentTypeData = (invoices: any[]) => {
+    const bankTransferInvoices = invoices.filter(inv => inv.invoice_type === 'bank_transfer');
+    const cardCashInvoices = invoices.filter(inv => inv.invoice_type === 'card_cash_afterpay');
+    
+    return [
+      { 
+        name: 'Banki átutalás', 
+        value: bankTransferInvoices.length, 
+        amount: bankTransferInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#059669' 
+      },
+      { 
+        name: 'Kártya/Készpénz/Utánvét', 
+        value: cardCashInvoices.length, 
+        amount: cardCashInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#7c3aed' 
+      }
+    ];
   };
 
   const generateWeeklyTrend = (invoices: any[]) => {
@@ -165,6 +205,37 @@ export const Dashboard: React.FC = () => {
     });
   };
 
+  const generateProcessingTimeData = (invoices: any[]) => {
+    const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+    
+    return months.map((month, index) => {
+      const monthInvoices = invoices.filter(inv => {
+        const date = new Date(inv.uploaded_at);
+        return date.getFullYear() === currentYear && 
+               date.getMonth() === index && 
+               inv.processed_at && 
+               inv.uploaded_at;
+      });
+      
+      if (monthInvoices.length === 0) {
+        return { month, avgTime: 0, count: 0 };
+      }
+      
+      const totalTime = monthInvoices.reduce((sum, inv) => {
+        const uploadTime = new Date(inv.uploaded_at).getTime();
+        const processTime = new Date(inv.processed_at).getTime();
+        return sum + (processTime - uploadTime);
+      }, 0);
+      
+      return {
+        month,
+        avgTime: Math.round(totalTime / monthInvoices.length / 1000), // seconds
+        count: monthInvoices.length
+      };
+    });
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('hu-HU', {
       style: 'currency',
@@ -183,12 +254,16 @@ export const Dashboard: React.FC = () => {
     }).format(new Date(dateString));
   };
 
-  const formatProcessingTime = (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes} perc`;
+  const formatProcessingTime = (seconds: number) => {
+    if (seconds < 60) {
+      return `${seconds} mp`;
+    } else if (seconds < 3600) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes}p ${remainingSeconds}mp`;
     } else {
-      const hours = Math.floor(minutes / 60);
-      const remainingMinutes = minutes % 60;
+      const hours = Math.floor(seconds / 3600);
+      const remainingMinutes = Math.floor((seconds % 3600) / 60);
       return `${hours}ó ${remainingMinutes}p`;
     }
   };
@@ -221,6 +296,28 @@ export const Dashboard: React.FC = () => {
       default:
         return 'Ismeretlen';
     }
+  };
+
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }} className="text-sm">
+              {entry.name}: {entry.value}
+              {entry.payload.amount && (
+                <span className="text-gray-500 ml-2">
+                  ({formatCurrency(entry.payload.amount)})
+                </span>
+              )}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
   };
 
   if (loading) {
@@ -323,14 +420,7 @@ export const Dashboard: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
                 <YAxis stroke="#6b7280" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e5e7eb', 
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
               </BarChart>
@@ -338,21 +428,26 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Weekly Activity */}
+        {/* Processing Time Trend */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-green-600" />
-              Heti aktivitás
+              <Clock className="h-5 w-5 mr-2 text-purple-600" />
+              Feldolgozási idő trend
             </h3>
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData.weeklyTrend}>
+              <LineChart data={chartData.processingTimeData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" stroke="#6b7280" fontSize={12} />
+                <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip 
+                  formatter={(value: any, name: string) => [
+                    `${formatProcessingTime(value)}`, 
+                    'Átlagos feldolgozási idő'
+                  ]}
+                  labelFormatter={(label) => `Hónap: ${label}`}
                   contentStyle={{ 
                     backgroundColor: '#fff', 
                     border: '1px solid #e5e7eb', 
@@ -360,15 +455,15 @@ export const Dashboard: React.FC = () => {
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
-                <Area 
+                <Line 
                   type="monotone" 
-                  dataKey="invoices" 
-                  stroke="#059669" 
-                  fill="#10b981" 
-                  fillOpacity={0.3}
-                  name="Számlák száma"
+                  dataKey="avgTime" 
+                  stroke="#7c3aed" 
+                  strokeWidth={3}
+                  dot={{ fill: '#7c3aed', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#7c3aed', strokeWidth: 2 }}
                 />
-              </AreaChart>
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -398,16 +493,24 @@ export const Dashboard: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value: any, name: string, props: any) => [
+                    `${value} számla (${formatCurrency(props.payload.amount)})`,
+                    name
+                  ]}
+                />
               </RechartsPieChart>
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center space-x-6 mt-4">
             {chartData.organizationData.map((item, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
-                <span className="text-sm text-gray-600">{item.name}</span>
-                <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+              <div key={index} className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
+                  <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                </div>
+                <p className="text-xs text-gray-600">{item.name}</p>
+                <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
               </div>
             ))}
           </div>
@@ -435,19 +538,55 @@ export const Dashboard: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value: any, name: string, props: any) => [
+                    `${value} számla (${formatCurrency(props.payload.amount)})`,
+                    name
+                  ]}
+                />
               </RechartsPieChart>
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center space-x-6 mt-4">
             {chartData.paymentTypeData.map((item, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
-                <span className="text-sm text-gray-600">{item.name}</span>
-                <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+              <div key={index} className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-1">
+                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
+                  <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                </div>
+                <p className="text-xs text-gray-600">{item.name}</p>
+                <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Weekly Activity */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <Activity className="h-5 w-5 mr-2 text-green-600" />
+            Heti aktivitás
+          </h3>
+        </div>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData.weeklyTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="day" stroke="#6b7280" fontSize={12} />
+              <YAxis stroke="#6b7280" fontSize={12} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area 
+                type="monotone" 
+                dataKey="invoices" 
+                stroke="#059669" 
+                fill="#10b981" 
+                fillOpacity={0.3}
+                name="Számlák száma"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
