@@ -11,6 +11,12 @@ interface UserProfile {
   last_sign_in_at: string;
 }
 
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
 export const Profile: React.FC = () => {
   const { user, updateProfile } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -18,8 +24,7 @@ export const Profile: React.FC = () => {
   const [editing, setEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   
   // Password change state
   const [changingPassword, setChangingPassword] = useState(false);
@@ -31,6 +36,21 @@ export const Profile: React.FC = () => {
     new: false,
     confirm: false
   });
+
+  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const notification = { id, type, message };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     if (user) {
@@ -48,12 +68,11 @@ export const Profile: React.FC = () => {
 
   const handleSaveProfile = async () => {
     if (!editedName.trim()) {
-      setError('A név mező nem lehet üres');
+      addNotification('error', 'A név mező nem lehet üres');
       return;
     }
 
     setSaving(true);
-    setError(null);
 
     try {
       const { error } = await supabase.auth.updateUser({
@@ -64,35 +83,30 @@ export const Profile: React.FC = () => {
 
       setProfile(prev => prev ? { ...prev, name: editedName.trim() } : null);
       setEditing(false);
-      setSuccess('Profil sikeresen frissítve!');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
+      addNotification('success', 'Profil sikeresen frissítve!');
 
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError(error instanceof Error ? error.message : 'Hiba történt a profil frissítése során');
+      addNotification('error', error instanceof Error ? error.message : 'Hiba történt a profil frissítése során');
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangePassword = async () => {
-    setError(null);
-
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('Minden jelszó mező kitöltése kötelező');
+      addNotification('error', 'Minden jelszó mező kitöltése kötelező');
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('Az új jelszónak legalább 6 karakter hosszúnak kell lennie');
+      addNotification('error', 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Az új jelszavak nem egyeznek');
+      addNotification('error', 'Az új jelszavak nem egyeznek');
       return;
     }
 
@@ -121,14 +135,11 @@ export const Profile: React.FC = () => {
       setNewPassword('');
       setConfirmPassword('');
       setChangingPassword(false);
-      setSuccess('Jelszó sikeresen megváltoztatva!');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
+      addNotification('success', 'Jelszó sikeresen megváltoztatva!');
 
     } catch (error) {
       console.error('Error changing password:', error);
-      setError(error instanceof Error ? error.message : 'Hiba történt a jelszó megváltoztatása során');
+      addNotification('error', error instanceof Error ? error.message : 'Hiba történt a jelszó megváltoztatása során');
     } finally {
       setSaving(false);
     }
@@ -178,26 +189,54 @@ export const Profile: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
+              notification.type === 'success' ? 'border-l-4 border-green-400' :
+              notification.type === 'error' ? 'border-l-4 border-red-400' :
+              'border-l-4 border-blue-400'
+            }`}
+          >
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && (
+                    <Check className="h-5 w-5 text-green-400" />
+                  )}
+                  {notification.type === 'error' && (
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                  )}
+                  {notification.type === 'info' && (
+                    <AlertCircle className="h-5 w-5 text-blue-400" />
+                  )}
+                </div>
+                <div className="ml-3 w-0 flex-1 pt-0.5">
+                  <p className="text-sm font-medium text-gray-900">
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    onClick={() => removeNotification(notification.id)}
+                  >
+                    <span className="sr-only">Bezárás</span>
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Profil beállítások</h2>
         <p className="text-gray-600">Kezelje fiókja adatait és biztonsági beállításait</p>
       </div>
-
-      {/* Success Message */}
-      {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
-          <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
-          <p className="text-sm text-green-700">{success}</p>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Card */}
@@ -284,7 +323,6 @@ export const Profile: React.FC = () => {
                       onClick={() => {
                         setEditing(false);
                         setEditedName(profile.name);
-                        setError(null);
                       }}
                       className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                     >
@@ -407,7 +445,6 @@ export const Profile: React.FC = () => {
                       setCurrentPassword('');
                       setNewPassword('');
                       setConfirmPassword('');
-                      setError(null);
                     }}
                     className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                   >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Building2, GraduationCap, Search, Filter, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
+import { FileText, Building2, GraduationCap, Search, Filter, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Invoice {
@@ -22,6 +22,12 @@ interface Invoice {
   invoice_type: 'bank_transfer' | 'card_cash_afterpay';
 }
 
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
 export const InvoiceList: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,10 +36,26 @@ export const InvoiceList: React.FC = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Invoice | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const notification = { id, type, message };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   const fetchInvoices = async () => {
     try {
@@ -47,6 +69,7 @@ export const InvoiceList: React.FC = () => {
       setInvoices(data || []);
     } catch (error) {
       console.error('Error fetching invoices:', error);
+      addNotification('error', 'Hiba történt a számlák betöltése során');
     } finally {
       setLoading(false);
     }
@@ -87,12 +110,11 @@ export const InvoiceList: React.FC = () => {
       setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
       setDeleteConfirm(null);
 
-      // Show success message
-      alert('Számla sikeresen törölve!');
+      addNotification('success', 'Számla sikeresen törölve!');
 
     } catch (error) {
       console.error('Error deleting invoice:', error);
-      alert('Hiba történt a számla törlése során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
+      addNotification('error', 'Hiba történt a számla törlése során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
     } finally {
       setDeleting(false);
     }
@@ -143,6 +165,50 @@ export const InvoiceList: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
+              notification.type === 'success' ? 'border-l-4 border-green-400' :
+              notification.type === 'error' ? 'border-l-4 border-red-400' :
+              'border-l-4 border-blue-400'
+            }`}
+          >
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && (
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                  )}
+                  {notification.type === 'error' && (
+                    <AlertTriangle className="h-5 w-5 text-red-400" />
+                  )}
+                  {notification.type === 'info' && (
+                    <AlertTriangle className="h-5 w-5 text-blue-400" />
+                  )}
+                </div>
+                <div className="ml-3 w-0 flex-1 pt-0.5">
+                  <p className="text-sm font-medium text-gray-900">
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    onClick={() => removeNotification(notification.id)}
+                  >
+                    <span className="sr-only">Bezárás</span>
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>

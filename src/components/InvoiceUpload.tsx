@@ -31,6 +31,12 @@ interface UploadedFile {
   cancelled?: boolean;
 }
 
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
 export const InvoiceUpload: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -41,6 +47,22 @@ export const InvoiceUpload: React.FC = () => {
   const [editingField, setEditingField] = useState<{fileId: string, field: string} | null>(null);
   const [tempEditValue, setTempEditValue] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const notification = { id, type, message };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   // Helper function to create simple, compatible filename for Supabase Storage
   const createSimpleFilename = (filename: string): string => {
@@ -332,12 +354,11 @@ export const InvoiceUpload: React.FC = () => {
       setSelectedFile(null);
       setEditingData(null);
 
-      // Show success message
-      alert('Adatok sikeresen frissítve!');
+      addNotification('success', 'Adatok sikeresen frissítve!');
 
     } catch (error) {
       console.error('Error updating data:', error);
-      alert('Hiba történt az adatok frissítése során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
+      addNotification('error', 'Hiba történt az adatok frissítése során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
     }
   };
 
@@ -375,11 +396,11 @@ export const InvoiceUpload: React.FC = () => {
         f.id === file.id ? { ...f, exportedToSheets: true } : f
       ));
 
-      alert('Sikeresen exportálva a Google Sheets-be!');
+      addNotification('success', 'Sikeresen exportálva a Google Sheets-be!');
 
     } catch (error) {
       console.error('Error exporting to Google Sheets:', error);
-      alert('Hiba történt az exportálás során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
+      addNotification('error', 'Hiba történt az exportálás során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
     } finally {
       setExportingToSheets(null);
     }
@@ -428,7 +449,7 @@ export const InvoiceUpload: React.FC = () => {
       return newSet;
     });
     
-    alert('Változások véglegesítve!');
+    addNotification('success', 'Változások véglegesítve!');
   };
 
   const getStatusIcon = (status: string) => {
@@ -552,6 +573,50 @@ export const InvoiceUpload: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
+              notification.type === 'success' ? 'border-l-4 border-green-400' :
+              notification.type === 'error' ? 'border-l-4 border-red-400' :
+              'border-l-4 border-blue-400'
+            }`}
+          >
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && (
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                  )}
+                  {notification.type === 'error' && (
+                    <AlertTriangle className="h-5 w-5 text-red-400" />
+                  )}
+                  {notification.type === 'info' && (
+                    <AlertTriangle className="h-5 w-5 text-blue-400" />
+                  )}
+                </div>
+                <div className="ml-3 w-0 flex-1 pt-0.5">
+                  <p className="text-sm font-medium text-gray-900">
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    onClick={() => removeNotification(notification.id)}
+                  >
+                    <span className="sr-only">Bezárás</span>
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Számla feltöltés</h2>
         <p className="text-gray-600">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat.</p>
