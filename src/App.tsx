@@ -1,0 +1,70 @@
+import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthPage } from './components/Auth/AuthPage';
+import { Sidebar } from './components/Sidebar';
+import { Dashboard } from './components/Dashboard';
+import { InvoiceUpload } from './components/InvoiceUpload';
+import { InvoiceList } from './components/InvoiceList';
+import { Profile } from './components/Profile';
+
+const AppContent: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, loading } = useAuth();
+
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'upload':
+        return <InvoiceUpload />;
+      case 'invoices':
+        return <InvoiceList />;
+      case 'profile':
+        return <Profile />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Betöltés...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
+      <main className={`flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-72' : 'ml-20'}`}>
+        <div className="min-h-screen">
+          {renderActiveComponent()}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+export default App;
