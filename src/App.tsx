@@ -5,7 +5,7 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { InvoiceUpload } from './components/InvoiceUpload';
 import { InvoiceList } from './components/InvoiceList';
-import { Profile } from './components/Profile';
+import { Settings } from './components/Settings';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -20,8 +20,8 @@ const AppContent: React.FC = () => {
         return <InvoiceUpload />;
       case 'invoices':
         return <InvoiceList />;
-      case 'profile':
-        return <Profile />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Dashboard />;
     }

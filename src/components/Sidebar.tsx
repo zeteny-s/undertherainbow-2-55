@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart3, Upload, FileText, LogOut, User, ChevronRight, ChevronLeft, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { ProfileModal } from './ProfileModal';
 
 interface SidebarProps {
   activeTab: string;
@@ -11,6 +12,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onToggle }) => {
   const { user, signOut } = useAuth();
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -33,8 +35,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       icon: FileText,
     },
     {
-      id: 'profile',
-      label: 'Profil',
+      id: 'settings',
+      label: 'Beállítások',
       icon: Settings,
     },
   ];
@@ -82,9 +84,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
         {/* Header with profile picture */}
         <div className="h-16 flex items-center justify-center border-b border-gray-100">
           <div className={`flex items-center space-x-3 ${isOpen ? 'px-4' : ''}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              title="Profil megnyitása"
+            >
               {userInitials}
-            </div>
+            </button>
             {isOpen && (
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">
@@ -176,6 +182,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
           </div>
         </div>
       </div>
+
+      {/* Profile Modal */}
+      <ProfileModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
     </>
   );
 };
