@@ -154,7 +154,7 @@ export const InvoiceList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
           <span className="ml-2 text-lg text-gray-600">Számlák betöltése...</span>
@@ -164,7 +164,7 @@ export const InvoiceList: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {notifications.map((notification) => (
@@ -209,11 +209,11 @@ export const InvoiceList: React.FC = () => {
         ))}
       </div>
 
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Számla kezelés</h2>
-            <p className="text-gray-600">Feltöltött számlák megtekintése, szűrése és kezelése</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Számla kezelés</h2>
+            <p className="text-gray-600 text-sm sm:text-base">Feltöltött számlák megtekintése, szűrése és kezelése</p>
           </div>
           <button
             onClick={fetchInvoices}
@@ -226,7 +226,7 @@ export const InvoiceList: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Keresés</label>
@@ -262,7 +262,92 @@ export const InvoiceList: React.FC = () => {
 
       {/* Invoice List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="block sm:hidden">
+          {filteredInvoices.map((invoice) => (
+            <div key={invoice.id} className="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {invoice.file_name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {invoice.invoice_number || '-'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1 ml-2">
+                  <button
+                    onClick={() => setSelectedInvoice(invoice)}
+                    className="p-2 text-blue-600 hover:text-blue-900 transition-colors"
+                    title="Részletek megtekintése"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => downloadFile(invoice)}
+                    className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    title="Letöltés"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(invoice)}
+                    className="p-2 text-red-600 hover:text-red-900 transition-colors"
+                    title="Számla törlése"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-500">Szervezet:</span>
+                  <div className="flex items-center mt-1">
+                    {invoice.organization === 'alapitvany' ? (
+                      <>
+                        <Building2 className="h-3 w-3 text-blue-800 mr-1" />
+                        <span className="text-blue-800 text-xs">Alapítvány</span>
+                      </>
+                    ) : (
+                      <>
+                        <GraduationCap className="h-3 w-3 text-orange-800 mr-1" />
+                        <span className="text-orange-800 text-xs">Óvoda</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <span className="text-gray-500">Összeg:</span>
+                  <p className="font-medium text-gray-900 mt-1">
+                    {formatCurrency(invoice.amount)}
+                  </p>
+                </div>
+                
+                <div>
+                  <span className="text-gray-500">Partner:</span>
+                  <p className="text-gray-900 truncate mt-1">
+                    {invoice.partner || '-'}
+                  </p>
+                </div>
+                
+                <div>
+                  <span className="text-gray-500">Dátum:</span>
+                  <p className="text-gray-900 mt-1">
+                    {formatDate(invoice.invoice_date || invoice.uploaded_at)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -440,9 +525,9 @@ export const InvoiceList: React.FC = () => {
       {selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Számla részletei</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Számla részletei</h3>
                 <button
                   onClick={() => setSelectedInvoice(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -452,7 +537,7 @@ export const InvoiceList: React.FC = () => {
               </div>
             </div>
             
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Alapinformációk</h4>

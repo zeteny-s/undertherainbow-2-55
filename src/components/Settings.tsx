@@ -207,7 +207,7 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {notifications.map((notification) => (
@@ -253,23 +253,23 @@ export const Settings: React.FC = () => {
       </div>
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-              <SettingsIcon className="h-8 w-8 mr-3 text-blue-600" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center">
+              <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8 mr-3 text-blue-600" />
               Beállítások
             </h2>
-            <p className="text-gray-600">Alkalmazás testreszabása és konfigurálása</p>
+            <p className="text-gray-600 text-sm sm:text-base">Alkalmazás testreszabása és konfigurálása</p>
           </div>
           
           {hasUnsavedChanges && (
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-orange-600 font-medium">Nem mentett változások</span>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <span className="text-sm text-orange-600 font-medium text-center sm:text-left">Nem mentett változások</span>
               <button
                 onClick={saveSettings}
                 disabled={saving}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
               >
                 {saving ? (
                   <>
@@ -288,19 +288,19 @@ export const Settings: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Appearance Settings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center mb-6">
-            <Palette className="h-6 w-6 text-purple-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">Megjelenés</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <Palette className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 mr-3" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Megjelenés</h3>
           </div>
           
           <div className="space-y-6">
             {/* Theme Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Téma</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   onClick={() => updateTopLevelSetting('theme', 'light')}
                   className={`p-4 border-2 rounded-lg transition-all ${
@@ -402,10 +402,10 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Notifications */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center mb-6">
-            <Bell className="h-6 w-6 text-yellow-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">Értesítések</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600 mr-3" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Értesítések</h3>
           </div>
           
           <div className="space-y-4">
@@ -488,10 +488,10 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Privacy & Security */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center mb-6">
-            <Shield className="h-6 w-6 text-green-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">Adatvédelem és biztonság</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mr-3" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Adatvédelem és biztonság</h3>
           </div>
           
           <div className="space-y-6">
@@ -551,10 +551,10 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Backup & Data */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center mb-6">
-            <Database className="h-6 w-6 text-blue-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">Biztonsági mentés és adatok</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <Database className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-3" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Biztonsági mentés és adatok</h3>
           </div>
           
           <div className="space-y-6">
@@ -592,16 +592,16 @@ export const Settings: React.FC = () => {
               </div>
             )}
 
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <button
                 onClick={exportSettings}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Beállítások exportálása
               </button>
               
-              <label className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors cursor-pointer">
+              <label className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors cursor-pointer">
                 <Upload className="h-4 w-4 mr-2" />
                 Beállítások importálása
                 <input
@@ -616,10 +616,10 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Language & Region */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center mb-6">
-            <Globe className="h-6 w-6 text-indigo-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">Nyelv és régió</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center mb-4 sm:mb-6">
+            <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mr-3" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Nyelv és régió</h3>
           </div>
           
           <div className="space-y-4">
@@ -638,15 +638,15 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Reset Settings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Beállítások visszaállítása</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Beállítások visszaállítása</h3>
               <p className="text-sm text-gray-500 mt-1">Minden beállítás visszaállítása az alapértelmezett értékekre</p>
             </div>
             <button
               onClick={resetSettings}
-              className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
             >
               Visszaállítás
             </button>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, User, ChevronRight, ChevronLeft, Settings } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, User, ChevronRight, ChevronLeft, Settings, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 
@@ -16,6 +16,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleTabChange = (tab: string) => {
+    onTabChange(tab);
+    // Auto-close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      onToggle();
+    }
   };
 
   const menuItems = [
@@ -54,6 +62,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
 
   return (
     <>
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4">
+        <button
+          onClick={onToggle}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <Menu className="h-6 w-6 text-gray-600" />
+        </button>
+        
+        <h1 className="text-lg font-semibold text-gray-900">
+          {menuItems.find(item => item.id === activeTab)?.label || 'Számla kezelő'}
+        </h1>
+        
+        <button
+          onClick={() => setShowProfileModal(true)}
+          className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm"
+        >
+          {userInitials}
+        </button>
+      </div>
+
       {/* Mobile overlay */}
       {isOpen && (
         <div 
@@ -64,11 +93,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
 
       {/* Sidebar */}
       <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200/80 z-50 transition-all duration-300 ease-in-out ${
-        isOpen ? 'w-72' : 'w-20'
-      }`}>
+        isOpen ? 'w-72' : 'w-20 lg:w-20'
+      } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         
-        {/* Toggle button - positioned in the middle */}
-        <div className="absolute -right-4 top-1/2 -translate-y-1/2 z-10">
+        {/* Mobile close button */}
+        <div className="lg:hidden absolute top-4 right-4">
+          <button
+            onClick={onToggle}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <X className="h-5 w-5 text-gray-600" />
+          </button>
+        </div>
+
+        {/* Toggle button - desktop only */}
+        <div className="hidden lg:block absolute -right-4 top-1/2 -translate-y-1/2 z-10">
           <button
             onClick={onToggle}
             className="w-8 h-8 bg-white border border-gray-200 rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center group hover:scale-105"
@@ -82,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
         </div>
 
         {/* Header with profile picture */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-100">
+        <div className="h-16 flex items-center justify-center border-b border-gray-100 mt-0 lg:mt-0">
           <div className={`flex items-center space-x-3 ${isOpen ? 'px-4' : ''}`}>
             <button
               onClick={() => setShowProfileModal(true)}
@@ -114,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
               return (
                 <div key={item.id} className="relative">
                   <button
-                    onClick={() => onTabChange(item.id)}
+                    onClick={() => handleTabChange(item.id)}
                     className={`w-full flex items-center px-4 py-3.5 rounded-xl font-medium text-sm transition-all duration-200 group relative ${
                       isActive
                         ? 'bg-blue-50 text-blue-700 shadow-sm'
@@ -141,9 +180,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
                     )}
                   </button>
                   
-                  {/* Tooltip for collapsed state */}
+                  {/* Tooltip for collapsed state - desktop only */}
                   {!isOpen && (
-                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                    <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                       {item.label}
                       <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
                     </div>
@@ -172,9 +211,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
               )}
             </button>
             
-            {/* Tooltip for collapsed state */}
+            {/* Tooltip for collapsed state - desktop only */}
             {!isOpen && (
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+              <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                 Kijelentkezés
                 <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
               </div>

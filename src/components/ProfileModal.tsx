@@ -221,10 +221,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-xl">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-              <User className="h-6 w-6 mr-2 text-blue-600" />
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
+              <User className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-blue-600" />
               Profil
             </h3>
             <button
@@ -250,28 +250,28 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             </p>
           </div>
         ) : (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Profile Card */}
               <div className="lg:col-span-1">
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-6 text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 shadow-lg">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 sm:p-6 text-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl mx-auto mb-4 shadow-lg">
                     {getUserInitials(profile.email, profile.name)}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
                     {profile.name || 'Névtelen felhasználó'}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">{profile.email}</p>
+                  <p className="text-sm text-gray-600 mb-4 break-all">{profile.email}</p>
                   
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center justify-center space-x-2">
                       <Calendar className="h-4 w-4" />
-                      <span>Regisztráció: {formatDate(profile.created_at)}</span>
+                      <span className="text-xs sm:text-sm">Regisztráció: {formatDate(profile.created_at)}</span>
                     </div>
                     {profile.last_sign_in_at && (
                       <div className="flex items-center justify-center space-x-2">
                         <User className="h-4 w-4" />
-                        <span>Utolsó belépés: {formatDate(profile.last_sign_in_at)}</span>
+                        <span className="text-xs sm:text-sm">Utolsó belépés: {formatDate(profile.last_sign_in_at)}</span>
                       </div>
                     )}
                   </div>
@@ -289,9 +289,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               {/* Profile Settings */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Basic Information */}
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-gray-900">Alapinformációk</h4>
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900">Alapinformációk</h4>
                     {!editing && (
                       <button
                         onClick={() => setEditing(true)}
@@ -308,7 +308,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <label className="block text-sm font-medium text-gray-700 mb-1">E-mail cím</label>
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-900">{profile.email}</span>
+                        <span className="text-sm text-gray-900 break-all">{profile.email}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">Az e-mail cím nem módosítható</p>
                     </div>
@@ -316,7 +316,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teljes név</label>
                       {editing ? (
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                           <input
                             type="text"
                             value={editedName}
@@ -324,26 +324,28 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Adja meg a teljes nevét"
                           />
-                          <button
-                            onClick={handleSaveProfile}
-                            disabled={saving}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {saving ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            ) : (
-                              <Check className="h-4 w-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditing(false);
-                              setEditedName(profile.name);
-                            }}
-                            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={handleSaveProfile}
+                              disabled={saving}
+                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {saving ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditing(false);
+                                setEditedName(profile.name);
+                              }}
+                              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex items-center space-x-2">
@@ -356,9 +358,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 </div>
 
                 {/* Security Settings */}
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
                       <Shield className="h-5 w-5 mr-2 text-green-600" />
                       Biztonság
                     </h4>
@@ -368,7 +370,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                       >
                         <Key className="h-4 w-4 mr-1" />
-                        Jelszó megváltoztatása
+                        <span className="hidden sm:inline">Jelszó megváltoztatása</span>
+                        <span className="sm:hidden">Jelszó</span>
                       </button>
                     )}
                   </div>
@@ -437,11 +440,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-3 pt-4">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
                         <button
                           onClick={handleChangePassword}
                           disabled={saving}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           {saving ? (
                             <>
@@ -462,7 +465,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             setNewPassword('');
                             setConfirmPassword('');
                           }}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                          className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                         >
                           <X className="h-4 w-4 mr-2" />
                           Mégse

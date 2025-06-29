@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthPage } from './components/Auth/AuthPage';
 import { Sidebar } from './components/Sidebar';
@@ -11,6 +11,18 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, loading } = useAuth();
+
+  // Handle responsive sidebar behavior
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(false); // Reset to collapsed on desktop
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderActiveComponent = () => {
     switch (activeTab) {
@@ -50,7 +62,9 @@ const AppContent: React.FC = () => {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
-      <main className={`flex-1 transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-72' : 'ml-20'}`}>
+      <main className={`flex-1 transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'
+      } pt-16 lg:pt-0`}>
         <div className="min-h-screen">
           {renderActiveComponent()}
         </div>

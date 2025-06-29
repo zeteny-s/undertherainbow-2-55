@@ -524,10 +524,10 @@ export const InvoiceUpload: React.FC = () => {
                         value || '-';
 
     return (
-      <div className={`bg-gray-50 rounded-lg p-4 transition-all duration-200 hover:bg-gray-100 cursor-pointer ${className}`}>
+      <div className={`bg-gray-50 rounded-lg p-3 sm:p-4 transition-all duration-200 hover:bg-gray-100 cursor-pointer ${className}`}>
         <div className="flex items-center space-x-2 mb-2">
           {icon}
-          <span className="text-sm font-medium text-gray-500">{label}</span>
+          <span className="text-xs sm:text-sm font-medium text-gray-500">{label}</span>
         </div>
         
         {isEditing ? (
@@ -536,7 +536,7 @@ export const InvoiceUpload: React.FC = () => {
               type={type}
               value={tempEditValue}
               onChange={(e) => setTempEditValue(e.target.value)}
-              className="flex-1 text-sm font-semibold text-gray-900 bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -561,7 +561,7 @@ export const InvoiceUpload: React.FC = () => {
           </div>
         ) : (
           <p 
-            className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+            className="text-xs sm:text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors"
             onClick={() => startEditing(fileId, field, value)}
           >
             {displayValue}
@@ -572,7 +572,7 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {notifications.map((notification) => (
@@ -591,10 +591,10 @@ export const InvoiceUpload: React.FC = () => {
                     <CheckCircle className="h-5 w-5 text-green-400" />
                   )}
                   {notification.type === 'error' && (
-                    <AlertTriangle className="h-5 w-5 text-red-400" />
+                    <AlertCircle className="h-5 w-5 text-red-400" />
                   )}
                   {notification.type === 'info' && (
-                    <AlertTriangle className="h-5 w-5 text-blue-400" />
+                    <AlertCircle className="h-5 w-5 text-blue-400" />
                   )}
                 </div>
                 <div className="ml-3 w-0 flex-1 pt-0.5">
@@ -617,14 +617,14 @@ export const InvoiceUpload: React.FC = () => {
         ))}
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Számla feltöltés</h2>
-        <p className="text-gray-600">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat.</p>
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Számla feltöltés</h2>
+        <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat.</p>
       </div>
 
       {/* File Upload Area */}
       <div 
-        className={`relative border-2 border-dashed rounded-xl p-8 transition-colors ${
+        className={`relative border-2 border-dashed rounded-xl p-6 sm:p-8 transition-colors ${
           dragActive 
             ? 'border-blue-400 bg-blue-50' 
             : 'border-gray-300 hover:border-gray-400'
@@ -635,9 +635,9 @@ export const InvoiceUpload: React.FC = () => {
         onDrop={handleDrop}
       >
         <div className="text-center">
-          <Upload className={`mx-auto h-12 w-12 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
+          <Upload className={`mx-auto h-10 w-10 sm:h-12 sm:w-12 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
           <div className="mt-4">
-            <p className="text-lg font-medium text-gray-900">
+            <p className="text-base sm:text-lg font-medium text-gray-900">
               Húzza ide a fájlokat vagy kattintson a tallózáshoz
             </p>
             <p className="mt-2 text-sm text-gray-500">
@@ -645,8 +645,8 @@ export const InvoiceUpload: React.FC = () => {
             </p>
           </div>
           <div className="mt-6">
-            <label className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">
-              <Upload className="h-5 w-5 mr-2" />
+            <label className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Fájlok tallózása
               <input
                 type="file"
@@ -662,19 +662,19 @@ export const InvoiceUpload: React.FC = () => {
 
       {/* Uploaded Files List */}
       {uploadedFiles.length > 0 && (
-        <div className="mt-8 space-y-6">
+        <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
           {uploadedFiles.map((uploadedFile) => (
             <div key={uploadedFile.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               {/* File Header */}
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center justify-between">
+              <div className="p-4 sm:p-6 border-b border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <FileText className="h-5 w-5 text-gray-400 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {uploadedFile.file.name}
                       </p>
-                      <div className="flex items-center space-x-4 mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-1 gap-2 sm:gap-0">
                         <p className="text-sm text-gray-500">
                           {(uploadedFile.file.size / 1024 / 1024).toFixed(1)} MB
                         </p>
@@ -695,9 +695,9 @@ export const InvoiceUpload: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="text-center sm:text-right">
+                      <div className="flex items-center justify-center sm:justify-end space-x-2">
                         {getStatusIcon(uploadedFile.status)}
                         <span className="text-sm font-medium text-gray-900">
                           {getStatusText(uploadedFile.status)}
@@ -705,7 +705,7 @@ export const InvoiceUpload: React.FC = () => {
                       </div>
                       {(uploadedFile.status === 'uploading' || uploadedFile.status === 'processing' || uploadedFile.status === 'ai_processing') && !uploadedFile.cancelled && (
                         <div className="mt-1">
-                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div className="w-24 bg-gray-200 rounded-full h-2 mx-auto sm:mx-0">
                             <div 
                               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${uploadedFile.progress}%` }}
@@ -719,7 +719,7 @@ export const InvoiceUpload: React.FC = () => {
                     </div>
                     
                     {/* Action Buttons */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-center sm:justify-start space-x-2">
                       {/* Cancel Button */}
                       {canCancel(uploadedFile.status) && !uploadedFile.cancelled && (
                         <button
@@ -749,23 +749,26 @@ export const InvoiceUpload: React.FC = () => {
                     </div>
                     
                     {/* Status Indicators */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                       {uploadedFile.savedToDatabase && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           <CheckCircle className="h-3 w-3 mr-1" />
-                          Adatbázisba mentve
+                          <span className="hidden sm:inline">Adatbázisba mentve</span>
+                          <span className="sm:hidden">DB</span>
                         </span>
                       )}
                       {uploadedFile.exportedToSheets && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           <CheckCircle className="h-3 w-3 mr-1" />
-                          Sheets-be exportálva
+                          <span className="hidden sm:inline">Sheets-be exportálva</span>
+                          <span className="sm:hidden">Sheets</span>
                         </span>
                       )}
                       {hasUnsavedChanges.has(uploadedFile.id) && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                           <AlertCircle className="h-3 w-3 mr-1" />
-                          Nem mentett változások
+                          <span className="hidden sm:inline">Nem mentett változások</span>
+                          <span className="sm:hidden">Változás</span>
                         </span>
                       )}
                     </div>
@@ -775,47 +778,52 @@ export const InvoiceUpload: React.FC = () => {
 
               {/* Extracted Data Display */}
               {uploadedFile.status === 'completed' && uploadedFile.extractedData && (
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="text-lg font-semibold text-gray-900">Kinyert számla adatok</h4>
-                    <div className="flex items-center space-x-3">
+                <div className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900">Kinyert számla adatok</h4>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <button
                         onClick={() => setSelectedFile(uploadedFile)}
-                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                        className="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        Nyers szöveg megtekintése
+                        <span className="hidden sm:inline">Nyers szöveg megtekintése</span>
+                        <span className="sm:hidden">Nyers szöveg</span>
                       </button>
                       
                       {hasUnsavedChanges.has(uploadedFile.id) && (
                         <button
                           onClick={() => finalizeChanges(uploadedFile.id)}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
+                          className="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
                         >
                           <Check className="h-4 w-4 mr-1" />
-                          Változások véglegesítése
+                          <span className="hidden sm:inline">Változások véglegesítése</span>
+                          <span className="sm:hidden">Véglegesítés</span>
                         </button>
                       )}
                       
                       <button
                         onClick={() => handleExportToSheets(uploadedFile)}
                         disabled={exportingToSheets === uploadedFile.id || uploadedFile.exportedToSheets}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {exportingToSheets === uploadedFile.id ? (
                           <>
                             <Loader className="h-4 w-4 mr-2 animate-spin" />
-                            Exportálás...
+                            <span className="hidden sm:inline">Exportálás...</span>
+                            <span className="sm:hidden">Export...</span>
                           </>
                         ) : uploadedFile.exportedToSheets ? (
                           <>
                             <CheckCircle className="h-4 w-4 mr-2" />
-                            Exportálva
+                            <span className="hidden sm:inline">Exportálva</span>
+                            <span className="sm:hidden">Kész</span>
                           </>
                         ) : (
                           <>
                             <FileSpreadsheet className="h-4 w-4 mr-2" />
-                            Google Sheets-be küldés
+                            <span className="hidden sm:inline">Google Sheets-be küldés</span>
+                            <span className="sm:hidden">Sheets</span>
                           </>
                         )}
                       </button>
@@ -823,7 +831,7 @@ export const InvoiceUpload: React.FC = () => {
                   </div>
 
                   {/* Inline Editable Data Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {/* Organization */}
                     {renderEditableField(
                       uploadedFile.id,
@@ -874,16 +882,16 @@ export const InvoiceUpload: React.FC = () => {
                     )}
 
                     {/* Payment Type */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                       <div className="flex items-center space-x-2 mb-2">
                         {uploadedFile.extractedData.paymentType === 'bank_transfer' ? (
                           <Banknote className="h-4 w-4 text-green-600" />
                         ) : (
                           <CreditCard className="h-4 w-4 text-purple-600" />
                         )}
-                        <span className="text-sm font-medium text-gray-500">Fizetési mód</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-500">Fizetési mód</span>
                       </div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900">
                         {uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : 'Kártya/Készpénz/Utánvét'}
                       </p>
                     </div>
@@ -918,7 +926,7 @@ export const InvoiceUpload: React.FC = () => {
                       <FileText className="h-4 w-4 text-gray-600" />,
                       'Tárgy',
                       'text',
-                      'md:col-span-2'
+                      'sm:col-span-2'
                     )}
 
                     {/* Work Number */}
@@ -950,9 +958,9 @@ export const InvoiceUpload: React.FC = () => {
       {selectedFile && selectedFile.extractedData && !editingData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Nyers OCR szöveg</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Nyers OCR szöveg</h3>
                 <button
                   onClick={() => setSelectedFile(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -962,7 +970,7 @@ export const InvoiceUpload: React.FC = () => {
               </div>
             </div>
             
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
                 <pre className="text-xs text-gray-700 whitespace-pre-wrap">
                   {selectedFile.extractedText || 'Nincs kinyert szöveg'}
