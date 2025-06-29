@@ -47,10 +47,10 @@ export const InvoiceList: React.FC = () => {
     const notification = { id, type, message };
     setNotifications(prev => [...prev, notification]);
     
-    // Auto remove after 5 seconds
+    // Auto remove after 4 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 5000);
+    }, 4000);
   };
 
   const removeNotification = (id: string) => {
@@ -67,6 +67,7 @@ export const InvoiceList: React.FC = () => {
 
       if (error) throw error;
       setInvoices(data || []);
+      addNotification('success', 'Számlák sikeresen betöltve');
     } catch (error) {
       console.error('Error fetching invoices:', error);
       addNotification('error', 'Hiba történt a számlák betöltése során');
@@ -191,42 +192,43 @@ export const InvoiceList: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      {/* Notifications */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
+      {/* Notifications - Bottom Right - Consistent Style */}
+      <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
           <div
             key={notification.id}
-            className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
-              notification.type === 'success' ? 'border-l-4 border-green-400' :
-              notification.type === 'error' ? 'border-l-4 border-red-400' :
-              'border-l-4 border-blue-400'
-            }`}
+            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
           >
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   {notification.type === 'success' && (
-                    <CheckCircle className="h-5 w-5 text-green-400" />
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </div>
                   )}
                   {notification.type === 'error' && (
-                    <AlertTriangle className="h-5 w-5 text-red-400" />
+                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                    </div>
                   )}
                   {notification.type === 'info' && (
-                    <AlertTriangle className="h-5 w-5 text-blue-400" />
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 text-blue-600" />
+                    </div>
                   )}
                 </div>
-                <div className="ml-3 w-0 flex-1 pt-0.5">
-                  <p className="text-sm font-medium text-gray-900">
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 break-words">
                     {notification.message}
                   </p>
                 </div>
-                <div className="ml-4 flex-shrink-0 flex">
+                <div className="ml-4 flex-shrink-0">
                   <button
-                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                     onClick={() => removeNotification(notification.id)}
                   >
-                    <span className="sr-only">Bezárás</span>
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
