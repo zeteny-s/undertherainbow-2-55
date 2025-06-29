@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Shield, Database, Download, Upload, Palette, Globe, Clock, Save, Check, AlertCircle, X } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface Notification {
   id: string;
@@ -7,73 +8,10 @@ interface Notification {
   message: string;
 }
 
-interface SettingsData {
-  theme: 'light' | 'dark' | 'system';
-  language: 'hu' | 'en';
-  notifications: {
-    emailNotifications: boolean;
-    pushNotifications: boolean;
-    invoiceProcessed: boolean;
-    systemUpdates: boolean;
-  };
-  privacy: {
-    dataRetention: '1year' | '2years' | '5years' | 'forever';
-    analyticsEnabled: boolean;
-    crashReporting: boolean;
-  };
-  display: {
-    compactMode: boolean;
-    showAnimations: boolean;
-    highContrast: boolean;
-  };
-  backup: {
-    autoBackup: boolean;
-    backupFrequency: 'daily' | 'weekly' | 'monthly';
-  };
-}
-
 export const Settings: React.FC = () => {
-  const [settings, setSettings] = useState<SettingsData>({
-    theme: 'light',
-    language: 'hu',
-    notifications: {
-      emailNotifications: true,
-      pushNotifications: true,
-      invoiceProcessed: true,
-      systemUpdates: false,
-    },
-    privacy: {
-      dataRetention: '2years',
-      analyticsEnabled: true,
-      crashReporting: true,
-    },
-    display: {
-      compactMode: false,
-      showAnimations: true,
-      highContrast: false,
-    },
-    backup: {
-      autoBackup: true,
-      backupFrequency: 'weekly',
-    },
-  });
-  
+  const { settings, updateSettings, resetSettings, exportSettings, importSettings } = useSettings();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [saving, setSaving] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  useEffect(() => {
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem('app-settings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings(prev => ({ ...prev, ...parsed }));
-      } catch (error) {
-        console.error('Error loading settings:', error);
-      }
-    }
-  }, []);
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -89,161 +27,100 @@ export const Settings: React.FC = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const updateSettings = (section: keyof SettingsData, key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
+  const handleSettingChange = (section: string, key: string, value: any) => {
+    const newSettings = {
+      ...settings,
       [section]: {
-        ...prev[section],
+        ...settings[section as keyof typeof settings],
         [key]: value,
       },
-    }));
-    setHasUnsavedChanges(true);
+    };
+    updateSettings(newSettings);
+    addNotification('success', 'Beállítás frissítve!');
   };
 
-  const updateTopLevelSetting = (key: keyof SettingsData, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-    setHasUnsavedChanges(true);
+  const handleTopLevelChange = (key: string, value: any) => {
+    updateSettings({ [key]: value });
+    addNotification('success', 'Beállítás frissítve!');
   };
 
-  const saveSettings = async () => {
+  const handleResetSettings = () => {
+    resetSettings();
+    addNotification('info', 'Beállítások visszaállítva az alapértelmezett értékekre');
+  };
+
+  const handleExportSettings = () => {
+    exportSettings();
+    addNotification('success', 'Beállítások exportálva');
+  };
+
+  const handleImportSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      await importSettings(file);
+      addNotification('success', 'Beállítások sikeresen importálva');
+    } catch (error) {
+      addNotification('error', error instanceof Error ? error.message : 'Hibás beállítás fájl');
+    }
+
+    // Reset file input
+    event.target.value = '';
+  };
+
+  const handleSaveSettings = async () => {
     setSaving(true);
     try {
-      // Save to localStorage
-      localStorage.setItem('app-settings', JSON.stringify(settings));
-      
-      // Apply theme changes immediately
-      applyTheme(settings.theme);
-      
-      setHasUnsavedChanges(false);
+      // Simulate save delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       addNotification('success', 'Beállítások sikeresen mentve!');
     } catch (error) {
-      console.error('Error saving settings:', error);
       addNotification('error', 'Hiba történt a beállítások mentése során');
     } finally {
       setSaving(false);
     }
   };
 
-  const applyTheme = (theme: 'light' | 'dark' | 'system') => {
-    const root = document.documentElement;
-    
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else if (theme === 'light') {
-      root.classList.remove('dark');
-    } else {
-      // System theme
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    }
-  };
-
-  const resetSettings = () => {
-    const defaultSettings: SettingsData = {
-      theme: 'light',
-      language: 'hu',
-      notifications: {
-        emailNotifications: true,
-        pushNotifications: true,
-        invoiceProcessed: true,
-        systemUpdates: false,
-      },
-      privacy: {
-        dataRetention: '2years',
-        analyticsEnabled: true,
-        crashReporting: true,
-      },
-      display: {
-        compactMode: false,
-        showAnimations: true,
-        highContrast: false,
-      },
-      backup: {
-        autoBackup: true,
-        backupFrequency: 'weekly',
-      },
-    };
-    
-    setSettings(defaultSettings);
-    setHasUnsavedChanges(true);
-    addNotification('info', 'Beállítások visszaállítva az alapértelmezett értékekre');
-  };
-
-  const exportSettings = () => {
-    const dataStr = JSON.stringify(settings, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'feketerigo-settings.json';
-    link.click();
-    URL.revokeObjectURL(url);
-    addNotification('success', 'Beállítások exportálva');
-  };
-
-  const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const imported = JSON.parse(e.target?.result as string);
-        setSettings(imported);
-        setHasUnsavedChanges(true);
-        addNotification('success', 'Beállítások sikeresen importálva');
-      } catch (error) {
-        addNotification('error', 'Hibás beállítás fájl');
-      }
-    };
-    reader.readAsText(file);
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Notifications */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
+      <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
           <div
             key={notification.id}
-            className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
-              notification.type === 'success' ? 'border-l-4 border-green-400' :
-              notification.type === 'error' ? 'border-l-4 border-red-400' :
-              'border-l-4 border-blue-400'
-            }`}
+            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
           >
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   {notification.type === 'success' && (
-                    <Check className="h-5 w-5 text-green-400" />
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <Check className="h-4 w-4 text-green-600" />
+                    </div>
                   )}
                   {notification.type === 'error' && (
-                    <AlertCircle className="h-5 w-5 text-red-400" />
+                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                    </div>
                   )}
                   {notification.type === 'info' && (
-                    <AlertCircle className="h-5 w-5 text-blue-400" />
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
+                    </div>
                   )}
                 </div>
-                <div className="ml-3 w-0 flex-1 pt-0.5">
-                  <p className="text-sm font-medium text-gray-900">
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 break-words">
                     {notification.message}
                   </p>
                 </div>
-                <div className="ml-4 flex-shrink-0 flex">
+                <div className="ml-4 flex-shrink-0">
                   <button
-                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                     onClick={() => removeNotification(notification.id)}
                   >
-                    <span className="sr-only">Bezárás</span>
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -263,28 +140,23 @@ export const Settings: React.FC = () => {
             <p className="text-gray-600 text-sm sm:text-base">Alkalmazás testreszabása és konfigurálása</p>
           </div>
           
-          {hasUnsavedChanges && (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <span className="text-sm text-orange-600 font-medium text-center sm:text-left">Nem mentett változások</span>
-              <button
-                onClick={saveSettings}
-                disabled={saving}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Mentés...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Mentés
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+          <button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Mentés...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Mentés
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -302,7 +174,7 @@ export const Settings: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-3">Téma</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
-                  onClick={() => updateTopLevelSetting('theme', 'light')}
+                  onClick={() => handleTopLevelChange('theme', 'light')}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     settings.theme === 'light' 
                       ? 'border-blue-500 bg-blue-50' 
@@ -314,7 +186,7 @@ export const Settings: React.FC = () => {
                 </button>
                 
                 <button
-                  onClick={() => updateTopLevelSetting('theme', 'dark')}
+                  onClick={() => handleTopLevelChange('theme', 'dark')}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     settings.theme === 'dark' 
                       ? 'border-blue-500 bg-blue-50' 
@@ -326,7 +198,7 @@ export const Settings: React.FC = () => {
                 </button>
                 
                 <button
-                  onClick={() => updateTopLevelSetting('theme', 'system')}
+                  onClick={() => handleTopLevelChange('theme', 'system')}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     settings.theme === 'system' 
                       ? 'border-blue-500 bg-blue-50' 
@@ -347,7 +219,7 @@ export const Settings: React.FC = () => {
                   <p className="text-xs text-gray-500">Kisebb távolságok és elemek</p>
                 </div>
                 <button
-                  onClick={() => updateSettings('display', 'compactMode', !settings.display.compactMode)}
+                  onClick={() => handleSettingChange('display', 'compactMode', !settings.display.compactMode)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     settings.display.compactMode ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
@@ -366,7 +238,7 @@ export const Settings: React.FC = () => {
                   <p className="text-xs text-gray-500">Átmenetek és mozgások</p>
                 </div>
                 <button
-                  onClick={() => updateSettings('display', 'showAnimations', !settings.display.showAnimations)}
+                  onClick={() => handleSettingChange('display', 'showAnimations', !settings.display.showAnimations)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     settings.display.showAnimations ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
@@ -385,7 +257,7 @@ export const Settings: React.FC = () => {
                   <p className="text-xs text-gray-500">Jobb láthatóság</p>
                 </div>
                 <button
-                  onClick={() => updateSettings('display', 'highContrast', !settings.display.highContrast)}
+                  onClick={() => handleSettingChange('display', 'highContrast', !settings.display.highContrast)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     settings.display.highContrast ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
@@ -415,7 +287,7 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-gray-500">Fontos események e-mailben</p>
               </div>
               <button
-                onClick={() => updateSettings('notifications', 'emailNotifications', !settings.notifications.emailNotifications)}
+                onClick={() => handleSettingChange('notifications', 'emailNotifications', !settings.notifications.emailNotifications)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   settings.notifications.emailNotifications ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
@@ -434,7 +306,7 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-gray-500">Böngésző értesítések</p>
               </div>
               <button
-                onClick={() => updateSettings('notifications', 'pushNotifications', !settings.notifications.pushNotifications)}
+                onClick={() => handleSettingChange('notifications', 'pushNotifications', !settings.notifications.pushNotifications)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   settings.notifications.pushNotifications ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
@@ -453,7 +325,7 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-gray-500">Értesítés feldolgozás után</p>
               </div>
               <button
-                onClick={() => updateSettings('notifications', 'invoiceProcessed', !settings.notifications.invoiceProcessed)}
+                onClick={() => handleSettingChange('notifications', 'invoiceProcessed', !settings.notifications.invoiceProcessed)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   settings.notifications.invoiceProcessed ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
@@ -472,7 +344,7 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-gray-500">Új funkciók és javítások</p>
               </div>
               <button
-                onClick={() => updateSettings('notifications', 'systemUpdates', !settings.notifications.systemUpdates)}
+                onClick={() => handleSettingChange('notifications', 'systemUpdates', !settings.notifications.systemUpdates)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   settings.notifications.systemUpdates ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
@@ -499,7 +371,7 @@ export const Settings: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Adatok megőrzése</label>
               <select
                 value={settings.privacy.dataRetention}
-                onChange={(e) => updateSettings('privacy', 'dataRetention', e.target.value)}
+                onChange={(e) => handleSettingChange('privacy', 'dataRetention', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="1year">1 év</option>
@@ -516,7 +388,7 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-gray-500">Névtelen adatok gyűjtése fejlesztéshez</p>
               </div>
               <button
-                onClick={() => updateSettings('privacy', 'analyticsEnabled', !settings.privacy.analyticsEnabled)}
+                onClick={() => handleSettingChange('privacy', 'analyticsEnabled', !settings.privacy.analyticsEnabled)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   settings.privacy.analyticsEnabled ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
@@ -535,7 +407,7 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-gray-500">Automatikus hibajelentés küldése</p>
               </div>
               <button
-                onClick={() => updateSettings('privacy', 'crashReporting', !settings.privacy.crashReporting)}
+                onClick={() => handleSettingChange('privacy', 'crashReporting', !settings.privacy.crashReporting)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   settings.privacy.crashReporting ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
@@ -564,7 +436,7 @@ export const Settings: React.FC = () => {
                 <p className="text-xs text-gray-500">Beállítások automatikus mentése</p>
               </div>
               <button
-                onClick={() => updateSettings('backup', 'autoBackup', !settings.backup.autoBackup)}
+                onClick={() => handleSettingChange('backup', 'autoBackup', !settings.backup.autoBackup)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   settings.backup.autoBackup ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
@@ -582,7 +454,7 @@ export const Settings: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Mentés gyakorisága</label>
                 <select
                   value={settings.backup.backupFrequency}
-                  onChange={(e) => updateSettings('backup', 'backupFrequency', e.target.value)}
+                  onChange={(e) => handleSettingChange('backup', 'backupFrequency', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="daily">Naponta</option>
@@ -594,7 +466,7 @@ export const Settings: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <button
-                onClick={exportSettings}
+                onClick={handleExportSettings}
                 className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <Download className="h-4 w-4 mr-2" />
@@ -607,7 +479,7 @@ export const Settings: React.FC = () => {
                 <input
                   type="file"
                   accept=".json"
-                  onChange={importSettings}
+                  onChange={handleImportSettings}
                   className="sr-only"
                 />
               </label>
@@ -627,7 +499,7 @@ export const Settings: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Nyelv</label>
               <select
                 value={settings.language}
-                onChange={(e) => updateTopLevelSetting('language', e.target.value)}
+                onChange={(e) => handleTopLevelChange('language', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="hu">Magyar</option>
@@ -645,7 +517,7 @@ export const Settings: React.FC = () => {
               <p className="text-sm text-gray-500 mt-1">Minden beállítás visszaállítása az alapértelmezett értékekre</p>
             </div>
             <button
-              onClick={resetSettings}
+              onClick={handleResetSettings}
               className="inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
             >
               Visszaállítás

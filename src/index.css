@@ -1,3 +1,190 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Dark theme styles */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-gray-900;
+}
+
+.dark .bg-gray-100 {
+  @apply bg-gray-800;
+}
+
+.dark .text-gray-900 {
+  @apply text-gray-100;
+}
+
+.dark .text-gray-800 {
+  @apply text-gray-200;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-400;
+}
+
+.dark .text-gray-500 {
+  @apply text-gray-500;
+}
+
+.dark .border-gray-200 {
+  @apply border-gray-700;
+}
+
+.dark .border-gray-300 {
+  @apply border-gray-600;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  @apply bg-gray-700;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  @apply bg-gray-700;
+}
+
+/* Compact mode styles */
+.compact-mode {
+  --spacing-unit: 0.75rem;
+  --text-scale: 0.9;
+}
+
+.compact-mode .p-4 {
+  @apply p-3;
+}
+
+.compact-mode .p-6 {
+  @apply p-4;
+}
+
+.compact-mode .p-8 {
+  @apply p-6;
+}
+
+.compact-mode .py-8 {
+  @apply py-6;
+}
+
+.compact-mode .mb-8 {
+  @apply mb-6;
+}
+
+.compact-mode .gap-8 {
+  @apply gap-6;
+}
+
+.compact-mode .space-y-8 > * + * {
+  @apply mt-6;
+}
+
+.compact-mode .text-3xl {
+  @apply text-2xl;
+}
+
+.compact-mode .text-2xl {
+  @apply text-xl;
+}
+
+.compact-mode .text-xl {
+  @apply text-lg;
+}
+
+.compact-mode .text-lg {
+  @apply text-base;
+}
+
+/* High contrast mode */
+.high-contrast {
+  --contrast-multiplier: 1.5;
+}
+
+.high-contrast .text-gray-600 {
+  @apply text-gray-800;
+}
+
+.high-contrast .text-gray-500 {
+  @apply text-gray-700;
+}
+
+.high-contrast .text-gray-400 {
+  @apply text-gray-600;
+}
+
+.high-contrast .border-gray-200 {
+  @apply border-gray-400;
+}
+
+.high-contrast .border-gray-300 {
+  @apply border-gray-500;
+}
+
+.high-contrast .bg-gray-50 {
+  @apply bg-gray-100;
+}
+
+.high-contrast .bg-gray-100 {
+  @apply bg-gray-200;
+}
+
+/* No animations mode */
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.no-animations .animate-spin {
+  animation: none !important;
+}
+
+/* Dark mode high contrast adjustments */
+.dark.high-contrast .text-gray-400 {
+  @apply text-gray-200;
+}
+
+.dark.high-contrast .text-gray-500 {
+  @apply text-gray-300;
+}
+
+.dark.high-contrast .text-gray-600 {
+  @apply text-gray-200;
+}
+
+.dark.high-contrast .border-gray-700 {
+  @apply border-gray-500;
+}
+
+.dark.high-contrast .border-gray-600 {
+  @apply border-gray-400;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Override transitions when animations are disabled */
+.no-animations * {
+  transition: none !important;
+}
