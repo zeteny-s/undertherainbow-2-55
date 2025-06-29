@@ -455,8 +455,8 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      {/* Notifications - Bottom Right */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-3 max-w-sm">
+      {/* Notifications - Bottom Right - Made Wider */}
+      <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
           <div
             key={notification.id}
@@ -481,8 +481,8 @@ export const Dashboard: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="ml-3 w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 break-words">
                     {notification.message}
                   </p>
                 </div>
