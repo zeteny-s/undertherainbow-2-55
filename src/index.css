@@ -158,23 +158,23 @@
 
 /* Dark mode high contrast adjustments */
 .dark.high-contrast .text-gray-400 {
-  @apply text-gray-200;
+  color: #e5e7eb;
 }
 
 .dark.high-contrast .text-gray-500 {
-  @apply text-gray-300;
+  color: #d1d5db;
 }
 
 .dark.high-contrast .text-gray-600 {
-  @apply text-gray-200;
+  color: #e5e7eb;
 }
 
 .dark.high-contrast .border-gray-700 {
-  @apply border-gray-500;
+  border-color: #6b7280;
 }
 
 .dark.high-contrast .border-gray-600 {
-  @apply border-gray-400;
+  border-color: #9ca3af;
 }
 
 /* Smooth transitions for theme changes */
