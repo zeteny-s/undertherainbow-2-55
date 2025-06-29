@@ -75,17 +75,37 @@ export const InvoiceList: React.FC = () => {
     }
   };
 
+  const extractFilePathFromUrl = (fileUrl: string): string | null => {
+    try {
+      // Parse the URL to extract the file path
+      const url = new URL(fileUrl);
+      const pathParts = url.pathname.split('/');
+      
+      // Find the 'invoices' bucket part and get everything after it
+      const bucketIndex = pathParts.findIndex(part => part === 'invoices');
+      if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
+        // Join all parts after 'invoices' to get the full file path
+        const filePath = pathParts.slice(bucketIndex + 1).join('/');
+        return decodeURIComponent(filePath); // Decode any URL encoding
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error parsing file URL:', error);
+      return null;
+    }
+  };
+
   const handleDeleteInvoice = async (invoice: Invoice) => {
     try {
       setDeleting(true);
 
-      // Delete from storage if file_url exists
+      // First, try to delete from storage if file_url exists
       if (invoice.file_url) {
-        // Extract the file path from the URL
-        const urlParts = invoice.file_url.split('/');
-        const bucketIndex = urlParts.findIndex(part => part === 'invoices');
-        if (bucketIndex !== -1 && bucketIndex < urlParts.length - 1) {
-          const filePath = urlParts.slice(bucketIndex + 1).join('/');
+        const filePath = extractFilePathFromUrl(invoice.file_url);
+        
+        if (filePath) {
+          console.log('Attempting to delete file from storage:', filePath);
           
           const { error: storageError } = await supabase.storage
             .from('invoices')
@@ -94,7 +114,13 @@ export const InvoiceList: React.FC = () => {
           if (storageError) {
             console.warn('Failed to delete file from storage:', storageError);
             // Continue with database deletion even if storage deletion fails
+            addNotification('info', 'Fájl törlése a tárolóból sikertelen, de az adatbázis rekord törölve lesz');
+          } else {
+            console.log('File successfully deleted from storage');
           }
+        } else {
+          console.warn('Could not extract file path from URL:', invoice.file_url);
+          addNotification('info', 'Nem sikerült meghatározni a fájl elérési útját a tárolóban');
         }
       }
 
@@ -110,7 +136,7 @@ export const InvoiceList: React.FC = () => {
       setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
       setDeleteConfirm(null);
 
-      addNotification('success', 'Számla sikeresen törölve!');
+      addNotification('success', 'Számla sikeresen törölve az adatbázisból és a tárolóból!');
 
     } catch (error) {
       console.error('Error deleting invoice:', error);
@@ -480,7 +506,7 @@ export const InvoiceList: React.FC = () => {
             
             <div className="mb-6">
               <p className="text-sm text-gray-500 mb-4">
-                Biztosan törölni szeretné ezt a számlát? Ez a művelet nem vonható vissza.
+                Biztosan törölni szeretné ezt a számlát? Ez a művelet nem vonható vissza. A számla az adatbázisból és a fájltárolóból is törlődni fog.
               </p>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-sm font-medium text-gray-900">{deleteConfirm.file_name}</p>
