@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Camera, Scan } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Camera, Scan, Play, Pause } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
 import { MobileScanner } from './MobileScanner';
@@ -21,7 +21,7 @@ interface UploadedFile {
   file: File;
   id: string;
   organization: 'alapitvany' | 'ovoda';
-  status: 'uploading' | 'processing' | 'ai_processing' | 'completed' | 'error' | 'cancelled';
+  status: 'preview' | 'uploading' | 'processing' | 'ai_processing' | 'completed' | 'error' | 'cancelled';
   progress: number;
   extractedData?: ProcessedData;
   extractedText?: string;
@@ -30,6 +30,7 @@ interface UploadedFile {
   exportedToSheets?: boolean;
   savedToDatabase?: boolean;
   cancelled?: boolean;
+  previewUrl?: string;
 }
 
 interface Notification {
@@ -50,6 +51,7 @@ export const InvoiceUpload: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showScanner, setShowScanner] = useState(false);
+  const [processingFiles, setProcessingFiles] = useState<Set<string>>(new Set());
 
   // Check if device supports camera
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -127,20 +129,25 @@ export const InvoiceUpload: React.FC = () => {
           ? 'ovoda' 
           : 'alapitvany';
 
+      // Create preview URL for the file
+      const previewUrl = URL.createObjectURL(file);
+
       const newFile: UploadedFile = {
         file,
         id: Math.random().toString(36).substr(2, 9),
         organization,
-        status: 'uploading',
+        status: 'preview', // Start with preview status
         progress: 0,
         exportedToSheets: false,
         savedToDatabase: false,
-        cancelled: false
+        cancelled: false,
+        previewUrl
       };
 
       setUploadedFiles(prev => [...prev, newFile]);
-      await processFile(newFile);
     }
+
+    addNotification('success', `${validFiles.length} fájl feltöltve előnézethez`);
   };
 
   // Handle scanned PDF from mobile scanner
@@ -154,6 +161,45 @@ export const InvoiceUpload: React.FC = () => {
     await handleFiles([file]);
     
     addNotification('success', 'Beolvasott számla sikeresen feltöltve!');
+  };
+
+  // Start extraction for a specific file
+  const startExtraction = async (fileId: string) => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (!file) return;
+
+    setProcessingFiles(prev => new Set(prev).add(fileId));
+    await processFile(file);
+    setProcessingFiles(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(fileId);
+      return newSet;
+    });
+  };
+
+  // Start extraction for all preview files
+  const startAllExtractions = async () => {
+    const previewFiles = uploadedFiles.filter(f => f.status === 'preview');
+    
+    if (previewFiles.length === 0) {
+      addNotification('info', 'Nincsenek feldolgozásra váró fájlok');
+      return;
+    }
+
+    addNotification('info', `${previewFiles.length} fájl feldolgozásának megkezdése...`);
+
+    // Process files sequentially to avoid overwhelming the system
+    for (const file of previewFiles) {
+      if (!processingFiles.has(file.id)) {
+        setProcessingFiles(prev => new Set(prev).add(file.id));
+        await processFile(file);
+        setProcessingFiles(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(file.id);
+          return newSet;
+        });
+      }
+    }
   };
 
   const cancelFile = async (fileId: string) => {
@@ -180,6 +226,11 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   const removeFile = (fileId: string) => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (file?.previewUrl) {
+      URL.revokeObjectURL(file.previewUrl);
+    }
+    
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
     // Remove from unsaved changes if exists
     setHasUnsavedChanges(prev => {
@@ -473,6 +524,8 @@ export const InvoiceUpload: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'preview':
+        return <Eye className="h-4 w-4 text-blue-600" />;
       case 'uploading':
         return <Loader className="h-4 w-4 animate-spin text-blue-600" />;
       case 'processing':
@@ -492,6 +545,8 @@ export const InvoiceUpload: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case 'preview':
+        return 'Előnézet';
       case 'uploading':
         return 'Feltöltés...';
       case 'processing':
@@ -532,7 +587,11 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   const canRemove = (status: string) => {
-    return ['completed', 'error', 'cancelled'].includes(status);
+    return ['preview', 'completed', 'error', 'cancelled'].includes(status);
+  };
+
+  const canStartExtraction = (status: string) => {
+    return status === 'preview';
   };
 
   // Render editable field
@@ -590,6 +649,10 @@ export const InvoiceUpload: React.FC = () => {
     );
   };
 
+  // Count files by status
+  const previewCount = uploadedFiles.filter(f => f.status === 'preview').length;
+  const processingCount = uploadedFiles.filter(f => ['uploading', 'processing', 'ai_processing'].includes(f.status)).length;
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Mobile Scanner Modal */}
@@ -646,8 +709,43 @@ export const InvoiceUpload: React.FC = () => {
 
       <div className="mb-6 sm:mb-8">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Számla feltöltés</h2>
-        <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat.</p>
+        <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Először megtekintheti az előnézetet, majd elindíthatja a feldolgozást.</p>
       </div>
+
+      {/* Processing Control Panel */}
+      {uploadedFiles.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{previewCount}</div>
+                <div className="text-xs text-gray-500">Előnézetben</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">{processingCount}</div>
+                <div className="text-xs text-gray-500">Feldolgozás alatt</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {uploadedFiles.filter(f => f.status === 'completed').length}
+                </div>
+                <div className="text-xs text-gray-500">Kész</div>
+              </div>
+            </div>
+            
+            {previewCount > 0 && (
+              <button
+                onClick={startAllExtractions}
+                disabled={processingCount > 0}
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Play className="h-5 w-5 mr-2" />
+                Összes feldolgozása ({previewCount})
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Upload Options */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -776,6 +874,23 @@ export const InvoiceUpload: React.FC = () => {
                     
                     {/* Action Buttons */}
                     <div className="flex items-center justify-center sm:justify-start space-x-2">
+                      {/* Start Extraction Button */}
+                      {canStartExtraction(uploadedFile.status) && (
+                        <button
+                          onClick={() => startExtraction(uploadedFile.id)}
+                          disabled={processingFiles.has(uploadedFile.id)}
+                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Feldolgozás indítása"
+                        >
+                          {processingFiles.has(uploadedFile.id) ? (
+                            <Loader className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Play className="h-4 w-4" />
+                          )}
+                          <span className="ml-1 hidden sm:inline">Feldolgozás</span>
+                        </button>
+                      )}
+
                       {/* Cancel Button */}
                       {canCancel(uploadedFile.status) && !uploadedFile.cancelled && (
                         <button
@@ -831,6 +946,66 @@ export const InvoiceUpload: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Preview Section for files in preview status */}
+              {uploadedFile.status === 'preview' && uploadedFile.previewUrl && (
+                <div className="p-4 sm:p-6 bg-blue-50 border-b border-blue-100">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Fájl előnézet</h4>
+                  <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="lg:w-1/2">
+                      {uploadedFile.file.type === 'application/pdf' ? (
+                        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                          <FileText className="h-16 w-16 text-red-600 mx-auto mb-4" />
+                          <p className="text-sm font-medium text-gray-900">{uploadedFile.file.name}</p>
+                          <p className="text-xs text-gray-500 mt-1">PDF dokumentum</p>
+                        </div>
+                      ) : (
+                        <img
+                          src={uploadedFile.previewUrl}
+                          alt="Invoice preview"
+                          className="w-full h-auto max-h-64 object-contain bg-white rounded-lg border border-gray-200"
+                        />
+                      )}
+                    </div>
+                    <div className="lg:w-1/2 space-y-3">
+                      <div className="bg-white rounded-lg p-4">
+                        <h5 className="font-medium text-gray-900 mb-2">Fájl információk</h5>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Név:</span>
+                            <span className="text-gray-900 truncate ml-2">{uploadedFile.file.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Méret:</span>
+                            <span className="text-gray-900">{(uploadedFile.file.size / 1024 / 1024).toFixed(1)} MB</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Típus:</span>
+                            <span className="text-gray-900">{uploadedFile.file.type}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Szervezet:</span>
+                            <span className="text-gray-900">
+                              {uploadedFile.organization === 'alapitvany' ? 'Alapítvány' : 'Óvoda'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-2">
+                          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800">Feldolgozásra kész</p>
+                            <p className="text-xs text-yellow-700 mt-1">
+                              Kattintson a "Feldolgozás" gombra az AI elemzés elindításához.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Extracted Data Display */}
               {uploadedFile.status === 'completed' && uploadedFile.extractedData && (
