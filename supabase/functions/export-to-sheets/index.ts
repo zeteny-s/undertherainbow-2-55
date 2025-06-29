@@ -51,7 +51,7 @@ serve(async (req) => {
     if (invoiceData.paymentType === 'bank_transfer') {
       // Átutalásos sheet: Szervezet, Partner, Bankszámlaszám, Munkaszám, Tárgy, Számla sorszáma, Összeg, Számla kelte, Fizetési határidő
       rowData = [
-        organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda',
+        organization === 'alapitvany' ? 'Alapítvány' : 'Óvoda',
         invoiceData.Partner || '',
         invoiceData.Bankszámlaszám || '',
         invoiceData.Munkaszám || '',
@@ -64,7 +64,7 @@ serve(async (req) => {
     } else {
       // KP sheet: Szervezet, Partner, Tárgy, Számla sorszáma, Összeg, Számla kelte, MUNKASZÁM
       rowData = [
-        organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda',
+        organization === 'alapitvany' ? 'Alapítvány' : 'Óvoda',
         invoiceData.Partner || '',
         invoiceData.Tárgy || '',
         invoiceData['Számla sorszáma'] || '',

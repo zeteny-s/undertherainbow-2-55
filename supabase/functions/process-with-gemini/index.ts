@@ -24,13 +24,13 @@ serve(async (req) => {
 
 Szervezet	Partner	Bankszámlaszám	Tárgy	Számla sorszáma	Összeg	Számla kelte	Fizetési határidő
 
-The szervezet is is either Feketerigó Alapítvány for which write "Alapítvány" or either Feketerigó Alapítványi Óvoda for which write "Óvoda". The partner is the company we bought the product/service from for the partner its important to include the company formation they have, so for example if the company name is let's say "My Company" and the formation is "Kft (korlátolt felelőségű társaság) then say "My Company Kft." same for other formations like EV (Egyéni vállalkozó), Bt (betéti társaság), etc. it has to be included in the partners name . The bankszámlaszám is the bankszámlaszám of the partner. The Tárgy should be the first product/service in the invoice. The others are straight forward.
+The szervezet should be either "Alapítvány" (for Feketerigó Alapítvány) or "Óvoda" (for Feketerigó Alapítványi Óvoda). The partner is the company we bought the product/service from for the partner its important to include the company formation they have, so for example if the company name is let's say "My Company" and the formation is "Kft (korlátolt felelőségű társaság) then say "My Company Kft." same for other formations like EV (Egyéni vállalkozó), Bt (betéti társaság), etc. it has to be included in the partners name . The bankszámlaszám is the bankszámlaszám of the partner. The Tárgy should be the first product/service in the invoice. The others are straight forward.
 
 If the kártya/kézpénz/utánvét/online or any other payment  method then I need these values:
 
 Szervezet	Partner	Tárgy	Számla sorszáma	Összeg	Számla kelte
 
-Please respond with a JSON object containing the extracted data. Use null for missing values. For dates, use YYYY-MM-DD format. For amounts, use numbers without currency symbols.
+Please respond with a JSON object containing the extracted data. Use null for missing values. For dates, use YYYY-MM-DD format. For amounts, use numbers without currency symbols. For Szervezet, use only "Alapítvány" or "Óvoda".
 
 Invoice text:
 ${extractedText}`
@@ -82,7 +82,7 @@ ${extractedText}`
       throw new Error('Failed to parse AI response')
     }
 
-    // Set the organization based on the parameter passed
+    // Ensure the organization is set correctly based on the parameter passed
     parsedData.Szervezet = organization === 'alapitvany' ? 'Alapítvány' : 'Óvoda'
 
     return new Response(
