@@ -456,40 +456,41 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Notifications - Bottom Right */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm">
+      <div className="fixed bottom-4 right-4 z-50 space-y-3 max-w-sm">
         {notifications.map((notification) => (
           <div
             key={notification.id}
-            className={`w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
-              notification.type === 'success' ? 'border-l-4 border-green-400' :
-              notification.type === 'error' ? 'border-l-4 border-red-400' :
-              'border-l-4 border-blue-400'
-            }`}
+            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
           >
-            <div className="p-3">
+            <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   {notification.type === 'success' && (
-                    <CheckCircle className="h-5 w-5 text-green-400" />
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </div>
                   )}
                   {notification.type === 'error' && (
-                    <AlertCircle className="h-5 w-5 text-red-400" />
+                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                    </div>
                   )}
                   {notification.type === 'info' && (
-                    <AlertCircle className="h-5 w-5 text-blue-400" />
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
+                    </div>
                   )}
                 </div>
-                <div className="ml-3 w-0 flex-1 pt-0.5">
+                <div className="ml-3 w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     {notification.message}
                   </p>
                 </div>
-                <div className="ml-4 flex-shrink-0 flex">
+                <div className="ml-4 flex-shrink-0">
                   <button
-                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                     onClick={() => removeNotification(notification.id)}
                   >
-                    <span className="sr-only">Bezárás</span>
                     <X className="h-4 w-4" />
                   </button>
                 </div>
