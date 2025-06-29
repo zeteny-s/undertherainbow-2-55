@@ -41,6 +41,12 @@ interface WeekData {
   data: Array<{ day: string; date: string; invoices: number; amount: number }>;
 }
 
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
 export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats>({
     totalInvoices: 0,
@@ -64,6 +70,22 @@ export const Dashboard: React.FC = () => {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
   const [showWeekHistory, setShowWeekHistory] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const notification = { id, type, message };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 4000);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -111,7 +133,7 @@ export const Dashboard: React.FC = () => {
       const monthlyData = generateMonthlyData(invoices || []);
       const organizationData = generateOrganizationData(invoices || []);
       const paymentTypeData = generatePaymentTypeData(invoices || []);
-      const weeklyTrend = weekHistoryData[currentWeekIndex]?.data || [];
+      const weeklyTrend = weekHistoryData[0]?.data || []; // Always show current week (index 0)
       const expenseData = generateExpenseData(invoices || []);
 
       setStats(calculatedStats);
@@ -123,8 +145,11 @@ export const Dashboard: React.FC = () => {
         weeklyTrend,
         expenseData
       });
+
+      addNotification('success', 'Adatok sikeresen frissítve');
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      addNotification('error', 'Hiba történt az adatok betöltése során');
     } finally {
       setLoading(false);
     }
@@ -134,17 +159,20 @@ export const Dashboard: React.FC = () => {
     const weeks: WeekData[] = [];
     const now = new Date();
     
-    // Generate last 12 weeks
+    // Generate last 12 weeks, starting with current week
     for (let i = 0; i < 12; i++) {
       const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay() + 1 - (i * 7)); // Monday of the week
+      // Get Monday of the week (current week when i=0)
+      const dayOfWeek = now.getDay();
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so 6 days back to Monday
+      weekStart.setDate(now.getDate() - daysToMonday - (i * 7));
       weekStart.setHours(0, 0, 0, 0);
       
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6); // Sunday of the week
       weekEnd.setHours(23, 59, 59, 999);
       
-      const weekLabel = `${formatDateShort(weekStart)}-${formatDateShort(weekEnd)}`;
+      const weekLabel = `${formatDateShort(weekStart)} - ${formatDateShort(weekEnd)}`;
       
       const weekData = generateWeeklyTrend(invoices, weekStart, weekEnd);
       
@@ -161,10 +189,9 @@ export const Dashboard: React.FC = () => {
 
   const formatDateShort = (date: Date) => {
     return new Intl.DateTimeFormat('hu-HU', {
-      year: 'numeric',
       month: '2-digit',
       day: '2-digit'
-    }).format(date).replace(/\./g, '.');
+    }).format(date);
   };
 
   const generateMonthlyData = (invoices: any[]) => {
@@ -239,7 +266,11 @@ export const Dashboard: React.FC = () => {
       
       const dayInvoices = invoices.filter(inv => {
         const invDate = new Date(inv.uploaded_at);
-        return invDate >= dayDate && invDate < new Date(dayDate.getTime() + 24 * 60 * 60 * 1000);
+        const dayStart = new Date(dayDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayDate);
+        dayEnd.setHours(23, 59, 59, 999);
+        return invDate >= dayStart && invDate <= dayEnd;
       });
       
       return {
@@ -424,6 +455,50 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      {/* Notifications - Bottom Right */}
+      <div className="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
+              notification.type === 'success' ? 'border-l-4 border-green-400' :
+              notification.type === 'error' ? 'border-l-4 border-red-400' :
+              'border-l-4 border-blue-400'
+            }`}
+          >
+            <div className="p-3">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && (
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                  )}
+                  {notification.type === 'error' && (
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                  )}
+                  {notification.type === 'info' && (
+                    <AlertCircle className="h-5 w-5 text-blue-400" />
+                  )}
+                </div>
+                <div className="ml-3 w-0 flex-1 pt-0.5">
+                  <p className="text-sm font-medium text-gray-900">
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
+                    onClick={() => removeNotification(notification.id)}
+                  >
+                    <span className="sr-only">Bezárás</span>
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
