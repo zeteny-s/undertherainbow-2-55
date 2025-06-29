@@ -156,25 +156,33 @@
   animation: none !important;
 }
 
-/* Dark mode high contrast adjustments */
-.dark.high-contrast .text-gray-400 {
-  color: #e5e7eb;
+/* Dark mode high contrast adjustments - using custom properties to avoid circular dependencies */
+.dark.high-contrast {
+  --text-gray-400: #e5e7eb;
+  --text-gray-500: #d1d5db;
+  --text-gray-600: #e5e7eb;
+  --border-gray-700: #6b7280;
+  --border-gray-600: #9ca3af;
 }
 
-.dark.high-contrast .text-gray-500 {
-  color: #d1d5db;
+.dark.high-contrast [class*="text-gray-400"] {
+  color: var(--text-gray-400);
 }
 
-.dark.high-contrast .text-gray-600 {
-  color: #e5e7eb;
+.dark.high-contrast [class*="text-gray-500"] {
+  color: var(--text-gray-500);
 }
 
-.dark.high-contrast .border-gray-700 {
-  border-color: #6b7280;
+.dark.high-contrast [class*="text-gray-600"] {
+  color: var(--text-gray-600);
 }
 
-.dark.high-contrast .border-gray-600 {
-  border-color: #9ca3af;
+.dark.high-contrast [class*="border-gray-700"] {
+  border-color: var(--border-gray-700);
+}
+
+.dark.high-contrast [class*="border-gray-600"] {
+  border-color: var(--border-gray-600);
 }
 
 /* Smooth transitions for theme changes */
