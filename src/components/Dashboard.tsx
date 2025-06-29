@@ -11,7 +11,7 @@ interface Stats {
   bankTransferCount: number;
   cardCashCount: number;
   thisMonthCount: number;
-  thisMonthAmount: number; // Monthly revenue instead of processing time
+  thisMonthAmount: number; // Monthly expenses instead of revenue
 }
 
 interface Invoice {
@@ -31,7 +31,7 @@ interface ChartData {
   organizationData: Array<{ name: string; value: number; amount: number; color: string }>;
   paymentTypeData: Array<{ name: string; value: number; amount: number; color: string }>;
   weeklyTrend: Array<{ day: string; date: string; invoices: number; amount: number }>;
-  revenueData: Array<{ month: string; revenue: number; count: number }>;
+  expenseData: Array<{ month: string; expenses: number; count: number }>;
 }
 
 interface WeekData {
@@ -58,7 +58,7 @@ export const Dashboard: React.FC = () => {
     organizationData: [],
     paymentTypeData: [],
     weeklyTrend: [],
-    revenueData: []
+    expenseData: []
   });
   const [loading, setLoading] = useState(true);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
@@ -112,7 +112,7 @@ export const Dashboard: React.FC = () => {
       const organizationData = generateOrganizationData(invoices || []);
       const paymentTypeData = generatePaymentTypeData(invoices || []);
       const weeklyTrend = weekHistoryData[currentWeekIndex]?.data || [];
-      const revenueData = generateRevenueData(invoices || []);
+      const expenseData = generateExpenseData(invoices || []);
 
       setStats(calculatedStats);
       setRecentInvoices(invoices?.slice(0, 5) || []);
@@ -121,7 +121,7 @@ export const Dashboard: React.FC = () => {
         organizationData,
         paymentTypeData,
         weeklyTrend,
-        revenueData
+        expenseData
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -251,7 +251,7 @@ export const Dashboard: React.FC = () => {
     });
   };
 
-  const generateRevenueData = (invoices: any[]) => {
+  const generateExpenseData = (invoices: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
@@ -261,11 +261,11 @@ export const Dashboard: React.FC = () => {
         return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
-      const revenue = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+      const expenses = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
       
       return {
         month,
-        revenue,
+        expenses,
         count: monthInvoices.length
       };
     });
@@ -390,15 +390,15 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
-  // Custom tooltip for revenue chart
-  const RevenueTooltip = ({ active, payload, label }: any) => {
+  // Custom tooltip for expense chart
+  const ExpenseTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-green-600">
-            Bevétel: {formatCurrency(data.revenue)}
+          <p className="text-sm text-red-600">
+            Kiadás: {formatCurrency(data.expenses)}
           </p>
           <p className="text-sm text-gray-500">
             Számlák: {data.count} db
@@ -484,12 +484,12 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">E havi bevétel</p>
+              <p className="text-sm font-medium text-gray-600">E havi kiadás</p>
               <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.thisMonthAmount)}</p>
-              <p className="text-xs text-purple-600 mt-1">Aktuális hónap</p>
+              <p className="text-xs text-red-600 mt-1">Aktuális hónap</p>
             </div>
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <DollarSign className="h-6 w-6 text-purple-800" />
+            <div className="bg-red-100 p-3 rounded-lg">
+              <DollarSign className="h-6 w-6 text-red-800" />
             </div>
           </div>
         </div>
@@ -519,26 +519,26 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Monthly Revenue Trend */}
+        {/* Monthly Expense Trend */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-              Havi bevétel trend
+              <DollarSign className="h-5 w-5 mr-2 text-red-600" />
+              Havi kiadás trend
             </h3>
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData.revenueData}>
+              <AreaChart data={chartData.expenseData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
                 <YAxis stroke="#6b7280" fontSize={12} />
-                <Tooltip content={<RevenueTooltip />} />
+                <Tooltip content={<ExpenseTooltip />} />
                 <Area 
                   type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#059669" 
-                  fill="#10b981" 
+                  dataKey="expenses" 
+                  stroke="#dc2626" 
+                  fill="#ef4444" 
                   fillOpacity={0.3}
                   strokeWidth={3}
                 />
