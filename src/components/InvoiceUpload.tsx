@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Camera, Scan } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
+import { MobileScanner } from './MobileScanner';
 
 interface ProcessedData {
   Szervezet?: string;
@@ -48,6 +49,11 @@ export const InvoiceUpload: React.FC = () => {
   const [tempEditValue, setTempEditValue] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showScanner, setShowScanner] = useState(false);
+
+  // Check if device supports camera
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const hasCamera = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -135,6 +141,19 @@ export const InvoiceUpload: React.FC = () => {
       setUploadedFiles(prev => [...prev, newFile]);
       await processFile(newFile);
     }
+  };
+
+  // Handle scanned PDF from mobile scanner
+  const handleScannedPDF = async (pdfBlob: Blob, fileName: string) => {
+    setShowScanner(false);
+    
+    // Convert blob to file
+    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    
+    // Process as regular file upload
+    await handleFiles([file]);
+    
+    addNotification('success', 'Beolvasott számla sikeresen feltöltve!');
   };
 
   const cancelFile = async (fileId: string) => {
@@ -573,6 +592,14 @@ export const InvoiceUpload: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      {/* Mobile Scanner Modal */}
+      {showScanner && (
+        <MobileScanner
+          onScanComplete={handleScannedPDF}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {notifications.map((notification) => (
@@ -622,42 +649,71 @@ export const InvoiceUpload: React.FC = () => {
         <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat.</p>
       </div>
 
-      {/* File Upload Area */}
-      <div 
-        className={`relative border-2 border-dashed rounded-xl p-6 sm:p-8 transition-colors ${
-          dragActive 
-            ? 'border-blue-400 bg-blue-50' 
-            : 'border-gray-300 hover:border-gray-400'
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <div className="text-center">
-          <Upload className={`mx-auto h-10 w-10 sm:h-12 sm:w-12 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
-          <div className="mt-4">
-            <p className="text-base sm:text-lg font-medium text-gray-900">
-              Húzza ide a fájlokat vagy kattintson a tallózáshoz
-            </p>
-            <p className="mt-2 text-sm text-gray-500">
-              PDF, JPG, PNG támogatott • Max. 10MB
-            </p>
-          </div>
-          <div className="mt-6">
-            <label className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">
-              <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-              Fájlok tallózása
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleFileInput}
-                className="sr-only"
-              />
-            </label>
+      {/* Upload Options */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* File Upload Area */}
+        <div 
+          className={`relative border-2 border-dashed rounded-xl p-6 sm:p-8 transition-colors ${
+            dragActive 
+              ? 'border-blue-400 bg-blue-50' 
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <div className="text-center">
+            <Upload className={`mx-auto h-10 w-10 sm:h-12 sm:w-12 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
+            <div className="mt-4">
+              <p className="text-base sm:text-lg font-medium text-gray-900">
+                Fájl feltöltés
+              </p>
+              <p className="mt-2 text-sm text-gray-500">
+                PDF, JPG, PNG támogatott • Max. 10MB
+              </p>
+            </div>
+            <div className="mt-6">
+              <label className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">
+                <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                Fájlok tallózása
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileInput}
+                  className="sr-only"
+                />
+              </label>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Scanner */}
+        {isMobile && hasCamera && (
+          <div className="relative border-2 border-dashed border-green-300 rounded-xl p-6 sm:p-8 bg-green-50 hover:bg-green-100 transition-colors">
+            <div className="text-center">
+              <Camera className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-green-600" />
+              <div className="mt-4">
+                <p className="text-base sm:text-lg font-medium text-gray-900">
+                  Mobil beolvasás
+                </p>
+                <p className="mt-2 text-sm text-gray-500">
+                  Használja a telefon kameráját számlák beolvasásához
+                </p>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowScanner(true)}
+                  className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                >
+                  <Scan className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Beolvasás indítása
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Uploaded Files List */}
