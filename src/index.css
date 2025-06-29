@@ -116,31 +116,31 @@
 }
 
 .high-contrast .text-gray-600 {
-  @apply text-gray-800;
+  color: #1f2937;
 }
 
 .high-contrast .text-gray-500 {
-  @apply text-gray-700;
+  color: #374151;
 }
 
 .high-contrast .text-gray-400 {
-  @apply text-gray-600;
+  color: #4b5563;
 }
 
 .high-contrast .border-gray-200 {
-  @apply border-gray-400;
+  border-color: #9ca3af;
 }
 
 .high-contrast .border-gray-300 {
-  @apply border-gray-500;
+  border-color: #6b7280;
 }
 
 .high-contrast .bg-gray-50 {
-  @apply bg-gray-100;
+  background-color: #f3f4f6;
 }
 
 .high-contrast .bg-gray-100 {
-  @apply bg-gray-200;
+  background-color: #e5e7eb;
 }
 
 /* No animations mode */
