@@ -25,6 +25,17 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Clear company access on app unmount (when user closes browser/tab)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Company access will be cleared automatically when session ends
+      // This is just for cleanup if needed
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   const renderActiveComponent = () => {
     switch (activeTab) {
       case 'dashboard':

@@ -69,6 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Clear company access when signing out
+    sessionStorage.removeItem('company-access');
     await supabase.auth.signOut();
   };
 
