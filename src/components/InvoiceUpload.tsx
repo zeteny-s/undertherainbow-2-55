@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, ArrowLeft } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, ArrowLeft, Camera } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
+import { MobileScanner } from './MobileScanner';
 
 interface ProcessedData {
   Szervezet?: string;
@@ -51,6 +52,10 @@ export const InvoiceUpload: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentView, setCurrentView] = useState<'upload' | 'preview'>('upload');
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
+
+  // Check if device is mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -148,6 +153,16 @@ export const InvoiceUpload: React.FC = () => {
       setPreviewFile(newFile);
       setCurrentView('preview');
     }
+  };
+
+  const handleScanComplete = async (pdfBlob: Blob, fileName: string) => {
+    setShowScanner(false);
+    
+    // Convert blob to file
+    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    
+    // Process the scanned file
+    await handleFiles([file]);
   };
 
   const startExtraction = async (fileId: string) => {
@@ -737,7 +752,7 @@ export const InvoiceUpload: React.FC = () => {
               PDF, JPG, PNG támogatott • Max. 10MB
             </p>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
             <label className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">
               <Upload className="h-5 w-5 mr-2" />
               Fájlok tallózása
@@ -749,6 +764,17 @@ export const InvoiceUpload: React.FC = () => {
                 className="sr-only"
               />
             </label>
+            
+            {/* Mobile Scanner Button */}
+            {isMobile && (
+              <button
+                onClick={() => setShowScanner(true)}
+                className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <Camera className="h-5 w-5 mr-2" />
+                Dokumentum beolvasása
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1134,6 +1160,14 @@ export const InvoiceUpload: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Mobile Scanner Modal */}
+      {showScanner && (
+        <MobileScanner
+          onScanComplete={handleScanComplete}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       {/* Render current view */}
       {currentView === 'preview' ? renderPreviewView() : renderUploadView()}
