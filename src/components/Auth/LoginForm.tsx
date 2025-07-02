@@ -23,36 +23,83 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
     setError(null);
 
     try {
-      const { error } = isSignUp 
-        ? await signUp(email, password, name)
-        : await signIn(email, password);
-
-      if (error) {
-        // Handle specific error cases
-        if (error.message.includes('user_already_exists') || error.message.includes('User already registered')) {
-          setError('Ez az e-mail cím már regisztrálva van. Kérjük, jelentkezzen be helyette.');
-          // Automatically switch to login mode after a short delay
-          setTimeout(() => {
-            onToggleMode();
-            setError(null);
-          }, 2000);
-        } else if (error.message.includes('Invalid login credentials')) {
-          setError('Hibás e-mail cím vagy jelszó. Kérjük, ellenőrizze az adatokat.');
-        } else if (error.message.includes('Email not confirmed')) {
-          setError('Kérjük, erősítse meg e-mail címét a regisztráció befejezéséhez.');
-        } else {
-          setError(error.message);
+      if (isSignUp) {
+        // Validate required fields for sign up
+        if (!email.trim()) {
+          throw new Error('E-mail cím megadása kötelező');
         }
-      } else if (isSignUp) {
-        setError('Regisztráció sikeres! Kérjük, jelentkezzen be.');
-        setTimeout(() => {
-          onToggleMode();
+        if (!password || password.length < 6) {
+          throw new Error('A jelszónak legalább 6 karakter hosszúnak kell lennie');
+        }
+        if (!name.trim()) {
+          throw new Error('Név megadása kötelező');
+        }
+
+        console.log('Attempting to sign up user:', { email, name });
+        const { error } = await signUp(email.trim(), password, name.trim());
+
+        if (error) {
+          console.error('Sign up error:', error);
+          
+          // Handle specific error cases
+          if (error.message.includes('User already registered') || 
+              error.message.includes('user_already_exists') ||
+              error.message.includes('already_registered')) {
+            setError('Ez az e-mail cím már regisztrálva van. Kérjük, jelentkezzen be helyette.');
+            // Automatically switch to login mode after a short delay
+            setTimeout(() => {
+              onToggleMode();
+              setError(null);
+            }, 2000);
+          } else if (error.message.includes('Invalid email')) {
+            setError('Érvénytelen e-mail cím formátum');
+          } else if (error.message.includes('Password')) {
+            setError('A jelszó nem felel meg a követelményeknek');
+          } else if (error.message.includes('signup_disabled')) {
+            setError('A regisztráció jelenleg nem elérhető');
+          } else {
+            setError(`Regisztráció sikertelen: ${error.message}`);
+          }
+        } else {
+          // Registration successful
+          console.log('Registration successful');
           setError(null);
-        }, 1500);
+          // Note: With email confirmation disabled, user should be automatically signed in
+          // If not, we can show a success message and switch to login
+        }
+      } else {
+        // Sign in
+        if (!email.trim()) {
+          throw new Error('E-mail cím megadása kötelező');
+        }
+        if (!password) {
+          throw new Error('Jelszó megadása kötelező');
+        }
+
+        console.log('Attempting to sign in user:', email);
+        const { error } = await signIn(email.trim(), password);
+
+        if (error) {
+          console.error('Sign in error:', error);
+          
+          if (error.message.includes('Invalid login credentials') || 
+              error.message.includes('invalid_credentials')) {
+            setError('Hibás e-mail cím vagy jelszó. Kérjük, ellenőrizze az adatokat.');
+          } else if (error.message.includes('Email not confirmed')) {
+            setError('Kérjük, erősítse meg e-mail címét a regisztráció befejezéséhez.');
+          } else if (error.message.includes('Too many requests')) {
+            setError('Túl sok próbálkozás. Kérjük, várjon egy kicsit és próbálja újra.');
+          } else {
+            setError(`Bejelentkezés sikertelen: ${error.message}`);
+          }
+        } else {
+          console.log('Sign in successful');
+          setError(null);
+        }
       }
     } catch (err) {
       console.error('Authentication error:', err);
-      setError('Váratlan hiba történt. Kérjük, próbálja újra.');
+      setError(err instanceof Error ? err.message : 'Váratlan hiba történt. Kérjük, próbálja újra.');
     } finally {
       setLoading(false);
     }
@@ -70,7 +117,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
               {isSignUp ? 'Regisztráció' : 'Bejelentkezés'}
             </h1>
             <p className="text-gray-600">
-              Számla kezelő rendszer
+              Feketerigó Alapítvány számla kezelő rendszer
             </p>
           </div>
 
@@ -85,7 +132,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
             {isSignUp && (
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Teljes név
+                  Teljes név *
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -104,7 +151,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                E-mail cím
+                E-mail cím *
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -122,7 +169,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Jelszó
+                Jelszó *
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -170,7 +217,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
           <div className="mt-6 text-center">
             <button
               onClick={onToggleMode}
-              className="text-sm text-blue-800 hover:text-blue-900 font-medium transition-colors"
+              disabled={loading}
+              className="text-sm text-blue-800 hover:text-blue-900 font-medium transition-colors disabled:opacity-50"
             >
               {isSignUp 
                 ? 'Már van fiókja? Jelentkezzen be' 
@@ -182,7 +230,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
 
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
-            © 2024 Számla kezelő rendszer. Minden jog fenntartva.
+            © 2024 Feketerigó Alapítvány számla kezelő rendszer. Minden jog fenntartva.
           </p>
         </div>
       </div>

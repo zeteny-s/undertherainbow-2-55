@@ -39,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -48,37 +49,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      console.log('Attempting sign in for:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+      } else {
+        console.log('Sign in successful:', data.user?.email);
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('Sign in exception:', err);
+      return { error: err };
+    }
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: name || '',
+    try {
+      console.log('Attempting sign up for:', email, 'with name:', name);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            name: name?.trim() || '',
+          },
+          // Disable email confirmation for internal tool
+          emailRedirectTo: undefined,
         },
-      },
-    });
-    return { error };
+      });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+      } else {
+        console.log('Sign up successful:', data.user?.email);
+        // Check if user needs email confirmation
+        if (data.user && !data.session) {
+          console.log('User created but needs email confirmation');
+        }
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('Sign up exception:', err);
+      return { error: err };
+    }
   };
 
   const signOut = async () => {
-    // Clear company access when signing out
-    sessionStorage.removeItem('company-access');
-    await supabase.auth.signOut();
+    try {
+      // Clear company access when signing out
+      sessionStorage.removeItem('company-access');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+      } else {
+        console.log('Sign out successful');
+      }
+    } catch (err) {
+      console.error('Sign out exception:', err);
+    }
   };
 
   const updateProfile = async (data: { name?: string }) => {
-    const { error } = await supabase.auth.updateUser({
-      data,
-    });
-    return { error };
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data,
+      });
+      return { error };
+    } catch (err) {
+      console.error('Update profile exception:', err);
+      return { error: err };
+    }
   };
 
   const value = {
