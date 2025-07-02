@@ -20,7 +20,7 @@ interface ProcessedData {
 interface UploadedFile {
   file: File;
   id: string;
-  organization: 'alapitvany' | 'ovoda';
+  organization: 'alapitvany' | 'ovoda' | 'auto'; // Add 'auto' for AI determination
   status: 'preview' | 'uploading' | 'processing' | 'ai_processing' | 'completed' | 'error' | 'cancelled';
   progress: number;
   extractedData?: ProcessedData;
@@ -124,17 +124,12 @@ export const InvoiceUpload: React.FC = () => {
     }
 
     for (const file of validFiles) {
-      const organization: 'alapitvany' | 'ovoda' = 
-        file.name.toLowerCase().includes('ovoda') || file.name.toLowerCase().includes('óvoda') 
-          ? 'ovoda' 
-          : 'alapitvany';
-
       const previewUrl = URL.createObjectURL(file);
 
       const newFile: UploadedFile = {
         file,
         id: Math.random().toString(36).substr(2, 9),
-        organization,
+        organization: 'auto', // Let AI determine the organization
         status: 'preview',
         progress: 0,
         exportedToSheets: false,
@@ -224,7 +219,7 @@ export const InvoiceUpload: React.FC = () => {
       if (checkCancelled()) return;
 
       const simpleFilename = createSimpleFilename(uploadedFile.file.name);
-      const fileName = `${uploadedFile.organization}/${Date.now()}_${simpleFilename}`;
+      const fileName = `temp/${Date.now()}_${simpleFilename}`; // Use temp folder initially
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('invoices')
@@ -261,6 +256,7 @@ export const InvoiceUpload: React.FC = () => {
         file.id === uploadedFile.id ? { ...file, status: 'ai_processing', progress: 80 } : file
       ));
 
+      // Don't pass organization to Gemini - let it determine from the document
       const geminiResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-with-gemini`, {
         method: 'POST',
         headers: {
@@ -268,8 +264,8 @@ export const InvoiceUpload: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          extractedText: extractedText,
-          organization: uploadedFile.organization
+          extractedText: extractedText
+          // Remove organization parameter - let AI determine it
         }),
       });
 
@@ -287,11 +283,42 @@ export const InvoiceUpload: React.FC = () => {
 
       const processedData = geminiResult.data;
       
+      // Determine payment type from AI response
       const paymentType = processedData.Bankszámlaszám ? 'bank_transfer' : 'card_cash_afterpay';
       processedData.paymentType = paymentType;
       processedData.Munkaszám = '';
 
-      await saveToDatabase(uploadedFile, processedData, extractedText, publicUrl);
+      // Determine the actual organization from AI response and move file to correct folder
+      let finalOrganization: 'alapitvany' | 'ovoda' = 'alapitvany'; // default
+      
+      if (processedData.Szervezet) {
+        if (processedData.Szervezet.toLowerCase().includes('óvoda') || 
+            processedData.Szervezet.toLowerCase().includes('ovoda')) {
+          finalOrganization = 'ovoda';
+        } else {
+          finalOrganization = 'alapitvany';
+        }
+      }
+
+      // Move file to correct organization folder
+      const finalFileName = `${finalOrganization}/${Date.now()}_${simpleFilename}`;
+      
+      // Copy file to final location
+      const { error: moveError } = await supabase.storage
+        .from('invoices')
+        .move(fileName, finalFileName);
+
+      if (moveError) {
+        console.warn('Failed to move file to organization folder:', moveError);
+        // Continue with original file location if move fails
+      }
+
+      const finalFileUrl = moveError ? publicUrl : supabase.storage
+        .from('invoices')
+        .getPublicUrl(finalFileName).data.publicUrl;
+
+      // Save to database with AI-determined organization
+      await saveToDatabase(uploadedFile, processedData, extractedText, finalFileUrl, finalOrganization);
 
       if (checkCancelled()) return;
 
@@ -300,6 +327,7 @@ export const InvoiceUpload: React.FC = () => {
           ...file, 
           status: 'completed', 
           progress: 100,
+          organization: finalOrganization, // Update with AI-determined organization
           extractedData: processedData,
           extractedText: extractedText,
           rawAiResponse: geminiResult.rawResponse,
@@ -327,14 +355,14 @@ export const InvoiceUpload: React.FC = () => {
     }
   };
 
-  const saveToDatabase = async (uploadedFile: UploadedFile, processedData: ProcessedData, extractedText: string, fileUrl: string) => {
+  const saveToDatabase = async (uploadedFile: UploadedFile, processedData: ProcessedData, extractedText: string, fileUrl: string, organization: 'alapitvany' | 'ovoda') => {
     try {
       const { data: invoiceData, error: dbError } = await supabase
         .from('invoices')
         .insert({
           file_name: uploadedFile.file.name,
           file_url: fileUrl,
-          organization: uploadedFile.organization,
+          organization: organization, // Use AI-determined organization
           status: 'completed',
           extracted_text: extractedText,
           partner: processedData.Partner,
@@ -621,17 +649,8 @@ export const InvoiceUpload: React.FC = () => {
             
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
               <div className="flex items-center justify-center sm:justify-start space-x-2">
-                {previewFile.organization === 'alapitvany' ? (
-                  <>
-                    <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">Alapítvány</span>
-                  </>
-                ) : (
-                  <>
-                    <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
-                    <span className="text-sm font-medium text-orange-800">Óvoda</span>
-                  </>
-                )}
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">AI fogja meghatározni a szervezetet</span>
               </div>
               
               <button
@@ -693,7 +712,7 @@ export const InvoiceUpload: React.FC = () => {
       {/* Header */}
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Számla feltöltés</h2>
-        <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat.</p>
+        <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat, valamint meghatározza a szervezetet.</p>
       </div>
 
       {/* File Upload Area */}
@@ -715,7 +734,7 @@ export const InvoiceUpload: React.FC = () => {
               Húzza ide a fájlokat vagy kattintson a tallózáshoz
             </p>
             <p className="mt-1 sm:mt-2 text-sm text-gray-500">
-              PDF, JPG, PNG támogatott • Max. 10MB
+              PDF, JPG, PNG támogatott • Max. 10MB • AI automatikusan meghatározza a szervezetet
             </p>
           </div>
           <div className="mt-4 sm:mt-6 flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
@@ -764,7 +783,12 @@ export const InvoiceUpload: React.FC = () => {
                           {(uploadedFile.file.size / 1024 / 1024).toFixed(1)} MB
                         </p>
                         <div className="flex items-center space-x-2">
-                          {uploadedFile.organization === 'alapitvany' ? (
+                          {uploadedFile.organization === 'auto' ? (
+                            <>
+                              <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
+                              <span className="text-xs sm:text-sm text-purple-800 font-medium">AI meghatározza</span>
+                            </>
+                          ) : uploadedFile.organization === 'alapitvany' ? (
                             <>
                               <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                               <span className="text-xs sm:text-sm text-blue-800 font-medium">Alapítvány</span>
@@ -928,15 +952,15 @@ export const InvoiceUpload: React.FC = () => {
 
                   {/* Inline Editable Data Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-                    {/* Organization */}
+                    {/* Organization - Show AI-determined value */}
                     {renderEditableField(
                       uploadedFile.id,
                       'Szervezet',
-                      uploadedFile.extractedData.Szervezet || (uploadedFile.organization === 'alapitvany' ? 'Alapítvány' : 'Óvoda'),
-                      uploadedFile.organization === 'alapitvany' ? 
-                        <Building2 className="h-4 w-4 text-blue-600" /> : 
-                        <GraduationCap className="h-4 w-4 text-orange-600" />,
-                      'Szervezet'
+                      uploadedFile.extractedData.Szervezet,
+                      uploadedFile.extractedData.Szervezet?.toLowerCase().includes('óvoda') ? 
+                        <GraduationCap className="h-4 w-4 text-orange-600" /> : 
+                        <Building2 className="h-4 w-4 text-blue-600" />,
+                      'Szervezet (AI által meghatározott)'
                     )}
 
                     {/* Partner */}
