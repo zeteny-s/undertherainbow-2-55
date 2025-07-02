@@ -47,7 +47,6 @@ export const InvoiceList: React.FC = () => {
     const notification = { id, type, message };
     setNotifications(prev => [...prev, notification]);
     
-    // Auto remove after 4 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 4000);
@@ -78,16 +77,13 @@ export const InvoiceList: React.FC = () => {
 
   const extractFilePathFromUrl = (fileUrl: string): string | null => {
     try {
-      // Parse the URL to extract the file path
       const url = new URL(fileUrl);
       const pathParts = url.pathname.split('/');
       
-      // Find the 'invoices' bucket part and get everything after it
       const bucketIndex = pathParts.findIndex(part => part === 'invoices');
       if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
-        // Join all parts after 'invoices' to get the full file path
         const filePath = pathParts.slice(bucketIndex + 1).join('/');
-        return decodeURIComponent(filePath); // Decode any URL encoding
+        return decodeURIComponent(filePath);
       }
       
       return null;
@@ -101,7 +97,6 @@ export const InvoiceList: React.FC = () => {
     try {
       setDeleting(true);
 
-      // First, try to delete from storage if file_url exists
       if (invoice.file_url) {
         const filePath = extractFilePathFromUrl(invoice.file_url);
         
@@ -114,7 +109,6 @@ export const InvoiceList: React.FC = () => {
 
           if (storageError) {
             console.warn('Failed to delete file from storage:', storageError);
-            // Continue with database deletion even if storage deletion fails
             addNotification('info', 'Fájl törlése a tárolóból sikertelen, de az adatbázis rekord törölve lesz');
           } else {
             console.log('File successfully deleted from storage');
@@ -125,7 +119,6 @@ export const InvoiceList: React.FC = () => {
         }
       }
 
-      // Delete from database
       const { error: dbError } = await supabase
         .from('invoices')
         .delete()
@@ -133,7 +126,6 @@ export const InvoiceList: React.FC = () => {
 
       if (dbError) throw dbError;
 
-      // Update local state
       setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
       setDeleteConfirm(null);
 
@@ -181,7 +173,7 @@ export const InvoiceList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
           <span className="ml-2 text-lg text-gray-600">Számlák betöltése...</span>
@@ -191,8 +183,8 @@ export const InvoiceList: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      {/* Notifications - Bottom Right - Consistent Style */}
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+      {/* Notifications */}
       <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
           <div
@@ -237,15 +229,16 @@ export const InvoiceList: React.FC = () => {
         ))}
       </div>
 
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header */}
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Számla kezelés</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Számla kezelés</h2>
             <p className="text-gray-600 text-sm sm:text-base">Feltöltött számlák megtekintése, szűrése és kezelése</p>
           </div>
           <button
             onClick={fetchInvoices}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Frissítés
@@ -254,8 +247,8 @@ export const InvoiceList: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Keresés</label>
             <div className="relative">
@@ -291,9 +284,9 @@ export const InvoiceList: React.FC = () => {
       {/* Invoice List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Mobile Card View */}
-        <div className="block sm:hidden">
+        <div className="block lg:hidden">
           {filteredInvoices.map((invoice) => (
-            <div key={invoice.id} className="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors">
+            <div key={invoice.id} className="border-b border-gray-200 p-3 sm:p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2 flex-1 min-w-0">
                   <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -356,14 +349,14 @@ export const InvoiceList: React.FC = () => {
                   </p>
                 </div>
                 
-                <div>
+                <div className="col-span-2">
                   <span className="text-gray-500">Partner:</span>
                   <p className="text-gray-900 truncate mt-1">
                     {invoice.partner || '-'}
                   </p>
                 </div>
                 
-                <div>
+                <div className="col-span-2">
                   <span className="text-gray-500">Dátum:</span>
                   <p className="text-gray-900 mt-1">
                     {formatDate(invoice.invoice_date || invoice.uploaded_at)}
@@ -375,7 +368,7 @@ export const InvoiceList: React.FC = () => {
         </div>
 
         {/* Desktop Table View */}
-        <div className="hidden sm:block overflow-x-auto">
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -496,7 +489,7 @@ export const InvoiceList: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
             <div className="flex items-center mb-4">
               <div className="flex-shrink-0">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
@@ -511,7 +504,7 @@ export const InvoiceList: React.FC = () => {
                 Biztosan törölni szeretné ezt a számlát? Ez a művelet nem vonható vissza. A számla az adatbázisból és a fájltárolóból is törlődni fog.
               </p>
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-sm font-medium text-gray-900">{deleteConfirm.file_name}</p>
+                <p className="text-sm font-medium text-gray-900 break-words">{deleteConfirm.file_name}</p>
                 <p className="text-xs text-gray-500">
                   {deleteConfirm.partner && `Partner: ${deleteConfirm.partner}`}
                   {deleteConfirm.amount && ` • Összeg: ${formatCurrency(deleteConfirm.amount)}`}
@@ -519,7 +512,7 @@ export const InvoiceList: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex justify-end space-x-3">
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 disabled={deleting}
@@ -530,7 +523,7 @@ export const InvoiceList: React.FC = () => {
               <button
                 onClick={() => handleDeleteInvoice(deleteConfirm)}
                 disabled={deleting}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
               >
                 {deleting ? (
                   <>
@@ -560,7 +553,7 @@ export const InvoiceList: React.FC = () => {
                   onClick={() => setSelectedInvoice(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  ✕
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -572,7 +565,7 @@ export const InvoiceList: React.FC = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm text-gray-500">Fájlnév</label>
-                      <p className="text-sm font-medium text-gray-900">{selectedInvoice.file_name}</p>
+                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.file_name}</p>
                     </div>
                     <div>
                       <label className="block text-sm text-gray-500">Szervezet</label>
@@ -592,7 +585,7 @@ export const InvoiceList: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm text-gray-500">Partner</label>
-                      <p className="text-sm font-medium text-gray-900">{selectedInvoice.partner || '-'}</p>
+                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.partner || '-'}</p>
                     </div>
                     <div>
                       <label className="block text-sm text-gray-500">Számlaszám</label>
@@ -604,7 +597,7 @@ export const InvoiceList: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm text-gray-500">Tárgy</label>
-                      <p className="text-sm font-medium text-gray-900">{selectedInvoice.subject || '-'}</p>
+                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.subject || '-'}</p>
                     </div>
                     <div>
                       <label className="block text-sm text-gray-500">Számla kelte</label>
@@ -620,7 +613,7 @@ export const InvoiceList: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm text-gray-500">Bankszámlaszám</label>
-                      <p className="text-sm font-medium text-gray-900">{selectedInvoice.bank_account || '-'}</p>
+                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.bank_account || '-'}</p>
                     </div>
                   </div>
                 </div>
@@ -628,7 +621,7 @@ export const InvoiceList: React.FC = () => {
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Kinyert szöveg</h4>
                   <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                    <pre className="text-xs text-gray-700 whitespace-pre-wrap">
+                    <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words">
                       {selectedInvoice.extracted_text || 'Nincs kinyert szöveg'}
                     </pre>
                   </div>

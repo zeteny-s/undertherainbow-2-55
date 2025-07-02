@@ -67,14 +67,12 @@ export const Settings: React.FC = () => {
       addNotification('error', error instanceof Error ? error.message : 'Hibás beállítás fájl');
     }
 
-    // Reset file input
     event.target.value = '';
   };
 
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
-      // Simulate save delay
       await new Promise(resolve => setTimeout(resolve, 500));
       addNotification('success', 'Beállítások sikeresen mentve!');
     } catch (error) {
@@ -90,7 +88,7 @@ export const Settings: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
       {/* Notifications */}
       <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
@@ -137,11 +135,11 @@ export const Settings: React.FC = () => {
       </div>
 
       {/* Header */}
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center">
-              <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8 mr-3 text-blue-600" />
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center">
+              <SettingsIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600" />
               Beállítások
             </h2>
             <p className="text-gray-600 text-sm sm:text-base">Alkalmazás testreszabása és konfigurálása</p>
@@ -151,7 +149,7 @@ export const Settings: React.FC = () => {
             <button
               onClick={handleSaveSettings}
               disabled={saving}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
             >
               {saving ? (
                 <>
@@ -170,16 +168,16 @@ export const Settings: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as 'general' | 'backup')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -196,59 +194,59 @@ export const Settings: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'general' && (
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
           {/* Appearance Settings */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center mb-4 sm:mb-6">
-              <Palette className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 mr-3" />
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Megjelenés</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
+              <Palette className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600 mr-2 sm:mr-3" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Megjelenés</h3>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Theme Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Téma</label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
                     onClick={() => handleTopLevelChange('theme', 'light')}
-                    className={`p-4 border-2 rounded-lg transition-all ${
+                    className={`p-3 sm:p-4 border-2 rounded-lg transition-all ${
                       settings.theme === 'light' 
                         ? 'border-blue-500 bg-blue-50' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <Sun className="h-6 w-6 mx-auto mb-2 text-yellow-500" />
+                    <Sun className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-yellow-500" />
                     <span className="text-sm font-medium">Világos</span>
                   </button>
                   
                   <button
                     onClick={() => handleTopLevelChange('theme', 'dark')}
-                    className={`p-4 border-2 rounded-lg transition-all ${
+                    className={`p-3 sm:p-4 border-2 rounded-lg transition-all ${
                       settings.theme === 'dark' 
                         ? 'border-blue-500 bg-blue-50' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <Moon className="h-6 w-6 mx-auto mb-2 text-gray-700" />
+                    <Moon className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-gray-700" />
                     <span className="text-sm font-medium">Sötét</span>
                   </button>
                   
                   <button
                     onClick={() => handleTopLevelChange('theme', 'system')}
-                    className={`p-4 border-2 rounded-lg transition-all ${
+                    className={`p-3 sm:p-4 border-2 rounded-lg transition-all ${
                       settings.theme === 'system' 
                         ? 'border-blue-500 bg-blue-50' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <Monitor className="h-6 w-6 mx-auto mb-2 text-gray-600" />
+                    <Monitor className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-gray-600" />
                     <span className="text-sm font-medium">Rendszer</span>
                   </button>
                 </div>
               </div>
 
               {/* Display Options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-sm font-medium text-gray-700">Kompakt mód</label>
@@ -310,10 +308,10 @@ export const Settings: React.FC = () => {
           </div>
 
           {/* Notifications */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center mb-4 sm:mb-6">
-              <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600 mr-3" />
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Értesítések</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600 mr-2 sm:mr-3" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Értesítések</h3>
             </div>
             
             <div className="space-y-4">
@@ -396,13 +394,13 @@ export const Settings: React.FC = () => {
           </div>
 
           {/* Privacy & Security */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center mb-4 sm:mb-6">
-              <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mr-3" />
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Adatvédelem és biztonság</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600 mr-2 sm:mr-3" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Adatvédelem és biztonság</h3>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Adatok megőrzése</label>
                 <select
@@ -459,13 +457,13 @@ export const Settings: React.FC = () => {
           </div>
 
           {/* Backup & Data */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center mb-4 sm:mb-6">
-              <Database className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-3" />
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Beállítások mentése</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
+              <Database className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600 mr-2 sm:mr-3" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Beállítások mentése</h3>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Automatikus mentés</label>
@@ -500,16 +498,16 @@ export const Settings: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:gap-4">
                 <button
                   onClick={handleExportSettings}
-                  className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Beállítások exportálása
                 </button>
                 
-                <label className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors cursor-pointer">
+                <label className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors cursor-pointer">
                   <Upload className="h-4 w-4 mr-2" />
                   Beállítások importálása
                   <input
@@ -524,10 +522,10 @@ export const Settings: React.FC = () => {
           </div>
 
           {/* Language & Region */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex items-center mb-4 sm:mb-6">
-              <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mr-3" />
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Nyelv és régió</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
+              <Globe className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-indigo-600 mr-2 sm:mr-3" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Nyelv és régió</h3>
             </div>
             
             <div className="space-y-4">
@@ -546,15 +544,15 @@ export const Settings: React.FC = () => {
           </div>
 
           {/* Reset Settings */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Beállítások visszaállítása</h3>
+                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Beállítások visszaállítása</h3>
                 <p className="text-sm text-gray-500 mt-1">Minden beállítás visszaállítása az alapértelmezett értékekre</p>
               </div>
               <button
                 onClick={handleResetSettings}
-                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
               >
                 Visszaállítás
               </button>

@@ -63,21 +63,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 sm:h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-3 sm:px-4">
         <button
           onClick={onToggle}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
-          <Menu className="h-6 w-6 text-gray-600" />
+          <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
         </button>
         
-        <h1 className="text-lg font-semibold text-gray-900">
+        <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
           {menuItems.find(item => item.id === activeTab)?.label || 'Számla kezelő'}
         </h1>
         
         <button
           onClick={() => setShowProfileModal(true)}
-          className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm"
+          className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-sm"
         >
           {userInitials}
         </button>
@@ -93,16 +93,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
 
       {/* Sidebar */}
       <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200/80 z-50 transition-all duration-300 ease-in-out ${
-        isOpen ? 'w-72' : 'w-20 lg:w-20'
+        isOpen ? 'w-64 sm:w-72' : 'w-20 lg:w-20'
       } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         
         {/* Mobile close button */}
-        <div className="lg:hidden absolute top-4 right-4">
+        <div className="lg:hidden absolute top-3 sm:top-4 right-3 sm:right-4">
           <button
             onClick={onToggle}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <X className="h-5 w-5 text-gray-600" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
           </button>
         </div>
 
@@ -121,17 +121,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
         </div>
 
         {/* Header with profile picture */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-100 mt-0 lg:mt-0">
-          <div className={`flex items-center space-x-3 ${isOpen ? 'px-4' : ''}`}>
+        <div className="h-14 sm:h-16 flex items-center justify-center border-b border-gray-100 mt-0 lg:mt-0">
+          <div className={`flex items-center space-x-3 ${isOpen ? 'px-3 sm:px-4' : ''}`}>
             <button
               onClick={() => setShowProfileModal(true)}
-              className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               title="Profil megnyitása"
             >
               {userInitials}
             </button>
             {isOpen && (
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-gray-900 truncate">
                   {displayName}
                 </p>
@@ -144,8 +144,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6">
-          <div className="space-y-2">
+        <nav className="flex-1 px-3 sm:px-4 py-4 sm:py-6">
+          <div className="space-y-1 sm:space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -154,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
                 <div key={item.id} className="relative">
                   <button
                     onClick={() => handleTabChange(item.id)}
-                    className={`w-full flex items-center px-4 py-3.5 rounded-xl font-medium text-sm transition-all duration-200 group relative ${
+                    className={`w-full flex items-center px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl font-medium text-sm transition-all duration-200 group relative ${
                       isActive
                         ? 'bg-blue-50 text-blue-700 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -162,17 +162,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
                   >
                     {/* Active indicator */}
                     {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full"></div>
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 sm:h-8 bg-blue-600 rounded-r-full"></div>
                     )}
                     
-                    <div className={`flex items-center justify-center w-6 h-6 ${isOpen ? 'mr-4' : 'mx-auto'}`}>
-                      <Icon className={`h-5 w-5 transition-colors duration-200 ${
+                    <div className={`flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 ${isOpen ? 'mr-3 sm:mr-4' : 'mx-auto'}`}>
+                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
                         isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
                       }`} />
                     </div>
                     
                     {isOpen && (
-                      <span className={`transition-all duration-300 ${
+                      <span className={`transition-all duration-300 truncate ${
                         isActive ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'
                       }`}>
                         {item.label}
@@ -194,18 +194,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
         </nav>
 
         {/* Logout section */}
-        <div className="border-t border-gray-100 p-4">
+        <div className="border-t border-gray-100 p-3 sm:p-4">
           {/* Logout button */}
           <div className="relative group">
             <button
               onClick={handleSignOut}
-              className={`w-full flex items-center px-4 py-3 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 ${
+              className={`w-full flex items-center px-3 sm:px-4 py-2.5 sm:py-3 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 ${
                 !isOpen ? 'justify-center' : ''
               }`}
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
               {isOpen && (
-                <span className="ml-4 text-sm font-medium">
+                <span className="ml-3 sm:ml-4 text-sm font-medium">
                   Kijelentkezés
                 </span>
               )}

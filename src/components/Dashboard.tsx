@@ -11,7 +11,7 @@ interface Stats {
   bankTransferCount: number;
   cardCashCount: number;
   thisMonthCount: number;
-  thisMonthAmount: number; // Monthly expenses instead of revenue
+  thisMonthAmount: number;
 }
 
 interface Invoice {
@@ -77,7 +77,6 @@ export const Dashboard: React.FC = () => {
     const notification = { id, type, message };
     setNotifications(prev => [...prev, notification]);
     
-    // Auto remove after 4 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 4000);
@@ -95,7 +94,6 @@ export const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch all invoices
       const { data: invoices, error } = await supabase
         .from('invoices')
         .select('*')
@@ -103,12 +101,10 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Calculate stats
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-      // Filter invoices for this month
       const thisMonthInvoices = invoices?.filter(inv => {
         const invDate = new Date(inv.uploaded_at);
         return invDate >= thisMonth && invDate < nextMonth;
@@ -125,15 +121,13 @@ export const Dashboard: React.FC = () => {
         thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
       };
 
-      // Generate week history and current week data
       const weekHistoryData = generateWeekHistory(invoices || []);
       setWeekHistory(weekHistoryData);
 
-      // Prepare chart data
       const monthlyData = generateMonthlyData(invoices || []);
       const organizationData = generateOrganizationData(invoices || []);
       const paymentTypeData = generatePaymentTypeData(invoices || []);
-      const weeklyTrend = weekHistoryData[0]?.data || []; // Always show current week (index 0)
+      const weeklyTrend = weekHistoryData[0]?.data || [];
       const expenseData = generateExpenseData(invoices || []);
 
       setStats(calculatedStats);
@@ -159,17 +153,15 @@ export const Dashboard: React.FC = () => {
     const weeks: WeekData[] = [];
     const now = new Date();
     
-    // Generate last 12 weeks, starting with current week
     for (let i = 0; i < 12; i++) {
       const weekStart = new Date(now);
-      // Get Monday of the week (current week when i=0)
       const dayOfWeek = now.getDay();
-      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so 6 days back to Monday
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       weekStart.setDate(now.getDate() - daysToMonday - (i * 7));
       weekStart.setHours(0, 0, 0, 0);
       
       const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6); // Sunday of the week
+      weekEnd.setDate(weekStart.getDate() + 6);
       weekEnd.setHours(23, 59, 59, 999);
       
       const weekLabel = `${formatDateShort(weekStart)} - ${formatDateShort(weekEnd)}`;
@@ -377,7 +369,6 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Custom tooltip for charts
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -399,7 +390,6 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
-  // Custom tooltip for weekly activity
   const WeeklyTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -421,7 +411,6 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
-  // Custom tooltip for expense chart
   const ExpenseTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -454,8 +443,8 @@ export const Dashboard: React.FC = () => {
   const currentWeek = weekHistory[currentWeekIndex];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      {/* Notifications - Bottom Right - Made Wider */}
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+      {/* Notifications */}
       <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
           <div
@@ -500,15 +489,16 @@ export const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header */}
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Áttekintés</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Áttekintés</h2>
             <p className="text-gray-600 text-sm sm:text-base">Számla feldolgozási statisztikák és üzleti elemzések</p>
           </div>
           <button
             onClick={fetchDashboardData}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Frissítés
@@ -517,76 +507,76 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Összes számla</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.totalInvoices}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Összes számla</p>
+              <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{stats.totalInvoices}</p>
               <p className="text-xs text-green-600 mt-1">+{stats.thisMonthCount} e hónapban</p>
             </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-800" />
+            <div className="bg-blue-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-800" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Teljes összeg</p>
-              <p className="text-xl sm:text-3xl font-bold text-gray-900">{formatCurrency(stats.totalAmount)}</p>
-              <p className="text-xs text-gray-500 mt-1">Összes feldolgozott számla</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Teljes összeg</p>
+              <p className="text-sm sm:text-xl lg:text-3xl font-bold text-gray-900 truncate">{formatCurrency(stats.totalAmount)}</p>
+              <p className="text-xs text-gray-500 mt-1 truncate">Összes feldolgozott</p>
             </div>
-            <div className="bg-green-100 p-3 rounded-lg">
-              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-800" />
+            <div className="bg-green-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-800" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">E havi számlák</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.thisMonthCount}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi számlák</p>
+              <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{stats.thisMonthCount}</p>
               <p className="text-xs text-blue-600 mt-1">Aktív hónap</p>
             </div>
-            <div className="bg-orange-100 p-3 rounded-lg">
-              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-orange-800" />
+            <div className="bg-orange-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-orange-800" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">E havi kiadás</p>
-              <p className="text-xl sm:text-3xl font-bold text-gray-900">{formatCurrency(stats.thisMonthAmount)}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi kiadás</p>
+              <p className="text-sm sm:text-xl lg:text-3xl font-bold text-gray-900 truncate">{formatCurrency(stats.thisMonthAmount)}</p>
               <p className="text-xs text-red-600 mt-1">Aktuális hónap</p>
             </div>
-            <div className="bg-red-100 p-3 rounded-lg">
-              <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-red-800" />
+            <div className="bg-red-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-red-800" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
         {/* Monthly Trend Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
               <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
               Havi számla trend
             </h3>
           </div>
-          <div className="h-64 sm:h-80">
+          <div className="h-48 sm:h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData.monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
-                <YAxis stroke="#6b7280" fontSize={12} />
+                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                <YAxis stroke="#6b7280" fontSize={10} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
@@ -596,19 +586,19 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Monthly Expense Trend */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
               <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-600" />
               Havi kiadás trend
             </h3>
           </div>
-          <div className="h-64 sm:h-80">
+          <div className="h-48 sm:h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData.expenseData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
-                <YAxis stroke="#6b7280" fontSize={12} />
+                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                <YAxis stroke="#6b7280" fontSize={10} />
                 <Tooltip content={<ExpenseTooltip />} />
                 <Area 
                   type="monotone" 
@@ -625,22 +615,22 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Distribution Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
         {/* Organization Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
             <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
             Szervezetek szerinti megoszlás
           </h3>
-          <div className="h-48 sm:h-64">
+          <div className="h-40 sm:h-48 lg:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <RechartsPieChart>
                 <Pie
                   data={chartData.organizationData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
+                  innerRadius={30}
+                  outerRadius={60}
                   paddingAngle={5}
                   dataKey="value"
                 >
@@ -657,14 +647,14 @@ export const Dashboard: React.FC = () => {
               </RechartsPieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mt-4">
+          <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
             {chartData.organizationData.map((item, index) => (
               <div key={index} className="text-center">
                 <div className="flex items-center justify-center space-x-2 mb-1">
                   <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
                   <span className="text-sm font-medium text-gray-900">{item.value}</span>
                 </div>
-                <p className="text-xs text-gray-600">{item.name}</p>
+                <p className="text-xs text-gray-600 truncate">{item.name}</p>
                 <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
               </div>
             ))}
@@ -672,20 +662,20 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Payment Method Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
             <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
             Fizetési módok megoszlása
           </h3>
-          <div className="h-48 sm:h-64">
+          <div className="h-40 sm:h-48 lg:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <RechartsPieChart>
                 <Pie
                   data={chartData.paymentTypeData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
+                  innerRadius={30}
+                  outerRadius={60}
                   paddingAngle={5}
                   dataKey="value"
                 >
@@ -702,14 +692,14 @@ export const Dashboard: React.FC = () => {
               </RechartsPieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mt-4">
+          <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
             {chartData.paymentTypeData.map((item, index) => (
               <div key={index} className="text-center">
                 <div className="flex items-center justify-center space-x-2 mb-1">
                   <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
                   <span className="text-sm font-medium text-gray-900">{item.value}</span>
                 </div>
-                <p className="text-xs text-gray-600">{item.name}</p>
+                <p className="text-xs text-gray-600 truncate">{item.name}</p>
                 <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
               </div>
             ))}
@@ -718,19 +708,19 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Weekly Activity */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6 lg:mb-8">
+        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
             <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
             Heti aktivitás
           </h3>
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
             {currentWeek && (
-              <span className="text-sm font-medium text-gray-600 text-center sm:text-left">
+              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
                 {currentWeek.weekLabel}
               </span>
             )}
-            <div className="flex items-center justify-center sm:justify-start space-x-2">
+            <div className="flex items-center justify-center space-x-2">
               <button
                 onClick={() => navigateWeek('prev')}
                 disabled={currentWeekIndex >= weekHistory.length - 1}
@@ -741,10 +731,10 @@ export const Dashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => setShowWeekHistory(!showWeekHistory)}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
               >
                 <History className="h-4 w-4" />
-                <span className="hidden sm:inline">Előzmények</span>
+                <span>Előzmények</span>
               </button>
               <button
                 onClick={() => navigateWeek('next')}
@@ -760,20 +750,20 @@ export const Dashboard: React.FC = () => {
 
         {/* Week History Dropdown */}
         {showWeekHistory && (
-          <div className="mb-6 bg-gray-50 rounded-lg p-4">
+          <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {weekHistory.map((week, index) => (
                 <button
                   key={index}
                   onClick={() => selectWeek(index)}
-                  className={`p-3 text-sm rounded-lg border transition-colors ${
+                  className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
                     index === currentWeekIndex
                       ? 'bg-blue-100 border-blue-300 text-blue-800'
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  <div className="font-medium">{week.weekLabel}</div>
+                  <div className="font-medium truncate">{week.weekLabel}</div>
                   <div className="text-xs text-gray-500 mt-1">
                     {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
                   </div>
@@ -783,12 +773,12 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
-        <div className="h-64 sm:h-80">
+        <div className="h-48 sm:h-64 lg:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData.weeklyTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" stroke="#6b7280" fontSize={12} />
-              <YAxis stroke="#6b7280" fontSize={12} />
+              <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} />
               <Tooltip content={<WeeklyTooltip />} />
               <Area 
                 type="monotone" 
@@ -804,28 +794,76 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Invoices */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+        <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
           <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-600" />
           Legutóbbi számlák
         </h3>
-        <div className="overflow-x-auto">
+        
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-3">
+          {recentInvoices.map((invoice) => (
+            <div key={invoice.id} className="border border-gray-200 rounded-lg p-3">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {invoice.file_name}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1 ml-2">
+                  {invoice.organization === 'alapitvany' ? (
+                    <Building2 className="h-4 w-4 text-blue-800" />
+                  ) : (
+                    <GraduationCap className="h-4 w-4 text-orange-800" />
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-500">Partner:</span>
+                  <p className="font-medium text-gray-900 truncate">
+                    {invoice.partner || '-'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Összeg:</span>
+                  <p className="font-medium text-gray-900">
+                    {invoice.amount ? formatCurrency(invoice.amount) : '-'}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-gray-500">Feltöltve:</span>
+                  <p className="text-gray-900">
+                    {formatDate(invoice.uploaded_at)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fájl név
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Szervezet
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Feltöltve
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Partner
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Összeg
                 </th>
               </tr>
@@ -833,15 +871,15 @@ export const Dashboard: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {recentInvoices.map((invoice) => (
                 <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <FileText className="h-4 w-4 text-gray-400 mr-2" />
+                      <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                       <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
                         {invoice.file_name}
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {invoice.organization === 'alapitvany' ? (
                         <>
@@ -856,13 +894,13 @@ export const Dashboard: React.FC = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(invoice.uploaded_at)}
                   </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {invoice.partner || '-'}
                   </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {invoice.amount ? formatCurrency(invoice.amount) : '-'}
                   </td>
                 </tr>

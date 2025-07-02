@@ -76,7 +76,7 @@ const AppContent: React.FC = () => {
       />
       <main className={`flex-1 transition-all duration-300 ease-in-out ${
         sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'
-      } pt-16 lg:pt-0`}>
+      } pt-14 sm:pt-16 lg:pt-0`}>
         <div className="min-h-screen">
           {renderActiveComponent()}
         </div>
