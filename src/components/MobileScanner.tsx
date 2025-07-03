@@ -22,10 +22,14 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [openCVReady, setOpenCVReady] = useState(false);
+  const [documentDetected, setDocumentDetected] = useState(false);
+  const [detectionOverlay, setDetectionOverlay] = useState<any>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
 
   // Load OpenCV.js
   useEffect(() => {
@@ -89,6 +93,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           setCameraReady(true);
+          startDocumentDetection();
         };
       }
     } catch (err) {
@@ -97,13 +102,172 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   }, []);
 
+  // Start real-time document detection
+  const startDocumentDetection = useCallback(() => {
+    if (!openCVReady || !videoRef.current || !overlayCanvasRef.current) return;
+
+    const detectDocument = () => {
+      if (!videoRef.current || !overlayCanvasRef.current || !cameraReady) return;
+
+      try {
+        const video = videoRef.current;
+        const overlayCanvas = overlayCanvasRef.current;
+        const overlayCtx = overlayCanvas.getContext('2d');
+
+        if (!overlayCtx) return;
+
+        // Set overlay canvas size to match video
+        overlayCanvas.width = video.videoWidth;
+        overlayCanvas.height = video.videoHeight;
+
+        // Clear overlay
+        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+        // Create temporary canvas for processing
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = video.videoWidth;
+        tempCanvas.height = video.videoHeight;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        if (!tempCtx) return;
+
+        // Draw current video frame
+        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+        // Detect document edges using OpenCV
+        const contour = detectDocumentEdges(tempCanvas);
+
+        if (contour && contour.length === 4) {
+          // Document detected - draw overlay
+          setDocumentDetected(true);
+          setDetectionOverlay(contour);
+
+          // Draw detection overlay
+          overlayCtx.strokeStyle = '#00ff00';
+          overlayCtx.lineWidth = 4;
+          overlayCtx.beginPath();
+          
+          for (let i = 0; i < contour.length; i++) {
+            const point = contour[i];
+            if (i === 0) {
+              overlayCtx.moveTo(point.x, point.y);
+            } else {
+              overlayCtx.lineTo(point.x, point.y);
+            }
+          }
+          overlayCtx.closePath();
+          overlayCtx.stroke();
+
+          // Add corner indicators
+          contour.forEach((point, index) => {
+            overlayCtx.fillStyle = '#00ff00';
+            overlayCtx.beginPath();
+            overlayCtx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+            overlayCtx.fill();
+          });
+
+        } else {
+          setDocumentDetected(false);
+          setDetectionOverlay(null);
+        }
+
+      } catch (error) {
+        console.warn('Document detection error:', error);
+      }
+    };
+
+    // Run detection every 100ms
+    detectionIntervalRef.current = window.setInterval(detectDocument, 100);
+  }, [openCVReady, cameraReady]);
+
+  // Detect document edges using OpenCV
+  const detectDocumentEdges = (canvas: HTMLCanvasElement) => {
+    if (!window.cv) return null;
+
+    try {
+      const cv = window.cv;
+      const src = cv.imread(canvas);
+      const gray = new cv.Mat();
+      const blur = new cv.Mat();
+      const edges = new cv.Mat();
+      const contours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
+
+      // Convert to grayscale
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+      // Apply Gaussian blur
+      cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
+
+      // Edge detection
+      cv.Canny(blur, edges, 50, 150);
+
+      // Find contours
+      cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+      // Find the largest rectangular contour
+      let maxArea = 0;
+      let bestContour = null;
+
+      for (let i = 0; i < contours.size(); i++) {
+        const contour = contours.get(i);
+        const area = cv.contourArea(contour);
+        
+        if (area > maxArea && area > canvas.width * canvas.height * 0.1) { // At least 10% of image
+          const peri = cv.arcLength(contour, true);
+          const approx = new cv.Mat();
+          cv.approxPolyDP(contour, approx, 0.02 * peri, true);
+          
+          if (approx.rows === 4) { // Rectangular shape
+            maxArea = area;
+            if (bestContour) bestContour.delete();
+            bestContour = approx.clone();
+          }
+          approx.delete();
+        }
+        contour.delete();
+      }
+
+      // Convert contour to points array
+      let points = null;
+      if (bestContour) {
+        points = [];
+        for (let i = 0; i < bestContour.rows; i++) {
+          const point = bestContour.data32S.slice(i * 2, i * 2 + 2);
+          points.push({ x: point[0], y: point[1] });
+        }
+        bestContour.delete();
+      }
+
+      // Cleanup
+      src.delete();
+      gray.delete();
+      blur.delete();
+      edges.delete();
+      contours.delete();
+      hierarchy.delete();
+
+      return points;
+    } catch (error) {
+      console.error('Edge detection error:', error);
+      return null;
+    }
+  };
+
   // Cleanup camera
   const cleanupCamera = useCallback(() => {
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+      detectionIntervalRef.current = null;
+    }
+    
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
     setCameraReady(false);
+    setDocumentDetected(false);
+    setDetectionOverlay(null);
   }, []);
 
   useEffect(() => {
@@ -118,7 +282,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     };
   }, [currentStep, initializeCamera, cleanupCamera]);
 
-  // Capture photo
+  // Capture photo with automatic cropping
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !cameraReady) return;
 
@@ -138,9 +302,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     // Get image data
     const imageData = canvas.toDataURL('image/jpeg', 0.9);
 
-    // Process the image
+    // Process the image with automatic cropping
     processImage(imageData, canvas);
-  }, [cameraReady]);
+  }, [cameraReady, detectionOverlay]);
 
   // Process image with edge detection and enhancement
   const processImage = async (imageData: string, originalCanvas: HTMLCanvasElement) => {
@@ -150,10 +314,17 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       let processedCanvas = originalCanvas;
       let processedImageData = imageData;
 
-      // If OpenCV is available, perform edge detection and cropping
-      if (openCVReady && window.cv) {
-        processedCanvas = await performEdgeDetection(originalCanvas);
+      // If we have detected edges and OpenCV is available, perform perspective correction
+      if (openCVReady && window.cv && detectionOverlay && detectionOverlay.length === 4) {
+        processedCanvas = await performPerspectiveCorrection(originalCanvas, detectionOverlay);
         processedImageData = processedCanvas.toDataURL('image/jpeg', 0.9);
+      } else if (openCVReady && window.cv) {
+        // Try to detect edges in the captured image
+        const detectedContour = detectDocumentEdges(originalCanvas);
+        if (detectedContour && detectedContour.length === 4) {
+          processedCanvas = await performPerspectiveCorrection(originalCanvas, detectedContour);
+          processedImageData = processedCanvas.toDataURL('image/jpeg', 0.9);
+        }
       }
 
       // Enhance image quality
@@ -178,153 +349,74 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   };
 
-  // Edge detection using OpenCV
-  const performEdgeDetection = async (canvas: HTMLCanvasElement): Promise<HTMLCanvasElement> => {
+  // Perspective correction
+  const performPerspectiveCorrection = async (canvas: HTMLCanvasElement, contour: any[]): Promise<HTMLCanvasElement> => {
     return new Promise((resolve) => {
       try {
         const cv = window.cv;
         const src = cv.imread(canvas);
+        
+        // Sort points: top-left, top-right, bottom-right, bottom-left
+        const points = [...contour];
+        points.sort((a, b) => a.y - b.y); // Sort by y
+        const topPoints = points.slice(0, 2).sort((a, b) => a.x - b.x); // Sort top by x
+        const bottomPoints = points.slice(2, 4).sort((a, b) => a.x - b.x); // Sort bottom by x
+
+        const orderedPoints = [
+          topPoints[0],    // top-left
+          topPoints[1],    // top-right
+          bottomPoints[1], // bottom-right
+          bottomPoints[0]  // bottom-left
+        ];
+
+        // Calculate output dimensions
+        const width = Math.max(
+          Math.sqrt(Math.pow(orderedPoints[1].x - orderedPoints[0].x, 2) + Math.pow(orderedPoints[1].y - orderedPoints[0].y, 2)),
+          Math.sqrt(Math.pow(orderedPoints[2].x - orderedPoints[3].x, 2) + Math.pow(orderedPoints[2].y - orderedPoints[3].y, 2))
+        );
+        
+        const height = Math.max(
+          Math.sqrt(Math.pow(orderedPoints[3].x - orderedPoints[0].x, 2) + Math.pow(orderedPoints[3].y - orderedPoints[0].y, 2)),
+          Math.sqrt(Math.pow(orderedPoints[2].x - orderedPoints[1].x, 2) + Math.pow(orderedPoints[2].y - orderedPoints[1].y, 2))
+        );
+
+        // Create transformation matrix
+        const srcPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+          orderedPoints[0].x, orderedPoints[0].y,
+          orderedPoints[1].x, orderedPoints[1].y,
+          orderedPoints[2].x, orderedPoints[2].y,
+          orderedPoints[3].x, orderedPoints[3].y
+        ]);
+        
+        const dstPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+          0, 0,
+          width, 0,
+          width, height,
+          0, height
+        ]);
+
+        const transformMatrix = cv.getPerspectiveTransform(srcPoints, dstPoints);
         const dst = new cv.Mat();
-        const gray = new cv.Mat();
-        const blur = new cv.Mat();
-        const edges = new cv.Mat();
-        const contours = new cv.MatVector();
-        const hierarchy = new cv.Mat();
 
-        // Convert to grayscale
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+        cv.warpPerspective(src, dst, transformMatrix, new cv.Size(width, height));
 
-        // Apply Gaussian blur
-        cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
+        // Create output canvas
+        const outputCanvas = document.createElement('canvas');
+        cv.imshow(outputCanvas, dst);
 
-        // Edge detection
-        cv.Canny(blur, edges, 50, 150);
+        // Cleanup
+        src.delete();
+        dst.delete();
+        srcPoints.delete();
+        dstPoints.delete();
+        transformMatrix.delete();
 
-        // Find contours
-        cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-        // Find the largest rectangular contour (document)
-        let maxArea = 0;
-        let bestContour = null;
-
-        for (let i = 0; i < contours.size(); i++) {
-          const contour = contours.get(i);
-          const area = cv.contourArea(contour);
-          
-          if (area > maxArea && area > 10000) { // Minimum area threshold
-            const peri = cv.arcLength(contour, true);
-            const approx = new cv.Mat();
-            cv.approxPolyDP(contour, approx, 0.02 * peri, true);
-            
-            if (approx.rows === 4) { // Rectangular shape
-              maxArea = area;
-              bestContour = approx;
-            }
-            approx.delete();
-          }
-          contour.delete();
-        }
-
-        // If we found a good contour, perform perspective correction
-        if (bestContour) {
-          const resultCanvas = performPerspectiveCorrection(canvas, bestContour);
-          
-          // Cleanup
-          src.delete();
-          dst.delete();
-          gray.delete();
-          blur.delete();
-          edges.delete();
-          contours.delete();
-          hierarchy.delete();
-          bestContour.delete();
-          
-          resolve(resultCanvas);
-        } else {
-          // No good contour found, return original
-          src.delete();
-          dst.delete();
-          gray.delete();
-          blur.delete();
-          edges.delete();
-          contours.delete();
-          hierarchy.delete();
-          
-          resolve(canvas);
-        }
+        resolve(outputCanvas);
       } catch (err) {
-        console.error('Edge detection error:', err);
+        console.error('Perspective correction error:', err);
         resolve(canvas);
       }
     });
-  };
-
-  // Perspective correction
-  const performPerspectiveCorrection = (canvas: HTMLCanvasElement, contour: any): HTMLCanvasElement => {
-    try {
-      const cv = window.cv;
-      const src = cv.imread(canvas);
-      
-      // Extract corner points
-      const points = [];
-      for (let i = 0; i < contour.rows; i++) {
-        const point = contour.data32S.slice(i * 2, i * 2 + 2);
-        points.push([point[0], point[1]]);
-      }
-
-      // Sort points: top-left, top-right, bottom-right, bottom-left
-      points.sort((a, b) => a[1] - b[1]); // Sort by y
-      const topPoints = points.slice(0, 2).sort((a, b) => a[0] - b[0]); // Sort top by x
-      const bottomPoints = points.slice(2, 4).sort((a, b) => a[0] - b[0]); // Sort bottom by x
-
-      const orderedPoints = [
-        topPoints[0],    // top-left
-        topPoints[1],    // top-right
-        bottomPoints[1], // bottom-right
-        bottomPoints[0]  // bottom-left
-      ];
-
-      // Calculate output dimensions
-      const width = Math.max(
-        Math.sqrt(Math.pow(orderedPoints[1][0] - orderedPoints[0][0], 2) + Math.pow(orderedPoints[1][1] - orderedPoints[0][1], 2)),
-        Math.sqrt(Math.pow(orderedPoints[2][0] - orderedPoints[3][0], 2) + Math.pow(orderedPoints[2][1] - orderedPoints[3][1], 2))
-      );
-      
-      const height = Math.max(
-        Math.sqrt(Math.pow(orderedPoints[3][0] - orderedPoints[0][0], 2) + Math.pow(orderedPoints[3][1] - orderedPoints[0][1], 2)),
-        Math.sqrt(Math.pow(orderedPoints[2][0] - orderedPoints[1][0], 2) + Math.pow(orderedPoints[2][1] - orderedPoints[1][1], 2))
-      );
-
-      // Create transformation matrix
-      const srcPoints = cv.matFromArray(4, 1, cv.CV_32FC2, orderedPoints.flat());
-      const dstPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
-        0, 0,
-        width, 0,
-        width, height,
-        0, height
-      ]);
-
-      const transformMatrix = cv.getPerspectiveTransform(srcPoints, dstPoints);
-      const dst = new cv.Mat();
-
-      cv.warpPerspective(src, dst, transformMatrix, new cv.Size(width, height));
-
-      // Create output canvas
-      const outputCanvas = document.createElement('canvas');
-      cv.imshow(outputCanvas, dst);
-
-      // Cleanup
-      src.delete();
-      dst.delete();
-      srcPoints.delete();
-      dstPoints.delete();
-      transformMatrix.delete();
-
-      return outputCanvas;
-    } catch (err) {
-      console.error('Perspective correction error:', err);
-      return canvas;
-    }
   };
 
   // Enhance image quality
@@ -410,13 +502,31 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           className="w-full h-full object-cover"
         />
         
-        {/* Overlay guide */}
-        <div className="absolute inset-4 border-2 border-white border-dashed rounded-lg flex items-center justify-center">
-          <div className="text-white text-center">
-            <Square className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p className="text-sm opacity-75">Helyezze a számlát a keretbe</p>
+        {/* Detection overlay */}
+        <canvas
+          ref={overlayCanvasRef}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{ mixBlendMode: 'screen' }}
+        />
+        
+        {/* Guide overlay */}
+        {!documentDetected && (
+          <div className="absolute inset-4 border-2 border-white border-dashed rounded-lg flex items-center justify-center">
+            <div className="text-white text-center">
+              <Square className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm opacity-75">Helyezze a számlát a keretbe</p>
+              <p className="text-xs opacity-60 mt-1">A rendszer automatikusan felismeri a dokumentumot</p>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Document detected indicator */}
+        {documentDetected && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2">
+            <Check className="h-4 w-4" />
+            <span>Dokumentum felismerve</span>
+          </div>
+        )}
 
         {/* Loading overlay */}
         {(!cameraReady || processing) && (
@@ -444,7 +554,11 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           <button
             onClick={capturePhoto}
             disabled={!cameraReady || processing}
-            className="p-4 rounded-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={`p-4 rounded-full transition-all duration-200 ${
+              documentDetected 
+                ? 'bg-green-600 hover:bg-green-700 scale-110' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100`}
           >
             <Camera className="h-8 w-8 text-white" />
           </button>
@@ -470,6 +584,16 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
+
+        {/* Instructions */}
+        <div className="mt-3 text-center">
+          <p className="text-xs text-gray-600">
+            {documentDetected 
+              ? 'Dokumentum automatikusan felismerve és kivágva lesz' 
+              : 'Helyezze a dokumentumot a keretbe az automatikus felismeréshez'
+            }
+          </p>
+        </div>
       </div>
 
       {/* Hidden canvas for image processing */}
