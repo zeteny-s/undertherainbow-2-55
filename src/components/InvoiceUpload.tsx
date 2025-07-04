@@ -626,15 +626,15 @@ export const InvoiceUpload: React.FC = () => {
         <div className="flex-1 bg-gray-50 overflow-hidden">
           <div className="w-full h-full overflow-auto">
             {file.file.type === 'application/pdf' ? (
-              <div className="w-full h-full flex items-center justify-center bg-white">
+              <div className="w-full h-full flex items-center justify-center bg-white p-4">
                 <iframe
                   src={file.previewUrl}
                   className="border-0 rounded-lg shadow-sm"
                   style={{
-                    width: `${Math.min(100, 90 * previewZoom)}%`,
-                    height: `${Math.min(100, 90 * previewZoom)}%`,
-                    minWidth: '300px',
-                    minHeight: '400px',
+                    width: `${Math.min(95, 85 * previewZoom)}%`,
+                    height: `${Math.min(95, 85 * previewZoom)}%`,
+                    minWidth: '320px',
+                    minHeight: '450px',
                     maxWidth: '100%',
                     maxHeight: '100%',
                     transform: `rotate(${previewRotation}deg)`,
