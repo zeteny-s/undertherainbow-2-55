@@ -587,8 +587,8 @@ export const InvoiceUpload: React.FC = () => {
     if (!file.previewUrl) return null;
 
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-3 sm:p-4 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
+        <div className="p-3 sm:p-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
@@ -623,29 +623,28 @@ export const InvoiceUpload: React.FC = () => {
           </div>
         </div>
         
-        <div className="p-3 sm:p-4 bg-gray-50">
-          <div className="max-h-[400px] sm:max-h-[500px] lg:max-h-[600px] overflow-auto border border-gray-200 rounded-lg bg-white">
+        <div className="flex-1 bg-gray-50 overflow-hidden">
+          <div className="w-full h-full overflow-auto">
             {file.file.type === 'application/pdf' ? (
-              <div 
-                className="w-full h-full min-h-[400px]"
-                style={{
-                  transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
-                  transformOrigin: 'center center',
-                  transition: 'transform 0.2s ease'
-                }}
-              >
+              <div className="w-full h-full min-h-[600px] flex items-center justify-center p-4">
                 <iframe
                   src={file.previewUrl}
-                  className="w-full h-full border-0"
+                  className="w-full h-full border-0 rounded-lg shadow-sm"
+                  style={{
+                    transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
+                    transformOrigin: 'center center',
+                    transition: 'transform 0.2s ease',
+                    minHeight: '600px'
+                  }}
                   title="PDF Preview"
                 />
               </div>
             ) : (
-              <div className="flex justify-center p-4">
+              <div className="w-full h-full flex items-center justify-center p-4">
                 <img
                   src={file.previewUrl}
                   alt="Invoice preview"
-                  className="max-w-full h-auto border border-gray-200 rounded-lg shadow-sm"
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-sm"
                   style={{
                     transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
@@ -777,7 +776,7 @@ export const InvoiceUpload: React.FC = () => {
             {uploadedFiles.map((uploadedFile) => (
               <div key={uploadedFile.id} className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 {/* Left Column: Document Preview (Always Visible) */}
-                <div className="order-2 xl:order-1">
+                <div className="order-2 xl:order-1 h-[600px] xl:h-[800px]">
                   {renderDocumentPreview(uploadedFile)}
                 </div>
 
