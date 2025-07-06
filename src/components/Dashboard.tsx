@@ -217,6 +217,9 @@ export const Dashboard: React.FC = () => {
   const [editingChart, setEditingChart] = useState<string | null>(null);
   const [showLayoutSelector, setShowLayoutSelector] = useState(false);
 
+  // Check if device is mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
     const notification = { id, type, message };
@@ -873,13 +876,16 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
             
-            <button
-              onClick={fetchDashboardData}
-              className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Frissítés
-            </button>
+            {/* Only show refresh button on desktop */}
+            {!isMobile && (
+              <button
+                onClick={fetchDashboardData}
+                className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Frissítés
+              </button>
+            )}
           </div>
         </div>
       </div>
