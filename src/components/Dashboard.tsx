@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, AlertCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart, Line, Area, AreaChart, Pie } from 'recharts';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, AlertCircle, Settings, Grid, List, Eye, Edit3, Save, RotateCcw } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart, Line, Area, AreaChart, Pie, RadialBarChart, RadialBar, ComposedChart } from 'recharts';
 import { supabase } from '../lib/supabase';
 
 interface Stats {
@@ -47,6 +47,145 @@ interface Notification {
   message: string;
 }
 
+interface ChartConfig {
+  id: string;
+  title: string;
+  type: 'bar' | 'line' | 'area' | 'pie' | 'radial' | 'composed';
+  dataKey: string;
+  icon: React.ComponentType<any>;
+  color: string;
+  description: string;
+  size: 'small' | 'medium' | 'large';
+  position: number;
+  visible: boolean;
+}
+
+interface DashboardLayout {
+  id: string;
+  name: string;
+  description: string;
+  charts: ChartConfig[];
+}
+
+const CHART_TYPES = [
+  { id: 'bar', name: 'Oszlopdiagram', icon: BarChart3, description: 'Kategóriák összehasonlítása' },
+  { id: 'line', name: 'Vonaldiagram', icon: TrendingUp, description: 'Időbeli trendek megjelenítése' },
+  { id: 'area', name: 'Területdiagram', icon: Activity, description: 'Kitöltött területtel' },
+  { id: 'pie', name: 'Kördiagram', icon: PieChart, description: 'Arányok megjelenítése' },
+  { id: 'radial', name: 'Radiális diagram', icon: RotateCcw, description: 'Körkörös megjelenítés' },
+  { id: 'composed', name: 'Kombinált diagram', icon: BarChart3, description: 'Több típus egyben' }
+];
+
+const CHART_SIZES = [
+  { id: 'small', name: 'Kicsi', cols: 'lg:col-span-1', height: 'h-64' },
+  { id: 'medium', name: 'Közepes', cols: 'lg:col-span-2', height: 'h-80' },
+  { id: 'large', name: 'Nagy', cols: 'lg:col-span-3', height: 'h-96' }
+];
+
+const DEFAULT_CHARTS: ChartConfig[] = [
+  {
+    id: 'monthly-trend',
+    title: 'Havi számla trend',
+    type: 'bar',
+    dataKey: 'monthlyData',
+    icon: BarChart3,
+    color: '#1e40af',
+    description: 'Havi számlák alakulása szervezetenként',
+    size: 'medium',
+    position: 1,
+    visible: true
+  },
+  {
+    id: 'expense-trend',
+    title: 'Havi kiadás trend',
+    type: 'area',
+    dataKey: 'expenseData',
+    icon: DollarSign,
+    color: '#dc2626',
+    description: 'Havi kiadások alakulása',
+    size: 'medium',
+    position: 2,
+    visible: true
+  },
+  {
+    id: 'organization-distribution',
+    title: 'Szervezetek megoszlása',
+    type: 'pie',
+    dataKey: 'organizationData',
+    icon: PieChart,
+    color: '#059669',
+    description: 'Számlák megoszlása szervezetek szerint',
+    size: 'medium',
+    position: 3,
+    visible: true
+  },
+  {
+    id: 'payment-distribution',
+    title: 'Fizetési módok',
+    type: 'pie',
+    dataKey: 'paymentTypeData',
+    icon: CreditCard,
+    color: '#7c3aed',
+    description: 'Fizetési módok megoszlása',
+    size: 'medium',
+    position: 4,
+    visible: true
+  },
+  {
+    id: 'weekly-activity',
+    title: 'Heti aktivitás',
+    type: 'area',
+    dataKey: 'weeklyTrend',
+    icon: Activity,
+    color: '#059669',
+    description: 'Heti számla aktivitás',
+    size: 'large',
+    position: 5,
+    visible: true
+  }
+];
+
+const PRESET_LAYOUTS: DashboardLayout[] = [
+  {
+    id: 'default',
+    name: 'Alapértelmezett',
+    description: 'Kiegyensúlyozott áttekintés minden fontos metrikával',
+    charts: DEFAULT_CHARTS
+  },
+  {
+    id: 'financial',
+    name: 'Pénzügyi fókusz',
+    description: 'Kiadások és pénzügyi trendek hangsúlyozása',
+    charts: [
+      { ...DEFAULT_CHARTS[1], position: 1, size: 'large' },
+      { ...DEFAULT_CHARTS[3], position: 2, size: 'medium' },
+      { ...DEFAULT_CHARTS[2], position: 3, size: 'medium' },
+      { ...DEFAULT_CHARTS[0], position: 4, size: 'medium', type: 'line' }
+    ]
+  },
+  {
+    id: 'operational',
+    name: 'Működési áttekintés',
+    description: 'Napi működésre és aktivitásra összpontosítva',
+    charts: [
+      { ...DEFAULT_CHARTS[4], position: 1, size: 'large' },
+      { ...DEFAULT_CHARTS[0], position: 2, size: 'medium' },
+      { ...DEFAULT_CHARTS[2], position: 3, size: 'small' },
+      { ...DEFAULT_CHARTS[3], position: 4, size: 'small' }
+    ]
+  },
+  {
+    id: 'executive',
+    name: 'Vezetői összefoglaló',
+    description: 'Magas szintű KPI-k és trendek',
+    charts: [
+      { ...DEFAULT_CHARTS[1], position: 1, size: 'large', type: 'composed' },
+      { ...DEFAULT_CHARTS[0], position: 2, size: 'medium', type: 'line' },
+      { ...DEFAULT_CHARTS[2], position: 3, size: 'medium', type: 'radial' }
+    ]
+  }
+];
+
 export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats>({
     totalInvoices: 0,
@@ -71,6 +210,12 @@ export const Dashboard: React.FC = () => {
   const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
   const [showWeekHistory, setShowWeekHistory] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // Chart customization state
+  const [currentLayout, setCurrentLayout] = useState<DashboardLayout>(PRESET_LAYOUTS[0]);
+  const [customizationMode, setCustomizationMode] = useState(false);
+  const [editingChart, setEditingChart] = useState<string | null>(null);
+  const [showLayoutSelector, setShowLayoutSelector] = useState(false);
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -88,7 +233,58 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    loadSavedLayout();
   }, []);
+
+  const loadSavedLayout = () => {
+    const savedLayout = localStorage.getItem('dashboard-layout');
+    if (savedLayout) {
+      try {
+        const layout = JSON.parse(savedLayout);
+        setCurrentLayout(layout);
+      } catch (error) {
+        console.error('Error loading saved layout:', error);
+      }
+    }
+  };
+
+  const saveLayout = (layout: DashboardLayout) => {
+    localStorage.setItem('dashboard-layout', JSON.stringify(layout));
+    setCurrentLayout(layout);
+    addNotification('success', 'Dashboard elrendezés mentve!');
+  };
+
+  const updateChartConfig = (chartId: string, updates: Partial<ChartConfig>) => {
+    const updatedCharts = currentLayout.charts.map(chart =>
+      chart.id === chartId ? { ...chart, ...updates } : chart
+    );
+    
+    const updatedLayout = {
+      ...currentLayout,
+      charts: updatedCharts
+    };
+    
+    setCurrentLayout(updatedLayout);
+  };
+
+  const toggleChartVisibility = (chartId: string) => {
+    updateChartConfig(chartId, { 
+      visible: !currentLayout.charts.find(c => c.id === chartId)?.visible 
+    });
+  };
+
+  const changeChartType = (chartId: string, newType: ChartConfig['type']) => {
+    updateChartConfig(chartId, { type: newType });
+  };
+
+  const changeChartSize = (chartId: string, newSize: ChartConfig['size']) => {
+    updateChartConfig(chartId, { size: newSize });
+  };
+
+  const resetToDefaultLayout = () => {
+    setCurrentLayout(PRESET_LAYOUTS[0]);
+    addNotification('info', 'Dashboard visszaállítva az alapértelmezett elrendezésre');
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -294,33 +490,6 @@ export const Dashboard: React.FC = () => {
     });
   };
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    if (direction === 'prev' && currentWeekIndex < weekHistory.length - 1) {
-      const newIndex = currentWeekIndex + 1;
-      setCurrentWeekIndex(newIndex);
-      setChartData(prev => ({
-        ...prev,
-        weeklyTrend: weekHistory[newIndex]?.data || []
-      }));
-    } else if (direction === 'next' && currentWeekIndex > 0) {
-      const newIndex = currentWeekIndex - 1;
-      setCurrentWeekIndex(newIndex);
-      setChartData(prev => ({
-        ...prev,
-        weeklyTrend: weekHistory[newIndex]?.data || []
-      }));
-    }
-  };
-
-  const selectWeek = (index: number) => {
-    setCurrentWeekIndex(index);
-    setChartData(prev => ({
-      ...prev,
-      weeklyTrend: weekHistory[index]?.data || []
-    }));
-    setShowWeekHistory(false);
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('hu-HU', {
       style: 'currency',
@@ -339,34 +508,211 @@ export const Dashboard: React.FC = () => {
     }).format(new Date(dateString));
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'processing':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'uploaded':
-        return 'bg-blue-100 text-blue-800';
-      case 'error':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const renderChart = (config: ChartConfig) => {
+    if (!config.visible) return null;
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Feldolgozva';
-      case 'processing':
-        return 'Feldolgozás alatt';
-      case 'uploaded':
-        return 'Feltöltve';
-      case 'error':
-        return 'Hiba';
-      default:
-        return 'Ismeretlen';
-    }
+    const data = chartData[config.dataKey as keyof ChartData];
+    const sizeConfig = CHART_SIZES.find(s => s.id === config.size) || CHART_SIZES[1];
+
+    const chartContent = () => {
+      switch (config.type) {
+        case 'bar':
+          return (
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey={config.dataKey === 'monthlyData' ? 'month' : 'day'} stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} />
+              <Tooltip content={<CustomTooltip />} />
+              {config.dataKey === 'monthlyData' && (
+                <>
+                  <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
+                </>
+              )}
+              {config.dataKey === 'weeklyTrend' && (
+                <Bar dataKey="invoices" fill={config.color} name="Számlák" radius={[2, 2, 0, 0]} />
+              )}
+            </BarChart>
+          );
+
+        case 'line':
+          return (
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey={config.dataKey === 'monthlyData' ? 'month' : config.dataKey === 'expenseData' ? 'month' : 'day'} stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} />
+              <Tooltip content={<CustomTooltip />} />
+              {config.dataKey === 'monthlyData' && (
+                <>
+                  <Line type="monotone" dataKey="alapitvany" stroke="#1e40af" strokeWidth={3} name="Alapítvány" />
+                  <Line type="monotone" dataKey="ovoda" stroke="#ea580c" strokeWidth={3} name="Óvoda" />
+                </>
+              )}
+              {config.dataKey === 'expenseData' && (
+                <Line type="monotone" dataKey="expenses" stroke={config.color} strokeWidth={3} name="Kiadások" />
+              )}
+              {config.dataKey === 'weeklyTrend' && (
+                <Line type="monotone" dataKey="invoices" stroke={config.color} strokeWidth={3} name="Számlák" />
+              )}
+            </LineChart>
+          );
+
+        case 'area':
+          return (
+            <AreaChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey={config.dataKey === 'expenseData' ? 'month' : 'day'} stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} />
+              <Tooltip content={<CustomTooltip />} />
+              {config.dataKey === 'expenseData' && (
+                <Area type="monotone" dataKey="expenses" stroke="#dc2626" fill="#ef4444" fillOpacity={0.3} strokeWidth={3} />
+              )}
+              {config.dataKey === 'weeklyTrend' && (
+                <Area type="monotone" dataKey="invoices" stroke={config.color} fill={config.color} fillOpacity={0.3} strokeWidth={3} />
+              )}
+            </AreaChart>
+          );
+
+        case 'pie':
+          return (
+            <RechartsPieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={config.size === 'small' ? 20 : 30}
+                outerRadius={config.size === 'small' ? 40 : 60}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {(data as any[]).map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip 
+                formatter={(value: any, name: string, props: any) => [
+                  `${value} számla (${formatCurrency(props.payload.amount)})`,
+                  name
+                ]}
+              />
+            </RechartsPieChart>
+          );
+
+        case 'radial':
+          return (
+            <RadialBarChart data={data} innerRadius="10%" outerRadius="80%">
+              <RadialBar dataKey="value" cornerRadius={10} fill={config.color} />
+              <Tooltip />
+            </RadialBarChart>
+          );
+
+        case 'composed':
+          return (
+            <ComposedChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey={config.dataKey === 'expenseData' ? 'month' : 'month'} stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} />
+              <Tooltip content={<CustomTooltip />} />
+              {config.dataKey === 'expenseData' && (
+                <>
+                  <Bar dataKey="count" fill="#3b82f6" name="Számlák száma" />
+                  <Line type="monotone" dataKey="expenses" stroke="#dc2626" strokeWidth={3} name="Kiadások" />
+                </>
+              )}
+              {config.dataKey === 'monthlyData' && (
+                <>
+                  <Bar dataKey="total" fill="#6b7280" name="Összes számla" />
+                  <Line type="monotone" dataKey="amount" stroke="#059669" strokeWidth={3} name="Összeg" />
+                </>
+              )}
+            </ComposedChart>
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <div key={config.id} className={`${sizeConfig.cols} ${customizationMode ? 'ring-2 ring-blue-200' : ''}`}>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 h-full">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+              <config.icon className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+              {config.title}
+            </h3>
+            
+            {customizationMode && (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setEditingChart(editingChart === config.id ? null : config.id)}
+                  className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                  title="Diagram szerkesztése"
+                >
+                  <Edit3 className="h-4 w-4 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => toggleChartVisibility(config.id)}
+                  className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                  title={config.visible ? 'Elrejtés' : 'Megjelenítés'}
+                >
+                  <Eye className={`h-4 w-4 ${config.visible ? 'text-blue-600' : 'text-gray-400'}`} />
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {editingChart === config.id && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Diagram típusa</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {CHART_TYPES.map(type => (
+                    <button
+                      key={type.id}
+                      onClick={() => changeChartType(config.id, type.id as ChartConfig['type'])}
+                      className={`p-2 text-xs rounded-md border transition-colors ${
+                        config.type === type.id 
+                          ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <type.icon className="h-4 w-4 mx-auto mb-1" />
+                      {type.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Méret</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {CHART_SIZES.map(size => (
+                    <button
+                      key={size.id}
+                      onClick={() => changeChartSize(config.id, size.id as ChartConfig['size'])}
+                      className={`p-2 text-xs rounded-md border transition-colors ${
+                        config.size === size.id 
+                          ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {size.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className={sizeConfig.height}>
+            <ResponsiveContainer width="100%" height="100%">
+              {chartContent()}
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -390,45 +736,6 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
-  const WeeklyTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-gray-600">{data.date}</p>
-          <p className="text-sm text-green-600">
-            Számlák: {data.invoices}
-          </p>
-          {data.amount > 0 && (
-            <p className="text-sm text-gray-500">
-              Összeg: {formatCurrency(data.amount)}
-            </p>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const ExpenseTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-red-600">
-            Kiadás: {formatCurrency(data.expenses)}
-          </p>
-          <p className="text-sm text-gray-500">
-            Számlák: {data.count} db
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -439,8 +746,6 @@ export const Dashboard: React.FC = () => {
       </div>
     );
   }
-
-  const currentWeek = weekHistory[currentWeekIndex];
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -496,13 +801,86 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Áttekintés</h2>
             <p className="text-gray-600 text-sm sm:text-base">Számla feldolgozási statisztikák és üzleti elemzések</p>
           </div>
-          <button
-            onClick={fetchDashboardData}
-            className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Frissítés
-          </button>
+          
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <button
+                onClick={() => setShowLayoutSelector(!showLayoutSelector)}
+                className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <Grid className="h-4 w-4 mr-2" />
+                Elrendezés
+              </button>
+              
+              {showLayoutSelector && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                  <div className="p-3">
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">Előre beállított elrendezések</h3>
+                    <div className="space-y-2">
+                      {PRESET_LAYOUTS.map(layout => (
+                        <button
+                          key={layout.id}
+                          onClick={() => {
+                            setCurrentLayout(layout);
+                            setShowLayoutSelector(false);
+                            addNotification('success', `${layout.name} elrendezés alkalmazva`);
+                          }}
+                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                            currentLayout.id === layout.id 
+                              ? 'border-blue-500 bg-blue-50' 
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="font-medium text-sm text-gray-900">{layout.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">{layout.description}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => setCustomizationMode(!customizationMode)}
+              className={`inline-flex items-center px-3 sm:px-4 py-2 border text-sm font-medium rounded-lg shadow-sm transition-colors ${
+                customizationMode 
+                  ? 'border-blue-500 text-blue-700 bg-blue-50' 
+                  : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              {customizationMode ? 'Kész' : 'Testreszabás'}
+            </button>
+            
+            {customizationMode && (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => saveLayout(currentLayout)}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  Mentés
+                </button>
+                
+                <button
+                  onClick={resetToDefaultLayout}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                >
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Visszaállítás
+                </button>
+              </div>
+            )}
+            
+            <button
+              onClick={fetchDashboardData}
+              className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Frissítés
+            </button>
+          </div>
         </div>
       </div>
 
@@ -561,236 +939,11 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
-        {/* Monthly Trend Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-              Havi számla trend
-            </h3>
-          </div>
-          <div className="h-48 sm:h-64 lg:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData.monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
-                <YAxis stroke="#6b7280" fontSize={10} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Monthly Expense Trend */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-600" />
-              Havi kiadás trend
-            </h3>
-          </div>
-          <div className="h-48 sm:h-64 lg:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData.expenseData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
-                <YAxis stroke="#6b7280" fontSize={10} />
-                <Tooltip content={<ExpenseTooltip />} />
-                <Area 
-                  type="monotone" 
-                  dataKey="expenses" 
-                  stroke="#dc2626" 
-                  fill="#ef4444" 
-                  fillOpacity={0.3}
-                  strokeWidth={3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Distribution Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
-        {/* Organization Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-            <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-            Szervezetek szerinti megoszlás
-          </h3>
-          <div className="h-40 sm:h-48 lg:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie
-                  data={chartData.organizationData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={30}
-                  outerRadius={60}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {chartData.organizationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any, name: string, props: any) => [
-                    `${value} számla (${formatCurrency(props.payload.amount)})`,
-                    name
-                  ]}
-                />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
-            {chartData.organizationData.map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-1">
-                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
-                  <span className="text-sm font-medium text-gray-900">{item.value}</span>
-                </div>
-                <p className="text-xs text-gray-600 truncate">{item.name}</p>
-                <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Payment Method Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-            <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
-            Fizetési módok megoszlása
-          </h3>
-          <div className="h-40 sm:h-48 lg:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie
-                  data={chartData.paymentTypeData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={30}
-                  outerRadius={60}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {chartData.paymentTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any, name: string, props: any) => [
-                    `${value} számla (${formatCurrency(props.payload.amount)})`,
-                    name
-                  ]}
-                />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
-            {chartData.paymentTypeData.map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-1">
-                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
-                  <span className="text-sm font-medium text-gray-900">{item.value}</span>
-                </div>
-                <p className="text-xs text-gray-600 truncate">{item.name}</p>
-                <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Weekly Activity */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6 lg:mb-8">
-        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-            <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-            Heti aktivitás
-          </h3>
-          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
-            {currentWeek && (
-              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
-                {currentWeek.weekLabel}
-              </span>
-            )}
-            <div className="flex items-center justify-center space-x-2">
-              <button
-                onClick={() => navigateWeek('prev')}
-                disabled={currentWeekIndex >= weekHistory.length - 1}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Előző hét"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setShowWeekHistory(!showWeekHistory)}
-                className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-              >
-                <History className="h-4 w-4" />
-                <span>Előzmények</span>
-              </button>
-              <button
-                onClick={() => navigateWeek('next')}
-                disabled={currentWeekIndex <= 0}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Következő hét"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Week History Dropdown */}
-        {showWeekHistory && (
-          <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {weekHistory.map((week, index) => (
-                <button
-                  key={index}
-                  onClick={() => selectWeek(index)}
-                  className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
-                    index === currentWeekIndex
-                      ? 'bg-blue-100 border-blue-300 text-blue-800'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium truncate">{week.weekLabel}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="h-48 sm:h-64 lg:h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData.weeklyTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
-              <YAxis stroke="#6b7280" fontSize={10} />
-              <Tooltip content={<WeeklyTooltip />} />
-              <Area 
-                type="monotone" 
-                dataKey="invoices" 
-                stroke="#059669" 
-                fill="#10b981" 
-                fillOpacity={0.3}
-                name="Számlák száma"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Customizable Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+        {currentLayout.charts
+          .sort((a, b) => a.position - b.position)
+          .map(config => renderChart(config))}
       </div>
 
       {/* Recent Invoices */}
