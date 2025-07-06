@@ -594,8 +594,7 @@ export const InvoiceUpload: React.FC = () => {
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
               Dokumentum előnézet
             </h4>
-            {/* Only show zoom controls on desktop */}
-            <div className="hidden sm:flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => setPreviewZoom(Math.max(0.5, previewZoom - 0.25))}
                 className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
@@ -627,19 +626,18 @@ export const InvoiceUpload: React.FC = () => {
         <div className="flex-1 bg-gray-50 overflow-hidden">
           <div className="w-full h-full overflow-auto">
             {file.file.type === 'application/pdf' ? (
-              <div className="w-full h-full flex items-center justify-center bg-white p-2 sm:p-4">
+              <div className="w-full h-full flex items-center justify-center bg-white p-4">
                 <iframe
                   src={file.previewUrl}
-                  className="border-0 rounded-lg shadow-sm w-full h-full"
+                  className="border-0 rounded-lg shadow-sm"
                   style={{
-                    // Mobile: Full width and height, no zoom controls
-                    width: isMobile ? '100%' : `${Math.min(95, 85 * previewZoom)}%`,
-                    height: isMobile ? '100%' : `${Math.min(95, 85 * previewZoom)}%`,
-                    minWidth: isMobile ? '100%' : '320px',
-                    minHeight: isMobile ? '100%' : '450px',
+                    width: `${Math.min(95, 85 * previewZoom)}%`,
+                    height: `${Math.min(95, 85 * previewZoom)}%`,
+                    minWidth: '320px',
+                    minHeight: '450px',
                     maxWidth: '100%',
                     maxHeight: '100%',
-                    transform: isMobile ? 'none' : `rotate(${previewRotation}deg)`,
+                    transform: `rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
                     transition: 'transform 0.2s ease'
                   }}
@@ -647,21 +645,15 @@ export const InvoiceUpload: React.FC = () => {
                 />
               </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
+              <div className="w-full h-full flex items-center justify-center p-4">
                 <img
                   src={file.previewUrl}
                   alt="Invoice preview"
                   className="max-w-full max-h-full object-contain rounded-lg shadow-sm"
                   style={{
-                    // Mobile: Fit to container, no zoom/rotation
-                    transform: isMobile ? 'none' : `scale(${previewZoom}) rotate(${previewRotation}deg)`,
+                    transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
-                    transition: 'transform 0.2s ease',
-                    // Ensure full visibility on mobile
-                    width: isMobile ? 'auto' : 'auto',
-                    height: isMobile ? 'auto' : 'auto',
-                    maxWidth: isMobile ? '100%' : 'none',
-                    maxHeight: isMobile ? '100%' : 'none'
+                    transition: 'transform 0.2s ease'
                   }}
                 />
               </div>
@@ -789,7 +781,7 @@ export const InvoiceUpload: React.FC = () => {
             {uploadedFiles.map((uploadedFile) => (
               <div key={uploadedFile.id} className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 {/* Left Column: Document Preview (Always Visible) */}
-                <div className="order-2 xl:order-1 h-[50vh] sm:h-[60vh] xl:h-[800px]">
+                <div className="order-2 xl:order-1 h-[70vh] sm:h-[600px] xl:h-[800px]">
                   {renderDocumentPreview(uploadedFile)}
                 </div>
 
