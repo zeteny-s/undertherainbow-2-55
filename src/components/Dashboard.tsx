@@ -79,7 +79,7 @@ const CHART_TYPES = [
 const CHART_SIZES = [
   { id: 'small', name: 'Kicsi', cols: 'lg:col-span-1', height: 'h-64' },
   { id: 'medium', name: 'Közepes', cols: 'lg:col-span-2', height: 'h-80' },
-  { id: 'large', name: 'Nagy', cols: 'lg:col-span-3', height: 'h-96' }
+  { id: 'large', name: 'Nagy', cols: 'lg:col-span-4', height: 'h-96' }
 ];
 
 const DEFAULT_CHARTS: ChartConfig[] = [
@@ -115,7 +115,7 @@ const DEFAULT_CHARTS: ChartConfig[] = [
     icon: PieChart,
     color: '#059669',
     description: 'Számlák megoszlása szervezetek szerint',
-    size: 'medium',
+    size: 'small',
     position: 3,
     visible: true
   },
@@ -127,7 +127,7 @@ const DEFAULT_CHARTS: ChartConfig[] = [
     icon: CreditCard,
     color: '#7c3aed',
     description: 'Fizetési módok megoszlása',
-    size: 'medium',
+    size: 'small',
     position: 4,
     visible: true
   },
@@ -798,7 +798,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Header */}
-      <div className="mb-4 sm:mb-6 lg:mb-8">
+      <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Áttekintés</h2>
@@ -891,8 +891,8 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Összes számla</p>
@@ -905,7 +905,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Teljes összeg</p>
@@ -918,7 +918,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi számlák</p>
@@ -931,7 +931,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi kiadás</p>
@@ -946,15 +946,15 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Customizable Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
         {currentLayout.charts
           .sort((a, b) => a.position - b.position)
           .map(config => renderChart(config))}
       </div>
 
       {/* Recent Invoices */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-        <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6">
+        <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-4 lg:mb-6 flex items-center">
           <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-600" />
           Legutóbbi számlák
         </h3>
