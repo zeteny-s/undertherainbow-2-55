@@ -71,9 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
           <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
         </button>
         
-        <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-          {menuItems.find(item => item.id === activeTab)?.label || 'Számla kezelő'}
-        </h1>
+       
         
         <button
           onClick={() => setShowProfileModal(true)}
