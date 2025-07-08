@@ -24,7 +24,10 @@ import {
   Layers,
   Palette,
   Download,
-  Upload
+  Upload,
+  Sparkles,
+  Zap,
+  Star
 } from 'lucide-react';
 import { DashboardWidget } from './DashboardWidget';
 import { WidgetLibrary } from './WidgetLibrary';
@@ -39,6 +42,7 @@ interface WidgetConfig {
   title: string;
   icon: React.ComponentType<any>;
   color: string;
+  gradient: string;
   data?: any;
   settings?: any;
 }
@@ -73,6 +77,7 @@ const WIDGET_TYPES = {
     title: 'Havi trend',
     icon: BarChart3,
     color: 'blue',
+    gradient: 'from-blue-500 to-blue-600',
     minW: 4,
     minH: 3,
     defaultSize: { w: 6, h: 4 }
@@ -81,6 +86,7 @@ const WIDGET_TYPES = {
     title: 'Szervezetek megoszlása',
     icon: PieChart,
     color: 'purple',
+    gradient: 'from-purple-500 to-purple-600',
     minW: 3,
     minH: 3,
     defaultSize: { w: 4, h: 4 }
@@ -88,7 +94,8 @@ const WIDGET_TYPES = {
   'payment-pie': {
     title: 'Fizetési módok',
     icon: PieChart,
-    color: 'green',
+    color: 'emerald',
+    gradient: 'from-emerald-500 to-emerald-600',
     minW: 3,
     minH: 3,
     defaultSize: { w: 4, h: 4 }
@@ -97,6 +104,7 @@ const WIDGET_TYPES = {
     title: 'Heti aktivitás',
     icon: TrendingUp,
     color: 'orange',
+    gradient: 'from-orange-500 to-orange-600',
     minW: 4,
     minH: 3,
     defaultSize: { w: 8, h: 4 }
@@ -105,14 +113,16 @@ const WIDGET_TYPES = {
     title: 'Kiadás trend',
     icon: DollarSign,
     color: 'red',
+    gradient: 'from-red-500 to-red-600',
     minW: 4,
     minH: 3,
     defaultSize: { w: 6, h: 4 }
   },
   'key-metrics': {
     title: 'Kulcs mutatók',
-    icon: FileText,
+    icon: Sparkles,
     color: 'indigo',
+    gradient: 'from-indigo-500 to-indigo-600',
     minW: 2,
     minH: 1,
     defaultSize: { w: 12, h: 2 }
@@ -120,7 +130,8 @@ const WIDGET_TYPES = {
   'recent-invoices': {
     title: 'Legutóbbi számlák',
     icon: Calendar,
-    color: 'gray',
+    color: 'slate',
+    gradient: 'from-slate-500 to-slate-600',
     minW: 4,
     minH: 3,
     defaultSize: { w: 8, h: 5 }
@@ -258,13 +269,13 @@ export const DashboardCustomizer: React.FC = () => {
         name: 'Feketerigó Alapítvány', 
         value: alapitvanyInvoices.length, 
         amount: alapitvanyInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
-        color: '#1e40af' 
+        color: '#3b82f6' 
       },
       { 
         name: 'Feketerigó Alapítványi Óvoda', 
         value: ovodaInvoices.length, 
         amount: ovodaInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
-        color: '#ea580c' 
+        color: '#f97316' 
       }
     ];
   };
@@ -278,13 +289,13 @@ export const DashboardCustomizer: React.FC = () => {
         name: 'Banki átutalás', 
         value: bankTransferInvoices.length, 
         amount: bankTransferInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
-        color: '#059669' 
+        color: '#10b981' 
       },
       { 
         name: 'Kártya/Készpénz/Utánvét', 
         value: cardCashInvoices.length, 
         amount: cardCashInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
-        color: '#7c3aed' 
+        color: '#8b5cf6' 
       }
     ];
   };
@@ -364,50 +375,57 @@ export const DashboardCustomizer: React.FC = () => {
         id: 'key-metrics',
         type: 'key-metrics',
         title: 'Kulcs mutatók',
-        icon: FileText,
-        color: 'indigo'
+        icon: Sparkles,
+        color: 'indigo',
+        gradient: 'from-indigo-500 to-indigo-600'
       },
       {
         id: 'monthly-trend',
         type: 'monthly-trend',
         title: 'Havi trend',
         icon: BarChart3,
-        color: 'blue'
+        color: 'blue',
+        gradient: 'from-blue-500 to-blue-600'
       },
       {
         id: 'expense-trend',
         type: 'expense-trend',
         title: 'Kiadás trend',
         icon: DollarSign,
-        color: 'red'
+        color: 'red',
+        gradient: 'from-red-500 to-red-600'
       },
       {
         id: 'organization-pie',
         type: 'organization-pie',
         title: 'Szervezetek megoszlása',
         icon: PieChart,
-        color: 'purple'
+        color: 'purple',
+        gradient: 'from-purple-500 to-purple-600'
       },
       {
         id: 'payment-pie',
         type: 'payment-pie',
         title: 'Fizetési módok',
         icon: PieChart,
-        color: 'green'
+        color: 'emerald',
+        gradient: 'from-emerald-500 to-emerald-600'
       },
       {
         id: 'weekly-activity',
         type: 'weekly-activity',
         title: 'Heti aktivitás',
         icon: TrendingUp,
-        color: 'orange'
+        color: 'orange',
+        gradient: 'from-orange-500 to-orange-600'
       },
       {
         id: 'recent-invoices',
         type: 'recent-invoices',
         title: 'Legutóbbi számlák',
         icon: Calendar,
-        color: 'gray'
+        color: 'slate',
+        gradient: 'from-slate-500 to-slate-600'
       }
     ];
 
@@ -487,7 +505,8 @@ export const DashboardCustomizer: React.FC = () => {
       type: widgetType,
       title: widgetConfig.title,
       icon: widgetConfig.icon,
-      color: widgetConfig.color
+      color: widgetConfig.color,
+      gradient: widgetConfig.gradient
     };
 
     const newLayoutItem: LayoutItem = {
@@ -584,40 +603,52 @@ export const DashboardCustomizer: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-lg text-gray-600">Dashboard betöltése...</span>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-purple-600 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+          </div>
+          <div className="mt-6">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Dashboard betöltése</h3>
+            <p className="text-gray-600">Adatok feldolgozása és vizualizáció előkészítése...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Notifications */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
+      <div className="fixed bottom-6 right-6 z-50 space-y-3 w-80 max-w-[calc(100vw-3rem)]">
         {notifications.map((notification) => (
           <div
             key={notification.id}
-            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
+            className={`bg-white/95 backdrop-blur-sm shadow-xl rounded-2xl border overflow-hidden transform transition-all duration-500 ease-out ${
+              notification.type === 'success' ? 'border-green-200' :
+              notification.type === 'error' ? 'border-red-200' : 'border-blue-200'
+            }`}
+            style={{
+              animation: 'slideInRight 0.5s ease-out'
+            }}
           >
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   {notification.type === 'success' && (
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                      <Settings className="h-4 w-4 text-green-600" />
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                      <Star className="h-4 w-4 text-white" />
                     </div>
                   )}
                   {notification.type === 'error' && (
-                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                      <X className="h-4 w-4 text-red-600" />
+                    <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-rose-500 rounded-full flex items-center justify-center">
+                      <X className="h-4 w-4 text-white" />
                     </div>
                   )}
                   {notification.type === 'info' && (
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Settings className="h-4 w-4 text-blue-600" />
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                      <Zap className="h-4 w-4 text-white" />
                     </div>
                   )}
                 </div>
@@ -628,7 +659,7 @@ export const DashboardCustomizer: React.FC = () => {
                 </div>
                 <div className="ml-4 flex-shrink-0">
                   <button
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"
                     onClick={() => removeNotification(notification.id)}
                   >
                     <X className="h-4 w-4" />
@@ -640,166 +671,187 @@ export const DashboardCustomizer: React.FC = () => {
         ))}
       </div>
 
-      {/* Header */}
-      <div className="mb-4 sm:mb-6 lg:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center">
-              <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600" />
-              {isCustomizing ? 'Dashboard testreszabása' : 'Áttekintés'}
-            </h2>
-            <p className="text-gray-600 text-sm sm:text-base">
-              {isCustomizing 
-                ? 'Húzza és méretezze át a widgeteket, vagy válasszon előre definiált elrendezést'
-                : 'Számla feldolgozási statisztikák és üzleti elemzések'
-              }
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {/* Breakpoint Indicator */}
-            {isCustomizing && (
-              <div className="flex items-center space-x-1 px-2 py-1 bg-gray-100 rounded-lg">
-                {React.createElement(getBreakpointIcon(currentBreakpoint), { 
-                  className: "h-4 w-4 text-gray-600" 
-                })}
-                <span className="text-xs font-medium text-gray-600 uppercase">
-                  {currentBreakpoint}
-                </span>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 lg:py-10">
+        {/* Header */}
+        <div className="mb-8 sm:mb-10 lg:mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+            <div>
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg">
+                  <BarChart3 className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                    {isCustomizing ? 'Dashboard Studio' : 'Üzleti Áttekintés'}
+                  </h1>
+                  <p className="text-gray-600 text-base sm:text-lg mt-1">
+                    {isCustomizing 
+                      ? 'Professzionális dashboard testreszabás élő előnézettel'
+                      : 'Valós idejű üzleti intelligencia és adatvizualizáció'
+                    }
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Breakpoint Indicator */}
+              {isCustomizing && (
+                <div className="flex items-center space-x-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
+                  {React.createElement(getBreakpointIcon(currentBreakpoint), { 
+                    className: "h-4 w-4 text-gray-600" 
+                  })}
+                  <span className="text-sm font-medium text-gray-700 uppercase">
+                    {currentBreakpoint}
+                  </span>
+                </div>
+              )}
 
-            {isCustomizing ? (
-              <>
-                <button
-                  onClick={() => setShowLayoutPresets(true)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                  <Layout className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Sablonok</span>
-                </button>
-                
-                <button
-                  onClick={() => setShowWidgetLibrary(true)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Widget</span>
-                </button>
-
-                <div className="flex items-center space-x-2">
-                  <label className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors cursor-pointer">
-                    <Upload className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Import</span>
-                    <input
-                      type="file"
-                      accept=".json"
-                      onChange={importLayout}
-                      className="sr-only"
-                    />
-                  </label>
+              {isCustomizing ? (
+                <>
+                  <button
+                    onClick={() => setShowLayoutPresets(true)}
+                    className="inline-flex items-center px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-gray-200 text-sm font-medium rounded-xl text-gray-700 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                  >
+                    <Layout className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Sablonok</span>
+                  </button>
                   
                   <button
-                    onClick={exportLayout}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    onClick={() => setShowWidgetLibrary(true)}
+                    className="inline-flex items-center px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-gray-200 text-sm font-medium rounded-xl text-gray-700 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Export</span>
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Widget</span>
                   </button>
-                </div>
 
-                <button
-                  onClick={resetLayout}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Reset</span>
-                </button>
+                  <div className="flex items-center space-x-2">
+                    <label className="inline-flex items-center px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-gray-200 text-sm font-medium rounded-xl text-gray-700 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 cursor-pointer">
+                      <Upload className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Import</span>
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={importLayout}
+                        className="sr-only"
+                      />
+                    </label>
+                    
+                    <button
+                      onClick={exportLayout}
+                      className="inline-flex items-center px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-gray-200 text-sm font-medium rounded-xl text-gray-700 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Export</span>
+                    </button>
+                  </div>
 
-                <button
-                  onClick={saveLayout}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Mentés
-                </button>
+                  <button
+                    onClick={resetLayout}
+                    className="inline-flex items-center px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-gray-200 text-sm font-medium rounded-xl text-gray-700 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Reset</span>
+                  </button>
 
+                  <button
+                    onClick={saveLayout}
+                    className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-sm font-medium rounded-xl shadow-lg text-white hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Mentés
+                  </button>
+
+                  <button
+                    onClick={() => setIsCustomizing(false)}
+                    className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-sm font-medium rounded-xl shadow-lg text-white hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Kész
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={() => setIsCustomizing(false)}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  onClick={() => setIsCustomizing(true)}
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-sm font-medium rounded-xl shadow-lg text-white hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
                 >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Kész
+                  <Settings className="h-4 w-4 mr-2" />
+                  Testreszabás
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsCustomizing(true)}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Testreszabás
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Dashboard Grid */}
+        <div className={`transition-all duration-300 ${isDragging ? 'cursor-grabbing' : ''} ${isCustomizing ? 'p-4 bg-white/30 backdrop-blur-sm rounded-3xl border border-white/50' : ''}`}>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={layouts}
+            onLayoutChange={onLayoutChange}
+            onBreakpointChange={onBreakpointChange}
+            onDragStart={() => setIsDragging(true)}
+            onDragStop={() => setIsDragging(false)}
+            onResizeStart={() => setIsDragging(true)}
+            onResizeStop={() => setIsDragging(false)}
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
+            cols={{ lg: 12, md: 10, sm: 6, xs: 4 }}
+            rowHeight={70}
+            isDraggable={isCustomizing}
+            isResizable={isCustomizing}
+            margin={[20, 20]}
+            containerPadding={[0, 0]}
+            useCSSTransforms={true}
+            transformScale={1}
+            compactType="vertical"
+            preventCollision={false}
+            autoSize={true}
+            draggableHandle=".drag-handle"
+            resizeHandles={['se']}
+          >
+            {widgets.map((widget) => (
+              <div key={widget.id} className="widget-container">
+                <DashboardWidget
+                  widget={widget}
+                  data={dashboardData}
+                  isCustomizing={isCustomizing}
+                  onRemove={() => removeWidget(widget.id)}
+                />
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        </div>
+
+        {/* Widget Library Modal */}
+        {showWidgetLibrary && (
+          <WidgetLibrary
+            onAddWidget={addWidget}
+            onClose={() => setShowWidgetLibrary(false)}
+            availableTypes={WIDGET_TYPES}
+          />
+        )}
+
+        {/* Layout Presets Modal */}
+        {showLayoutPresets && (
+          <LayoutPresets
+            onApplyPreset={applyPresetLayout}
+            onClose={() => setShowLayoutPresets(false)}
+          />
+        )}
       </div>
 
-      {/* Dashboard Grid */}
-      <div className={`transition-all duration-300 ${isDragging ? 'cursor-grabbing' : ''}`}>
-        <ResponsiveGridLayout
-          className="layout"
-          layouts={layouts}
-          onLayoutChange={onLayoutChange}
-          onBreakpointChange={onBreakpointChange}
-          onDragStart={() => setIsDragging(true)}
-          onDragStop={() => setIsDragging(false)}
-          onResizeStart={() => setIsDragging(true)}
-          onResizeStop={() => setIsDragging(false)}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 4 }}
-          rowHeight={60}
-          isDraggable={isCustomizing}
-          isResizable={isCustomizing}
-          margin={[16, 16]}
-          containerPadding={[0, 0]}
-          useCSSTransforms={true}
-          transformScale={1}
-          compactType="vertical"
-          preventCollision={false}
-          autoSize={true}
-          draggableHandle=".drag-handle"
-          resizeHandles={['se']}
-        >
-          {widgets.map((widget) => (
-            <div key={widget.id} className="widget-container">
-              <DashboardWidget
-                widget={widget}
-                data={dashboardData}
-                isCustomizing={isCustomizing}
-                onRemove={() => removeWidget(widget.id)}
-              />
-            </div>
-          ))}
-        </ResponsiveGridLayout>
-      </div>
-
-      {/* Widget Library Modal */}
-      {showWidgetLibrary && (
-        <WidgetLibrary
-          onAddWidget={addWidget}
-          onClose={() => setShowWidgetLibrary(false)}
-          availableTypes={WIDGET_TYPES}
-        />
-      )}
-
-      {/* Layout Presets Modal */}
-      {showLayoutPresets && (
-        <LayoutPresets
-          onApplyPreset={applyPresetLayout}
-          onClose={() => setShowLayoutPresets(false)}
-        />
-      )}
+      <style jsx>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };
