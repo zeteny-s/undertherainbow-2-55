@@ -10,7 +10,7 @@ interface ProcessedData {
   Bankszámlaszám?: string;
   Tárgy?: string;
   'Számla sorszáma'?: string;
-  Összeg?: number;
+  Összeg?: number | string;
   'Számla kelte'?: string;
   'Fizetési határidő'?: string;
   paymentType?: 'bank_transfer' | 'card_cash_afterpay';
@@ -56,6 +56,21 @@ export const InvoiceUpload: React.FC = () => {
 
   // Check if device is mobile
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  const parseHungarianCurrency = (value: string | number | undefined): number => {
+    if (typeof value === 'number') return value;
+    if (!value || typeof value !== 'string') return 0;
+    
+    // Remove currency symbols and normalize the string
+    const cleanValue = value
+      .replace(/HUF|Ft|€|EUR|\$|USD/gi, '') // Remove currency symbols
+      .replace(/\s+/g, '') // Remove all spaces (thousands separators)
+      .replace(',', '.') // Replace comma with dot for decimal point
+      .trim();
+    
+    const parsed = parseFloat(cleanValue);
+    return isNaN(parsed) ? 0 : parsed;
+  };
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -276,6 +291,9 @@ export const InvoiceUpload: React.FC = () => {
       const paymentType = processedData.Bankszámlaszám ? 'bank_transfer' : 'card_cash_afterpay';
       processedData.paymentType = paymentType;
       processedData.Munkaszám = '';
+      
+      // Parse the amount to ensure it's a valid number
+      processedData.Összeg = parseHungarianCurrency(processedData.Összeg);
 
       let finalOrganization: 'alapitvany' | 'ovoda' = 'alapitvany';
       
@@ -435,7 +453,7 @@ export const InvoiceUpload: React.FC = () => {
         const updatedData = { ...file.extractedData };
         
         if (field === 'Összeg') {
-          updatedData[field] = parseFloat(tempEditValue) || 0;
+          updatedData[field] = parseHungarianCurrency(tempEditValue);
         } else {
           updatedData[field as keyof ProcessedData] = tempEditValue as any;
         }
