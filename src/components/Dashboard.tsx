@@ -303,7 +303,7 @@ export const Dashboard: React.FC = () => {
     const partnerSpending: { [key: string]: { amount: number; count: number } } = {};
     
     invoices.forEach(invoice => {
-      if (invoice.partner && invoice.amount) {
+      if (invoice.partner && invoice.amount && invoice.amount > 0) {
         const partner = invoice.partner.trim();
         if (!partnerSpending[partner]) {
           partnerSpending[partner] = { amount: 0, count: 0 };
@@ -315,8 +315,9 @@ export const Dashboard: React.FC = () => {
     
     // Convert to array and sort by amount (descending)
     const partnersArray = Object.entries(partnerSpending)
+      .filter(([, data]) => data.amount > 0) // Only include partners with positive spending
       .map(([partner, data]) => ({
-        partner: partner.length > 25 ? partner.substring(0, 25) + '...' : partner,
+        partner: partner.length > 20 ? partner.substring(0, 20) + '...' : partner,
         fullPartner: partner,
         amount: data.amount,
         invoiceCount: data.count
@@ -325,7 +326,7 @@ export const Dashboard: React.FC = () => {
       .slice(0, 5); // Top 5 partners
     
     // Add colors
-    const colors = ['#1e40af', '#dc2626', '#059669', '#7c3aed', '#ea580c'];
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
     
     return partnersArray.map((partner, index) => ({
       ...partner,
@@ -433,17 +434,17 @@ export const Dashboard: React.FC = () => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg max-w-xs">
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
           <p className="font-semibold text-gray-900 mb-2">{data.fullPartner || label}</p>
           <div className="space-y-1">
             <p className="text-sm text-green-600 font-medium">
-              Összeg: {formatCurrency(data.amount)}
+              💰 Összeg: {formatCurrency(data.amount)}
             </p>
             <p className="text-sm text-gray-600">
-              Számlák: {data.invoiceCount} db
+              📄 Számlák: {data.invoiceCount} db
             </p>
             <p className="text-xs text-gray-500">
-              Átlag/számla: {formatCurrency(data.amount / data.invoiceCount)}
+              📊 Átlag/számla: {formatCurrency(data.amount / data.invoiceCount)}
             </p>
           </div>
         </div>
@@ -652,40 +653,11 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
             <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-              Legmagasabb Partneri Kiadások
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+              Legmagasabb partneri kiadások
             </h3>
           </div>
-          <div className="h-48 sm:h-64 lg:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={chartData.topPartnersData} 
-                layout="horizontal"
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis 
-                  type="number" 
-                  stroke="#6b7280" 
-                  fontSize={10}
-                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
-                />
-                <YAxis 
-                  type="category" 
-                  dataKey="partner" 
-                  stroke="#6b7280" 
-                  fontSize={10}
-                  width={80}
-                />
-                <Tooltip content={<TopPartnersTooltip />} />
-                <Bar 
-                  dataKey="amount" 
-                  fill="#1e40af"
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          
           {chartData.topPartnersData.length === 0 && (
             <div className="text-center py-8">
               <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
@@ -694,6 +666,73 @@ export const Dashboard: React.FC = () => {
                 A számlák feldolgozása után itt jelennek meg a legnagyobb kiadású partnerek.
               </p>
             </div>
+          )}
+          
+          {chartData.topPartnersData.length > 0 && (
+            <>
+              <div className="h-48 sm:h-64 lg:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={chartData.topPartnersData} 
+                    layout="horizontal"
+                    margin={{ top: 10, right: 30, left: 5, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis 
+                      type="number" 
+                      stroke="#64748b" 
+                      fontSize={11}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis 
+                      type="category" 
+                      dataKey="partner" 
+                      stroke="#64748b" 
+                      fontSize={11}
+                      width={100}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip content={<TopPartnersTooltip />} />
+                    <Bar 
+                      dataKey="amount" 
+                      radius={[0, 6, 6, 0]}
+                    >
+                      {chartData.topPartnersData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              {/* Partner Legend */}
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {chartData.topPartnersData.map((partner, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+                    <div 
+                      className="w-3 h-3 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: partner.color }}
+                    ></div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate" title={partner.fullPartner}>
+                        {partner.partner}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-green-600 font-semibold">
+                          {formatCurrency(partner.amount)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {partner.invoiceCount} számla
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
