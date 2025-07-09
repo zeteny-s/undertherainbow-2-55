@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
 import { supabase } from '../lib/supabase';
 import 'react-grid-layout/css/styles.css';
-import 'react-grid-layout/css/resizable.css';
+import 'react-resizable/css/styles.css';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
