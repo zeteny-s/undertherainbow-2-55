@@ -32,6 +32,7 @@ interface ChartData {
   paymentTypeData: Array<{ name: string; value: number; amount: number; color: string }>;
   weeklyTrend: Array<{ day: string; date: string; invoices: number; amount: number }>;
   expenseData: Array<{ month: string; expenses: number; count: number }>;
+  topPartnersData: Array<{ partner: string; amount: number; invoiceCount: number; color: string }>;
 }
 
 interface WeekData {
@@ -64,7 +65,8 @@ export const Dashboard: React.FC = () => {
     organizationData: [],
     paymentTypeData: [],
     weeklyTrend: [],
-    expenseData: []
+    expenseData: [],
+    topPartnersData: []
   });
   const [loading, setLoading] = useState(true);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
@@ -129,6 +131,7 @@ export const Dashboard: React.FC = () => {
       const paymentTypeData = generatePaymentTypeData(invoices || []);
       const weeklyTrend = weekHistoryData[0]?.data || [];
       const expenseData = generateExpenseData(invoices || []);
+      const topPartnersData = generateTopPartnersData(invoices || []);
 
       setStats(calculatedStats);
       setRecentInvoices(invoices?.slice(0, 5) || []);
@@ -137,7 +140,8 @@ export const Dashboard: React.FC = () => {
         organizationData,
         paymentTypeData,
         weeklyTrend,
-        expenseData
+        expenseData,
+        topPartnersData
       });
 
       addNotification('success', 'Adatok sikeresen frissítve');
@@ -294,6 +298,41 @@ export const Dashboard: React.FC = () => {
     });
   };
 
+  const generateTopPartnersData = (invoices: any[]) => {
+    // Group invoices by partner and calculate total spending
+    const partnerSpending: { [key: string]: { amount: number; count: number } } = {};
+    
+    invoices.forEach(invoice => {
+      if (invoice.partner && invoice.amount) {
+        const partner = invoice.partner.trim();
+        if (!partnerSpending[partner]) {
+          partnerSpending[partner] = { amount: 0, count: 0 };
+        }
+        partnerSpending[partner].amount += invoice.amount;
+        partnerSpending[partner].count += 1;
+      }
+    });
+    
+    // Convert to array and sort by amount (descending)
+    const partnersArray = Object.entries(partnerSpending)
+      .map(([partner, data]) => ({
+        partner: partner.length > 25 ? partner.substring(0, 25) + '...' : partner,
+        fullPartner: partner,
+        amount: data.amount,
+        invoiceCount: data.count
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5); // Top 5 partners
+    
+    // Add colors
+    const colors = ['#1e40af', '#dc2626', '#059669', '#7c3aed', '#ea580c'];
+    
+    return partnersArray.map((partner, index) => ({
+      ...partner,
+      color: colors[index % colors.length]
+    }));
+  };
+
   const navigateWeek = (direction: 'prev' | 'next') => {
     if (direction === 'prev' && currentWeekIndex < weekHistory.length - 1) {
       const newIndex = currentWeekIndex + 1;
@@ -384,6 +423,29 @@ export const Dashboard: React.FC = () => {
               )}
             </p>
           ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const TopPartnersTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg max-w-xs">
+          <p className="font-semibold text-gray-900 mb-2">{data.fullPartner || label}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-green-600 font-medium">
+              Összeg: {formatCurrency(data.amount)}
+            </p>
+            <p className="text-sm text-gray-600">
+              Számlák: {data.invoiceCount} db
+            </p>
+            <p className="text-xs text-gray-500">
+              Átlag/számla: {formatCurrency(data.amount / data.invoiceCount)}
+            </p>
+          </div>
         </div>
       );
     }
@@ -586,32 +648,53 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Monthly Expense Trend */}
+        {/* Top Partners Spending Chart */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
             <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-600" />
-              Havi kiadás trend
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+              Legmagasabb Partneri Kiadások
             </h3>
           </div>
           <div className="h-48 sm:h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData.expenseData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
-                <YAxis stroke="#6b7280" fontSize={10} />
-                <Tooltip content={<ExpenseTooltip />} />
-                <Area 
-                  type="monotone" 
-                  dataKey="expenses" 
-                  stroke="#dc2626" 
-                  fill="#ef4444" 
-                  fillOpacity={0.3}
-                  strokeWidth={3}
+              <BarChart 
+                data={chartData.topPartnersData} 
+                layout="horizontal"
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis 
+                  type="number" 
+                  stroke="#6b7280" 
+                  fontSize={10}
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                 />
-              </AreaChart>
+                <YAxis 
+                  type="category" 
+                  dataKey="partner" 
+                  stroke="#6b7280" 
+                  fontSize={10}
+                  width={80}
+                />
+                <Tooltip content={<TopPartnersTooltip />} />
+                <Bar 
+                  dataKey="amount" 
+                  fill="#1e40af"
+                  radius={[0, 4, 4, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
+          {chartData.topPartnersData.length === 0 && (
+            <div className="text-center py-8">
+              <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek partner adatok</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                A számlák feldolgozása után itt jelennek meg a legnagyobb kiadású partnerek.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

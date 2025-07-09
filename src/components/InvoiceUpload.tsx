@@ -625,18 +625,15 @@ export const InvoiceUpload: React.FC = () => {
         </div>
         
         <div className="flex-1 bg-gray-50 overflow-hidden">
-          <div className="w-full h-full overflow-auto">
+          <div className="w-full h-full overflow-auto flex items-center justify-center p-2">
             {file.file.type === 'application/pdf' ? (
-              <div className="w-full h-full flex items-center justify-center bg-white p-1 sm:p-4">
+              <div className="w-full h-full flex items-center justify-center bg-white">
                 <iframe
                   src={file.previewUrl}
-                  className="border-0 rounded-lg shadow-sm"
+                  className="border-0 rounded-lg shadow-sm max-w-full max-h-full"
                   style={{
-                    // Mobile-first responsive sizing
-                    width: '100%',
-                    height: '100%',
-                    maxWidth: '100%',
-                    maxHeight: '100%',
+                    width: window.innerWidth < 640 ? '100%' : '90%',
+                    height: window.innerWidth < 640 ? '100%' : '90%',
                     transform: `rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
                     transition: 'transform 0.2s ease'
@@ -645,19 +642,19 @@ export const InvoiceUpload: React.FC = () => {
                 />
               </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center p-1 sm:p-4">
+              <div className="w-full h-full flex items-center justify-center">
                 <img
                   src={file.previewUrl}
                   alt="Invoice preview"
                   className="max-w-full max-h-full object-contain rounded-lg shadow-sm"
                   style={{
-                    // Ensure full visibility on mobile, zoom controls on desktop
-                    transform: window.innerWidth < 640 ? 'none' : `scale(${previewZoom}) rotate(${previewRotation}deg)`,
+                    transform: window.innerWidth < 640 ? 
+                      `rotate(${previewRotation}deg)` : 
+                      `scale(${previewZoom}) rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
                     transition: 'transform 0.2s ease',
-                    // Mobile: fit to container, Desktop: respect zoom
-                    width: window.innerWidth < 640 ? 'auto' : 'auto',
-                    height: window.innerWidth < 640 ? 'auto' : 'auto'
+                    maxWidth: window.innerWidth < 640 ? '100%' : 'none',
+                    maxHeight: window.innerWidth < 640 ? '100%' : 'none'
                   }}
                 />
               </div>
