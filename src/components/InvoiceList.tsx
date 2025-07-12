@@ -361,12 +361,9 @@ export const InvoiceList: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Mobile Card View */}
         <div className="block lg:hidden">
-          {filteredInvoices.map((invoice) => (
-            <div 
-              key={invoice.id} 
               className="border-b border-gray-200 p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer"
               onClick={() => setSelectedInvoice(invoice)}
-            >
+            <div key={invoice.id} className="border-b border-gray-200 p-3 sm:p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2 flex-1 min-w-0">
                   <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
