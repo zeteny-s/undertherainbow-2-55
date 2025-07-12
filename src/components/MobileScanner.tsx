@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, Check, X, Plus, FileText, Loader, AlertCircle } from 'lucide-react';
+import { Camera, Check, X, Plus, FileText, Loader, AlertCircle, Edit, RotateCcw } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 interface ScannedPage {
@@ -14,22 +14,319 @@ interface MobileScannerProps {
   onClose: () => void;
 }
 
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface ManualCropperProps {
+  imageData: string;
+  initialPoints: Point[];
+  onApply: (points: Point[]) => void;
+  onCancel: () => void;
+}
+
+// Manual Cropper Component using Konva
+const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints, onApply, onCancel }) => {
+  const [points, setPoints] = useState<Point[]>(initialPoints);
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [scale, setScale] = useState(1);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [isDragging, setIsDragging] = useState<number | null>(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const containerWidth = window.innerWidth - 32; // Account for padding
+      const containerHeight = window.innerHeight - 200; // Account for header and buttons
+
+      const scaleX = containerWidth / img.width;
+      const scaleY = containerHeight / img.height;
+      const newScale = Math.min(scaleX, scaleY, 1);
+
+      const displayWidth = img.width * newScale;
+      const displayHeight = img.height * newScale;
+
+      canvas.width = displayWidth;
+      canvas.height = displayHeight;
+
+      setImageSize({ width: displayWidth, height: displayHeight });
+      setScale(newScale);
+
+      // Scale the initial points to match the display size
+      const scaledPoints = initialPoints.map(point => ({
+        x: point.x * newScale,
+        y: point.y * newScale
+      }));
+      setPoints(scaledPoints);
+
+      // Draw the image
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, displayWidth, displayHeight);
+        drawOverlay(ctx, scaledPoints);
+      }
+    };
+    img.src = imageData;
+    imageRef.current = img;
+  }, [imageData, initialPoints]);
+
+  const drawOverlay = (ctx: CanvasRenderingContext2D, currentPoints: Point[]) => {
+    if (currentPoints.length !== 4) return;
+
+    // Clear previous overlay
+    const img = imageRef.current;
+    if (img) {
+      ctx.clearRect(0, 0, imageSize.width, imageSize.height);
+      ctx.drawImage(img, 0, 0, imageSize.width, imageSize.height);
+    }
+
+    // Draw crop area
+    ctx.strokeStyle = '#00ff00';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 4;
+    
+    ctx.beginPath();
+    ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+    for (let i = 1; i < currentPoints.length; i++) {
+      ctx.lineTo(currentPoints[i].x, currentPoints[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Draw corner handles
+    currentPoints.forEach((point, index) => {
+      ctx.fillStyle = '#00ff00';
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 15, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Add corner labels
+      ctx.fillStyle = '#000000';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText((index + 1).toString(), point.x, point.y + 4);
+    });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Find the closest point
+    let closestIndex = -1;
+    let minDistance = Infinity;
+
+    points.forEach((point, index) => {
+      const distance = Math.hypot(x - point.x, y - point.y);
+      if (distance < 30 && distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    if (closestIndex !== -1) {
+      setIsDragging(closestIndex);
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDragging === null) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.max(0, Math.min(imageSize.width, e.clientX - rect.left));
+    const y = Math.max(0, Math.min(imageSize.height, e.clientY - rect.top));
+
+    const newPoints = [...points];
+    newPoints[isDragging] = { x, y };
+    setPoints(newPoints);
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      drawOverlay(ctx, newPoints);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(null);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    // Find the closest point
+    let closestIndex = -1;
+    let minDistance = Infinity;
+
+    points.forEach((point, index) => {
+      const distance = Math.hypot(x - point.x, y - point.y);
+      if (distance < 40 && distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    if (closestIndex !== -1) {
+      setIsDragging(closestIndex);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (isDragging === null) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = Math.max(0, Math.min(imageSize.width, touch.clientX - rect.left));
+    const y = Math.max(0, Math.min(imageSize.height, touch.clientY - rect.top));
+
+    const newPoints = [...points];
+    newPoints[isDragging] = { x, y };
+    setPoints(newPoints);
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      drawOverlay(ctx, newPoints);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    setIsDragging(null);
+  };
+
+  const handleApply = () => {
+    // Scale points back to original image size
+    const originalPoints = points.map(point => ({
+      x: point.x / scale,
+      y: point.y / scale
+    }));
+    onApply(originalPoints);
+  };
+
+  const resetPoints = () => {
+    const scaledPoints = initialPoints.map(point => ({
+      x: point.x * scale,
+      y: point.y * scale
+    }));
+    setPoints(scaledPoints);
+
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx) {
+      drawOverlay(ctx, scaledPoints);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      {/* Header */}
+      <div className="p-4 bg-black border-b border-gray-700">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">Manuális vágás</h3>
+          <button
+            onClick={resetPoints}
+            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
+            title="Visszaállítás"
+          >
+            <RotateCcw className="h-5 w-5 text-white" />
+          </button>
+        </div>
+        <p className="text-sm text-gray-300 mt-1">
+          Húzza a sarkok pontjait a pontos vágáshoz
+        </p>
+      </div>
+
+      {/* Canvas Container */}
+      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          className="max-w-full max-h-full border border-gray-600 rounded-lg cursor-crosshair"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'none' }}
+        />
+      </div>
+
+      {/* Controls */}
+      <div className="p-4 bg-black border-t border-gray-700">
+        <div className="flex items-center justify-between space-x-4">
+          <button
+            onClick={onCancel}
+            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-gray-600 text-sm font-medium rounded-lg text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Mégse
+          </button>
+          <button
+            onClick={handleApply}
+            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Alkalmazás
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, onClose }) => {
   const [scannedPages, setScannedPages] = useState<ScannedPage[]>([]);
-  const [currentStep, setCurrentStep] = useState<'camera' | 'preview' | 'naming'>('camera');
+  const [currentStep, setCurrentStep] = useState<'camera' | 'preview' | 'naming' | 'manualCrop'>('camera');
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [openCVReady, setOpenCVReady] = useState(false);
   const [documentDetected, setDocumentDetected] = useState(false);
   const [fileName, setFileName] = useState('');
+  
+  // Manual cropping state
+  const [manualCropData, setManualCropData] = useState<{
+    imageData: string;
+    originalCanvas: HTMLCanvasElement;
+    detectedPoints: Point[];
+  } | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<number | null>(null);
-  const lastDetectionRef = useRef<any>(null);
+  const lastDetectionRef = useRef<Point[] | null>(null);
 
   // Load OpenCV.js
   useEffect(() => {
@@ -106,8 +403,10 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   }, [openCVReady]);
 
-  // Order points helper function from the example
-  const orderPoints = (pts: any[]) => {
+  // Order points helper function
+  const orderPoints = (pts: Point[]): Point[] => {
+    if (pts.length !== 4) return pts;
+    
     // Order: [topLeft, topRight, bottomRight, bottomLeft]
     const sum = pts.map((p) => p.x + p.y);
     const diff = pts.map((p) => p.y - p.x);
@@ -120,8 +419,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     ];
   };
 
-  // Improved document edge detection using the proven logic
-  const detectDocumentEdges = (canvas: HTMLCanvasElement) => {
+  // Enhanced document edge detection with fallback
+  const detectDocumentEdges = (canvas: HTMLCanvasElement): Point[] | null => {
     if (!window.cv) return null;
 
     try {
@@ -136,8 +435,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       // Convert to grayscale
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      // Apply Gaussian blur with proven parameters
-      cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+      // Apply Gaussian blur with enhanced kernel
+      cv.GaussianBlur(gray, blurred, new cv.Size(7, 7), 0);
 
       // Apply Canny edge detection with proven thresholds
       cv.Canny(blurred, edged, 75, 200);
@@ -149,6 +448,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       let maxArea = 0;
       const minArea = canvas.width * canvas.height * 0.1; // At least 10% of image
 
+      // First pass: Look for perfect quadrilaterals
       for (let i = 0; i < contours.size(); i++) {
         const cnt = contours.get(i);
         const peri = cv.arcLength(cnt, true);
@@ -167,7 +467,49 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         cnt.delete();
       }
 
-      let points = null;
+      // Second pass: If no perfect quadrilateral found, use largest contour with minAreaRect
+      if (!biggest || maxArea < minArea * 2) {
+        console.log('No perfect quadrilateral found, using fallback method');
+        
+        let largestContour = null;
+        let largestArea = 0;
+
+        for (let i = 0; i < contours.size(); i++) {
+          const cnt = contours.get(i);
+          const area = cv.contourArea(cnt);
+          if (area > largestArea && area > minArea) {
+            largestArea = area;
+            if (largestContour) largestContour.delete();
+            largestContour = cnt.clone();
+          }
+          cnt.delete();
+        }
+
+        if (largestContour) {
+          // Use minAreaRect to get a rotated bounding rectangle
+          const rect = cv.minAreaRect(largestContour);
+          const vertices = cv.RotatedRect.points(rect);
+          
+          const points: Point[] = [];
+          for (let i = 0; i < 4; i++) {
+            points.push({ x: vertices[i].x, y: vertices[i].y });
+          }
+
+          largestContour.delete();
+
+          // Cleanup
+          src.delete();
+          gray.delete();
+          blurred.delete();
+          edged.delete();
+          contours.delete();
+          hierarchy.delete();
+
+          return orderPoints(points);
+        }
+      }
+
+      let points: Point[] | null = null;
       if (biggest) {
         points = [];
         for (let i = 0; i < biggest.rows; i++) {
@@ -175,7 +517,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           points.push({ x: pt[0], y: pt[1] });
         }
         
-        // Order the points correctly using the proven function
+        // Order the points correctly
         points = orderPoints(points);
         biggest.delete();
       }
@@ -202,7 +544,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       return;
     }
 
-    console.log('Starting document detection');
+    console.log('Starting enhanced document detection');
 
     const detectDocument = () => {
       if (!videoRef.current || !overlayCanvasRef.current || !cameraReady) return;
@@ -254,12 +596,12 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     };
 
-    // Run detection every 100ms (10 FPS)
-    detectionIntervalRef.current = window.setInterval(detectDocument, 100);
+    // Run detection every 150ms for smoother performance
+    detectionIntervalRef.current = window.setInterval(detectDocument, 150);
   }, [openCVReady, cameraReady]);
 
   // Draw detection overlay
-  const drawDetectionOverlay = (ctx: CanvasRenderingContext2D, contour: any[]) => {
+  const drawDetectionOverlay = (ctx: CanvasRenderingContext2D, contour: Point[]) => {
     // Draw document outline
     ctx.strokeStyle = '#00ff00';
     ctx.lineWidth = 4;
@@ -282,7 +624,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     ctx.shadowBlur = 0;
 
     // Draw corner indicators
-    contour.forEach((point) => {
+    contour.forEach((point, index) => {
       ctx.fillStyle = '#00ff00';
       ctx.beginPath();
       ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
@@ -293,6 +635,12 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       ctx.beginPath();
       ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
       ctx.fill();
+
+      // Corner number
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText((index + 1).toString(), point.x, point.y + 3);
     });
   };
 
@@ -334,8 +682,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   }, [cameraReady, openCVReady, currentStep, startDocumentDetection]);
 
-  // Improved perspective correction using the proven logic
-  const performPerspectiveCorrection = async (canvas: HTMLCanvasElement, contour: any[]): Promise<HTMLCanvasElement> => {
+  // Enhanced perspective correction using proven logic
+  const performPerspectiveCorrection = async (canvas: HTMLCanvasElement, contour: Point[]): Promise<HTMLCanvasElement> => {
     return new Promise((resolve) => {
       try {
         const cv = window.cv;
@@ -457,7 +805,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   }, [cameraReady, processing]);
 
   // Process captured image with live-detected contour
-  const processImage = async (originalCanvas: HTMLCanvasElement, detectedContour: any[] | null) => {
+  const processImage = async (originalCanvas: HTMLCanvasElement, detectedContour: Point[] | null) => {
     try {
       let processedCanvas = originalCanvas;
       const imageData = originalCanvas.toDataURL('image/jpeg', 0.9);
@@ -472,11 +820,46 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         const fallbackContour = detectDocumentEdges(originalCanvas);
         if (fallbackContour && fallbackContour.length === 4) {
           processedCanvas = await performPerspectiveCorrection(originalCanvas, fallbackContour);
+          detectedContour = fallbackContour;
         } else {
-          console.log('No document edges detected, using original image');
+          console.log('No document edges detected, offering manual crop');
+          // If no edges detected, use full image corners for manual cropping
+          detectedContour = [
+            { x: 0, y: 0 },
+            { x: originalCanvas.width, y: 0 },
+            { x: originalCanvas.width, y: originalCanvas.height },
+            { x: 0, y: originalCanvas.height }
+          ];
         }
       }
 
+      // Set up manual cropping data
+      setManualCropData({
+        imageData,
+        originalCanvas,
+        detectedPoints: detectedContour || []
+      });
+
+      // Go to manual crop step
+      setCurrentStep('manualCrop');
+
+    } catch (err) {
+      console.error('Image processing error:', err);
+      setError('Kép feldolgozási hiba. Próbálja újra.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Handle manual crop apply
+  const handleManualCropApply = async (adjustedPoints: Point[]) => {
+    if (!manualCropData) return;
+
+    setProcessing(true);
+    try {
+      // Apply perspective correction with user-adjusted points
+      let processedCanvas = await performPerspectiveCorrection(manualCropData.originalCanvas, adjustedPoints);
+      
       // Enhance image quality
       const enhancedCanvas = enhanceImage(processedCanvas);
       const enhancedImageData = enhancedCanvas.toDataURL('image/jpeg', 0.95);
@@ -484,19 +867,26 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       // Create new scanned page
       const newPage: ScannedPage = {
         id: Date.now().toString(),
-        originalImage: imageData,
+        originalImage: manualCropData.imageData,
         processedImage: enhancedImageData,
         canvas: enhancedCanvas
       };
 
       setScannedPages(prev => [...prev, newPage]);
+      setManualCropData(null);
       setCurrentStep('preview');
     } catch (err) {
-      console.error('Image processing error:', err);
-      setError('Kép feldolgozási hiba. Próbálja újra.');
+      console.error('Manual crop processing error:', err);
+      setError('Manuális vágás feldolgozási hiba. Próbálja újra.');
     } finally {
       setProcessing(false);
     }
+  };
+
+  // Handle manual crop cancel
+  const handleManualCropCancel = () => {
+    setManualCropData(null);
+    setCurrentStep('camera');
   };
 
   // Remove a scanned page
@@ -592,7 +982,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         )}
       </div>
 
-      {/* Camera controls - moved up with extra padding */}
+      {/* Camera controls - positioned higher */}
       <div className="p-4 pb-12 bg-black">
         <div className="flex items-center justify-center">
           {/* Manual capture button - always visible */}
@@ -646,12 +1036,34 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
               <span className="text-sm font-medium text-gray-700">
                 Oldal {index + 1}
               </span>
-              <button
-                onClick={() => removePage(page.id)}
-                className="text-red-600 hover:text-red-800 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    // Set up manual cropping for this page
+                    setManualCropData({
+                      imageData: page.originalImage,
+                      originalCanvas: page.canvas || document.createElement('canvas'),
+                      detectedPoints: [
+                        { x: 0, y: 0 },
+                        { x: page.canvas?.width || 0, y: 0 },
+                        { x: page.canvas?.width || 0, y: page.canvas?.height || 0 },
+                        { x: 0, y: page.canvas?.height || 0 }
+                      ]
+                    });
+                    setCurrentStep('manualCrop');
+                  }}
+                  className="text-blue-600 hover:text-blue-800 transition-colors"
+                  title="Manuális vágás"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => removePage(page.id)}
+                  className="text-red-600 hover:text-red-800 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <div className="p-3">
               <img
@@ -809,6 +1221,14 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       {currentStep === 'camera' && renderCameraView()}
       {currentStep === 'preview' && renderPreviewView()}
       {currentStep === 'naming' && renderNamingView()}
+      {currentStep === 'manualCrop' && manualCropData && (
+        <ManualCropper
+          imageData={manualCropData.imageData}
+          initialPoints={manualCropData.detectedPoints}
+          onApply={handleManualCropApply}
+          onCancel={handleManualCropCancel}
+        />
+      )}
     </div>
   );
 };
