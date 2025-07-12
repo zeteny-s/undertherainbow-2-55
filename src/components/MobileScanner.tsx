@@ -26,8 +26,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [documentDetected, setDocumentDetected] = useState(false);
-  const [autoCapture, setAutoCapture] = useState(false);
-  const [captureCountdown, setCaptureCountdown] = useState(0);
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
   const [documentName, setDocumentName] = useState('');
@@ -42,8 +40,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const cropCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const detectionIntervalRef = useRef<number | null>(null);
-  const captureTimeoutRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
   // Load OpenCV.js
@@ -151,9 +147,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       return;
     }
 
-    let stableDetectionCount = 0;
-    let lastCorners: Point[] = [];
-
     const detectDocument = () => {
       if (!videoRef.current || !overlayCanvasRef.current || !cameraReady || !window.cv) return;
 
@@ -188,35 +181,12 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         const corners = detectDocumentEdgesOpenCV(tempCanvas);
 
         if (corners && corners.length === 4) {
-          // Check if detection is stable
-          if (isCornersStable(corners, lastCorners)) {
-            stableDetectionCount++;
-            
-            if (stableDetectionCount >= 15 && !processing) {
-              setDocumentDetected(true);
-              setDetectedCorners(corners);
-              
-              if (!autoCapture && !captureTimeoutRef.current) {
-                setAutoCapture(true);
-                startCaptureCountdown();
-              }
-            }
-          } else {
-            stableDetectionCount = 0;
-          }
-
+          setDocumentDetected(true);
+          setDetectedCorners(corners);
           drawDetectionOverlay(overlayCtx, corners);
-          lastCorners = corners;
         } else {
           setDocumentDetected(false);
-          setAutoCapture(false);
           setDetectedCorners([]);
-          stableDetectionCount = 0;
-          if (captureTimeoutRef.current) {
-            clearTimeout(captureTimeoutRef.current);
-            captureTimeoutRef.current = null;
-            setCaptureCountdown(0);
-          }
         }
 
       } catch (error) {
@@ -227,7 +197,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     };
 
     animationFrameRef.current = requestAnimationFrame(detectDocument);
-  }, [cameraReady, processing, opencvReady]);
+  }, [cameraReady, opencvReady]);
 
   // OpenCV.js document edge detection
   const detectDocumentEdgesOpenCV = (canvas: HTMLCanvasElement): Point[] | null => {
@@ -328,23 +298,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     });
   };
 
-  // Check if corners are stable
-  const isCornersStable = (newCorners: Point[], lastCorners: Point[]): boolean => {
-    if (lastCorners.length !== 4) return true;
-
-    const threshold = 20; // pixels
-
-    for (let i = 0; i < 4; i++) {
-      const dx = Math.abs(newCorners[i].x - lastCorners[i].x);
-      const dy = Math.abs(newCorners[i].y - lastCorners[i].y);
-      if (dx > threshold || dy > threshold) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   // Draw detection overlay
   const drawDetectionOverlay = (ctx: CanvasRenderingContext2D, corners: Point[]) => {
     // Draw document outline
@@ -383,30 +336,11 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     });
   };
 
-  // Start capture countdown
-  const startCaptureCountdown = () => {
-    setCaptureCountdown(3);
-    
-    const countdown = (count: number) => {
-      if (count > 0) {
-        setCaptureCountdown(count);
-        captureTimeoutRef.current = window.setTimeout(() => countdown(count - 1), 1000);
-      } else {
-        setCaptureCountdown(0);
-        capturePhoto();
-      }
-    };
-
-    captureTimeoutRef.current = window.setTimeout(() => countdown(2), 1000);
-  };
-
-  // Capture photo
+  // Capture photo with automatic cropping
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !cameraReady || processing) return;
 
     setProcessing(true);
-    setAutoCapture(false);
-    setCaptureCountdown(0);
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -426,7 +360,20 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     
     // Use detected corners or default to full image
     if (detectedCorners.length === 4) {
-      setCurrentStep('crop');
+      // Automatically crop using detected corners
+      const croppedImage = cropImage(detectedCorners, imageData);
+      
+      const newPage: ScannedPage = {
+        id: Date.now().toString(),
+        originalImage: imageData,
+        croppedImage,
+        corners: detectedCorners
+      };
+
+      setScannedPages(prev => [...prev, newPage]);
+      setCurrentCapture(null);
+      setDetectedCorners([]);
+      setCurrentStep('preview');
     } else {
       // If no corners detected, use full image corners
       setDetectedCorners([
@@ -442,8 +389,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   }, [cameraReady, processing, detectedCorners]);
 
   // Crop the captured image using OpenCV perspective transform
-  const cropImage = (corners: Point[]): string => {
-    if (!currentCapture || !cropCanvasRef.current || !window.cv) return '';
+  const cropImage = (corners: Point[], imageData?: string): string => {
+    const sourceImage = imageData || currentCapture;
+    if (!sourceImage || !cropCanvasRef.current || !window.cv) return '';
 
     const canvas = cropCanvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -506,7 +454,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       }
     };
-    img.src = currentCapture;
+    img.src = sourceImage;
 
     return canvas.toDataURL('image/jpeg', 0.95);
   };
@@ -636,16 +584,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
 
   // Cleanup camera
   const cleanupCamera = useCallback(() => {
-    if (detectionIntervalRef.current) {
-      clearInterval(detectionIntervalRef.current);
-      detectionIntervalRef.current = null;
-    }
-    
-    if (captureTimeoutRef.current) {
-      clearTimeout(captureTimeoutRef.current);
-      captureTimeoutRef.current = null;
-    }
-
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -658,8 +596,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     
     setCameraReady(false);
     setDocumentDetected(false);
-    setAutoCapture(false);
-    setCaptureCountdown(0);
   }, []);
 
   useEffect(() => {
@@ -718,30 +654,10 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
             </div>
           )}
           
-          {documentDetected && !autoCapture && (
-            <div className="bg-green-500 bg-opacity-90 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 animate-pulse">
+          {documentDetected && (
+            <div className="bg-green-500 bg-opacity-90 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2">
               <Check className="h-4 w-4" />
               <span>Dokumentum észlelve</span>
-            </div>
-          )}
-          
-          {autoCapture && captureCountdown > 0 && (
-            <div className="bg-red-500 bg-opacity-90 text-white px-6 py-3 rounded-full text-xl font-bold flex items-center justify-center min-w-[120px]">
-              <span>{captureCountdown}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Corner guides */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-8 left-8 w-8 h-8 border-l-4 border-t-4 border-white opacity-60"></div>
-          <div className="absolute top-8 right-8 w-8 h-8 border-r-4 border-t-4 border-white opacity-60"></div>
-          <div className="absolute bottom-8 left-8 w-8 h-8 border-l-4 border-b-4 border-white opacity-60"></div>
-          <div className="absolute bottom-8 right-8 w-8 h-8 border-r-4 border-b-4 border-white opacity-60"></div>
-          
-          {cameraReady && opencvReady && !documentDetected && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-64 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-pulse"></div>
             </div>
           )}
         </div>
@@ -756,8 +672,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         )}
       </div>
 
-      {/* Bottom controls - Always visible */}
-      <div className="bg-black bg-opacity-90 p-4 z-10">
+      {/* Bottom controls - Moved up to avoid Google window overlap */}
+      <div className="bg-black bg-opacity-90 p-4 pb-8 z-10">
         <div className="flex items-center justify-between max-w-sm mx-auto">
           {/* Flash toggle */}
           {cameraFacing === 'environment' && (
