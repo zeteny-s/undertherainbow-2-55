@@ -544,86 +544,165 @@ export const InvoiceList: React.FC = () => {
 
       {/* Invoice Detail Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Számla részletei</h3>
-                <button
-                  onClick={() => setSelectedInvoice(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center space-x-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Számla részletei</h3>
+                  <button
+                    onClick={() => downloadFile(selectedInvoice)}
+                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Letöltés
+                  </button>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => downloadFile(selectedInvoice)}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Számla letöltése"
+                  >
+                    <Download className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedInvoice(null)}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             </div>
             
-            <div className="p-4 sm:p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Alapinformációk</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm text-gray-500">Fájlnév</label>
-                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.file_name}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Szervezet</label>
-                      <div className="flex items-center mt-1">
-                        {selectedInvoice.organization === 'alapitvany' ? (
-                          <>
-                            <Building2 className="h-4 w-4 text-blue-800 mr-2" />
-                            <span className="text-sm text-gray-900">Alapítvány</span>
-                          </>
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full grid grid-cols-1 lg:grid-cols-2">
+                {/* Document Preview */}
+                <div className="bg-gray-50 border-r border-gray-200 flex flex-col">
+                  <div className="p-4 border-b border-gray-200 bg-white">
+                    <h4 className="text-sm font-medium text-gray-900 flex items-center">
+                      <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                      Dokumentum előnézet
+                    </h4>
+                  </div>
+                  <div className="flex-1 p-4 overflow-auto">
+                    {selectedInvoice.file_url ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        {selectedInvoice.file_name.toLowerCase().endsWith('.pdf') ? (
+                          <iframe
+                            src={selectedInvoice.file_url}
+                            className="w-full h-full min-h-[500px] border-0 rounded-lg shadow-sm bg-white"
+                            title="PDF Preview"
+                          />
                         ) : (
-                          <>
-                            <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
-                            <span className="text-sm text-gray-900">Óvoda</span>
-                          </>
+                          <img
+                            src={selectedInvoice.file_url}
+                            alt="Invoice preview"
+                            className="max-w-full max-h-full object-contain rounded-lg shadow-sm bg-white"
+                          />
                         )}
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Partner</label>
-                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.partner || '-'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Számlaszám</label>
-                      <p className="text-sm font-medium text-gray-900">{selectedInvoice.invoice_number || '-'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Összeg</label>
-                      <p className="text-sm font-medium text-gray-900">{formatCurrency(selectedInvoice.amount)}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Tárgy</label>
-                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.subject || '-'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Számla kelte</label>
-                      <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.invoice_date)}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Fizetési határidő</label>
-                      <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.payment_deadline)}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Fizetési mód</label>
-                      <p className="text-sm font-medium text-gray-900">{selectedInvoice.payment_method || '-'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-500">Bankszámlaszám</label>
-                      <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.bank_account || '-'}</p>
-                    </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500">
+                        <div className="text-center">
+                          <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                          <p className="text-sm">Nincs elérhető előnézet</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Kinyert szöveg</h4>
-                  <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                    <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words">
-                      {selectedInvoice.extracted_text || 'Nincs kinyert szöveg'}
-                    </pre>
+                {/* Invoice Details */}
+                <div className="bg-white flex flex-col">
+                  <div className="p-4 border-b border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-900">Számla adatok</h4>
+                  </div>
+                  <div className="flex-1 p-4 overflow-y-auto">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Fájlnév</label>
+                          <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.file_name}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Szervezet</label>
+                          <div className="flex items-center">
+                            {selectedInvoice.organization === 'alapitvany' ? (
+                              <>
+                                <Building2 className="h-4 w-4 text-blue-800 mr-2" />
+                                <span className="text-sm text-gray-900">Alapítvány</span>
+                              </>
+                            ) : (
+                              <>
+                                <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
+                                <span className="text-sm text-gray-900">Óvoda</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Partner</label>
+                          <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.partner || '-'}</p>
+                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Összeg</label>
+                          <p className="text-sm font-medium text-gray-900">{formatCurrency(selectedInvoice.amount)}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Fizetési mód</label>
+                          <p className="text-sm font-medium text-gray-900">{selectedInvoice.payment_method || '-'}</p>
+                        </div>
+                      </div>
+                        <div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Tárgy</label>
+                        <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.subject || '-'}</p>
+                      </div>
+                          <label className="block text-xs text-gray-500 mb-1">Számlaszám</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Számla kelte</label>
+                          <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.invoice_date)}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Fizetési határidő</label>
+                          <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.payment_deadline)}</p>
+                        </div>
+                      </div>
+                          <p className="text-sm font-medium text-gray-900">{selectedInvoice.invoice_number || '-'}</p>
+                      {selectedInvoice.bank_account && (
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Bankszámlaszám</label>
+                          <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.bank_account}</p>
+                        </div>
+                      )}
+                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Feltöltve</label>
+                          <p className="text-sm text-gray-900">{formatDate(selectedInvoice.uploaded_at)}</p>
+                        </div>
+                        {selectedInvoice.processed_at && (
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Feldolgozva</label>
+                            <p className="text-sm text-gray-900">{formatDate(selectedInvoice.processed_at)}</p>
+                          </div>
+                        )}
+                      </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Állapot</label>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedInvoice.status)}`}>
+                          {getStatusText(selectedInvoice.status)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
