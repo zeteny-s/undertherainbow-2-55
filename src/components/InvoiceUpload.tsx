@@ -939,15 +939,6 @@ export const InvoiceUpload: React.FC = () => {
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
                         <h4 className="text-base sm:text-lg font-semibold text-gray-900">Kinyert számla adatok</h4>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                          <button
-                            onClick={() => setSelectedFile(uploadedFile)}
-                            className="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Nyers szöveg megtekintése</span>
-                            <span className="sm:hidden">Nyers szöveg</span>
-                          </button>
-                          
                           {hasUnsavedChanges.has(uploadedFile.id) && (
                             <button
                               onClick={() => finalizeChanges(uploadedFile.id)}
@@ -1109,42 +1100,6 @@ export const InvoiceUpload: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Data Verification Modal */}
-        {selectedFile && selectedFile.extractedData && !editingData && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Nyers OCR szöveg</h3>
-                  <button
-                    onClick={() => setSelectedFile(null)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-4 sm:p-6">
-                <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                  <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words">
-                    {selectedFile.extractedText || 'Nincs kinyert szöveg'}
-                  </pre>
-                </div>
-                
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => setSelectedFile(null)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Bezárás
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
