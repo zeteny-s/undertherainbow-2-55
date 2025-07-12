@@ -1032,7 +1032,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       </div>
 
       {/* Scanned pages */}
-      <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${hasProceededToNaming ? 'hidden md:block' : 'block'}`}>
+      <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${hasProceededToNaming ? 'hidden md:block' : ''}`}>
         {scannedPages.map((page, index) => (
           <div key={page.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-3 border-b border-gray-100 flex items-center justify-between">
@@ -1080,16 +1080,11 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       </div>
 
       {/* Mobile-only page count indicator */}
-      <div className={`md:hidden p-4 bg-gray-50 border-t border-gray-200 ${hasProceededToNaming ? 'block' : 'hidden'}`}>
+      <div className={`md:hidden p-4 bg-gray-50 border-t border-gray-200 ${hasProceededToNaming ? '' : 'hidden'}`}>
         <div className="text-center">
-          {hasProceededToNaming && (
-            <p className="text-xs text-gray-500 mt-1">
-              Adatok feldolgozása folyamatban...
-            </p>
-          )}
           {scannedPages.length > 0 && (
             <p className="text-xs text-gray-500 mt-1">
-              Az előnézet asztali nézetben érhető el
+              {scannedPages.length} oldal beolvasva - Az előnézet asztali nézetben érhető el
             </p>
           )}
         </div>
