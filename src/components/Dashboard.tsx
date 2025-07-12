@@ -70,8 +70,11 @@ export const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  const [currentExpenseWeekIndex, setCurrentExpenseWeekIndex] = useState(0);
   const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
+  const [expenseWeekHistory, setExpenseWeekHistory] = useState<WeekData[]>([]);
   const [showWeekHistory, setShowWeekHistory] = useState(false);
+  const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
@@ -125,6 +128,7 @@ export const Dashboard: React.FC = () => {
 
       const weekHistoryData = generateWeekHistory(invoices || []);
       setWeekHistory(weekHistoryData);
+      setExpenseWeekHistory(weekHistoryData);
 
       const monthlyData = generateMonthlyData(invoices || []);
       const organizationData = generateOrganizationData(invoices || []);
@@ -318,12 +322,11 @@ export const Dashboard: React.FC = () => {
     // Convert to array and sort by amount (descending)
     const partnersArray = Object.entries(partnerSpending)
       .filter(([, data]) => data.amount > 0) // Only include partners with positive spending
-      .map(([partner, data], index) => ({
-        partner: partner.length > 15 ? partner.substring(0, 15) + '...' : partner,
+      .map(([partner, data]) => ({
+        partner: partner.length > 12 ? partner.substring(0, 12) + '...' : partner,
         fullPartner: partner,
         amount: data.amount,
         invoiceCount: data.count,
-        color: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'][index % 5]
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5); // Top 5 partners
@@ -337,26 +340,50 @@ export const Dashboard: React.FC = () => {
       setCurrentWeekIndex(newIndex);
       setChartData(prev => ({
         ...prev,
-        weeklyTrend: weekHistory[newIndex]?.data || [],
-        weeklyExpenseTrend: weekHistory[newIndex]?.data || []
+        weeklyTrend: weekHistory[newIndex]?.data || []
       }));
     } else if (direction === 'next' && currentWeekIndex > 0) {
       const newIndex = currentWeekIndex - 1;
       setCurrentWeekIndex(newIndex);
       setChartData(prev => ({
         ...prev,
-        weeklyTrend: weekHistory[newIndex]?.data || [],
-        weeklyExpenseTrend: weekHistory[newIndex]?.data || []
+        weeklyTrend: weekHistory[newIndex]?.data || []
       }));
     }
+  };
+
+  const navigateExpenseWeek = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentExpenseWeekIndex < expenseWeekHistory.length - 1) {
+      const newIndex = currentExpenseWeekIndex + 1;
+      setCurrentExpenseWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyExpenseTrend: expenseWeekHistory[newIndex]?.data || []
+      }));
+    } else if (direction === 'next' && currentExpenseWeekIndex > 0) {
+      const newIndex = currentExpenseWeekIndex - 1;
+      setCurrentExpenseWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyExpenseTrend: expenseWeekHistory[newIndex]?.data || []
+      }));
+    }
+  };
+
+  const selectExpenseWeek = (index: number) => {
+    setCurrentExpenseWeekIndex(index);
+    setChartData(prev => ({
+      ...prev,
+      weeklyExpenseTrend: expenseWeekHistory[index]?.data || []
+    }));
+    setShowExpenseWeekHistory(false);
   };
 
   const selectWeek = (index: number) => {
     setCurrentWeekIndex(index);
     setChartData(prev => ({
       ...prev,
-      weeklyTrend: weekHistory[index]?.data || [],
-      weeklyExpenseTrend: weekHistory[index]?.data || []
+      weeklyTrend: weekHistory[index]?.data || []
     }));
     setShowWeekHistory(false);
   };
@@ -523,6 +550,7 @@ export const Dashboard: React.FC = () => {
   }
 
   const currentWeek = weekHistory[currentWeekIndex];
+  const currentExpenseWeek = expenseWeekHistory[currentExpenseWeekIndex];
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -645,322 +673,370 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
-        {/* Monthly Trend Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-              Havi számla trend
-            </h3>
-          </div>
-          <div className="h-48 sm:h-64 lg:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData.monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
-                <YAxis stroke="#6b7280" fontSize={10} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Top Partners Spending Chart - Fixed */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-              Legmagasabb partneri kiadások
-            </h3>
-          </div>
-          
-          {chartData.topPartnersData.length === 0 && (
-            <div className="text-center py-8">
-              <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek partner adatok</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                A számlák feldolgozása után itt jelennek meg a legnagyobb kiadású partnerek.
-              </p>
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8">
+        {/* First Row: Monthly Trend and Top Partners */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          {/* Monthly Trend Chart */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                Havi számla trend
+              </h3>
             </div>
-          )}
-          
-          {chartData.topPartnersData.length > 0 && (
             <div className="h-48 sm:h-64 lg:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData.topPartnersData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <BarChart data={chartData.monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="partner" 
-                    stroke="#6b7280" 
-                    fontSize={10}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                    interval={0}
-                  />
-                  <YAxis 
-                    stroke="#6b7280" 
-                    fontSize={10}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
-                  />
-                  <Tooltip content={<TopPartnersTooltip />} />
-                  <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                    {chartData.topPartnersData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
+                  <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                  <YAxis stroke="#6b7280" fontSize={10} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Distribution Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
-        {/* Organization Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-            <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-            Szervezetek szerinti megoszlás
-          </h3>
-          <div className="h-40 sm:h-48 lg:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie
-                  data={chartData.organizationData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={30}
-                  outerRadius={60}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {chartData.organizationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any, name: string, props: any) => [
-                    `${value} számla (${formatCurrency(props.payload.amount)})`,
-                    name
-                  ]}
-                />
-              </RechartsPieChart>
-            </ResponsiveContainer>
           </div>
-          <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
-            {chartData.organizationData.map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-1">
-                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
-                  <span className="text-sm font-medium text-gray-900">{item.value}</span>
-                </div>
-                <p className="text-xs text-gray-600 truncate">{item.name}</p>
-                <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
+
+          {/* Top Partners Spending Chart - Completely Redesigned */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+                Legmagasabb partneri kiadások
+              </h3>
+            </div>
+            
+            {chartData.topPartnersData.length === 0 && (
+              <div className="text-center py-12">
+                <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek partner adatok</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  A számlák feldolgozása után itt jelennek meg a legnagyobb kiadású partnerek.
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Payment Method Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-            <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
-            Fizetési módok megoszlása
-          </h3>
-          <div className="h-40 sm:h-48 lg:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie
-                  data={chartData.paymentTypeData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={30}
-                  outerRadius={60}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {chartData.paymentTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any, name: string, props: any) => [
-                    `${value} számla (${formatCurrency(props.payload.amount)})`,
-                    name
-                  ]}
-                />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
-            {chartData.paymentTypeData.map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-1">
-                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
-                  <span className="text-sm font-medium text-gray-900">{item.value}</span>
-                </div>
-                <p className="text-xs text-gray-600 truncate">{item.name}</p>
-                <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Weekly Activity */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6 lg:mb-8">
-        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-            <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-            Heti aktivitás
-          </h3>
-          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
-            {currentWeek && (
-              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
-                {currentWeek.weekLabel}
-              </span>
             )}
-            <div className="flex items-center justify-center space-x-2">
-              <button
-                onClick={() => navigateWeek('prev')}
-                disabled={currentWeekIndex >= weekHistory.length - 1}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Előző hét"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setShowWeekHistory(!showWeekHistory)}
-                className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-              >
-                <History className="h-4 w-4" />
-                <span>Előzmények</span>
-              </button>
-              <button
-                onClick={() => navigateWeek('next')}
-                disabled={currentWeekIndex <= 0}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Következő hét"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+            
+            {chartData.topPartnersData.length > 0 && (
+              <div className="h-48 sm:h-64 lg:h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={chartData.topPartnersData} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                    <XAxis 
+                      dataKey="partner" 
+                      stroke="#374151" 
+                      fontSize={11}
+                      fontWeight={500}
+                      angle={-45}
+                      textAnchor="end"
+                      height={90}
+                      interval={0}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <YAxis 
+                      stroke="#374151" 
+                      fontSize={11}
+                      fontWeight={500}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <Tooltip content={<TopPartnersTooltip />} />
+                    <Bar 
+                      dataKey="amount" 
+                      radius={[6, 6, 0, 0]}
+                      fill="url(#partnerGradient)"
+                    >
+                      {chartData.topPartnersData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'][index]} 
+                        />
+                      ))}
+                    </Bar>
+                    <defs>
+                      <linearGradient id="partnerGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.8}/>
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.3}/>
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Weekly Expense Trend - MOVED TO 3RD POSITION */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-600" />
+              Heti kiadás trend
+            </h3>
+            <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+              {expenseWeekHistory[currentExpenseWeekIndex] && (
+                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+                  {expenseWeekHistory[currentExpenseWeekIndex].weekLabel}
+                </span>
+              )}
+              <div className="flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => navigateExpenseWeek('prev')}
+                  disabled={currentExpenseWeekIndex >= expenseWeekHistory.length - 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Előző hét"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setShowExpenseWeekHistory(!showExpenseWeekHistory)}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <History className="h-4 w-4" />
+                  <span>Előzmények</span>
+                </button>
+                <button
+                  onClick={() => navigateExpenseWeek('next')}
+                  disabled={currentExpenseWeekIndex <= 0}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Következő hét"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Expense Week History Dropdown */}
+          {showExpenseWeekHistory && (
+            <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Kiadás heti előzmények</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {expenseWeekHistory.map((week, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectExpenseWeek(index)}
+                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                      index === currentExpenseWeekIndex
+                        ? 'bg-red-100 border-red-300 text-red-800'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium truncate">{week.weekLabel}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatCurrency(week.data.reduce((sum, day) => sum + day.amount, 0))}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="h-48 sm:h-64 lg:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData.weeklyExpenseTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
+                <YAxis 
+                  stroke="#6b7280" 
+                  fontSize={10} 
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                  domain={[0, 'dataMax']}
+                />
+                <Tooltip content={<WeeklyExpenseTooltip />} />
+                <Area 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="#dc2626" 
+                  fill="#ef4444" 
+                  fillOpacity={0.3}
+                  name="Kiadás összege"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        {/* Week History Dropdown */}
-        {showWeekHistory && (
-          <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {weekHistory.map((week, index) => (
+        {/* Weekly Activity */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+              Heti aktivitás
+            </h3>
+            <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+              {weekHistory[currentWeekIndex] && (
+                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+                  {weekHistory[currentWeekIndex].weekLabel}
+                </span>
+              )}
+              <div className="flex items-center justify-center space-x-2">
                 <button
-                  key={index}
-                  onClick={() => selectWeek(index)}
-                  className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
-                    index === currentWeekIndex
-                      ? 'bg-blue-100 border-blue-300 text-blue-800'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
-                  }`}
+                  onClick={() => navigateWeek('prev')}
+                  disabled={currentWeekIndex >= weekHistory.length - 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Előző hét"
                 >
-                  <div className="font-medium truncate">{week.weekLabel}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
-                  </div>
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
+                <button
+                  onClick={() => setShowWeekHistory(!showWeekHistory)}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <History className="h-4 w-4" />
+                  <span>Előzmények</span>
+                </button>
+                <button
+                  onClick={() => navigateWeek('next')}
+                  disabled={currentWeekIndex <= 0}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Következő hét"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Week History Dropdown */}
+          {showWeekHistory && (
+            <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {weekHistory.map((week, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectWeek(index)}
+                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                      index === currentWeekIndex
+                        ? 'bg-blue-100 border-blue-300 text-blue-800'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium truncate">{week.weekLabel}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="h-48 sm:h-64 lg:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData.weeklyTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
+                <YAxis stroke="#6b7280" fontSize={10} />
+                <Tooltip content={<WeeklyTooltip />} />
+                <Area 
+                  type="monotone" 
+                  dataKey="invoices" 
+                  stroke="#059669" 
+                  fill="#10b981" 
+                  fillOpacity={0.3}
+                  name="Számlák száma"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Distribution Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          {/* Organization Distribution */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+              <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+              Szervezetek szerinti megoszlás
+            </h3>
+            <div className="h-40 sm:h-48 lg:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={chartData.organizationData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={60}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {chartData.organizationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: string, props: any) => [
+                      `${value} számla (${formatCurrency(props.payload.amount)})`,
+                      name
+                    ]}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
+              {chartData.organizationData.map((item, index) => (
+                <div key={index} className="text-center">
+                  <div className="flex items-center justify-center space-x-2 mb-1">
+                    <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
+                    <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 truncate">{item.name}</p>
+                  <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
+                </div>
               ))}
             </div>
           </div>
-        )}
 
-        <div className="h-48 sm:h-64 lg:h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData.weeklyTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
-              <YAxis stroke="#6b7280" fontSize={10} />
-              <Tooltip content={<WeeklyTooltip />} />
-              <Area 
-                type="monotone" 
-                dataKey="invoices" 
-                stroke="#059669" 
-                fill="#10b981" 
-                fillOpacity={0.3}
-                name="Számlák száma"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Weekly Expense Trend */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6 lg:mb-8">
-        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-            <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-600" />
-            Heti kiadás trend
-          </h3>
-          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
-            {currentWeek && (
-              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
-                {currentWeek.weekLabel}
-              </span>
-            )}
-            <div className="flex items-center justify-center space-x-2">
-              <button
-                onClick={() => navigateWeek('prev')}
-                disabled={currentWeekIndex >= weekHistory.length - 1}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Előző hét"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setShowWeekHistory(!showWeekHistory)}
-                className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-              >
-                <History className="h-4 w-4" />
-                <span>Előzmények</span>
-              </button>
-              <button
-                onClick={() => navigateWeek('next')}
-                disabled={currentWeekIndex <= 0}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Következő hét"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+          {/* Payment Method Distribution */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+              Fizetési módok megoszlása
+            </h3>
+            <div className="h-40 sm:h-48 lg:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={chartData.paymentTypeData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={60}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {chartData.paymentTypeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: string, props: any) => [
+                      `${value} számla (${formatCurrency(props.payload.amount)})`,
+                      name
+                    ]}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
+              {chartData.paymentTypeData.map((item, index) => (
+                <div key={index} className="text-center">
+                  <div className="flex items-center justify-center space-x-2 mb-1">
+                    <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
+                    <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 truncate">{item.name}</p>
+                  <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-
-        <div className="h-48 sm:h-64 lg:h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData.weeklyExpenseTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
-              <YAxis 
-                stroke="#6b7280" 
-                fontSize={10} 
-                tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
-                domain={[0, 'dataMax']}
-              />
-              <Tooltip content={<WeeklyExpenseTooltip />} />
-              <Area 
-                type="monotone" 
-                dataKey="amount" 
-                stroke="#dc2626" 
-                fill="#ef4444" 
-                fillOpacity={0.3}
-                name="Kiadás összege"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
         </div>
       </div>
 
