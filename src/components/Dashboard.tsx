@@ -1,6 +1,3 @@
-Here's the fixed script with all missing closing brackets added:
-
-```javascript
                 disabled={currentWeekIndex <= 0}
                 className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 title="Következő hét"
@@ -66,4 +63,3 @@ Here's the fixed script with all missing closing brackets added:
     </div>
   );
 };
-```
