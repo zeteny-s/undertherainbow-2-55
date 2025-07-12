@@ -620,31 +620,22 @@ export const InvoiceList: React.FC = () => {
 
       {/* Invoice Detail Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white rounded-xl max-w-6xl w-full max-h-[95vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50 overflow-hidden">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Számla részletei</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Számla szerkesztése</h3>
+                <div className="flex items-center space-x-3">
                   <button
                     onClick={() => downloadFile(selectedInvoice)}
-                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                   >
-                    <Download className="h-4 w-4 mr-1" />
+                    <Download className="h-4 w-4 mr-2" />
                     Letöltés
-                  </button>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => downloadFile(selectedInvoice)}
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Számla letöltése"
-                  >
-                    <Download className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => setSelectedInvoice(null)}
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md hover:bg-gray-100"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -652,220 +643,340 @@ export const InvoiceList: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-0">
-                {/* Document Preview */}
-                <div className="bg-gray-50 border-r border-gray-200 flex flex-col min-h-0">
-                  <div className="p-4 border-b border-gray-200 bg-white">
-                    <h4 className="text-sm font-medium text-gray-900 flex items-center">
-                      <FileText className="h-4 w-4 mr-2 text-blue-600" />
-                      Dokumentum előnézet ({selectedInvoice.file_name})
-                    </h4>
-                  </div>
-                  <div className="flex-1 p-4 overflow-auto">
-                    {selectedInvoice.file_url && selectedInvoice.file_url.trim() !== '' ? (
-                      <div className="w-full h-full flex items-center justify-center">
-                        {selectedInvoice.file_name.toLowerCase().endsWith('.pdf') ? (
-                          <iframe
-                            src={selectedInvoice.file_url}
-                            className="w-full h-full min-h-[500px] border-0 rounded-lg shadow-sm bg-white"
-                            title="PDF Preview"
-                            onError={() => {
-                              console.error('PDF preview failed to load:', selectedInvoice.file_url);
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={selectedInvoice.file_url}
-                            alt="Invoice preview"
-                            className="max-w-full max-h-full object-contain rounded-lg shadow-sm bg-white"
-                            onError={(e) => {
-                              console.error('Image preview failed to load:', selectedInvoice.file_url);
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const errorDiv = document.createElement('div');
-                              errorDiv.className = 'text-center text-gray-500 p-8';
-                              errorDiv.innerHTML = `
-                                <div class="text-center">
-                                  <svg class="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                  </svg>
-                                  <p class="text-sm font-medium text-gray-900">Fájl nem található</p>
-                                  <p class="text-xs text-gray-500 mt-1">A dokumentum nem érhető el vagy törölve lett</p>
-                                  <p class="text-xs text-gray-400 mt-2 break-all">${selectedInvoice.file_url}</p>
-                                </div>
-                              `;
-                              target.parentNode?.appendChild(errorDiv);
-                            }}
-                          />
-                        )}
-                      </div>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-500">
-                        <div className="text-center">
-                          <svg className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                          </svg>
-                          <p className="text-sm font-medium text-gray-900">Nincs elérhető előnézet</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {selectedInvoice.file_url ? 'A fájl URL üres vagy érvénytelen' : 'Nincs fájl URL megadva'}
-                          </p>
-                          {selectedInvoice.file_url && (
-                            <p className="text-xs text-gray-400 mt-2 break-all">{selectedInvoice.file_url}</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Invoice Details */}
-                <div className="bg-white flex flex-col min-h-0">
-                  <div className="p-4 border-b border-gray-200">
-                    <h4 className="text-lg font-semibold text-gray-900">Számla részletes adatok</h4>
-                  </div>
-                  <div className="flex-1 p-4 overflow-y-auto">
-                    <div className="space-y-6">
-                      {/* Basic Information Section */}
-                      <div className="border-b border-gray-100 pb-4">
-                        <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Alapadatok</h5>
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Fájlnév</label>
-                            <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.file_name}</p>
-                          </div>
-                          
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Szervezet</label>
-                            <div className="flex items-center">
-                              {selectedInvoice.organization === 'alapitvany' ? (
-                                <>
-                                  <Building2 className="h-4 w-4 text-blue-800 mr-2" />
-                                  <span className="text-sm font-medium text-gray-900">Feketerigó Alapítvány</span>
-                                </>
-                              ) : (
-                                <>
-                                  <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
-                                  <span className="text-sm font-medium text-gray-900">Feketerigó Alapítványi Óvoda</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Állapot</label>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedInvoice.status)}`}>
-                              {getStatusText(selectedInvoice.status)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+            <InvoiceEditForm 
+              invoice={selectedInvoice}
+              onSave={(updatedInvoice) => {
+                setInvoices(prev => prev.map(inv => 
+                  inv.id === updatedInvoice.id ? updatedInvoice : inv
+                ));
+                setSelectedInvoice(updatedInvoice);
+              }}
+              onCancel={() => setSelectedInvoice(null)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-                      {/* Partner and Invoice Information */}
-                      <div className="border-b border-gray-100 pb-4">
-                        <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Partner és számla adatok</h5>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Partner neve</label>
-                            <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.partner || 'Nincs megadva'}</p>
-                          </div>
-                          
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Számlaszám</label>
-                            <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.invoice_number || 'Nincs megadva'}</p>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <div className="bg-gray-50 rounded-lg p-3 mt-4">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Tárgy / Szolgáltatás</label>
-                            <p className="text-sm font-medium text-gray-900 break-words">{selectedInvoice.subject || 'Nincs megadva'}</p>
-                          </div>
-                        </div>
-                      </div>
+// Separate component for invoice editing form
+interface InvoiceEditFormProps {
+  invoice: Invoice;
+  onSave: (updatedInvoice: Invoice) => void;
+  onCancel: () => void;
+}
 
-                      {/* Financial Information */}
-                      <div className="border-b border-gray-100 pb-4">
-                        <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Pénzügyi adatok</h5>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                            <label className="block text-xs font-medium text-green-700 mb-1">Összeg</label>
-                            <p className="text-lg font-bold text-green-800">{formatCurrency(selectedInvoice.amount)}</p>
-                          </div>
-                          
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Fizetési mód</label>
-                            <div className="flex items-center">
-                              {selectedInvoice.invoice_type === 'bank_transfer' ? (
-                                <>
-                                  <Banknote className="h-4 w-4 text-green-600 mr-2" />
-                                  <span className="text-sm font-medium text-gray-900">Banki átutalás</span>
-                                </>
-                              ) : (
-                                <>
-                                  <CreditCard className="h-4 w-4 text-purple-600 mr-2" />
-                                  <span className="text-sm font-medium text-gray-900">Kártya/Készpénz/Utánvét</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {selectedInvoice.bank_account && (
-                          <div className="bg-gray-50 rounded-lg p-3 mt-4">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Bankszámlaszám</label>
-                            <p className="text-sm font-medium text-gray-900 font-mono break-all">{selectedInvoice.bank_account}</p>
-                          </div>
-                        )}
-                      </div>
+const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCancel }) => {
+  const [editedInvoice, setEditedInvoice] = useState<Invoice>(invoice);
+  const [saving, setSaving] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-                      {/* Date Information */}
-                      <div className="border-b border-gray-100 pb-4">
-                        <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Dátumok</h5>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <div className="bg-gray-50 rounded-lg p-3">
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Számla kelte</label>
-                              <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.invoice_date)}</p>
-                            </div>
-                          </div>
-                          
-                          {selectedInvoice.payment_deadline && (
-                            <div>
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Fizetési határidő</label>
-                                <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.payment_deadline)}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const notification = { id, type, message };
+    setNotifications(prev => [...prev, notification]);
+    
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 4000);
+  };
 
-                      {/* System Information */}
-                      <div>
-                        <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Rendszer adatok</h5>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Feltöltve</label>
-                            <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.uploaded_at)}</p>
-                          </div>
-                          
-                          {selectedInvoice.processed_at && (
-                            <div className="bg-gray-50 rounded-lg p-3">
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Feldolgozva</label>
-                              <p className="text-sm font-medium text-gray-900">{formatDate(selectedInvoice.processed_at)}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({
+          partner: editedInvoice.partner,
+          bank_account: editedInvoice.bank_account,
+          subject: editedInvoice.subject,
+          invoice_number: editedInvoice.invoice_number,
+          amount: editedInvoice.amount,
+          invoice_date: editedInvoice.invoice_date,
+          payment_deadline: editedInvoice.payment_deadline,
+          payment_method: editedInvoice.payment_method,
+          invoice_type: editedInvoice.invoice_type,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editedInvoice.id);
+
+      if (error) throw error;
+
+      addNotification('success', 'Számla adatok sikeresen frissítve!');
+      onSave(editedInvoice);
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      addNotification('error', 'Hiba történt a számla frissítése során');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    if (!amount) return '';
+    return new Intl.NumberFormat('hu-HU', {
+      style: 'currency',
+      currency: 'HUF',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toISOString().split('T')[0];
+  };
+
+  const parseDate = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toISOString();
+  };
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      {/* Notifications */}
+      <div className="fixed top-20 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
+          >
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && (
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
                     </div>
+                  )}
+                  {notification.type === 'error' && (
+                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                    </div>
+                  )}
+                </div>
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 break-words">
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0">
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={() => removeNotification(notification.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Basic Information Section */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-blue-600" />
+              Alapadatok
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fájlnév</label>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm font-medium text-gray-900 break-words">{editedInvoice.file_name}</p>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Szervezet</label>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center">
+                    {editedInvoice.organization === 'alapitvany' ? (
+                      <>
+                        <Building2 className="h-4 w-4 text-blue-800 mr-2" />
+                        <span className="text-sm font-medium text-gray-900">Feketerigó Alapítvány</span>
+                      </>
+                    ) : (
+                      <>
+                        <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
+                        <span className="text-sm font-medium text-gray-900">Feketerigó Alapítványi Óvoda</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Partner and Invoice Information */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <Building2 className="h-5 w-5 mr-2 text-green-600" />
+              Partner és számla adatok
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Partner neve *</label>
+                <input
+                  type="text"
+                  value={editedInvoice.partner || ''}
+                  onChange={(e) => setEditedInvoice(prev => ({ ...prev, partner: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Partner neve"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Számlaszám</label>
+                <input
+                  type="text"
+                  value={editedInvoice.invoice_number || ''}
+                  onChange={(e) => setEditedInvoice(prev => ({ ...prev, invoice_number: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Számlaszám"
+                />
+              </div>
+              
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tárgy / Szolgáltatás</label>
+                <textarea
+                  value={editedInvoice.subject || ''}
+                  onChange={(e) => setEditedInvoice(prev => ({ ...prev, subject: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Számla tárgya vagy szolgáltatás leírása"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Information */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <Banknote className="h-5 w-5 mr-2 text-green-600" />
+              Pénzügyi adatok
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Összeg (HUF) *</label>
+                <input
+                  type="number"
+                  value={editedInvoice.amount || ''}
+                  onChange={(e) => setEditedInvoice(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                />
+                {editedInvoice.amount > 0 && (
+                  <p className="text-sm text-gray-500 mt-1">{formatCurrency(editedInvoice.amount)}</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fizetési mód</label>
+                <select
+                  value={editedInvoice.invoice_type || 'bank_transfer'}
+                  onChange={(e) => setEditedInvoice(prev => ({ 
+                    ...prev, 
+                    invoice_type: e.target.value as 'bank_transfer' | 'card_cash_afterpay'
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="bank_transfer">Banki átutalás</option>
+                  <option value="card_cash_afterpay">Kártya/Készpénz/Utánvét</option>
+                </select>
+              </div>
+              
+              {editedInvoice.invoice_type === 'bank_transfer' && (
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Bankszámlaszám</label>
+                  <input
+                    type="text"
+                    value={editedInvoice.bank_account || ''}
+                    onChange={(e) => setEditedInvoice(prev => ({ ...prev, bank_account: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                    placeholder="12345678-12345678-12345678"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Date Information */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <Calendar className="h-5 w-5 mr-2 text-purple-600" />
+              Dátumok
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Számla kelte</label>
+                <input
+                  type="date"
+                  value={formatDate(editedInvoice.invoice_date)}
+                  onChange={(e) => setEditedInvoice(prev => ({ 
+                    ...prev, 
+                    invoice_date: e.target.value ? parseDate(e.target.value) : ''
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fizetési határidő</label>
+                <input
+                  type="date"
+                  value={formatDate(editedInvoice.payment_deadline)}
+                  onChange={(e) => setEditedInvoice(prev => ({ 
+                    ...prev, 
+                    payment_deadline: e.target.value ? parseDate(e.target.value) : ''
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Fixed Footer with Actions */}
+      <div className="border-t border-gray-200 bg-white px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 font-medium"
+          >
+            Mégse
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !editedInvoice.partner || !editedInvoice.amount}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Mentés...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4" />
+                <span>Mentés</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
