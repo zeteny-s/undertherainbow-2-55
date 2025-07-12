@@ -195,26 +195,55 @@ export const InvoiceList: React.FC = () => {
   });
 
   const downloadFile = async (invoice: Invoice) => {
-    if (invoice.file_url && invoice.file_url.trim() !== '') {
-      try {
-        console.log('Attempting to download file:', invoice.file_url);
-        
-        // Try to fetch the file first to check if it exists
-        const response = await fetch(invoice.file_url, { method: 'HEAD' });
-        
-        if (response.ok) {
-          // File exists, open in new tab
-          window.open(invoice.file_url, '_blank');
-        } else {
-          console.error('File not accessible:', response.status, response.statusText);
-          addNotification('error', `Fájl nem érhető el: ${response.status} ${response.statusText}`);
-        }
-      } catch (error) {
-        console.error('Error accessing file:', error);
-        addNotification('error', 'Hiba történt a fájl elérésekor. Ellenőrizze a Supabase Storage beállításokat.');
+    try {
+      console.log('Attempting to download file for invoice:', invoice.id, invoice.file_name);
+      
+      if (!invoice.file_url || invoice.file_url.trim() === '') {
+        addNotification('error', 'Nincs elérhető fájl URL a számlához');
+        return;
       }
-    } else {
-      addNotification('error', 'Nincs elérhető fájl URL a számlához');
+
+      // Extract file path from URL for direct Supabase Storage access
+      const filePath = extractFilePathFromUrl(invoice.file_url);
+      
+      if (!filePath) {
+        console.warn('Could not extract file path from URL, trying direct URL access');
+        // Fallback to direct URL access
+        window.open(invoice.file_url, '_blank');
+        return;
+      }
+
+      console.log('Extracted file path:', filePath);
+
+      // Try to download directly from Supabase Storage
+      const { data: fileBlob, error: downloadError } = await supabase.storage
+        .from('invoices')
+        .download(filePath);
+
+      if (downloadError) {
+        console.error('Supabase storage download error:', downloadError);
+        addNotification('error', `Fájl letöltési hiba: ${downloadError.message}`);
+        return;
+      }
+
+      if (fileBlob) {
+        // Create download link
+        const url = URL.createObjectURL(fileBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = invoice.file_name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        addNotification('success', 'Fájl sikeresen letöltve!');
+      } else {
+        addNotification('error', 'Fájl nem található a tárolóban');
+      }
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      addNotification('error', 'Hiba történt a fájl letöltése során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
     }
   };
 
