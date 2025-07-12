@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "jspdf": "^2.5.1",
+    "jspdf": "^2.5.2",
     "konva": "^9.2.0",
     "lucide-react": "^0.344.0",
     "opencv.js": "^1.2.1",
