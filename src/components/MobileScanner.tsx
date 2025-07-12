@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, Check, X, Plus, FileText, Loader, Zap, AlertCircle } from 'lucide-react';
+import { Camera, Check, X, Plus, FileText, Loader, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 interface ScannedPage {
@@ -175,7 +175,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           points.push({ x: pt[0], y: pt[1] });
         }
         
-        // Order the points correctly
+        // Order the points correctly using the proven function
         points = orderPoints(points);
         biggest.delete();
       }
@@ -246,6 +246,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           drawDetectionOverlay(overlayCtx, contour);
         } else {
           setDocumentDetected(false);
+          lastDetectionRef.current = null;
         }
 
       } catch (error) {
@@ -340,7 +341,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         const cv = window.cv;
         const src = cv.imread(canvas);
         
-        // Order points correctly
+        // Order points correctly using the proven function
         const ordered = orderPoints(contour);
         const [tl, tr, br, bl] = ordered;
 
@@ -426,7 +427,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     return canvas;
   };
 
-  // Capture and process photo
+  // Capture and process photo using live-detected edges
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !cameraReady || processing) return;
 
@@ -449,26 +450,31 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     // Draw video frame to canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Process the image
+    // Process the image using the live-detected contour
     setTimeout(() => {
-      processImage(canvas);
+      processImage(canvas, lastDetectionRef.current);
     }, 100);
   }, [cameraReady, processing]);
 
-  // Process captured image with automatic cropping
-  const processImage = async (originalCanvas: HTMLCanvasElement) => {
+  // Process captured image with live-detected contour
+  const processImage = async (originalCanvas: HTMLCanvasElement, detectedContour: any[] | null) => {
     try {
       let processedCanvas = originalCanvas;
       const imageData = originalCanvas.toDataURL('image/jpeg', 0.9);
 
-      // Detect document edges in the captured image
-      const detectedContour = detectDocumentEdges(originalCanvas);
-      
+      // Use the live-detected contour if available
       if (detectedContour && detectedContour.length === 4) {
-        console.log('Document edges detected, applying perspective correction');
+        console.log('Using live-detected edges for cropping');
         processedCanvas = await performPerspectiveCorrection(originalCanvas, detectedContour);
       } else {
-        console.log('No document edges detected, using original image');
+        console.log('No live detection available, attempting edge detection on captured image');
+        // Fallback: try to detect edges on the captured image
+        const fallbackContour = detectDocumentEdges(originalCanvas);
+        if (fallbackContour && fallbackContour.length === 4) {
+          processedCanvas = await performPerspectiveCorrection(originalCanvas, fallbackContour);
+        } else {
+          console.log('No document edges detected, using original image');
+        }
       }
 
       // Enhance image quality
@@ -558,30 +564,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         </button>
       </div>
 
-      {/* Status indicators */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-        {!openCVReady && (
-          <div className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2">
-            <Loader className="h-4 w-4 animate-spin" />
-            <span>Dokumentum felismerő betöltése...</span>
-          </div>
-        )}
-        
-        {openCVReady && !cameraReady && (
-          <div className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2">
-            <Loader className="h-4 w-4 animate-spin" />
-            <span>Kamera inicializálása...</span>
-          </div>
-        )}
-        
-        {documentDetected && (
-          <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2">
-            <Check className="h-4 w-4" />
-            <span>Dokumentum felismerve</span>
-          </div>
-        )}
-      </div>
-
       {/* Camera preview */}
       <div className="flex-1 relative overflow-hidden">
         <video
@@ -598,16 +580,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
 
-        {/* Instructions */}
-        {cameraReady && openCVReady && !documentDetected && (
-          <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 text-center text-white z-10">
-            <div className="bg-black bg-opacity-50 px-4 py-2 rounded-lg">
-              <p className="text-sm">Helyezze a dokumentumot a kamera elé</p>
-              <p className="text-xs opacity-75">A rendszer automatikusan felismeri az éleket</p>
-            </div>
-          </div>
-        )}
-
         {/* Processing overlay */}
         {processing && (
           <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-20">
@@ -621,7 +593,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       </div>
 
       {/* Camera controls - moved up with extra padding */}
-      <div className="p-4 pb-8 bg-black">
+      <div className="p-4 pb-12 bg-black">
         <div className="flex items-center justify-center">
           {/* Manual capture button - always visible */}
           <button
