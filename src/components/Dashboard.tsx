@@ -1,27 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, FileText, Building2, GraduationCap, TrendingUp, Calendar, DollarSign, Clock, Eye, Download, Banknote, CreditCard } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, AlertCircle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart, Line, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../lib/supabase';
-
-interface Invoice {
-  id: string;
-  file_name: string;
-  file_url: string;
-  organization: 'alapitvany' | 'ovoda';
-  uploaded_at: string;
-  processed_at: string;
-  status: 'uploaded' | 'processing' | 'completed' | 'error';
-  extracted_text: string;
-  partner: string;
-  bank_account: string;
-  subject: string;
-  invoice_number: string;
-  amount: number;
-  invoice_date: string;
-  payment_deadline: string;
-  payment_method: string;
-  invoice_type: 'bank_transfer' | 'card_cash_afterpay';
-}
 
 interface Stats {
   totalInvoices: number;
@@ -31,7 +11,41 @@ interface Stats {
   bankTransferCount: number;
   cardCashCount: number;
   thisMonthCount: number;
-  pendingCount: number;
+  thisMonthAmount: number;
+}
+
+interface Invoice {
+  id: string;
+  file_name: string;
+  organization: 'alapitvany' | 'ovoda';
+  uploaded_at: string;
+  processed_at: string;
+  status: string;
+  partner: string;
+  amount: number;
+  invoice_type: string;
+}
+
+interface ChartData {
+  monthlyData: Array<{ month: string; alapitvany: number; ovoda: number; total: number; amount: number }>;
+  organizationData: Array<{ name: string; value: number; amount: number; color: string }>;
+  paymentTypeData: Array<{ name: string; value: number; amount: number; color: string }>;
+  weeklyTrend: Array<{ day: string; date: string; invoices: number; amount: number }>;
+  expenseData: Array<{ month: string; expenses: number; count: number }>;
+  topPartnersData: Array<{ partner: string; amount: number; invoiceCount: number; color: string }>;
+}
+
+interface WeekData {
+  weekStart: Date;
+  weekEnd: Date;
+  weekLabel: string;
+  data: Array<{ day: string; date: string; invoices: number; amount: number }>;
+}
+
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
 }
 
 export const Dashboard: React.FC = () => {
@@ -43,11 +57,39 @@ export const Dashboard: React.FC = () => {
     bankTransferCount: 0,
     cardCashCount: 0,
     thisMonthCount: 0,
-    pendingCount: 0
+    thisMonthAmount: 0
   });
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
+  const [chartData, setChartData] = useState<ChartData>({
+    monthlyData: [],
+    organizationData: [],
+    paymentTypeData: [],
+    weeklyTrend: [],
+    expenseData: [],
+    topPartnersData: []
+  });
   const [loading, setLoading] = useState(true);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  const [currentExpenseWeekIndex, setCurrentExpenseWeekIndex] = useState(0);
+  const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
+  const [expenseWeekHistory, setExpenseWeekHistory] = useState<WeekData[]>([]);
+  const [showWeekHistory, setShowWeekHistory] = useState(false);
+  const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const notification = { id, type, message };
+    setNotifications(prev => [...prev, notification]);
+    
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 4000);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -57,7 +99,6 @@ export const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch all invoices
       const { data: invoices, error } = await supabase
         .from('invoices')
         .select('*')
@@ -65,30 +106,286 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      if (invoices) {
-        // Calculate stats
-        const now = new Date();
-        const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
-        const calculatedStats: Stats = {
-          totalInvoices: invoices.length,
-          totalAmount: invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
-          alapitvanyCount: invoices.filter(inv => inv.organization === 'alapitvany').length,
-          ovodaCount: invoices.filter(inv => inv.organization === 'ovoda').length,
-          bankTransferCount: invoices.filter(inv => inv.invoice_type === 'bank_transfer').length,
-          cardCashCount: invoices.filter(inv => inv.invoice_type === 'card_cash_afterpay').length,
-          thisMonthCount: invoices.filter(inv => new Date(inv.uploaded_at) >= thisMonth).length,
-          pendingCount: invoices.filter(inv => inv.status === 'uploaded' || inv.status === 'processing').length
-        };
+      const now = new Date();
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-        setStats(calculatedStats);
-        setRecentInvoices(invoices.slice(0, 5)); // Get 5 most recent
-      }
+      const thisMonthInvoices = invoices?.filter(inv => {
+        const invDate = new Date(inv.uploaded_at);
+        return invDate >= thisMonth && invDate < nextMonth;
+      }) || [];
+
+      const calculatedStats: Stats = {
+        totalInvoices: invoices?.length || 0,
+        totalAmount: invoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0,
+        alapitvanyCount: invoices?.filter(inv => inv.organization === 'alapitvany').length || 0,
+        ovodaCount: invoices?.filter(inv => inv.organization === 'ovoda').length || 0,
+        bankTransferCount: invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
+        cardCashCount: invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
+        thisMonthCount: thisMonthInvoices.length,
+        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
+      };
+
+      const weekHistoryData = generateWeekHistory(invoices || []);
+      setWeekHistory(weekHistoryData);
+      setExpenseWeekHistory(weekHistoryData);
+
+      const monthlyData = generateMonthlyData(invoices || []);
+      const organizationData = generateOrganizationData(invoices || []);
+      const paymentTypeData = generatePaymentTypeData(invoices || []);
+      const weeklyTrend = weekHistoryData[0]?.data || [];
+      const expenseData = generateExpenseData(invoices || []);
+      const topPartnersData = generateTopPartnersData(invoices || []);
+      const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
+
+      setStats(calculatedStats);
+      setRecentInvoices(invoices?.slice(0, 5) || []);
+      setChartData({
+        monthlyData,
+        organizationData,
+        paymentTypeData,
+        weeklyTrend,
+        expenseData,
+        topPartnersData,
+        weeklyExpenseTrend
+      });
+
+      addNotification('success', 'Adatok sikeresen frissítve');
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      addNotification('error', 'Hiba történt az adatok betöltése során');
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateWeekHistory = (invoices: any[]): WeekData[] => {
+    const weeks: WeekData[] = [];
+    const now = new Date();
+    
+    for (let i = 0; i < 12; i++) {
+      const weekStart = new Date(now);
+      const dayOfWeek = now.getDay();
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      weekStart.setDate(now.getDate() - daysToMonday - (i * 7));
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+      
+      const weekLabel = `${formatDateShort(weekStart)} - ${formatDateShort(weekEnd)}`;
+      
+      const weekData = generateWeeklyTrend(invoices, weekStart, weekEnd);
+      
+      weeks.push({
+        weekStart,
+        weekEnd,
+        weekLabel,
+        data: weekData
+      });
+    }
+    
+    return weeks;
+  };
+
+  const formatDateShort = (date: Date) => {
+    return new Intl.DateTimeFormat('hu-HU', {
+      month: '2-digit',
+      day: '2-digit'
+    }).format(date);
+  };
+
+  const generateMonthlyData = (invoices: any[]) => {
+    const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+    
+    return months.map((month, index) => {
+      const monthInvoices = invoices.filter(inv => {
+        const date = new Date(inv.uploaded_at);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
+      });
+      
+      const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
+      const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
+      
+      return {
+        month,
+        alapitvany: alapitvanyInvoices.length,
+        ovoda: ovodaInvoices.length,
+        total: monthInvoices.length,
+        amount: monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
+      };
+    });
+  };
+
+  const generateOrganizationData = (invoices: any[]) => {
+    const alapitvanyInvoices = invoices.filter(inv => inv.organization === 'alapitvany');
+    const ovodaInvoices = invoices.filter(inv => inv.organization === 'ovoda');
+    
+    return [
+      { 
+        name: 'Feketerigó Alapítvány', 
+        value: alapitvanyInvoices.length, 
+        amount: alapitvanyInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#1e40af' 
+      },
+      { 
+        name: 'Feketerigó Alapítványi Óvoda', 
+        value: ovodaInvoices.length, 
+        amount: ovodaInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#ea580c' 
+      }
+    ];
+  };
+
+  const generatePaymentTypeData = (invoices: any[]) => {
+    const bankTransferInvoices = invoices.filter(inv => inv.invoice_type === 'bank_transfer');
+    const cardCashInvoices = invoices.filter(inv => inv.invoice_type === 'card_cash_afterpay');
+    
+    return [
+      { 
+        name: 'Banki átutalás', 
+        value: bankTransferInvoices.length, 
+        amount: bankTransferInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#059669' 
+      },
+      { 
+        name: 'Kártya/Készpénz/Utánvét', 
+        value: cardCashInvoices.length, 
+        amount: cardCashInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+        color: '#7c3aed' 
+      }
+    ];
+  };
+
+  const generateWeeklyTrend = (invoices: any[], weekStart: Date, weekEnd: Date) => {
+    const days = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+    
+    return days.map((day, index) => {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + index);
+      
+      const dayInvoices = invoices.filter(inv => {
+        const invDate = new Date(inv.uploaded_at);
+        const dayStart = new Date(dayDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayDate);
+        dayEnd.setHours(23, 59, 59, 999);
+        return invDate >= dayStart && invDate <= dayEnd;
+      });
+      
+      return {
+        day,
+        date: formatDateShort(dayDate),
+        invoices: dayInvoices.length,
+        amount: dayInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
+      };
+    });
+  };
+
+  const generateExpenseData = (invoices: any[]) => {
+    const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+    
+    return months.map((month, index) => {
+      const monthInvoices = invoices.filter(inv => {
+        const date = new Date(inv.uploaded_at);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
+      });
+      
+      const expenses = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+      
+      return {
+        month,
+        expenses,
+        count: monthInvoices.length
+      };
+    });
+  };
+
+  const generateTopPartnersData = (invoices: any[]) => {
+    // Group invoices by partner and calculate total spending
+    const partnerSpending: { [key: string]: { amount: number; count: number } } = {};
+    
+    invoices.forEach(invoice => {
+      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0) {
+        const partner = invoice.partner.trim();
+        if (!partnerSpending[partner]) {
+          partnerSpending[partner] = { amount: 0, count: 0 };
+        }
+        partnerSpending[partner].amount += invoice.amount;
+        partnerSpending[partner].count += 1;
+      }
+    });
+    
+    // Convert to array and sort by amount (descending)
+    const partnersArray = Object.entries(partnerSpending)
+      .filter(([, data]) => data.amount > 0) // Only include partners with positive spending
+      .map(([partner, data]) => ({
+        partner: partner.length > 12 ? partner.substring(0, 12) + '...' : partner,
+        fullPartner: partner,
+        amount: data.amount,
+        invoiceCount: data.count,
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5); // Top 5 partners
+    
+    return partnersArray;
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentWeekIndex < weekHistory.length - 1) {
+      const newIndex = currentWeekIndex + 1;
+      setCurrentWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyTrend: weekHistory[newIndex]?.data || []
+      }));
+    } else if (direction === 'next' && currentWeekIndex > 0) {
+      const newIndex = currentWeekIndex - 1;
+      setCurrentWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyTrend: weekHistory[newIndex]?.data || []
+      }));
+    }
+  };
+
+  const navigateExpenseWeek = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentExpenseWeekIndex < expenseWeekHistory.length - 1) {
+      const newIndex = currentExpenseWeekIndex + 1;
+      setCurrentExpenseWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyExpenseTrend: expenseWeekHistory[newIndex]?.data || []
+      }));
+    } else if (direction === 'next' && currentExpenseWeekIndex > 0) {
+      const newIndex = currentExpenseWeekIndex - 1;
+      setCurrentExpenseWeekIndex(newIndex);
+      setChartData(prev => ({
+        ...prev,
+        weeklyExpenseTrend: expenseWeekHistory[newIndex]?.data || []
+      }));
+    }
+  };
+
+  const selectExpenseWeek = (index: number) => {
+    setCurrentExpenseWeekIndex(index);
+    setChartData(prev => ({
+      ...prev,
+      weeklyExpenseTrend: expenseWeekHistory[index]?.data || []
+    }));
+    setShowExpenseWeekHistory(false);
+  };
+
+  const selectWeek = (index: number) => {
+    setCurrentWeekIndex(index);
+    setChartData(prev => ({
+      ...prev,
+      weeklyTrend: weekHistory[index]?.data || []
+    }));
+    setShowWeekHistory(false);
   };
 
   const formatCurrency = (amount: number) => {
@@ -103,7 +400,9 @@ export const Dashboard: React.FC = () => {
     return new Intl.DateTimeFormat('hu-HU', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     }).format(new Date(dateString));
   };
 
@@ -113,9 +412,10 @@ export const Dashboard: React.FC = () => {
         return 'bg-green-100 text-green-800';
       case 'processing':
         return 'bg-yellow-100 text-yellow-800';
+      case 'uploaded':
+        return 'bg-blue-100 text-blue-800';
       case 'error':
         return 'bg-red-100 text-red-800';
-      case 'uploaded':
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -127,305 +427,752 @@ export const Dashboard: React.FC = () => {
         return 'Feldolgozva';
       case 'processing':
         return 'Feldolgozás alatt';
+      case 'uploaded':
+        return 'Feltöltve';
       case 'error':
         return 'Hiba';
-      case 'uploaded':
       default:
-        return 'Feltöltve';
+        return 'Ismeretlen';
     }
   };
 
-  const downloadFile = async (invoice: Invoice) => {
-    try {
-      console.log('Attempting to download file for invoice:', invoice.id, invoice.file_name);
-      
-      if (!invoice.file_url || invoice.file_url.trim() === '') {
-        console.error('No file URL available for invoice');
-        return;
-      }
-
-      const extractFilePathFromUrl = (fileUrl: string): string | null => {
-        try {
-          const url = new URL(fileUrl);
-          const pathParts = url.pathname.split('/');
-          
-          const bucketIndex = pathParts.findIndex(part => part === 'invoices');
-          if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
-            const filePath = pathParts.slice(bucketIndex + 1).join('/');
-            return decodeURIComponent(filePath);
-          }
-          
-          return null;
-        } catch (error) {
-          console.error('Error parsing file URL:', error);
-          return null;
-        }
-      };
-
-      const filePath = extractFilePathFromUrl(invoice.file_url);
-      
-      if (!filePath) {
-        console.warn('Could not extract file path from URL, trying direct URL access');
-        window.open(invoice.file_url, '_blank');
-        return;
-      }
-
-      console.log('Extracted file path:', filePath);
-
-      const { data: fileBlob, error: downloadError } = await supabase.storage
-        .from('invoices')
-        .download(filePath);
-
-      if (downloadError) {
-        console.error('Supabase storage download error:', downloadError);
-        return;
-      }
-
-      if (fileBlob) {
-        const url = URL.createObjectURL(fileBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = invoice.file_name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error('Error downloading file:', error);
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }} className="text-sm">
+              {entry.name}: {entry.value}
+              {entry.payload.amount && (
+                <span className="text-gray-500 ml-2">
+                  ({formatCurrency(entry.payload.amount)})
+                </span>
+              )}
+            </p>
+          ))}
+        </div>
+      );
     }
+    return null;
   };
 
-  // Chart data
-  const organizationData = [
-    { name: 'Alapítvány', value: stats.alapitvanyCount, color: '#3B82F6' },
-    { name: 'Óvoda', value: stats.ovodaCount, color: '#F59E0B' }
-  ];
+  const TopPartnersTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
+          <p className="font-semibold text-gray-900 mb-2">{data.fullPartner || label}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-green-600 font-medium">
+              💰 Összeg: {formatCurrency(data.amount)}
+            </p>
+            <p className="text-sm text-gray-600">
+              📄 Számlák: {data.invoiceCount} db
+            </p>
+            <p className="text-xs text-gray-500">
+              📊 Átlag/számla: {formatCurrency(data.amount / data.invoiceCount)}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
-  const paymentTypeData = [
-    { name: 'Banki átutalás', value: stats.bankTransferCount, color: '#10B981' },
-    { name: 'Kártya/Készpénz', value: stats.cardCashCount, color: '#8B5CF6' }
-  ];
+  const WeeklyTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{label}</p>
+          <p className="text-sm text-gray-600">{data.date}</p>
+          <p className="text-sm text-green-600">
+            Számlák: {data.invoices}
+          </p>
+          {data.amount > 0 && (
+            <p className="text-sm text-gray-500">
+              Összeg: {formatCurrency(data.amount)}
+            </p>
+          )}
+        </div>
+      );
+        {/* Heti Aktivitás Chart - MOVED TO 5TH POSITION */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+              Heti aktivitás
+            </h3>
+            <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+              {weekHistory[currentWeekIndex] && (
+                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+                  {weekHistory[currentWeekIndex].weekLabel}
+                </span>
+              )}
+              <div className="flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => navigateWeek('prev')}
+                  disabled={currentWeekIndex >= weekHistory.length - 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Előző hét"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setShowWeekHistory(!showWeekHistory)}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <History className="h-4 w-4" />
+                  <span>Előzmények</span>
+                </button>
+                <button
+                  onClick={() => navigateWeek('next')}
+                  disabled={currentWeekIndex <= 0}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Következő hét"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
 
-  const monthlyData = [
-    { month: 'Jan', amount: Math.floor(stats.totalAmount * 0.08) },
-    { month: 'Feb', amount: Math.floor(stats.totalAmount * 0.12) },
-    { month: 'Már', amount: Math.floor(stats.totalAmount * 0.15) },
-    { month: 'Ápr', amount: Math.floor(stats.totalAmount * 0.10) },
-    { month: 'Máj', amount: Math.floor(stats.totalAmount * 0.18) },
-    { month: 'Jún', amount: Math.floor(stats.totalAmount * 0.22) },
-    { month: 'Júl', amount: Math.floor(stats.totalAmount * 0.15) }
-  ];
+          {/* Week History Dropdown */}
+          {showWeekHistory && (
+            <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {weekHistory.map((week, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectWeek(index)}
+                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                      index === currentWeekIndex
+                        ? 'bg-blue-100 border-blue-300 text-blue-800'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium truncate">{week.weekLabel}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="h-48 sm:h-64 lg:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData.weeklyTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
+                <YAxis stroke="#6b7280" fontSize={10} />
+                <Tooltip content={<WeeklyTooltip />} />
+                <Area 
+                  type="monotone" 
+                  dataKey="invoices" 
+                  stroke="#059669" 
+                  fill="#10b981" 
+                  fillOpacity={0.3}
+                  name="Számlák száma"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+    }
+    return null;
+  };
+
+  const ExpenseTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{label}</p>
+          <p className="text-sm text-red-600">
+            Kiadás: {formatCurrency(data.expenses)}
+          </p>
+          <p className="text-sm text-gray-500">
+            Számlák: {data.count} db
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const WeeklyExpenseTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{label}</p>
+          <p className="text-sm text-gray-600">{data.date}</p>
+          <p className="text-sm text-red-600">
+            Kiadás: {formatCurrency(data.amount)}
+          </p>
+          <p className="text-sm text-gray-500">
+            Számlák: {data.invoices} db
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
           <span className="ml-2 text-lg text-gray-600">Adatok betöltése...</span>
         </div>
       </div>
     );
   }
 
+  const currentWeek = weekHistory[currentWeekIndex];
+  const currentExpenseWeek = expenseWeekHistory[currentExpenseWeekIndex];
+
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+      {/* Notifications */}
+      <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
+          >
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && (
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </div>
+                  )}
+                  {notification.type === 'error' && (
+                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                    </div>
+                  )}
+                  {notification.type === 'info' && (
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
+                    </div>
+                  )}
+                </div>
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 break-words">
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0">
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={() => removeNotification(notification.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Header */}
       <div className="mb-4 sm:mb-6 lg:mb-8">
-        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center">
-          <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600" />
-          Áttekintés
-        </h2>
-        <p className="text-gray-600 text-sm sm:text-base">Számla kezelési statisztikák és legutóbbi tevékenységek</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-            </div>
-            <div className="ml-3 sm:ml-4 w-0 flex-1">
-              <dl>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Összes számla</dt>
-                <dd className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">{stats.totalInvoices}</dd>
-              </dl>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Áttekintés</h2>
+            <p className="text-gray-600 text-sm sm:text-base">Számla feldolgozási statisztikák és üzleti elemzések</p>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
-            </div>
-            <div className="ml-3 sm:ml-4 w-0 flex-1">
-              <dl>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Teljes összeg</dt>
-                <dd className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">
-                  {formatCurrency(stats.totalAmount)}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
-            </div>
-            <div className="ml-3 sm:ml-4 w-0 flex-1">
-              <dl>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Ez a hónap</dt>
-                <dd className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">{stats.thisMonthCount}</dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
-            </div>
-            <div className="ml-3 sm:ml-4 w-0 flex-1">
-              <dl>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500 truncate">Feldolgozás alatt</dt>
-                <dd className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">{stats.pendingCount}</dd>
-              </dl>
-            </div>
-          </div>
+          {/* Hide refresh button on mobile */}
+          <button
+            onClick={fetchDashboardData}
+            className="hidden sm:inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Frissítés
+          </button>
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
-        {/* Monthly Trend */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-            Havi összegek
-          </h3>
-          <div className="h-64 sm:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}K`} />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Összes számla</p>
+              <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{stats.totalInvoices}</p>
+              <p className="text-xs text-green-600 mt-1">+{stats.thisMonthCount} e hónapban</p>
+            </div>
+            <div className="bg-blue-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-800" />
+            </div>
           </div>
         </div>
 
-        {/* Organization Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Building2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-            Szervezetek szerinti megoszlás
-          </h3>
-          <div className="h-64 sm:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={organizationData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Teljes összeg</p>
+              <p className="text-sm sm:text-xl lg:text-3xl font-bold text-gray-900 truncate">{formatCurrency(stats.totalAmount)}</p>
+              <p className="text-xs text-gray-500 mt-1 truncate">Összes feldolgozott</p>
+            </div>
+            <div className="bg-green-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-800" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi számlák</p>
+              <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{stats.thisMonthCount}</p>
+              <p className="text-xs text-blue-600 mt-1">Aktív hónap</p>
+            </div>
+            <div className="bg-orange-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-orange-800" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi kiadás</p>
+              <p className="text-sm sm:text-xl lg:text-3xl font-bold text-gray-900 truncate">{formatCurrency(stats.thisMonthAmount)}</p>
+              <p className="text-xs text-red-600 mt-1">Aktuális hónap</p>
+            </div>
+            <div className="bg-red-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-red-800" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8">
+        {/* First Row: Monthly Trend and Top Partners */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          {/* Monthly Trend Chart */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                Havi számla trend
+              </h3>
+            </div>
+            <div className="h-48 sm:h-64 lg:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData.monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                  <YAxis stroke="#6b7280" fontSize={10} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Top Partners Spending Chart - Completely Redesigned */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+                Legmagasabb partneri kiadások
+              </h3>
+            </div>
+            
+            {chartData.topPartnersData.length === 0 && (
+              <div className="text-center py-12">
+                <TrendingUp className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek partner adatok</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  A számlák feldolgozása után itt jelennek meg a legnagyobb kiadású partnerek.
+                </p>
+              </div>
+            )}
+            
+            {chartData.topPartnersData.length > 0 && (
+              <div className="h-64 sm:h-80 lg:h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={chartData.topPartnersData} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                    <XAxis 
+                      dataKey="partner" 
+                      stroke="#374151" 
+                      fontSize={9}
+                      fontWeight={500}
+                      angle={0}
+                      textAnchor="middle"
+                      height={40}
+                      interval={0}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <YAxis 
+                      stroke="#374151" 
+                      fontSize={11}
+                      fontWeight={500}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <Tooltip content={<TopPartnersTooltip />} />
+                    <Bar 
+                      dataKey="amount" 
+                      radius={[6, 6, 0, 0]}
+                      fill="url(#partnerGradient)"
+                    >
+                      {chartData.topPartnersData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'][index]} 
+                        />
+                      ))}
+                    </Bar>
+                    <defs>
+                      <linearGradient id="partnerGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.8}/>
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.3}/>
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Weekly Expense Trend - MOVED TO 3RD POSITION */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-600" />
+              Heti kiadás trend
+            </h3>
+            <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+              {expenseWeekHistory[currentExpenseWeekIndex] && (
+                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+                  {expenseWeekHistory[currentExpenseWeekIndex].weekLabel}
+                </span>
+              )}
+              <div className="flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => navigateExpenseWeek('prev')}
+                  disabled={currentExpenseWeekIndex >= expenseWeekHistory.length - 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Előző hét"
                 >
-                  {organizationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setShowExpenseWeekHistory(!showExpenseWeekHistory)}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <History className="h-4 w-4" />
+                  <span>Előzmények</span>
+                </button>
+                <button
+                  onClick={() => navigateExpenseWeek('next')}
+                  disabled={currentExpenseWeekIndex <= 0}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Következő hét"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Expense Week History Dropdown */}
+          {showExpenseWeekHistory && (
+            <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Kiadás heti előzmények</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {expenseWeekHistory.map((week, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectExpenseWeek(index)}
+                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                      index === currentExpenseWeekIndex
+                        ? 'bg-red-100 border-red-300 text-red-800'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium truncate">{week.weekLabel}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatCurrency(week.data.reduce((sum, day) => sum + day.amount, 0))}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="h-48 sm:h-64 lg:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData.weeklyExpenseTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
+                <YAxis 
+                  stroke="#6b7280" 
+                  fontSize={10} 
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                  domain={[0, 'dataMax']}
+                />
+                <Tooltip content={<WeeklyExpenseTooltip />} />
+                <Area 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="#dc2626" 
+                  fill="#ef4444" 
+                  fillOpacity={0.3}
+                  name="Kiadás összege"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+
+        {/* Distribution Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          {/* Organization Distribution */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+              <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+              Szervezetek szerinti megoszlás
+            </h3>
+            <div className="h-40 sm:h-48 lg:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={chartData.organizationData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={60}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {chartData.organizationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: string, props: any) => [
+                      `${value} számla (${formatCurrency(props.payload.amount)})`,
+                      name
+                    ]}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
+              {chartData.organizationData.map((item, index) => (
+                <div key={index} className="text-center">
+                  <div className="flex items-center justify-center space-x-2 mb-1">
+                    <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
+                    <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 truncate">{item.name}</p>
+                  <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment Method Distribution */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+              Fizetési módok megoszlása
+            </h3>
+            <div className="h-40 sm:h-48 lg:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={chartData.paymentTypeData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={60}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {chartData.paymentTypeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: string, props: any) => [
+                      `${value} számla (${formatCurrency(props.payload.amount)})`,
+                      name
+                    ]}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col space-y-2 mt-3 sm:mt-4">
+              {chartData.paymentTypeData.map((item, index) => (
+                <div key={index} className="text-center">
+                  <div className="flex items-center justify-center space-x-2 mb-1">
+                    <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }}></div>
+                    <span className="text-sm font-medium text-gray-900">{item.value}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 truncate">{item.name}</p>
+                  <p className="text-xs text-gray-500">{formatCurrency(item.amount)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Heti Aktivitás Chart - 5TH POSITION */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+            Heti aktivitás
+          </h3>
+          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+            {weekHistory[currentWeekIndex] && (
+              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+                {weekHistory[currentWeekIndex].weekLabel}
+              </span>
+            )}
+            <div className="flex items-center justify-center space-x-2">
+              <button
+                onClick={() => navigateWeek('prev')}
+                disabled={currentWeekIndex >= weekHistory.length - 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Előző hét"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setShowWeekHistory(!showWeekHistory)}
+                className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+              >
+                <History className="h-4 w-4" />
+                <span>Előzmények</span>
+              </button>
+              <button
+                onClick={() => navigateWeek('next')}
+                disabled={currentWeekIndex <= 0}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Következő hét"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Week History Dropdown */}
+        {showWeekHistory && (
+          <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {weekHistory.map((week, index) => (
+                <button
+                  key={index}
+                  onClick={() => selectWeek(index)}
+                  className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                    index === currentWeekIndex
+                      ? 'bg-blue-100 border-blue-300 text-blue-800'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="font-medium truncate">{week.weekLabel}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="h-48 sm:h-64 lg:h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData.weeklyTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} />
+              <Tooltip content={<WeeklyTooltip />} />
+              <Area 
+                type="monotone" 
+                dataKey="invoices" 
+                stroke="#059669" 
+                fill="#10b981" 
+                fillOpacity={0.3}
+                name="Számlák száma"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
       {/* Recent Invoices */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
-          <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+        <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+          <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-600" />
           Legutóbbi számlák
         </h3>
-
+        
         {/* Mobile Card View */}
-        <div className="block lg:hidden space-y-3 sm:space-y-4">
+        <div className="block sm:hidden space-y-3">
           {recentInvoices.map((invoice) => (
-            <div 
-              key={invoice.id} 
-              className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-              onClick={() => setSelectedInvoice(invoice)}
-            >
-              <div className="flex items-start justify-between mb-3">
+            <div key={invoice.id} className="border border-gray-200 rounded-lg p-3">
+              <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center space-x-2 flex-1 min-w-0">
                   <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {invoice.file_name}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {invoice.invoice_number || '-'}
-                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-1 ml-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      downloadFile(invoice);
-                    }}
-                    className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-                    title="Letöltés"
-                  >
-                    <Download className="h-4 w-4" />
-                  </button>
+                  {invoice.organization === 'alapitvany' ? (
+                    <Building2 className="h-4 w-4 text-blue-800" />
+                  ) : (
+                    <GraduationCap className="h-4 w-4 text-orange-800" />
+                  )}
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-gray-500">Szervezet:</span>
-                  <div className="flex items-center mt-1">
-                    {invoice.organization === 'alapitvany' ? (
-                      <>
-                        <Building2 className="h-3 w-3 text-blue-800 mr-1" />
-                        <span className="text-blue-800 text-xs">Alapítvány</span>
-                      </>
-                    ) : (
-                      <>
-                        <GraduationCap className="h-3 w-3 text-orange-800 mr-1" />
-                        <span className="text-orange-800 text-xs">Óvoda</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <span className="text-gray-500">Összeg:</span>
-                  <p className="font-medium text-gray-900 mt-1">
-                    {formatCurrency(invoice.amount)}
-                  </p>
-                </div>
-                
-                <div className="col-span-2">
                   <span className="text-gray-500">Partner:</span>
-                  <p className="text-gray-900 truncate mt-1">
+                  <p className="font-medium text-gray-900 truncate">
                     {invoice.partner || '-'}
                   </p>
                 </div>
-                
+                <div>
+                  <span className="text-gray-500">Összeg:</span>
+                  <p className="font-medium text-gray-900">
+                    {invoice.amount ? formatCurrency(invoice.amount) : '-'}
+                  </p>
+                </div>
                 <div className="col-span-2">
-                  <span className="text-gray-500">Dátum:</span>
-                  <p className="text-gray-900 mt-1">
-                    {formatDate(invoice.invoice_date || invoice.uploaded_at)}
+                  <span className="text-gray-500">Feltöltve:</span>
+                  <p className="text-gray-900">
+                    {formatDate(invoice.uploaded_at)}
                   </p>
                 </div>
               </div>
@@ -434,429 +1181,77 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Desktop Table View */}
-        <div className="hidden lg:block overflow-x-auto">
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Számla
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fájl név
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Szervezet
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Feltöltve
+                </th>
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Partner
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Összeg
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fizetés
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dátum
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Állapot
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Műveletek
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {recentInvoices.map((invoice) => (
-                <tr 
-                  key={invoice.id} 
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedInvoice(invoice)}
-                >
-                  <td className="px-4 py-4 whitespace-nowrap">
+                <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
-                          {invoice.file_name}
-                        </div>
-                        <div className="text-sm text-gray-500 truncate max-w-[200px]">
-                          {invoice.invoice_number || '-'}
-                        </div>
-                      </div>
+                      <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                        {invoice.file_name}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {invoice.organization === 'alapitvany' ? (
                         <>
-                          <Building2 className="h-4 w-4 text-blue-800 mr-2 flex-shrink-0" />
+                          <Building2 className="h-4 w-4 text-blue-800 mr-2" />
                           <span className="text-sm text-gray-900">Alapítvány</span>
                         </>
                       ) : (
                         <>
-                          <GraduationCap className="h-4 w-4 text-orange-800 mr-2 flex-shrink-0" />
+                          <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
                           <span className="text-sm text-gray-900">Óvoda</span>
                         </>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="max-w-[150px]">
-                      <div className="text-sm text-gray-900 truncate">
-                        {invoice.partner || '-'}
-                      </div>
-                      <div className="text-sm text-gray-500 truncate">
-                        {invoice.subject || ''}
-                      </div>
-                    </div>
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(invoice.uploaded_at)}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {formatCurrency(invoice.amount)}
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {invoice.partner || '-'}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-500">
-                      {invoice.invoice_type === 'bank_transfer' ? (
-                        <>
-                          <Banknote className="h-4 w-4 mr-1 flex-shrink-0" />
-                          <span className="truncate">Átutalás</span>
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="h-4 w-4 mr-1 flex-shrink-0" />
-                          <span className="truncate">Kártya/KP</span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
-                      <span className="truncate">
-                        {formatDate(invoice.invoice_date || invoice.uploaded_at)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                      {getStatusText(invoice.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        downloadFile(invoice);
-                      }}
-                      className="text-gray-600 hover:text-gray-900 transition-colors"
-                      title="Letöltés"
-                    >
-                      <Download className="h-4 w-4" />
-                    </button>
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {invoice.amount ? formatCurrency(invoice.amount) : '-'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
+        
         {recentInvoices.length === 0 && (
-          <div className="text-center py-8 sm:py-12">
-            <FileText className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
+          <div className="text-center py-8">
+            <FileText className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek számlák</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Kezdje el a számlák feltöltésével az áttekintés megtekintéséhez.
+              Kezdje el a számlák feltöltésével a "Feltöltés" menüpontban.
             </p>
           </div>
         )}
-      </div>
-
-      {/* Invoice Detail Modal */}
-      {selectedInvoice && (
-        <InvoiceDetailModal 
-          invoice={selectedInvoice}
-          onClose={() => setSelectedInvoice(null)}
-          onSave={(updatedInvoice) => {
-            setRecentInvoices(prev => prev.map(inv => 
-              inv.id === updatedInvoice.id ? updatedInvoice : inv
-            ));
-            setSelectedInvoice(updatedInvoice);
-            fetchDashboardData(); // Refresh stats
-          }}
-        />
-      )}
-    </div>
-  );
-};
-
-// Invoice Detail Modal Component
-interface InvoiceDetailModalProps {
-  invoice: Invoice;
-  onClose: () => void;
-  onSave: (updatedInvoice: Invoice) => void;
-}
-
-const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice, onClose, onSave }) => {
-  const [editedInvoice, setEditedInvoice] = useState<Invoice>(invoice);
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('invoices')
-        .update({
-          partner: editedInvoice.partner,
-          bank_account: editedInvoice.bank_account,
-          subject: editedInvoice.subject,
-          invoice_number: editedInvoice.invoice_number,
-          amount: editedInvoice.amount,
-          invoice_date: editedInvoice.invoice_date,
-          payment_deadline: editedInvoice.payment_deadline,
-          payment_method: editedInvoice.payment_method,
-          invoice_type: editedInvoice.invoice_type,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editedInvoice.id);
-
-      if (error) throw error;
-
-      onSave(editedInvoice);
-    } catch (error) {
-      console.error('Error updating invoice:', error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    if (!amount) return '';
-    return new Intl.NumberFormat('hu-HU', {
-      style: 'currency',
-      currency: 'HUF',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
-  };
-
-  const parseDate = (dateString: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toISOString();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50 overflow-hidden">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] flex flex-col overflow-hidden">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Számla szerkesztése</h3>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md hover:bg-gray-100"
-            >
-              <Eye className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 min-h-0">
-          <div className="max-w-4xl mx-auto space-y-8">
-            {/* Basic Information Section */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                Alapadatok
-              </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Fájlnév</label>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-sm font-medium text-gray-900 break-words">{editedInvoice.file_name}</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Szervezet</label>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="flex items-center">
-                      {editedInvoice.organization === 'alapitvany' ? (
-                        <>
-                          <Building2 className="h-4 w-4 text-blue-800 mr-2" />
-                          <span className="text-sm font-medium text-gray-900">Feketerigó Alapítvány</span>
-                        </>
-                      ) : (
-                        <>
-                          <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
-                          <span className="text-sm font-medium text-gray-900">Feketerigó Alapítványi Óvoda</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Partner and Invoice Information */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Building2 className="h-5 w-5 mr-2 text-green-600" />
-                Partner és számla adatok
-              </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Partner neve *</label>
-                  <input
-                    type="text"
-                    value={editedInvoice.partner || ''}
-                    onChange={(e) => setEditedInvoice(prev => ({ ...prev, partner: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Partner neve"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Számlaszám</label>
-                  <input
-                    type="text"
-                    value={editedInvoice.invoice_number || ''}
-                    onChange={(e) => setEditedInvoice(prev => ({ ...prev, invoice_number: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Számlaszám"
-                  />
-                </div>
-                
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tárgy / Szolgáltatás</label>
-                  <textarea
-                    value={editedInvoice.subject || ''}
-                    onChange={(e) => setEditedInvoice(prev => ({ ...prev, subject: e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Számla tárgya vagy szolgáltatás leírása"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Financial Information */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Banknote className="h-5 w-5 mr-2 text-green-600" />
-                Pénzügyi adatok
-              </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Összeg (HUF) *</label>
-                  <input
-                    type="number"
-                    value={editedInvoice.amount || ''}
-                    onChange={(e) => setEditedInvoice(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0"
-                    min="0"
-                    step="1"
-                  />
-                  {editedInvoice.amount > 0 && (
-                    <p className="text-sm text-gray-500 mt-1">{formatCurrency(editedInvoice.amount)}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Fizetési mód</label>
-                  <select
-                    value={editedInvoice.invoice_type || 'bank_transfer'}
-                    onChange={(e) => setEditedInvoice(prev => ({ 
-                      ...prev, 
-                      invoice_type: e.target.value as 'bank_transfer' | 'card_cash_afterpay'
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="bank_transfer">Banki átutalás</option>
-                    <option value="card_cash_afterpay">Kártya/Készpénz/Utánvét</option>
-                  </select>
-                </div>
-                
-                {editedInvoice.invoice_type === 'bank_transfer' && (
-                  <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bankszámlaszám</label>
-                    <input
-                      type="text"
-                      value={editedInvoice.bank_account || ''}
-                      onChange={(e) => setEditedInvoice(prev => ({ ...prev, bank_account: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-                      placeholder="12345678-12345678-12345678"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Date Information */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-purple-600" />
-                Dátumok
-              </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Számla kelte</label>
-                  <input
-                    type="date"
-                    value={formatDate(editedInvoice.invoice_date)}
-                    onChange={(e) => setEditedInvoice(prev => ({ 
-                      ...prev, 
-                      invoice_date: e.target.value ? parseDate(e.target.value) : ''
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Fizetési határidő</label>
-                  <input
-                    type="date"
-                    value={formatDate(editedInvoice.payment_deadline)}
-                    onChange={(e) => setEditedInvoice(prev => ({ 
-                      ...prev, 
-                      payment_deadline: e.target.value ? parseDate(e.target.value) : ''
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-200 bg-white px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-            <button
-              onClick={onClose}
-              disabled={saving}
-              className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 font-medium"
-            >
-              Bezárás
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !editedInvoice.partner || !editedInvoice.amount}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Mentés...</span>
-                </>
-              ) : (
-                <>
-                  <span>Mentés</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
