@@ -226,11 +226,11 @@ export const InvoiceUpload: React.FC = () => {
       if (checkCancelled()) return;
 
       const simpleFilename = createSimpleFilename(uploadedFile.file.name);
-      const fileName = `temp/${Date.now()}_${simpleFilename}`;
+      const tempFileName = `temp/${Date.now()}_${simpleFilename}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('invoices')
-        .upload(fileName, uploadedFile.file);
+        .upload(tempFileName, uploadedFile.file);
 
       if (uploadError) throw uploadError;
 
@@ -240,9 +240,9 @@ export const InvoiceUpload: React.FC = () => {
         file.id === uploadedFile.id ? { ...file, progress: 40 } : file
       ));
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl: tempPublicUrl } } = supabase.storage
         .from('invoices')
-        .getPublicUrl(fileName);
+        .getPublicUrl(tempFileName);
 
       if (checkCancelled()) return;
 
@@ -306,19 +306,28 @@ export const InvoiceUpload: React.FC = () => {
         }
       }
 
+      // Create final file path with organization folder
       const finalFileName = `${finalOrganization}/${Date.now()}_${simpleFilename}`;
       
+      console.log('Moving file from:', tempFileName, 'to:', finalFileName);
+      
+      // Move file to organization-specific folder
       const { error: moveError } = await supabase.storage
         .from('invoices')
-        .move(fileName, finalFileName);
+        .move(tempFileName, finalFileName);
 
       if (moveError) {
-        console.warn('Failed to move file to organization folder:', moveError);
+        console.error('Failed to move file to organization folder:', moveError);
+        // If move fails, try to get the temp file URL and continue
+        addNotification('error', `Fájl áthelyezése sikertelen: ${moveError.message}`);
       }
 
-      const finalFileUrl = moveError ? publicUrl : supabase.storage
+      // Get the final file URL (use moved file if successful, temp file if move failed)
+      const finalFileUrl = moveError ? tempPublicUrl : supabase.storage
         .from('invoices')
         .getPublicUrl(finalFileName).data.publicUrl;
+
+      console.log('Final file URL:', finalFileUrl);
 
       await saveToDatabase(uploadedFile, processedData, extractedText, finalFileUrl, finalOrganization);
 

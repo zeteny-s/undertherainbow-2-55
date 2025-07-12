@@ -195,8 +195,26 @@ export const InvoiceList: React.FC = () => {
   });
 
   const downloadFile = async (invoice: Invoice) => {
-    if (invoice.file_url) {
-      window.open(invoice.file_url, '_blank');
+    if (invoice.file_url && invoice.file_url.trim() !== '') {
+      try {
+        console.log('Attempting to download file:', invoice.file_url);
+        
+        // Try to fetch the file first to check if it exists
+        const response = await fetch(invoice.file_url, { method: 'HEAD' });
+        
+        if (response.ok) {
+          // File exists, open in new tab
+          window.open(invoice.file_url, '_blank');
+        } else {
+          console.error('File not accessible:', response.status, response.statusText);
+          addNotification('error', `Fájl nem érhető el: ${response.status} ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('Error accessing file:', error);
+        addNotification('error', 'Hiba történt a fájl elérésekor. Ellenőrizze a Supabase Storage beállításokat.');
+      }
+    } else {
+      addNotification('error', 'Nincs elérhető fájl URL a számlához');
     }
   };
 
@@ -573,8 +591,8 @@ export const InvoiceList: React.FC = () => {
 
       {/* Invoice Detail Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white rounded-xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50 overflow-hidden">
+          <div className="bg-white rounded-xl max-w-6xl w-full h-[95vh] flex flex-col">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -605,17 +623,17 @@ export const InvoiceList: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex-1 overflow-hidden">
-              <div className="h-full grid grid-cols-1 lg:grid-cols-2">
+            <div className="flex-1 overflow-hidden min-h-0">
+              <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-0">
                 {/* Document Preview */}
-                <div className="bg-gray-50 border-r border-gray-200 flex flex-col">
+                <div className="bg-gray-50 border-r border-gray-200 flex flex-col h-full">
                   <div className="p-4 border-b border-gray-200 bg-white">
                     <h4 className="text-sm font-medium text-gray-900 flex items-center">
                       <FileText className="h-4 w-4 mr-2 text-blue-600" />
                       Dokumentum előnézet ({selectedInvoice.file_name})
                     </h4>
                   </div>
-                  <div className="flex-1 p-4 overflow-auto">
+                  <div className="flex-1 p-4 overflow-auto min-h-0">
                     {selectedInvoice.file_url && selectedInvoice.file_url.trim() !== '' ? (
                       <div className="w-full h-full flex items-center justify-center">
                         {selectedInvoice.file_name.toLowerCase().endsWith('.pdf') ? (
@@ -673,11 +691,11 @@ export const InvoiceList: React.FC = () => {
                 </div>
                 
                 {/* Invoice Details */}
-                <div className="bg-white flex flex-col">
-                  <div className="p-4 border-b border-gray-200">
+                <div className="bg-white flex flex-col h-full">
+                  <div className="p-4 border-b border-gray-200 flex-shrink-0">
                     <h4 className="text-lg font-semibold text-gray-900">Számla részletes adatok</h4>
                   </div>
-                  <div className="flex-1 p-4 overflow-y-auto">
+                  <div className="flex-1 p-4 overflow-y-auto min-h-0">
                     <div className="space-y-6">
                       {/* Basic Information Section */}
                       <div className="border-b border-gray-100 pb-4">
