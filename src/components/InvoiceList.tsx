@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Building2, GraduationCap, Search, Filter, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { FileText, Building2, GraduationCap, Search, Filter, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote, CreditCard } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Utility functions for status display
