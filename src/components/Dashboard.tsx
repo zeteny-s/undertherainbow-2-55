@@ -43,7 +43,7 @@ interface DashboardProps {
   invoices: Invoice[];
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ invoices }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ invoices = [] }) => {
   const [currentExpenseWeekIndex, setCurrentExpenseWeekIndex] = useState(0);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
 
