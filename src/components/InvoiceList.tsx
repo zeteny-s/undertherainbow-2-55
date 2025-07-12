@@ -361,7 +361,8 @@ export const InvoiceList: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Mobile Card View */}
         <div className="block lg:hidden">
-          {filteredInvoices.map((invoice) => (
+              className="border-b border-gray-200 p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              onClick={() => setSelectedInvoice(invoice)}
             <div key={invoice.id} className="border-b border-gray-200 p-3 sm:p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -377,21 +378,30 @@ export const InvoiceList: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-1 ml-2">
                   <button
-                    onClick={() => setSelectedInvoice(invoice)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedInvoice(invoice);
+                    }}
                     className="p-2 text-blue-600 hover:text-blue-900 transition-colors"
                     title="Részletek megtekintése"
                   >
                     <Eye className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => downloadFile(invoice)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadFile(invoice);
+                    }}
                     className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
                     title="Letöltés"
                   >
                     <Download className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => setDeleteConfirm(invoice)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteConfirm(invoice);
+                    }}
                     className="p-2 text-red-600 hover:text-red-900 transition-colors"
                     title="Számla törlése"
                   >
@@ -523,21 +533,30 @@ export const InvoiceList: React.FC = () => {
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setSelectedInvoice(invoice)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedInvoice(invoice);
+                        }}
                         className="text-blue-600 hover:text-blue-900 transition-colors"
                         title="Részletek megtekintése"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => downloadFile(invoice)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadFile(invoice);
+                        }}
                         className="text-gray-600 hover:text-gray-900 transition-colors"
                         title="Letöltés"
                       >
                         <Download className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteConfirm(invoice)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirm(invoice);
+                        }}
                         className="text-red-600 hover:text-red-900 transition-colors"
                         title="Számla törlése"
                       >
@@ -889,7 +908,8 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
                     ...prev, 
                     invoice_type: e.target.value as 'bank_transfer' | 'card_cash_afterpay'
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => setSelectedInvoice(invoice)}
                 >
                   <option value="bank_transfer">Banki átutalás</option>
                   <option value="card_cash_afterpay">Kártya/Készpénz/Utánvét</option>
