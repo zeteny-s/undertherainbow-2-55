@@ -479,6 +479,15 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   const finalizeChanges = (fileId: string) => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (!file || !file.extractedData) {
+      addNotification('error', 'Nem található a fájl vagy az adatok');
+      return;
+    }
+
+    // Update the database with the new extracted data
+    updateInvoiceInDatabase(file);
+    
     setHasUnsavedChanges(prev => {
       const newSet = new Set(prev);
       newSet.delete(fileId);
@@ -486,6 +495,64 @@ export const InvoiceUpload: React.FC = () => {
     });
     
     addNotification('success', 'Változások véglegesítve!');
+  };
+
+  const updateInvoiceInDatabase = async (uploadedFile: UploadedFile) => {
+    if (!uploadedFile.extractedData) return;
+
+    try {
+      // Find the invoice in the database by matching file name and organization
+      const { data: existingInvoices, error: fetchError } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('file_name', uploadedFile.file.name)
+        .eq('organization', uploadedFile.organization)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (fetchError) {
+        console.error('Error fetching invoice for update:', fetchError);
+        addNotification('error', 'Hiba történt a számla keresése során');
+        return;
+      }
+
+      if (!existingInvoices || existingInvoices.length === 0) {
+        addNotification('error', 'Nem található a számla az adatbázisban');
+        return;
+      }
+
+      const invoiceId = existingInvoices[0].id;
+
+      // Update the invoice with the new data
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({
+          partner: uploadedFile.extractedData.Partner,
+          bank_account: uploadedFile.extractedData.Bankszámlaszám,
+          subject: uploadedFile.extractedData.Tárgy,
+          invoice_number: uploadedFile.extractedData['Számla sorszáma'],
+          amount: uploadedFile.extractedData.Összeg,
+          invoice_date: uploadedFile.extractedData['Számla kelte'],
+          payment_deadline: uploadedFile.extractedData['Fizetési határidő'],
+          payment_method: uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : 'Kártya/Készpénz/Utánvét',
+          invoice_type: uploadedFile.extractedData.paymentType,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invoiceId);
+
+      if (updateError) {
+        console.error('Error updating invoice:', updateError);
+        addNotification('error', 'Hiba történt a számla frissítése során');
+        return;
+      }
+
+      console.log('Invoice updated successfully in database');
+      addNotification('success', 'Számla adatok sikeresen frissítve az adatbázisban!');
+
+    } catch (error) {
+      console.error('Error in updateInvoiceInDatabase:', error);
+      addNotification('error', 'Váratlan hiba történt a frissítés során');
+    }
   };
 
   const getStatusIcon = (status: string) => {
