@@ -944,7 +944,12 @@ export const Dashboard: React.FC = () => {
             <AreaChart data={chartData.weeklyExpenseTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
-              <YAxis stroke="#6b7280" fontSize={10} tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`} />
+              <YAxis 
+                stroke="#6b7280" 
+                fontSize={10} 
+                tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                domain={[0, 'dataMax']}
+              />
               <Tooltip content={<WeeklyExpenseTooltip />} />
               <Area 
                 type="monotone" 
