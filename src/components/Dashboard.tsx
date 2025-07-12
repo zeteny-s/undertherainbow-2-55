@@ -1041,6 +1041,92 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Heti Aktivitás Chart - 5TH POSITION */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+            Heti aktivitás
+          </h3>
+          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+            {weekHistory[currentWeekIndex] && (
+              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+                {weekHistory[currentWeekIndex].weekLabel}
+              </span>
+            )}
+            <div className="flex items-center justify-center space-x-2">
+              <button
+                onClick={() => navigateWeek('prev')}
+                disabled={currentWeekIndex >= weekHistory.length - 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Előző hét"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setShowWeekHistory(!showWeekHistory)}
+                className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+              >
+                <History className="h-4 w-4" />
+                <span>Előzmények</span>
+              </button>
+              <button
+                onClick={() => navigateWeek('next')}
+                disabled={currentWeekIndex <= 0}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Következő hét"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Week History Dropdown */}
+        {showWeekHistory && (
+          <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {weekHistory.map((week, index) => (
+                <button
+                  key={index}
+                  onClick={() => selectWeek(index)}
+                  className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                    index === currentWeekIndex
+                      ? 'bg-blue-100 border-blue-300 text-blue-800'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="font-medium truncate">{week.weekLabel}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="h-48 sm:h-64 lg:h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData.weeklyTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} />
+              <Tooltip content={<WeeklyTooltip />} />
+              <Area 
+                type="monotone" 
+                dataKey="invoices" 
+                stroke="#059669" 
+                fill="#10b981" 
+                fillOpacity={0.3}
+                name="Számlák száma"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* Recent Invoices */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
         <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
