@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, ArrowLeft, Camera, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
@@ -31,6 +31,8 @@ interface UploadedFile {
   savedToDatabase?: boolean;
   cancelled?: boolean;
   previewUrl?: string;
+  isHidden?: boolean; // Flag to track if a file should be hidden after export animation
+  isExiting?: boolean; // Flag for animation state
 }
 
 interface Notification {
@@ -53,9 +55,36 @@ export const InvoiceUpload: React.FC = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [previewZoom, setPreviewZoom] = useState(1);
   const [previewRotation, setPreviewRotation] = useState(0);
+  const [processingQueue, setProcessingQueue] = useState<string[]>([]);
+  const [currentlyProcessing, setCurrentlyProcessing] = useState<string | null>(null);
 
   // Check if device is mobile
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  // Process the next file in queue when current file finishes
+  useEffect(() => {
+    const processNextInQueue = async () => {
+      if (processingQueue.length > 0 && !currentlyProcessing) {
+        const nextFileId = processingQueue[0];
+        const nextFile = uploadedFiles.find(f => f.id === nextFileId);
+        
+        if (nextFile) {
+          setCurrentlyProcessing(nextFileId);
+          
+          // Remove from queue
+          setProcessingQueue(prev => prev.filter(id => id !== nextFileId));
+          
+          // Process the file
+          await processFile(nextFile);
+          
+          // Clear current processing
+          setCurrentlyProcessing(null);
+        }
+      }
+    };
+    
+    processNextInQueue();
+  }, [processingQueue, currentlyProcessing, uploadedFiles]);
 
   const parseHungarianCurrency = (value: string | number | undefined): number => {
     if (typeof value === 'number') return value;
@@ -138,12 +167,15 @@ export const InvoiceUpload: React.FC = () => {
       return;
     }
 
+    const newFileIds: string[] = [];
+
     for (const file of validFiles) {
       const previewUrl = URL.createObjectURL(file);
+      const newId = Math.random().toString(36).substr(2, 9);
 
       const newFile: UploadedFile = {
         file,
-        id: Math.random().toString(36).substr(2, 9),
+        id: newId,
         organization: 'auto',
         status: 'preview',
         progress: 0,
@@ -153,12 +185,17 @@ export const InvoiceUpload: React.FC = () => {
         previewUrl
       };
 
+      newFileIds.push(newId);
       setUploadedFiles(prev => [...prev, newFile]);
-      
-      // Auto-start processing for the first file
-      if (uploadedFiles.length === 0) {
-        setTimeout(() => processFile(newFile), 500);
-      }
+    }
+    
+    // If no file is currently being processed, add to processing queue
+    if (!currentlyProcessing) {
+      setProcessingQueue(prev => [...prev, ...newFileIds]);
+    } else {
+      // Otherwise add to queue
+      setProcessingQueue(prev => [...prev, ...newFileIds]);
+      addNotification('info', `${newFileIds.length} számla hozzáadva a feldolgozási sorhoz`);
     }
   };
 
@@ -174,12 +211,25 @@ export const InvoiceUpload: React.FC = () => {
     const file = uploadedFiles.find(f => f.id === fileId);
     if (!file) return;
 
-    await processFile(file);
+    if (currentlyProcessing) {
+      // Add to queue if another file is processing
+      setProcessingQueue(prev => [...prev, fileId]);
+      addNotification('info', 'Számla hozzáadva a feldolgozási sorhoz');
+    } else {
+      // Start processing immediately if no file is being processed
+      setCurrentlyProcessing(fileId);
+      await processFile(file);
+      setCurrentlyProcessing(null);
+    }
   };
 
   const cancelFile = async (fileId: string) => {
     setCancellingFiles(prev => new Set(prev).add(fileId));
     
+    // Remove from processing queue if it's there
+    setProcessingQueue(prev => prev.filter(id => id !== fileId));
+    
+    // Mark as cancelled
     setUploadedFiles(prev => prev.map(file => 
       file.id === fileId ? { 
         ...file, 
@@ -204,12 +254,30 @@ export const InvoiceUpload: React.FC = () => {
       URL.revokeObjectURL(file.previewUrl);
     }
     
+    // Remove from queue if it's there
+    setProcessingQueue(prev => prev.filter(id => id !== fileId));
+    
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
     setHasUnsavedChanges(prev => {
       const newSet = new Set(prev);
       newSet.delete(fileId);
       return newSet;
     });
+  };
+
+  // Animate and hide file after export
+  const hideFileAfterExport = (fileId: string) => {
+    // First set the exiting flag to trigger animation
+    setUploadedFiles(prev => prev.map(file => 
+      file.id === fileId ? { ...file, isExiting: true } : file
+    ));
+    
+    // After animation completes, set isHidden flag
+    setTimeout(() => {
+      setUploadedFiles(prev => prev.map(file => 
+        file.id === fileId ? { ...file, isHidden: true } : file
+      ));
+    }, 500);
   };
 
   const processFile = async (uploadedFile: UploadedFile) => {
@@ -437,6 +505,9 @@ export const InvoiceUpload: React.FC = () => {
       ));
 
       addNotification('success', 'Sikeresen exportálva a Google Sheets-be!');
+      
+      // Start the animation to hide the file
+      hideFileAfterExport(file.id);
 
     } catch (error) {
       console.error('Error exporting to Google Sheets:', error);
@@ -759,8 +830,37 @@ export const InvoiceUpload: React.FC = () => {
     );
   };
 
+  // Queue status display
+  const renderQueueStatus = () => {
+    if (processingQueue.length === 0 && !currentlyProcessing) return null;
+    
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+            <Loader className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 animate-spin" />
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Feldolgozási sor</h4>
+          </div>
+          <div className="text-sm text-gray-600">
+            {currentlyProcessing && (
+              <span className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                <Loader className="h-3 w-3 mr-1 animate-spin" />
+                Feldolgozás alatt: 1
+              </span>
+            )}
+            {processingQueue.length > 0 && (
+              <span className="inline-flex items-center bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                Sorban: {processingQueue.length}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
       {/* Notifications */}
       <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
@@ -821,6 +921,9 @@ export const InvoiceUpload: React.FC = () => {
           <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat, valamint meghatározza a szervezetet.</p>
         </div>
 
+        {/* Queue status display */}
+        {renderQueueStatus()}
+
         {/* File Upload Area */}
         <div 
           className={`relative border-2 border-dashed rounded-xl p-4 sm:p-6 lg:p-8 transition-colors mb-6 sm:mb-8 ${
@@ -873,8 +976,13 @@ export const InvoiceUpload: React.FC = () => {
         {/* Uploaded Files List */}
         {uploadedFiles.length > 0 && (
           <div className="space-y-4 sm:space-y-6">
-            {uploadedFiles.map((uploadedFile) => (
-              <div key={uploadedFile.id} className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+            {uploadedFiles.filter(file => !file.isHidden).map((uploadedFile) => (
+              <div 
+                key={uploadedFile.id} 
+                className={`grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${
+                  uploadedFile.isExiting ? 'transform -translate-x-full opacity-0' : 'transform translate-x-0 opacity-100'
+                }`}
+              >
                 {/* Left Column: Document Preview (Always Visible) */}
                 <div className="order-2 xl:order-1 h-[60vh] sm:h-[65vh] lg:h-[70vh] xl:h-[800px]">
                   {renderDocumentPreview(uploadedFile)}
