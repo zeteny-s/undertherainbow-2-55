@@ -749,7 +749,8 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   const renderDocumentPreview = (file: UploadedFile) => {
-    if (!file.previewUrl) return null;
+    // Check if we're on mobile - this function shouldn't even render on mobile
+    if (!file.previewUrl || (typeof window !== 'undefined' && window.innerWidth < 640)) return null;
 
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
@@ -759,8 +760,7 @@ export const InvoiceUpload: React.FC = () => {
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
               Dokumentum előnézet
             </h4>
-            {/* Hide zoom controls on mobile */}
-            <div className="hidden sm:flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => setPreviewZoom(Math.max(0.5, previewZoom - 0.25))}
                 className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
@@ -797,8 +797,8 @@ export const InvoiceUpload: React.FC = () => {
                   src={file.previewUrl}
                   className="border-0 rounded-lg shadow-sm max-w-full max-h-full"
                   style={{
-                    width: window.innerWidth < 640 ? '100%' : '90%',
-                    height: window.innerWidth < 640 ? '100%' : '90%',
+                    width: '90%',
+                    height: '90%',
                     transform: `rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
                     transition: 'transform 0.2s ease'
@@ -813,13 +813,11 @@ export const InvoiceUpload: React.FC = () => {
                   alt="Invoice preview"
                   className="max-w-full max-h-full object-contain rounded-lg shadow-sm"
                   style={{
-                    transform: window.innerWidth < 640 ? 
-                      `rotate(${previewRotation}deg)` : 
-                      `scale(${previewZoom}) rotate(${previewRotation}deg)`,
+                    transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
                     transformOrigin: 'center center',
                     transition: 'transform 0.2s ease',
-                    maxWidth: window.innerWidth < 640 ? '100%' : 'none',
-                    maxHeight: window.innerWidth < 640 ? '100%' : 'none'
+                    maxWidth: 'none',
+                    maxHeight: 'none'
                   }}
                 />
               </div>
