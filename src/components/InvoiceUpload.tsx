@@ -860,433 +860,433 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   return (
-      <div className="min-h-screen bg-gray-50">
-      {/* Notifications */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
-        {notifications.map((notification) => (
-          <div
-            key={notification.id}
-            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
-          >
-            <div className="p-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  {notification.type === 'success' && (
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    </div>
-                  )}
-                  {notification.type === 'error' && (
-                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                    </div>
-                  )}
-                  {notification.type === 'info' && (
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <AlertCircle className="h-4 w-4 text-blue-600" />
-                    </div>
-                  )}
-                </div>
-                <div className="ml-3 flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 break-words">
-                    {notification.message}
-                  </p>
-                </div>
-                <div className="ml-4 flex-shrink-0">
-                  <button
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                    onClick={() => removeNotification(notification.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+    {/* Notifications */}
+    <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
+      {notifications.map((notification) => (
+        <div
+          key={notification.id}
+          className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
+        >
+          <div className="p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {notification.type === 'success' && (
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                )}
+                {notification.type === 'error' && (
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  </div>
+                )}
+                {notification.type === 'info' && (
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                  </div>
+                )}
+              </div>
+              <div className="ml-3 flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 break-words">
+                  {notification.message}
+                </p>
+              </div>
+              <div className="ml-4 flex-shrink-0">
+                <button
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={() => removeNotification(notification.id)}
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
-        ))}
+        </div>
+      ))}
+    </div>
+
+    {/* Mobile Scanner Modal */}
+    {showScanner && (
+      <MobileScanner
+        onScanComplete={handleScanComplete}
+        onClose={() => setShowScanner(false)}
+      />
+    )}
+
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+      {/* Header */}
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Számla feltöltés</h2>
+        <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat, valamint meghatározza a szervezetet.</p>
       </div>
 
-      {/* Mobile Scanner Modal */}
-      {showScanner && (
-        <MobileScanner
-          onScanComplete={handleScanComplete}
-          onClose={() => setShowScanner(false)}
-        />
-      )}
+      {/* Queue status display */}
+      {renderQueueStatus()}
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Header */}
-        <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Számla feltöltés</h2>
-          <p className="text-gray-600 text-sm sm:text-base">Töltse fel a számlákat PDF, JPG vagy PNG formátumban (max. 10MB). Az AI automatikusan kinyeri és elemzi az adatokat, valamint meghatározza a szervezetet.</p>
-        </div>
-
-        {/* Queue status display */}
-        {renderQueueStatus()}
-
-        {/* File Upload Area */}
-        <div 
-          className={`relative border-2 border-dashed rounded-xl p-4 sm:p-6 lg:p-8 transition-colors mb-6 sm:mb-8 ${
-            dragActive 
-              ? 'border-blue-400 bg-blue-50' 
-              : 'border-gray-300 hover:border-gray-400'
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <div className="text-center">
-            <Upload className={`mx-auto h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
-            <div className="mt-3 sm:mt-4">
-              <p className="text-base sm:text-lg font-medium text-gray-900">
-                Húzza ide a fájlokat vagy kattintson a tallózáshoz
-              </p>
-              <p className="mt-1 sm:mt-2 text-sm text-gray-500">
-                PDF, JPG, PNG támogatott • Max. 10MB • AI automatikusan meghatározza a szervezetet
-              </p>
-            </div>
-            <div className="mt-4 sm:mt-6 flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
-              <label className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">
-                <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                Fájlok tallózása
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleFileInput}
-                  className="sr-only"
-                />
-              </label>
-              
-              {/* Mobile Scanner Button */}
-              {isMobile && (
-                <button
-                  onClick={() => setShowScanner(true)}
-                  className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 text-sm sm:text-base font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                  <Camera className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Dokumentum beolvasása
-                </button>
-              )}
-            </div>
+      {/* File Upload Area */}
+      <div 
+        className={`relative border-2 border-dashed rounded-xl p-4 sm:p-6 lg:p-8 transition-colors mb-6 sm:mb-8 ${
+          dragActive 
+            ? 'border-blue-400 bg-blue-50' 
+            : 'border-gray-300 hover:border-gray-400'
+        }`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <div className="text-center">
+          <Upload className={`mx-auto h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 ${dragActive ? 'text-blue-500' : 'text-gray-400'}`} />
+          <div className="mt-3 sm:mt-4">
+            <p className="text-base sm:text-lg font-medium text-gray-900">
+              Húzza ide a fájlokat vagy kattintson a tallózáshoz
+            </p>
+            <p className="mt-1 sm:mt-2 text-sm text-gray-500">
+              PDF, JPG, PNG támogatott • Max. 10MB • AI automatikusan meghatározza a szervezetet
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-6 flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
+            <label className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer transition-colors">
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+              Fájlok tallózása
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleFileInput}
+                className="sr-only"
+              />
+            </label>
+            
+            {/* Mobile Scanner Button */}
+            {isMobile && (
+              <button
+                onClick={() => setShowScanner(true)}
+                className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 text-sm sm:text-base font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <Camera className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                Dokumentum beolvasása
+              </button>
+            )}
           </div>
         </div>
+      </div>
 
-        {/* Uploaded Files List */}
-        {uploadedFiles.length > 0 && (
-          <div className="space-y-4 sm:space-y-6">
-            {uploadedFiles.filter(file => !file.isHidden).map((uploadedFile) => (
-              <div 
-                key={uploadedFile.id} 
-                className={`grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${
-                  uploadedFile.isExiting ? 'transform -translate-x-full opacity-0' : 'transform translate-x-0 opacity-100'
-                }`}
-              >
-                {/* Left Column: Document Preview (Always Visible) */}
-                <div className="order-2 xl:order-1 h-[60vh] sm:h-[65vh] lg:h-[70vh] xl:h-[800px]">
-                  {renderDocumentPreview(uploadedFile)}
-                </div>
+      {/* Uploaded Files List */}
+      {uploadedFiles.length > 0 && (
+        <div className="space-y-4 sm:space-y-6">
+          {uploadedFiles.filter(file => !file.isHidden).map((uploadedFile) => (
+            <div 
+              key={uploadedFile.id} 
+              className={`grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 transition-all duration-500 ease-in-out ${
+                uploadedFile.isExiting ? 'transform -translate-x-full opacity-0' : 'transform translate-x-0 opacity-100'
+              }`}
+            >
+              {/* Left Column: Document Preview (Hidden on mobile, visible on desktop) */}
+              <div className="hidden sm:block order-2 xl:order-1 h-[60vh] sm:h-[65vh] lg:h-[70vh] xl:h-[800px]">
+                {renderDocumentPreview(uploadedFile)}
+              </div>
 
-                {/* Right Column: Processing Status and Data */}
-                <div className="order-1 xl:order-2 space-y-4 sm:space-y-6">
-                  {/* File Header */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {uploadedFile.file.name}
+              {/* Right Column: Processing Status and Data */}
+              <div className="order-1 xl:order-2 space-y-4 sm:space-y-6">
+                {/* File Header */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {uploadedFile.file.name}
+                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-1 space-y-1 sm:space-y-0">
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            {(uploadedFile.file.size / 1024 / 1024).toFixed(1)} MB
                           </p>
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-1 space-y-1 sm:space-y-0">
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              {(uploadedFile.file.size / 1024 / 1024).toFixed(1)} MB
-                            </p>
-                            <div className="flex items-center space-x-2">
-                              {uploadedFile.organization === 'auto' ? (
-                                <>
-                                  <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
-                                  <span className="text-xs sm:text-sm text-purple-800 font-medium">AI meghatározza</span>
-                                </>
-                              ) : uploadedFile.organization === 'alapitvany' ? (
-                                <>
-                                  <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                                  <span className="text-xs sm:text-sm text-blue-800 font-medium">Alapítvány</span>
-                                </>
-                              ) : (
-                                <>
-                                  <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
-                                  <span className="text-xs sm:text-sm text-orange-800 font-medium">Óvoda</span>
-                                </>
-                              )}
-                            </div>
+                          <div className="flex items-center space-x-2">
+                            {uploadedFile.organization === 'auto' ? (
+                              <>
+                                <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
+                                <span className="text-xs sm:text-sm text-purple-800 font-medium">AI meghatározza</span>
+                              </>
+                            ) : uploadedFile.organization === 'alapitvany' ? (
+                              <>
+                                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                                <span className="text-xs sm:text-sm text-blue-800 font-medium">Alapítvány</span>
+                              </>
+                            ) : (
+                              <>
+                                <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
+                                <span className="text-xs sm:text-sm text-orange-800 font-medium">Óvoda</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
-                      
-                      <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 ml-3">
-                        <div className="text-right">
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(uploadedFile.status)}
-                            <span className="text-xs sm:text-sm font-medium text-gray-900">
-                              {getStatusText(uploadedFile.status)}
-                            </span>
-                          </div>
-                          {(uploadedFile.status === 'uploading' || uploadedFile.status === 'processing' || uploadedFile.status === 'ai_processing') && !uploadedFile.cancelled && (
-                            <div className="mt-1">
-                              <div className="w-16 sm:w-24 bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${uploadedFile.progress}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                          {uploadedFile.error && (
-                            <p className="text-xs text-red-600 mt-1 max-w-xs break-words">{uploadedFile.error}</p>
-                          )}
-                        </div>
-                        
-                        {/* Action Buttons */}
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 ml-3">
+                      <div className="text-right">
                         <div className="flex items-center space-x-2">
-                          {/* Start Extraction Button for Preview */}
-                          {uploadedFile.status === 'preview' && (
-                            <button
-                              onClick={() => startExtraction(uploadedFile.id)}
-                              className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              Indítás
-                            </button>
-                          )}
-
-                          {/* Cancel Button */}
-                          {canCancel(uploadedFile.status) && !uploadedFile.cancelled && (
-                            <button
-                              onClick={() => cancelFile(uploadedFile.id)}
-                              disabled={cancellingFiles.has(uploadedFile.id)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                              title="Feldolgozás megszakítása"
-                            >
-                              {cancellingFiles.has(uploadedFile.id) ? (
-                                <Loader className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <X className="h-3 w-3" />
-                              )}
-                            </button>
-                          )}
-
-                          {/* Remove Button */}
-                          {canRemove(uploadedFile.status) && (
-                            <button
-                              onClick={() => removeFile(uploadedFile.id)}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                              title="Eltávolítás a listából"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          )}
+                          {getStatusIcon(uploadedFile.status)}
+                          <span className="text-xs sm:text-sm font-medium text-gray-900">
+                            {getStatusText(uploadedFile.status)}
+                          </span>
                         </div>
-                        
-                        {/* Status Indicators */}
-                        <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
-                          {uploadedFile.savedToDatabase && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              <span className="hidden sm:inline">Adatbázisba mentve</span>
-                              <span className="sm:hidden">DB</span>
-                            </span>
-                          )}
-                          {uploadedFile.exportedToSheets && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              <span className="hidden sm:inline">Sheets-be exportálva</span>
-                              <span className="sm:hidden">Sheets</span>
-                            </span>
-                          )}
-                          {hasUnsavedChanges.has(uploadedFile.id) && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              <AlertCircle className="h-3 w-3 mr-1" />
-                              <span className="hidden sm:inline">Nem mentett változások</span>
-                              <span className="sm:hidden">Változás</span>
-                            </span>
-                          )}
-                        </div>
+                        {(uploadedFile.status === 'uploading' || uploadedFile.status === 'processing' || uploadedFile.status === 'ai_processing') && !uploadedFile.cancelled && (
+                          <div className="mt-1">
+                            <div className="w-16 sm:w-24 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${uploadedFile.progress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        {uploadedFile.error && (
+                          <p className="text-xs text-red-600 mt-1 max-w-xs break-words">{uploadedFile.error}</p>
+                        )}
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center space-x-2">
+                        {/* Start Extraction Button for Preview */}
+                        {uploadedFile.status === 'preview' && (
+                          <button
+                            onClick={() => startExtraction(uploadedFile.id)}
+                            className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                          >
+                            <Play className="h-3 w-3 mr-1" />
+                            Indítás
+                          </button>
+                        )}
+
+                        {/* Cancel Button */}
+                        {canCancel(uploadedFile.status) && !uploadedFile.cancelled && (
+                          <button
+                            onClick={() => cancelFile(uploadedFile.id)}
+                            disabled={cancellingFiles.has(uploadedFile.id)}
+                            className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title="Feldolgozás megszakítása"
+                          >
+                            {cancellingFiles.has(uploadedFile.id) ? (
+                              <Loader className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <X className="h-3 w-3" />
+                            )}
+                          </button>
+                        )}
+
+                        {/* Remove Button */}
+                        {canRemove(uploadedFile.status) && (
+                          <button
+                            onClick={() => removeFile(uploadedFile.id)}
+                            className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                            title="Eltávolítás a listából"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      {/* Status Indicators */}
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                        {uploadedFile.savedToDatabase && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            <span className="hidden sm:inline">Adatbázisba mentve</span>
+                            <span className="sm:hidden">DB</span>
+                          </span>
+                        )}
+                        {uploadedFile.exportedToSheets && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            <span className="hidden sm:inline">Sheets-be exportálva</span>
+                            <span className="sm:hidden">Sheets</span>
+                          </span>
+                        )}
+                        {hasUnsavedChanges.has(uploadedFile.id) && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            <span className="hidden sm:inline">Nem mentett változások</span>
+                            <span className="sm:hidden">Változás</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Extracted Data Display */}
-                  {uploadedFile.status === 'completed' && uploadedFile.extractedData && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
-                        <h4 className="text-base sm:text-lg font-semibold text-gray-900">Kinyert számla adatok</h4>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                          {hasUnsavedChanges.has(uploadedFile.id) && (
-                            <button
-                              onClick={() => finalizeChanges(uploadedFile.id)}
-                              className="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              <span className="hidden sm:inline">Változások véglegesítése</span>
-                              <span className="sm:hidden">Véglegesítés</span>
-                            </button>
-                          )}
-                          
+                {/* Extracted Data Display */}
+                {uploadedFile.status === 'completed' && uploadedFile.extractedData && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-900">Kinyert számla adatok</h4>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                        {hasUnsavedChanges.has(uploadedFile.id) && (
                           <button
-                            onClick={() => handleExportToSheets(uploadedFile)}
-                            disabled={exportingToSheets === uploadedFile.id || uploadedFile.exportedToSheets}
-                            className="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            onClick={() => finalizeChanges(uploadedFile.id)}
+                            className="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
                           >
-                            {exportingToSheets === uploadedFile.id ? (
-                              <>
-                                <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                <span className="hidden sm:inline">Exportálás...</span>
-                                <span className="sm:hidden">Export...</span>
-                              </>
-                            ) : uploadedFile.exportedToSheets ? (
-                              <>
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                <span className="hidden sm:inline">Exportálva</span>
-                                <span className="sm:hidden">Kész</span>
-                              </>
-                            ) : (
-                              <>
-                                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                                <span className="hidden sm:inline">Google Sheets-be küldés</span>
-                                <span className="sm:hidden">Sheets</span>
-                              </>
-                            )}
+                            <Check className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Változások véglegesítése</span>
+                            <span className="sm:hidden">Véglegesítés</span>
                           </button>
-                        </div>
-                      </div>
-
-                      {/* Inline Editable Data Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                        {/* Organization - Show AI-determined value */}
-                        {renderEditableField(
-                          uploadedFile.id,
-                          'Szervezet',
-                          uploadedFile.extractedData.Szervezet,
-                          uploadedFile.extractedData.Szervezet?.toLowerCase().includes('óvoda') ? 
-                            <GraduationCap className="h-4 w-4 text-orange-600" /> : 
-                            <Building2 className="h-4 w-4 text-blue-600" />,
-                          'Szervezet (AI által meghatározott)'
                         )}
-
-                        {/* Partner */}
-                        {renderEditableField(
-                          uploadedFile.id,
-                          'Partner',
-                          uploadedFile.extractedData.Partner,
-                          <User className="h-4 w-4 text-gray-600" />,
-                          'Partner'
-                        )}
-
-                        {/* Amount */}
-                        {renderEditableField(
-                          uploadedFile.id,
-                          'Összeg',
-                          uploadedFile.extractedData.Összeg,
-                          <DollarSign className="h-4 w-4 text-green-600" />,
-                          'Összeg',
-                          'number'
-                        )}
-
-                        {/* Invoice Number */}
-                        {renderEditableField(
-                          uploadedFile.id,
-                          'Számla sorszáma',
-                          uploadedFile.extractedData['Számla sorszáma'],
-                          <Hash className="h-4 w-4 text-gray-600" />,
-                          'Számla sorszáma'
-                        )}
-
-                        {/* Invoice Date */}
-                        {renderEditableField(
-                          uploadedFile.id,
-                          'Számla kelte',
-                          uploadedFile.extractedData['Számla kelte'],
-                          <Calendar className="h-4 w-4 text-blue-600" />,
-                          'Számla kelte',
-                          'date'
-                        )}
-
-                        {/* Payment Type */}
-                        <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-                          <div className="flex items-center space-x-2 mb-2">
-                            {uploadedFile.extractedData.paymentType === 'bank_transfer' ? (
-                              <Banknote className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <CreditCard className="h-4 w-4 text-purple-600" />
-                            )}
-                            <span className="text-xs sm:text-sm font-medium text-gray-500">Fizetési mód</span>
-                          </div>
-                          <p className="text-xs sm:text-sm font-semibold text-gray-900">
-                            {uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : 'Kártya/Készpénz/Utánvét'}
-                          </p>
-                        </div>
-
-                        {/* Bank Account (if bank transfer) */}
-                        {uploadedFile.extractedData.paymentType === 'bank_transfer' && (
-                          <>
-                            {renderEditableField(
-                              uploadedFile.id,
-                              'Bankszámlaszám',
-                              uploadedFile.extractedData.Bankszámlaszám,
-                              <Banknote className="h-4 w-4 text-green-600" />,
-                              'Bankszámlaszám'
-                            )}
-
-                            {renderEditableField(
-                              uploadedFile.id,
-                              'Fizetési határidő',
-                              uploadedFile.extractedData['Fizetési határidő'],
-                              <Calendar className="h-4 w-4 text-red-600" />,
-                              'Fizetési határidő',
-                              'date'
-                            )}
-                          </>
-                        )}
-
-                        {/* Subject */}
-                        {renderEditableField(
-                          uploadedFile.id,
-                          'Tárgy',
-                          uploadedFile.extractedData.Tárgy,
-                          <FileText className="h-4 w-4 text-gray-600" />,
-                          'Tárgy',
-                          'text',
-                          'sm:col-span-2'
-                        )}
-
-                        {/* Work Number */}
-                        {renderEditableField(
-                          uploadedFile.id,
-                          'Munkaszám',
-                          uploadedFile.extractedData.Munkaszám,
-                          <Hash className="h-4 w-4 text-yellow-600" />,
-                          'Munkaszám',
-                          'text',
-                          'border border-yellow-200 bg-yellow-50'
-                        )}
-                      </div>
-
-                      {/* Click to edit hint */}
-                      <div className="mt-3 sm:mt-4 text-center">
-                        <p className="text-xs text-gray-500 italic">
-                          Kattintson bármelyik mezőre a szerkesztéshez. Nyomja meg az Enter-t a mentéshez vagy az Escape-et a megszakításhoz.
-                        </p>
+                        
+                        <button
+                          onClick={() => handleExportToSheets(uploadedFile)}
+                          disabled={exportingToSheets === uploadedFile.id || uploadedFile.exportedToSheets}
+                          className="inline-flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {exportingToSheets === uploadedFile.id ? (
+                            <>
+                              <Loader className="h-4 w-4 mr-2 animate-spin" />
+                              <span className="hidden sm:inline">Exportálás...</span>
+                              <span className="sm:hidden">Export...</span>
+                            </>
+                          ) : uploadedFile.exportedToSheets ? (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              <span className="hidden sm:inline">Exportálva</span>
+                              <span className="sm:hidden">Kész</span>
+                            </>
+                          ) : (
+                            <>
+                              <FileSpreadsheet className="h-4 w-4 mr-2" />
+                              <span className="hidden sm:inline">Google Sheets-be küldés</span>
+                              <span className="sm:hidden">Sheets</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
-                  )}
-                </div>
+
+                    {/* Inline Editable Data Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                      {/* Organization - Show AI-determined value */}
+                      {renderEditableField(
+                        uploadedFile.id,
+                        'Szervezet',
+                        uploadedFile.extractedData.Szervezet,
+                        uploadedFile.extractedData.Szervezet?.toLowerCase().includes('óvoda') ? 
+                          <GraduationCap className="h-4 w-4 text-orange-600" /> : 
+                          <Building2 className="h-4 w-4 text-blue-600" />,
+                        'Szervezet (AI által meghatározott)'
+                      )}
+
+                      {/* Partner */}
+                      {renderEditableField(
+                        uploadedFile.id,
+                        'Partner',
+                        uploadedFile.extractedData.Partner,
+                        <User className="h-4 w-4 text-gray-600" />,
+                        'Partner'
+                      )}
+
+                      {/* Amount */}
+                      {renderEditableField(
+                        uploadedFile.id,
+                        'Összeg',
+                        uploadedFile.extractedData.Összeg,
+                        <DollarSign className="h-4 w-4 text-green-600" />,
+                        'Összeg',
+                        'number'
+                      )}
+
+                      {/* Invoice Number */}
+                      {renderEditableField(
+                        uploadedFile.id,
+                        'Számla sorszáma',
+                        uploadedFile.extractedData['Számla sorszáma'],
+                        <Hash className="h-4 w-4 text-gray-600" />,
+                        'Számla sorszáma'
+                      )}
+
+                      {/* Invoice Date */}
+                      {renderEditableField(
+                        uploadedFile.id,
+                        'Számla kelte',
+                        uploadedFile.extractedData['Számla kelte'],
+                        <Calendar className="h-4 w-4 text-blue-600" />,
+                        'Számla kelte',
+                        'date'
+                      )}
+
+                      {/* Payment Type */}
+                      <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          {uploadedFile.extractedData.paymentType === 'bank_transfer' ? (
+                            <Banknote className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <CreditCard className="h-4 w-4 text-purple-600" />
+                          )}
+                          <span className="text-xs sm:text-sm font-medium text-gray-500">Fizetési mód</span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900">
+                          {uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : 'Kártya/Készpénz/Utánvét'}
+                        </p>
+                      </div>
+
+                      {/* Bank Account (if bank transfer) */}
+                      {uploadedFile.extractedData.paymentType === 'bank_transfer' && (
+                        <>
+                          {renderEditableField(
+                            uploadedFile.id,
+                            'Bankszámlaszám',
+                            uploadedFile.extractedData.Bankszámlaszám,
+                            <Banknote className="h-4 w-4 text-green-600" />,
+                            'Bankszámlaszám'
+                          )}
+
+                          {renderEditableField(
+                            uploadedFile.id,
+                            'Fizetési határidő',
+                            uploadedFile.extractedData['Fizetési határidő'],
+                            <Calendar className="h-4 w-4 text-red-600" />,
+                            'Fizetési határidő',
+                            'date'
+                          )}
+                        </>
+                      )}
+
+                      {/* Subject */}
+                      {renderEditableField(
+                        uploadedFile.id,
+                        'Tárgy',
+                        uploadedFile.extractedData.Tárgy,
+                        <FileText className="h-4 w-4 text-gray-600" />,
+                        'Tárgy',
+                        'text',
+                        'sm:col-span-2'
+                      )}
+
+                      {/* Work Number */}
+                      {renderEditableField(
+                        uploadedFile.id,
+                        'Munkaszám',
+                        uploadedFile.extractedData.Munkaszám,
+                        <Hash className="h-4 w-4 text-yellow-600" />,
+                        'Munkaszám',
+                        'text',
+                        'border border-yellow-200 bg-yellow-50'
+                      )}
+                    </div>
+
+                    {/* Click to edit hint */}
+                    <div className="mt-3 sm:mt-4 text-center">
+                      <p className="text-xs text-gray-500 italic">
+                        Kattintson bármelyik mezőre a szerkesztéshez. Nyomja meg az Enter-t a mentéshez vagy az Escape-et a megszakításhoz.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
-  );
-};
+  </div>
+);
+};   
