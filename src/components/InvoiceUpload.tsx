@@ -357,27 +357,48 @@ export const InvoiceUpload: React.FC = () => {
 
       const processedData = geminiResult.data;
       
-      // Extract payment info from the raw response to get specific payment method
+      // Extract payment type information from the raw response
       let specificPaymentMethod = '';
-      
-      // Try to find specific payment method in the raw response
       const rawResponse = geminiResult.rawResponse || '';
+      
+      // Check for payment method in the raw response
       if (rawResponse && typeof rawResponse === 'string') {
-        // Look for payment method indicators in the raw response
-        const paymentMatch = rawResponse.match(/"(Bank Kártya|Bankkártya|Készpénz|Utánvét|Online|[^"]+fizetés)"/i);
-        if (paymentMatch) {
-          specificPaymentMethod = paymentMatch[1].trim();
-          
-          // Normalize payment method names
-          if (specificPaymentMethod === 'Bank Kártya') {
-            specificPaymentMethod = 'Bankkártya';
-          }
+        console.log('Raw Gemini response:', rawResponse);
+        
+        // Check for bank card indicators with broader regex
+        if (rawResponse.match(/bank\s*k[aáä]rty[aáä]/i) || 
+            rawResponse.match(/credit card/i) || 
+            rawResponse.match(/"Bank Kártya"/i)) {
+          specificPaymentMethod = 'Bankkártya';
+        } 
+        // Check for cash indicators
+        else if (rawResponse.match(/k[eé]szp[eé]nz/i) || rawResponse.match(/cash/i)) {
+          specificPaymentMethod = 'Készpénz';
+        }
+        // Check for cash on delivery
+        else if (rawResponse.match(/ut[aá]nv[eé]t/i) || rawResponse.match(/cash on delivery/i)) {
+          specificPaymentMethod = 'Utánvét';
+        }
+        // Check for online payment
+        else if (rawResponse.match(/online/i)) {
+          specificPaymentMethod = 'Online fizetés';
         }
       }
       
+      console.log('Detected payment method:', specificPaymentMethod);
+      
+      // Determine payment type
       const paymentType = processedData.Bankszámlaszám ? 'bank_transfer' : 'card_cash_afterpay';
       processedData.paymentType = paymentType;
-      processedData.specificPaymentMethod = specificPaymentMethod;
+      
+      // Use detected specificPaymentMethod, but ensure it's properly normalized
+      if (specificPaymentMethod) {
+        processedData.specificPaymentMethod = specificPaymentMethod;
+      } else if (paymentType !== 'bank_transfer') {
+        // Set a generic value if we couldn't detect a specific non-bank payment method
+        processedData.specificPaymentMethod = 'Egyéb fizetési mód';
+      }
+      
       processedData.Munkaszám = '';
       
       // Parse the amount to ensure it's a valid number
