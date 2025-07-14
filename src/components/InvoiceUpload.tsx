@@ -364,9 +364,14 @@ export const InvoiceUpload: React.FC = () => {
       const rawResponse = geminiResult.rawResponse || '';
       if (rawResponse && typeof rawResponse === 'string') {
         // Look for payment method indicators in the raw response
-        const paymentMatch = rawResponse.match(/"(Bank Kártya|Készpénz|Utánvét|Online|[^"]+fizetés)"/i);
+        const paymentMatch = rawResponse.match(/"(Bank Kártya|Bankkártya|Készpénz|Utánvét|Online|[^"]+fizetés)"/i);
         if (paymentMatch) {
           specificPaymentMethod = paymentMatch[1].trim();
+          
+          // Normalize payment method names
+          if (specificPaymentMethod === 'Bank Kártya') {
+            specificPaymentMethod = 'Bankkártya';
+          }
         }
       }
       
