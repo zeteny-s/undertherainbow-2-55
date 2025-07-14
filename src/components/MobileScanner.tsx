@@ -919,7 +919,20 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     setProcessing(true);
     
     try {
-      const pdf = new jsPDF();
+      // Create PDF with A4 format
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // A4 dimensions in mm
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 10; // Margin around the image in mm
+      const maxWidth = pageWidth - (margin * 2);
+      const maxHeight = pageHeight - (margin * 2);
+      
       let isFirstPage = true;
 
       for (const page of scannedPages) {
@@ -927,11 +940,35 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           pdf.addPage();
         }
 
-        const canvas = page.canvas || document.createElement('canvas');
-        const imgWidth = 210; // A4 width in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        // Load image to get dimensions
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.src = page.processedImage;
+        });
+        
+        // Calculate aspect ratio
+        const aspectRatio = img.width / img.height;
+        
+        // Calculate dimensions that fit within the page while maintaining aspect ratio
+        let imgWidth, imgHeight;
+        
+        if (aspectRatio > maxWidth / maxHeight) {
+          // Image is wider than the page ratio
+          imgWidth = maxWidth;
+          imgHeight = imgWidth / aspectRatio;
+        } else {
+          // Image is taller than the page ratio
+          imgHeight = maxHeight;
+          imgWidth = imgHeight * aspectRatio;
+        }
+        
+        // Calculate centering offsets
+        const xOffset = margin + (maxWidth - imgWidth) / 2;
+        const yOffset = margin + (maxHeight - imgHeight) / 2;
 
-        pdf.addImage(page.processedImage, 'JPEG', 0, 0, imgWidth, imgHeight);
+        // Add image to PDF centered with margins
+        pdf.addImage(page.processedImage, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
         isFirstPage = false;
       }
 
