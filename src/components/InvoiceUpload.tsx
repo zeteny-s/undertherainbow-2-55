@@ -14,6 +14,7 @@ interface ProcessedData {
   'Számla kelte'?: string;
   'Fizetési határidő'?: string;
   paymentType?: 'bank_transfer' | 'card_cash_afterpay';
+  specificPaymentMethod?: string; // Specific payment method for non-bank transfer payments
   Munkaszám?: string;
 }
 
@@ -356,8 +357,22 @@ export const InvoiceUpload: React.FC = () => {
 
       const processedData = geminiResult.data;
       
+      // Extract payment info from the raw response to get specific payment method
+      let specificPaymentMethod = '';
+      
+      // Try to find specific payment method in the raw response
+      const rawResponse = geminiResult.rawResponse || '';
+      if (rawResponse && typeof rawResponse === 'string') {
+        // Look for payment method indicators in the raw response
+        const paymentMatch = rawResponse.match(/"(Bank Kártya|Készpénz|Utánvét|Online|[^"]+fizetés)"/i);
+        if (paymentMatch) {
+          specificPaymentMethod = paymentMatch[1].trim();
+        }
+      }
+      
       const paymentType = processedData.Bankszámlaszám ? 'bank_transfer' : 'card_cash_afterpay';
       processedData.paymentType = paymentType;
+      processedData.specificPaymentMethod = specificPaymentMethod;
       processedData.Munkaszám = '';
       
       // Parse the amount to ensure it's a valid number
@@ -451,7 +466,7 @@ export const InvoiceUpload: React.FC = () => {
           amount: processedData.Összeg,
           invoice_date: processedData['Számla kelte'],
           payment_deadline: processedData['Fizetési határidő'],
-          payment_method: processedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : 'Kártya/Készpénz/Utánvét',
+          payment_method: processedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (processedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
           invoice_type: processedData.paymentType,
           processed_at: new Date().toISOString()
         })
@@ -605,7 +620,7 @@ export const InvoiceUpload: React.FC = () => {
           amount: uploadedFile.extractedData.Összeg,
           invoice_date: uploadedFile.extractedData['Számla kelte'],
           payment_deadline: uploadedFile.extractedData['Fizetési határidő'],
-          payment_method: uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : 'Kártya/Készpénz/Utánvét',
+          payment_method: uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
           invoice_type: uploadedFile.extractedData.paymentType,
           updated_at: new Date().toISOString()
         })
@@ -1222,7 +1237,10 @@ export const InvoiceUpload: React.FC = () => {
                           <span className="text-xs sm:text-sm font-medium text-gray-500">Fizetési mód</span>
                         </div>
                         <p className="text-xs sm:text-sm font-semibold text-gray-900">
-                          {uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : 'Kártya/Készpénz/Utánvét'}
+                          {uploadedFile.extractedData.paymentType === 'bank_transfer' ? 
+                            'Banki átutalás' : 
+                            uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'
+                          }
                         </p>
                       </div>
 
