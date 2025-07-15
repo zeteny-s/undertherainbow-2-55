@@ -1305,16 +1305,36 @@ export const InvoiceUpload: React.FC = () => {
                         'sm:col-span-2'
                       )}
 
-                      {/* Work Number */}
-                      {renderEditableField(
-                        uploadedFile.id,
-                        'Munkaszám',
-                        uploadedFile.extractedData.Munkaszám,
-                        <Hash className="h-4 w-4 text-yellow-600" />,
-                        'Munkaszám',
-                        'text',
-                        'border border-yellow-200 bg-yellow-50'
-                      )}
+                      {/* Work Number - Manual Input */}
+                      <div className="border border-yellow-200 bg-yellow-50 rounded-lg p-3 sm:p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Hash className="h-4 w-4 text-yellow-600" />
+                          <span className="text-xs sm:text-sm font-medium text-gray-500">Munkaszám</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            value={uploadedFile.extractedData.Munkaszám || ''}
+                            onChange={(e) => {
+                              setUploadedFiles(prev => prev.map(file => {
+                                if (file.id === uploadedFile.id && file.extractedData) {
+                                  return {
+                                    ...file,
+                                    extractedData: {
+                                      ...file.extractedData,
+                                      Munkaszám: e.target.value
+                                    }
+                                  };
+                                }
+                                return file;
+                              }));
+                              setHasUnsavedChanges(prev => new Set(prev).add(uploadedFile.id));
+                            }}
+                            className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-yellow-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            placeholder="Adja meg a munkaszámot"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Click to edit hint */}
