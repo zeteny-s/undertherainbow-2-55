@@ -59,6 +59,7 @@ export const InvoiceUpload: React.FC = () => {
   const [previewRotation, setPreviewRotation] = useState(0);
   const [processingQueue, setProcessingQueue] = useState<string[]>([]);
   const [currentlyProcessing, setCurrentlyProcessing] = useState<string | null>(null);
+  const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
 
   // Check if device is mobile
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -87,6 +88,72 @@ export const InvoiceUpload: React.FC = () => {
     
     processNextInQueue();
   }, [processingQueue, currentlyProcessing, uploadedFiles]);
+
+  // Helper function to update munkaszam in database
+  const updateMunkaszamInDatabase = async (fileId: string, fileName: string, organization: 'alapitvany' | 'ovoda' | 'auto', newMunkaszam: string) => {
+    try {
+      const { data: existingInvoices, error: fetchError } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('file_name', fileName)
+        .eq('organization', organization)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (fetchError || !existingInvoices || existingInvoices.length === 0) {
+        console.error('Could not find invoice for auto-save', fetchError);
+        return;
+      }
+      
+      const invoiceId = existingInvoices[0].id;
+      
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({
+          munkaszam: newMunkaszam,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invoiceId);
+      
+      if (updateError) {
+        console.error('Error saving munkaszam:', updateError);
+        return;
+      }
+      
+      // Show saved indicator
+      const savedIndicator = document.getElementById(`munkaszam-saved-${fileId}`);
+      if (savedIndicator) {
+        savedIndicator.style.opacity = '1';
+        setTimeout(() => {
+          savedIndicator.style.opacity = '0';
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error in save munkaszam:', error);
+    }
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdowns.size > 0) {
+        const clickedOnDropdown = Array.from(openDropdowns).some(dropdownId => {
+          const dropdown = document.getElementById(dropdownId);
+          const button = document.getElementById(`${dropdownId}-button`);
+          return dropdown && (dropdown.contains(event.target as Node) || button?.contains(event.target as Node));
+        });
+        
+        if (!clickedOnDropdown) {
+          setOpenDropdowns(new Set());
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdowns]);
 
   const parseHungarianCurrency = (value: string | number | undefined): number => {
     if (typeof value === 'number') return value;
@@ -1550,7 +1617,7 @@ export const InvoiceUpload: React.FC = () => {
                         </select>
                       </div>
                       
-                      {/* Work Number - Manual Input */}
+                      {/* Work Number - Manual Input with Dropdown */}
                       <div className="border border-yellow-200 bg-yellow-50 rounded-lg p-3 sm:p-4">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
@@ -1562,81 +1629,227 @@ export const InvoiceUpload: React.FC = () => {
                             Mentve
                           </span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="text"
-                            value={uploadedFile.extractedData.Munkaszám || ''}
-                            onChange={(e) => {
-                              const newMunkaszam = e.target.value;
-                              
-                              // Update local state
-                              setUploadedFiles(prev => prev.map(file => {
-                                if (file.id === uploadedFile.id && file.extractedData) {
-                                  return {
-                                    ...file,
-                                    extractedData: {
-                                      ...file.extractedData,
-                                      Munkaszám: newMunkaszam
+                        <div className="relative">
+                          <div className="flex items-center space-x-2">
+                            <div className="relative flex-1">
+                              <input
+                                type="text"
+                                value={uploadedFile.extractedData.Munkaszám || ''}
+                                onChange={(e) => {
+                                  const newMunkaszam = e.target.value;
+                                  
+                                  // Update local state
+                                  setUploadedFiles(prev => prev.map(file => {
+                                    if (file.id === uploadedFile.id && file.extractedData) {
+                                      return {
+                                        ...file,
+                                        extractedData: {
+                                          ...file.extractedData,
+                                          Munkaszám: newMunkaszam
+                                        }
+                                      };
                                     }
-                                  };
-                                }
-                                return file;
-                              }));
-                            }}
-                            onBlur={(e) => {
-                              const newMunkaszam = e.target.value;
-                              
-                              // Auto-save the munkaszam change when the field loses focus
-                              const saveMunkaszam = async () => {
-                                try {
-                                  // Find the invoice in the database
-                                  const { data: existingInvoices, error: fetchError } = await supabase
-                                    .from('invoices')
-                                    .select('id')
-                                    .eq('file_name', uploadedFile.file.name)
-                                    .eq('organization', uploadedFile.organization)
-                                    .order('created_at', { ascending: false })
-                                    .limit(1);
+                                    return file;
+                                  }));
+                                }}
+                                onBlur={(e) => {
+                                  const newMunkaszam = e.target.value;
                                   
-                                  if (fetchError || !existingInvoices || existingInvoices.length === 0) {
-                                    console.error('Could not find invoice for auto-save', fetchError);
-                                    return;
+                                  // Auto-save the munkaszam change when the field loses focus
+                                  updateMunkaszamInDatabase(
+                                    uploadedFile.id, 
+                                    uploadedFile.file.name, 
+                                    uploadedFile.organization, 
+                                    newMunkaszam
+                                  );
+                                }}
+                                className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-yellow-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-500 pr-8"
+                                placeholder="Adja meg a munkaszámot"
+                              />
+                              <button 
+                                id={`munkaszam-dropdown-${uploadedFile.id}-button`}
+                                onClick={() => {
+                                  const dropdownId = `munkaszam-dropdown-${uploadedFile.id}`;
+                                  if (openDropdowns.has(dropdownId)) {
+                                    setOpenDropdowns(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(dropdownId);
+                                      return next;
+                                    });
+                                  } else {
+                                    setOpenDropdowns(prev => new Set(prev).add(dropdownId));
                                   }
-                                  
-                                  const invoiceId = existingInvoices[0].id;
-                                  
-                                  // Update just the munkaszam field
-                                  const { error: updateError } = await supabase
-                                    .from('invoices')
-                                    .update({
-                                      munkaszam: newMunkaszam,
-                                      updated_at: new Date().toISOString()
-                                    })
-                                    .eq('id', invoiceId);
-                                  
-                                  if (updateError) {
-                                    console.error('Error auto-saving munkaszam:', updateError);
-                                    return;
-                                  }
-                                  
-                                  // Show saved indicator
-                                  const savedIndicator = document.getElementById(`munkaszam-saved-${uploadedFile.id}`);
-                                  if (savedIndicator) {
-                                    savedIndicator.style.opacity = '1';
-                                    setTimeout(() => {
-                                      savedIndicator.style.opacity = '0';
-                                    }, 2000);
-                                  }
-                                } catch (error) {
-                                  console.error('Error in auto-save munkaszam:', error);
-                                }
-                              };
-                              
-                              saveMunkaszam();
-                            }}
-                            className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-yellow-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            placeholder="Adja meg a munkaszámot"
-                          />
+                                }}
+                                className="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                                aria-label="Open munkaszám options"
+                                title="Munkaszám opciók"
+                              >
+                                <svg className="w-4 h-4 transition-transform duration-200" 
+                                     style={{ transform: openDropdowns.has(`munkaszam-dropdown-${uploadedFile.id}`) ? 'rotate(180deg)' : 'rotate(0)' }}
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Dropdown Menu */}
+                          <div 
+                            id={`munkaszam-dropdown-${uploadedFile.id}`} 
+                            className={`absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg ${openDropdowns.has(`munkaszam-dropdown-${uploadedFile.id}`) ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'} transition-all duration-150 ease-in-out`}
+                          >
+                            <div className="py-1 max-h-60 overflow-auto">
+                              <div className="px-3 py-2 text-xs text-gray-500 font-medium border-b border-gray-100">
+                                Válasszon munkaszámot
+                              </div>
+                              <ul>
+                                <li 
+                                  className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors"
+                                  onClick={() => {
+                                    const newMunkaszam = "11";
+                                    setUploadedFiles(prev => prev.map(file => {
+                                      if (file.id === uploadedFile.id && file.extractedData) {
+                                        return {
+                                          ...file,
+                                          extractedData: {
+                                            ...file.extractedData,
+                                            Munkaszám: newMunkaszam
+                                          }
+                                        };
+                                      }
+                                      return file;
+                                    }));
+                                    
+                                    // Close dropdown
+                                    setOpenDropdowns(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(`munkaszam-dropdown-${uploadedFile.id}`);
+                                      return next;
+                                    });
+                                    
+                                    // Save to database
+                                    updateMunkaszamInDatabase(
+                                      uploadedFile.id, 
+                                      uploadedFile.file.name, 
+                                      uploadedFile.organization, 
+                                      newMunkaszam
+                                    );
+                                  }}
+                                >
+                                  <span className="font-medium text-blue-700">FR20</span>
+                                  <span className="text-gray-800">11</span>
+                                </li>
+                                <li 
+                                  className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors"
+                                  onClick={() => {
+                                    const newMunkaszam = "21,22,23";
+                                    setUploadedFiles(prev => prev.map(file => {
+                                      if (file.id === uploadedFile.id && file.extractedData) {
+                                        return {
+                                          ...file,
+                                          extractedData: {
+                                            ...file.extractedData,
+                                            Munkaszám: newMunkaszam
+                                          }
+                                        };
+                                      }
+                                      return file;
+                                    }));
+                                    
+                                    // Close dropdown
+                                    setOpenDropdowns(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(`munkaszam-dropdown-${uploadedFile.id}`);
+                                      return next;
+                                    });
+                                    
+                                    // Save to database
+                                    updateMunkaszamInDatabase(
+                                      uploadedFile.id, 
+                                      uploadedFile.file.name, 
+                                      uploadedFile.organization, 
+                                      newMunkaszam
+                                    );
+                                  }}
+                                >
+                                  <span className="font-medium text-blue-700">FR26</span>
+                                  <span className="text-gray-800">21,22,23</span>
+                                </li>
+                                <li 
+                                  className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors"
+                                  onClick={() => {
+                                    const newMunkaszam = "12,24,25";
+                                    setUploadedFiles(prev => prev.map(file => {
+                                      if (file.id === uploadedFile.id && file.extractedData) {
+                                        return {
+                                          ...file,
+                                          extractedData: {
+                                            ...file.extractedData,
+                                            Munkaszám: newMunkaszam
+                                          }
+                                        };
+                                      }
+                                      return file;
+                                    }));
+                                    
+                                    // Close dropdown
+                                    setOpenDropdowns(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(`munkaszam-dropdown-${uploadedFile.id}`);
+                                      return next;
+                                    });
+                                    
+                                    // Save to database
+                                    updateMunkaszamInDatabase(
+                                      uploadedFile.id, 
+                                      uploadedFile.file.name, 
+                                      uploadedFile.organization, 
+                                      newMunkaszam
+                                    );
+                                  }}
+                                >
+                                  <span className="font-medium text-blue-700">TOR</span>
+                                  <span className="text-gray-800">12,24,25</span>
+                                </li>
+                                <li 
+                                  className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors"
+                                  onClick={() => {
+                                    const newMunkaszam = "13,26";
+                                    setUploadedFiles(prev => prev.map(file => {
+                                      if (file.id === uploadedFile.id && file.extractedData) {
+                                        return {
+                                          ...file,
+                                          extractedData: {
+                                            ...file.extractedData,
+                                            Munkaszám: newMunkaszam
+                                          }
+                                        };
+                                      }
+                                      return file;
+                                    }));
+                                    
+                                    // Close dropdown
+                                    setOpenDropdowns(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(`munkaszam-dropdown-${uploadedFile.id}`);
+                                      return next;
+                                    });
+                                    
+                                    // Save to database
+                                    updateMunkaszamInDatabase(
+                                      uploadedFile.id, 
+                                      uploadedFile.file.name, 
+                                      uploadedFile.organization, 
+                                      newMunkaszam
+                                    );
+                                  }}
+                                >
+                                  <span className="font-medium text-blue-700">LEV</span>
+                                  <span className="text-gray-800">13,26</span>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
