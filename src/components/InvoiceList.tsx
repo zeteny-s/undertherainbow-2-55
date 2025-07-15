@@ -96,7 +96,19 @@ export const InvoiceList: React.FC = () => {
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
-      setInvoices(data || []);
+      
+      // Clean up category values by removing " (AI)" suffix if present
+      const cleanedData = (data || []).map(invoice => {
+        if (invoice.category && typeof invoice.category === 'string' && invoice.category.endsWith(' (AI)')) {
+          return {
+            ...invoice,
+            category: invoice.category.replace(' (AI)', '')
+          };
+        }
+        return invoice;
+      });
+      
+      setInvoices(cleanedData);
       addNotification('success', 'Számlák sikeresen betöltve');
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -443,16 +455,16 @@ export const InvoiceList: React.FC = () => {
                   </div>
                 )}
                 
-                                      {invoice.category && (
-                        <div className="col-span-2">
-                          <span className="text-gray-500">Kategória (AI):</span>
-                          <p className="text-gray-900 truncate mt-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                              {invoice.category}
-                            </span>
-                          </p>
-                        </div>
-                      )}
+                {invoice.category && (
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Kategória:</span>
+                    <p className="text-gray-900 truncate mt-1">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        {invoice.category}
+                      </span>
+                    </p>
+                  </div>
+                )}
                 
                 <div className="col-span-2">
                   <span className="text-gray-500">Dátum:</span>
@@ -537,7 +549,7 @@ export const InvoiceList: React.FC = () => {
                       {invoice.category && (
                         <div className="text-xs truncate mt-1">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {invoice.category} <span className="ml-1 text-blue-600 opacity-75">(AI)</span>
+                            {invoice.category}
                           </span>
                         </div>
                       )}
@@ -723,8 +735,11 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Preserve the original AI-determined category if it exists
-      const categoryToSave = editedInvoice.category || 'Egyéb';
+      // Clean up category value by removing " (AI)" suffix if present
+      let category = editedInvoice.category || 'Egyéb';
+      if (category.endsWith(' (AI)')) {
+        category = category.replace(' (AI)', '');
+      }
       
       const { error } = await supabase
         .from('invoices')
@@ -739,7 +754,7 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
           payment_method: editedInvoice.payment_method,
           invoice_type: editedInvoice.invoice_type,
           munkaszam: editedInvoice.munkaszam,
-          category: categoryToSave,
+          category: category,
           updated_at: new Date().toISOString()
         })
         .eq('id', editedInvoice.id);
@@ -907,11 +922,11 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kategória {editedInvoice.category && <span className="text-xs text-gray-500">(AI által meghatározva)</span>}
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kategória</label>
                 <select
-                  value={editedInvoice.category || 'Egyéb'}
+                  value={(editedInvoice.category && editedInvoice.category.endsWith(' (AI)')) 
+                    ? editedInvoice.category.replace(' (AI)', '') 
+                    : (editedInvoice.category || 'Egyéb')}
                   onChange={(e) => setEditedInvoice(prev => ({ ...prev, category: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
