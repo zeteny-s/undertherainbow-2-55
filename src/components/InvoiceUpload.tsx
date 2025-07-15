@@ -635,6 +635,7 @@ export const InvoiceUpload: React.FC = () => {
     }
 
     // Update the database with the new extracted data
+    // Note: Munkaszám and category are already auto-saved
     updateInvoiceInDatabase(file);
     
     setHasUnsavedChanges(prev => {
@@ -1344,26 +1345,82 @@ export const InvoiceUpload: React.FC = () => {
 
                       {/* Category Selection */}
                       <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <FileText className="h-4 w-4 text-blue-600" />
-                          <span className="text-xs sm:text-sm font-medium text-gray-500">Kategória</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-4 w-4 text-blue-600" />
+                            <span className="text-xs sm:text-sm font-medium text-gray-500">Kategória</span>
+                          </div>
+                          <span className="text-xs text-green-600 opacity-0 transition-opacity duration-300" id={`category-saved-${uploadedFile.id}`}>
+                            <CheckCircle className="h-3 w-3 inline mr-1" />
+                            Mentve
+                          </span>
                         </div>
                         <select
                           value={uploadedFile.extractedData.category || 'Egyéb'}
                           onChange={(e) => {
+                            const newCategory = e.target.value;
+                            
+                            // Update local state
                             setUploadedFiles(prev => prev.map(file => {
                               if (file.id === uploadedFile.id && file.extractedData) {
                                 return {
                                   ...file,
                                   extractedData: {
                                     ...file.extractedData,
-                                    category: e.target.value
+                                    category: newCategory
                                   }
                                 };
                               }
                               return file;
                             }));
-                            setHasUnsavedChanges(prev => new Set(prev).add(uploadedFile.id));
+                            
+                            // Auto-save the category change
+                            const saveCategory = async () => {
+                              try {
+                                // Find the invoice in the database
+                                const { data: existingInvoices, error: fetchError } = await supabase
+                                  .from('invoices')
+                                  .select('id')
+                                  .eq('file_name', uploadedFile.file.name)
+                                  .eq('organization', uploadedFile.organization)
+                                  .order('created_at', { ascending: false })
+                                  .limit(1);
+                                
+                                if (fetchError || !existingInvoices || existingInvoices.length === 0) {
+                                  console.error('Could not find invoice for auto-save', fetchError);
+                                  return;
+                                }
+                                
+                                const invoiceId = existingInvoices[0].id;
+                                
+                                // Update just the category field
+                                const { error: updateError } = await supabase
+                                  .from('invoices')
+                                  .update({
+                                    category: newCategory,
+                                    updated_at: new Date().toISOString()
+                                  })
+                                  .eq('id', invoiceId);
+                                
+                                if (updateError) {
+                                  console.error('Error auto-saving category:', updateError);
+                                  return;
+                                }
+                                
+                                // Show saved indicator
+                                const savedIndicator = document.getElementById(`category-saved-${uploadedFile.id}`);
+                                if (savedIndicator) {
+                                  savedIndicator.style.opacity = '1';
+                                  setTimeout(() => {
+                                    savedIndicator.style.opacity = '0';
+                                  }, 2000);
+                                }
+                              } catch (error) {
+                                console.error('Error in auto-save category:', error);
+                              }
+                            };
+                            
+                            saveCategory();
                           }}
                           className="w-full text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
@@ -1381,28 +1438,87 @@ export const InvoiceUpload: React.FC = () => {
                       
                       {/* Work Number - Manual Input */}
                       <div className="border border-yellow-200 bg-yellow-50 rounded-lg p-3 sm:p-4">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Hash className="h-4 w-4 text-yellow-600" />
-                          <span className="text-xs sm:text-sm font-medium text-gray-500">Munkaszám</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <Hash className="h-4 w-4 text-yellow-600" />
+                            <span className="text-xs sm:text-sm font-medium text-gray-500">Munkaszám</span>
+                          </div>
+                          <span className="text-xs text-green-600 opacity-0 transition-opacity duration-300" id={`munkaszam-saved-${uploadedFile.id}`}>
+                            <CheckCircle className="h-3 w-3 inline mr-1" />
+                            Mentve
+                          </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <input
                             type="text"
                             value={uploadedFile.extractedData.Munkaszám || ''}
                             onChange={(e) => {
+                              const newMunkaszam = e.target.value;
+                              
+                              // Update local state
                               setUploadedFiles(prev => prev.map(file => {
                                 if (file.id === uploadedFile.id && file.extractedData) {
                                   return {
                                     ...file,
                                     extractedData: {
                                       ...file.extractedData,
-                                      Munkaszám: e.target.value
+                                      Munkaszám: newMunkaszam
                                     }
                                   };
                                 }
                                 return file;
                               }));
-                              setHasUnsavedChanges(prev => new Set(prev).add(uploadedFile.id));
+                            }}
+                            onBlur={(e) => {
+                              const newMunkaszam = e.target.value;
+                              
+                              // Auto-save the munkaszam change when the field loses focus
+                              const saveMunkaszam = async () => {
+                                try {
+                                  // Find the invoice in the database
+                                  const { data: existingInvoices, error: fetchError } = await supabase
+                                    .from('invoices')
+                                    .select('id')
+                                    .eq('file_name', uploadedFile.file.name)
+                                    .eq('organization', uploadedFile.organization)
+                                    .order('created_at', { ascending: false })
+                                    .limit(1);
+                                  
+                                  if (fetchError || !existingInvoices || existingInvoices.length === 0) {
+                                    console.error('Could not find invoice for auto-save', fetchError);
+                                    return;
+                                  }
+                                  
+                                  const invoiceId = existingInvoices[0].id;
+                                  
+                                  // Update just the munkaszam field
+                                  const { error: updateError } = await supabase
+                                    .from('invoices')
+                                    .update({
+                                      munkaszam: newMunkaszam,
+                                      updated_at: new Date().toISOString()
+                                    })
+                                    .eq('id', invoiceId);
+                                  
+                                  if (updateError) {
+                                    console.error('Error auto-saving munkaszam:', updateError);
+                                    return;
+                                  }
+                                  
+                                  // Show saved indicator
+                                  const savedIndicator = document.getElementById(`munkaszam-saved-${uploadedFile.id}`);
+                                  if (savedIndicator) {
+                                    savedIndicator.style.opacity = '1';
+                                    setTimeout(() => {
+                                      savedIndicator.style.opacity = '0';
+                                    }, 2000);
+                                  }
+                                } catch (error) {
+                                  console.error('Error in auto-save munkaszam:', error);
+                                }
+                              };
+                              
+                              saveMunkaszam();
                             }}
                             className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-yellow-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-500"
                             placeholder="Adja meg a munkaszámot"
