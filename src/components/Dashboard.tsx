@@ -740,17 +740,23 @@ export const Dashboard: React.FC = () => {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
-          <p className="font-semibold text-gray-900 mb-2">{data.fullMunkaszam || data.munkaszam}</p>
-          <div className="space-y-1">
-            <p className="text-sm text-blue-600 font-medium">
-              💰 Összeg: {formatCurrency(data.amount)}
-            </p>
-            <p className="text-sm text-gray-600">
-              📄 Számlák: {data.count} db
-            </p>
-            <p className="text-xs text-gray-500">
-              📊 Átlag/számla: {formatCurrency(data.amount / data.count)}
-            </p>
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.color }}></div>
+            <p className="font-semibold text-gray-900">{data.fullMunkaszam || data.munkaszam}</p>
+          </div>
+          <div className="space-y-2 pt-1 border-t border-gray-100">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Összeg:</span>
+              <span className="text-sm font-medium text-blue-700">{formatCurrency(data.amount)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Számlák száma:</span>
+              <span className="text-sm font-medium text-gray-900">{data.count} db</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Átlag/számla:</span>
+              <span className="text-sm font-medium text-green-600">{formatCurrency(data.amount / data.count)}</span>
+            </div>
           </div>
         </div>
       );
@@ -763,18 +769,24 @@ export const Dashboard: React.FC = () => {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
-          <p className="font-semibold text-gray-900 mb-2">{data.category}</p>
-          <div className="space-y-1">
-            <p className="text-sm text-purple-600 font-medium">
-              💰 Összeg: {formatCurrency(data.amount)}
-            </p>
-            <p className="text-sm text-gray-600">
-              📄 Számlák: {data.count} db
-            </p>
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.color }}></div>
+            <p className="font-semibold text-gray-900">{data.category}</p>
+          </div>
+          <div className="space-y-2 pt-1 border-t border-gray-100">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Összeg:</span>
+              <span className="text-sm font-medium text-purple-700">{formatCurrency(data.amount)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Számlák száma:</span>
+              <span className="text-sm font-medium text-gray-900">{data.count} db</span>
+            </div>
             {data.count > 0 && (
-              <p className="text-xs text-gray-500">
-                📊 Átlag/számla: {formatCurrency(data.amount / data.count)}
-              </p>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Átlag/számla:</span>
+                <span className="text-sm font-medium text-green-600">{formatCurrency(data.amount / data.count)}</span>
+              </div>
             )}
           </div>
         </div>
@@ -1017,123 +1029,235 @@ export const Dashboard: React.FC = () => {
         {/* Second Row: Munkaszám Distribution and Category Spending */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
           {/* Munkaszám Distribution Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-                <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-                Munkaszám megoszlás
-              </h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute inset-0 bg-opacity-5 pointer-events-none">
+              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="munkaszam-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(59, 130, 246, 0.05)" strokeWidth="1"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#munkaszam-grid)" />
+              </svg>
             </div>
-            
-            {chartData.munkaszamData.length === 0 && (
-              <div className="text-center py-12">
-                <Hash className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek munkaszám adatok</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  A számlák feldolgozása után itt jelennek meg a munkaszámok szerinti kiadások.
-                </p>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                  <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                  Munkaszám megoszlás
+                </h3>
+                <div className="text-xs text-gray-500">Kiadások munkaszám szerint</div>
               </div>
-            )}
-            
-            {chartData.munkaszamData.length > 0 && (
-              <div className="h-64 sm:h-80 lg:h-96">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    data={chartData.munkaszamData} 
-                    margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-                    layout="vertical"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} horizontal={false} />
-                    <XAxis 
-                      type="number"
-                      stroke="#374151" 
-                      fontSize={11}
-                      fontWeight={500}
-                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
-                      tick={{ fill: '#374151' }}
-                    />
-                    <YAxis 
-                      type="category"
-                      dataKey="munkaszam" 
-                      stroke="#374151" 
-                      fontSize={10}
-                      fontWeight={500}
-                      width={100}
-                      tick={{ fill: '#374151' }}
-                    />
-                    <Tooltip content={<MunkaszamTooltip />} />
-                    <Bar 
-                      dataKey="amount" 
-                      radius={[0, 6, 6, 0]}
-                      barSize={20}
+              
+              {chartData.munkaszamData.length === 0 && (
+                <div className="text-center py-12">
+                  <Hash className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek munkaszám adatok</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    A számlák feldolgozása után itt jelennek meg a munkaszámok szerinti kiadások.
+                  </p>
+                </div>
+              )}
+              
+              {chartData.munkaszamData.length > 0 && (
+                <div className="h-64 sm:h-80 lg:h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={chartData.munkaszamData} 
+                      margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                      layout="vertical"
                     >
-                      {chartData.munkaszamData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} horizontal={false} />
+                      <XAxis 
+                        type="number"
+                        stroke="#374151" 
+                        fontSize={11}
+                        fontWeight={500}
+                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                        tick={{ fill: '#374151' }}
+                      />
+                      <YAxis 
+                        type="category"
+                        dataKey="munkaszam" 
+                        stroke="#374151" 
+                        fontSize={10}
+                        fontWeight={500}
+                        width={100}
+                        tick={{ fill: '#374151' }}
+                      />
+                      <Tooltip content={<MunkaszamTooltip />} />
+                      <Bar 
+                        dataKey="amount" 
+                        radius={[0, 6, 6, 0]}
+                        barSize={24}
+                        animationDuration={1000}
+                      >
+                        {chartData.munkaszamData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={`url(#munkaszamGradient-${index})`} 
+                          />
+                        ))}
+                      </Bar>
+                      <defs>
+                        {chartData.munkaszamData.map((entry, index) => (
+                          <linearGradient 
+                            key={`gradient-${index}`} 
+                            id={`munkaszamGradient-${index}`} 
+                            x1="0" 
+                            y1="0" 
+                            x2="1" 
+                            y2="0"
+                          >
+                            <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
+                            <stop offset="100%" stopColor={entry.color} stopOpacity={1}/>
+                          </linearGradient>
+                        ))}
+                      </defs>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              
+              {chartData.munkaszamData.length > 0 && (
+                <div className="mt-4 border-t border-gray-100 pt-3">
+                  <div className="flex flex-wrap justify-between text-xs text-gray-500">
+                    <div className="flex items-center space-x-1 mb-1">
+                      <span>Összes:</span>
+                      <span className="font-medium text-blue-700">
+                        {formatCurrency(chartData.munkaszamData.reduce((sum, item) => sum + item.amount, 0))}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span>Számlák:</span>
+                      <span className="font-medium text-gray-700">
+                        {chartData.munkaszamData.reduce((sum, item) => sum + item.count, 0)} db
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-center text-gray-500 mt-1">
+                    * A grafikon a legmagasabb összegű munkaszámokat mutatja
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Category Spending Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-                <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
-                Kategória szerinti kiadások
-              </h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute inset-0 bg-opacity-5 pointer-events-none">
+              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="category-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="3" cy="3" r="1" fill="rgba(124, 58, 237, 0.07)"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#category-dots)" />
+              </svg>
             </div>
-            
-            {chartData.categoryData.length === 0 && (
-              <div className="text-center py-12">
-                <PieChart className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek kategória adatok</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  A számlák feldolgozása után itt jelennek meg a kategóriák szerinti kiadások.
-                </p>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                  <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+                  Kategória szerinti kiadások
+                </h3>
+                <div className="text-xs text-gray-500">Kiadások kategóriánként</div>
               </div>
-            )}
-            
-            {chartData.categoryData.length > 0 && (
-              <div className="h-64 sm:h-80 lg:h-96">
-                <ResponsiveContainer width="100%" height="100%">
-                  <div className="flex flex-col h-full">
-                    <div className="flex-1">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={chartData.categoryData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
-                            paddingAngle={2}
-                            dataKey="amount"
-                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                            labelLine={false}
+              
+              {chartData.categoryData.length === 0 && (
+                <div className="text-center py-12">
+                  <PieChart className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek kategória adatok</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    A számlák feldolgozása után itt jelennek meg a kategóriák szerinti kiadások.
+                  </p>
+                </div>
+              )}
+              
+              {chartData.categoryData.length > 0 && (
+                <div className="h-64 sm:h-80 lg:h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <div className="flex flex-col h-full">
+                      <div className="flex-1">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RechartsPieChart>
+                            <Pie
+                              data={chartData.categoryData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={90}
+                              paddingAngle={3}
+                              dataKey="amount"
+                              animationDuration={1000}
+                              animationBegin={200}
+                            >
+                              {chartData.categoryData.map((entry, index) => (
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={`url(#categoryGradient-${index})`}
+                                  stroke="#ffffff"
+                                  strokeWidth={2}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip content={<CategoryTooltip />} />
+                            <defs>
+                              {chartData.categoryData.map((entry, index) => (
+                                <radialGradient 
+                                  key={`gradient-${index}`} 
+                                  id={`categoryGradient-${index}`} 
+                                  cx="50%" 
+                                  cy="50%" 
+                                  r="50%" 
+                                  fx="50%" 
+                                  fy="50%"
+                                >
+                                  <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
+                                  <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
+                                </radialGradient>
+                              ))}
+                            </defs>
+                          </RechartsPieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                        {chartData.categoryData.slice(0, 6).map((item, index) => (
+                          <div 
+                            key={index} 
+                            className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-gray-50 transition-colors cursor-default"
+                            title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
                           >
-                            {chartData.categoryData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip content={<CategoryTooltip />} />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      {chartData.categoryData.slice(0, 6).map((item, index) => (
-                        <div key={index} className="flex items-center space-x-1">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                          <span className="text-xs text-gray-600 truncate">{item.category}</span>
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
+                              <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-3 border-t border-gray-100 pt-3">
+                        <div className="flex flex-wrap justify-between text-xs text-gray-500">
+                          <div className="flex items-center space-x-1 mb-1">
+                            <span>Összes kiadás:</span>
+                            <span className="font-medium text-purple-700">
+                              {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span>Összes számla:</span>
+                            <span className="font-medium text-gray-700">
+                              {chartData.categoryData.reduce((sum, item) => sum + item.count, 0)} db
+                            </span>
+                          </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-                </ResponsiveContainer>
-              </div>
-            )}
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
