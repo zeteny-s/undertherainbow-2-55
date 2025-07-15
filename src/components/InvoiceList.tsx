@@ -443,16 +443,16 @@ export const InvoiceList: React.FC = () => {
                   </div>
                 )}
                 
-                {invoice.category && (
-                  <div className="col-span-2">
-                    <span className="text-gray-500">Kategória:</span>
-                    <p className="text-gray-900 truncate mt-1">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                        {invoice.category}
-                      </span>
-                    </p>
-                  </div>
-                )}
+                                      {invoice.category && (
+                        <div className="col-span-2">
+                          <span className="text-gray-500">Kategória (AI):</span>
+                          <p className="text-gray-900 truncate mt-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              {invoice.category}
+                            </span>
+                          </p>
+                        </div>
+                      )}
                 
                 <div className="col-span-2">
                   <span className="text-gray-500">Dátum:</span>
@@ -537,7 +537,7 @@ export const InvoiceList: React.FC = () => {
                       {invoice.category && (
                         <div className="text-xs truncate mt-1">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {invoice.category}
+                            {invoice.category} <span className="ml-1 text-blue-600 opacity-75">(AI)</span>
                           </span>
                         </div>
                       )}
@@ -723,6 +723,9 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Preserve the original AI-determined category if it exists
+      const categoryToSave = editedInvoice.category || 'Egyéb';
+      
       const { error } = await supabase
         .from('invoices')
         .update({
@@ -736,7 +739,7 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
           payment_method: editedInvoice.payment_method,
           invoice_type: editedInvoice.invoice_type,
           munkaszam: editedInvoice.munkaszam,
-          category: editedInvoice.category || 'Egyéb',
+          category: categoryToSave,
           updated_at: new Date().toISOString()
         })
         .eq('id', editedInvoice.id);
@@ -904,7 +907,9 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Kategória</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kategória {editedInvoice.category && <span className="text-xs text-gray-500">(AI által meghatározva)</span>}
+                </label>
                 <select
                   value={editedInvoice.category || 'Egyéb'}
                   onChange={(e) => setEditedInvoice(prev => ({ ...prev, category: e.target.value }))}
