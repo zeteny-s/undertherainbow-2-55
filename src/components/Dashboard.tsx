@@ -78,6 +78,7 @@ export const Dashboard: React.FC = () => {
   const [showWeekHistory, setShowWeekHistory] = useState(false);
   const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showAllMunkaszam, setShowAllMunkaszam] = useState(false);
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -341,28 +342,62 @@ export const Dashboard: React.FC = () => {
   };
   
   const generateMunkaszamData = (invoices: any[]) => {
+    // Define all possible munkaszám values
+    const allMunkaszamValues = [
+        "1",
+        "11",
+        "12",
+        "13",
+        "2",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "3",
+        "4",
+        "5",
+        "21,22,23",
+        "12,24,25",
+        "13,26",
+      ];
+      
     // Group invoices by munkaszam and calculate total spending
     const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
     
+    // Initialize all possible munkaszám values with zero values
+    allMunkaszamValues.forEach(munkaszam => {
+      munkaszamSpending[munkaszam] = { amount: 0, count: 0 };
+    });
+    
+    // Add "Nincs munkaszám" for invoices without a munkaszam
+    munkaszamSpending["Nincs munkaszám"] = { amount: 0, count: 0 };
+    
+    // Process invoices
     invoices.forEach(invoice => {
       if (invoice.amount && invoice.amount > 0) {
         // Use 'Nincs munkaszám' for invoices without a munkaszam
         const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
         
-        if (!munkaszamSpending[munkaszam]) {
-          munkaszamSpending[munkaszam] = { amount: 0, count: 0 };
+        if (munkaszamSpending[munkaszam]) {
+          munkaszamSpending[munkaszam].amount += invoice.amount;
+          munkaszamSpending[munkaszam].count += 1;
+        } else {
+          // If the munkaszám is not in our predefined list, add it
+          munkaszamSpending[munkaszam] = { 
+            amount: invoice.amount, 
+            count: 1 
+          };
         }
-        munkaszamSpending[munkaszam].amount += invoice.amount;
-        munkaszamSpending[munkaszam].count += 1;
       }
     });
     
     // Color palette for the chart
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6'];
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
     
-    // Convert to array and sort by amount (descending)
+    // Convert to array and include all munkaszám values
     const munkaszamArray = Object.entries(munkaszamSpending)
-      .filter(([, data]) => data.amount > 0) // Only include munkaszams with positive spending
       .map(([munkaszam, data], index) => ({
         munkaszam: munkaszam.length > 15 ? munkaszam.substring(0, 15) + '...' : munkaszam,
         fullMunkaszam: munkaszam,
@@ -370,8 +405,8 @@ export const Dashboard: React.FC = () => {
         amount: data.amount,
         color: colors[index % colors.length]
       }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 8); // Top 8 munkaszams
+      .filter(item => item.amount > 0 || allMunkaszamValues.includes(item.fullMunkaszam))
+      .sort((a, b) => b.amount - a.amount);
     
     return munkaszamArray;
   };
@@ -1029,235 +1064,214 @@ export const Dashboard: React.FC = () => {
         {/* Second Row: Munkaszám Distribution and Category Spending */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
           {/* Munkaszám Distribution Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="absolute inset-0 bg-opacity-5 pointer-events-none">
-              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="munkaszam-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(59, 130, 246, 0.05)" strokeWidth="1"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#munkaszam-grid)" />
-              </svg>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                Munkaszám megoszlás
+              </h3>
+              {chartData.munkaszamData.length > 5 && (
+                <button
+                  onClick={() => setShowAllMunkaszam(true)}
+                  className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                >
+                  Összes megtekintése
+                </button>
+              )}
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-                  <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-                  Munkaszám megoszlás
-                </h3>
-                <div className="text-xs text-gray-500">Kiadások munkaszám szerint</div>
+            
+            {chartData.munkaszamData.length === 0 && (
+              <div className="text-center py-12">
+                <Hash className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek munkaszám adatok</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  A számlák feldolgozása után itt jelennek meg a munkaszámok szerinti kiadások.
+                </p>
               </div>
-              
-              {chartData.munkaszamData.length === 0 && (
-                <div className="text-center py-12">
-                  <Hash className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek munkaszám adatok</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    A számlák feldolgozása után itt jelennek meg a munkaszámok szerinti kiadások.
-                  </p>
-                </div>
-              )}
-              
-              {chartData.munkaszamData.length > 0 && (
-                <div className="h-64 sm:h-80 lg:h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={chartData.munkaszamData} 
-                      margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-                      layout="vertical"
+            )}
+            
+            {chartData.munkaszamData.length > 0 && (
+              <div className="h-64 sm:h-80 lg:h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={chartData.munkaszamData.slice(0, 5)} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} horizontal={false} />
+                    <XAxis 
+                      type="number"
+                      stroke="#374151" 
+                      fontSize={11}
+                      fontWeight={500}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <YAxis 
+                      type="category"
+                      dataKey="munkaszam" 
+                      stroke="#374151" 
+                      fontSize={10}
+                      fontWeight={500}
+                      width={100}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <Tooltip content={<MunkaszamTooltip />} />
+                    <Bar 
+                      dataKey="amount" 
+                      radius={[0, 6, 6, 0]}
+                      barSize={24}
+                      animationDuration={1000}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} horizontal={false} />
-                      <XAxis 
-                        type="number"
-                        stroke="#374151" 
-                        fontSize={11}
-                        fontWeight={500}
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
-                        tick={{ fill: '#374151' }}
-                      />
-                      <YAxis 
-                        type="category"
-                        dataKey="munkaszam" 
-                        stroke="#374151" 
-                        fontSize={10}
-                        fontWeight={500}
-                        width={100}
-                        tick={{ fill: '#374151' }}
-                      />
-                      <Tooltip content={<MunkaszamTooltip />} />
-                      <Bar 
-                        dataKey="amount" 
-                        radius={[0, 6, 6, 0]}
-                        barSize={24}
-                        animationDuration={1000}
-                      >
-                        {chartData.munkaszamData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={`url(#munkaszamGradient-${index})`} 
-                          />
-                        ))}
-                      </Bar>
-                      <defs>
-                        {chartData.munkaszamData.map((entry, index) => (
-                          <linearGradient 
-                            key={`gradient-${index}`} 
-                            id={`munkaszamGradient-${index}`} 
-                            x1="0" 
-                            y1="0" 
-                            x2="1" 
-                            y2="0"
-                          >
-                            <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
-                            <stop offset="100%" stopColor={entry.color} stopOpacity={1}/>
-                          </linearGradient>
-                        ))}
-                      </defs>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-              
-              {chartData.munkaszamData.length > 0 && (
-                <div className="mt-4 border-t border-gray-100 pt-3">
-                  <div className="flex flex-wrap justify-between text-xs text-gray-500">
-                    <div className="flex items-center space-x-1 mb-1">
-                      <span>Összes:</span>
-                      <span className="font-medium text-blue-700">
-                        {formatCurrency(chartData.munkaszamData.reduce((sum, item) => sum + item.amount, 0))}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span>Számlák:</span>
-                      <span className="font-medium text-gray-700">
-                        {chartData.munkaszamData.reduce((sum, item) => sum + item.count, 0)} db
-                      </span>
+                      {chartData.munkaszamData.slice(0, 5).map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={`url(#munkaszamGradient-${index})`} 
+                        />
+                      ))}
+                    </Bar>
+                    <defs>
+                      {chartData.munkaszamData.slice(0, 5).map((entry, index) => (
+                        <linearGradient 
+                          key={`gradient-${index}`} 
+                          id={`munkaszamGradient-${index}`} 
+                          x1="0" 
+                          y1="0" 
+                          x2="1" 
+                          y2="0"
+                        >
+                          <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
+                          <stop offset="100%" stopColor={entry.color} stopOpacity={1}/>
+                        </linearGradient>
+                      ))}
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            
+            {chartData.munkaszamData.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <div className="flex justify-between items-center">
+                  <div className="text-center">
+                    <div className="text-xs text-gray-500">Összes:</div>
+                    <div className="text-sm font-medium text-blue-700">
+                      {formatCurrency(chartData.munkaszamData.reduce((sum, item) => sum + item.amount, 0))}
                     </div>
                   </div>
-                  <div className="text-xs text-center text-gray-500 mt-1">
-                    * A grafikon a legmagasabb összegű munkaszámokat mutatja
+                  <div className="text-center">
+                    <div className="text-xs text-gray-500">Számlák:</div>
+                    <div className="text-sm font-medium text-gray-700">
+                      {chartData.munkaszamData.reduce((sum, item) => sum + item.count, 0)} db
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Category Spending Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="absolute inset-0 bg-opacity-5 pointer-events-none">
-              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="category-dots" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <circle cx="3" cy="3" r="1" fill="rgba(124, 58, 237, 0.07)"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#category-dots)" />
-              </svg>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+                Kategória szerinti kiadások
+              </h3>
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-                <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-                  <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
-                  Kategória szerinti kiadások
-                </h3>
-                <div className="text-xs text-gray-500">Kiadások kategóriánként</div>
+            
+            {chartData.categoryData.length === 0 && (
+              <div className="text-center py-12">
+                <PieChart className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek kategória adatok</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  A számlák feldolgozása után itt jelennek meg a kategóriák szerinti kiadások.
+                </p>
               </div>
-              
-              {chartData.categoryData.length === 0 && (
-                <div className="text-center py-12">
-                  <PieChart className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek kategória adatok</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    A számlák feldolgozása után itt jelennek meg a kategóriák szerinti kiadások.
-                  </p>
-                </div>
-              )}
-              
-              {chartData.categoryData.length > 0 && (
-                <div className="h-64 sm:h-80 lg:h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <div className="flex flex-col h-full">
-                      <div className="flex-1">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RechartsPieChart>
-                            <Pie
-                              data={chartData.categoryData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={90}
-                              paddingAngle={3}
-                              dataKey="amount"
-                              animationDuration={1000}
-                              animationBegin={200}
-                            >
-                              {chartData.categoryData.map((entry, index) => (
-                                <Cell 
-                                  key={`cell-${index}`} 
-                                  fill={`url(#categoryGradient-${index})`}
-                                  stroke="#ffffff"
-                                  strokeWidth={2}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip content={<CategoryTooltip />} />
-                            <defs>
-                              {chartData.categoryData.map((entry, index) => (
-                                <radialGradient 
-                                  key={`gradient-${index}`} 
-                                  id={`categoryGradient-${index}`} 
-                                  cx="50%" 
-                                  cy="50%" 
-                                  r="50%" 
-                                  fx="50%" 
-                                  fy="50%"
-                                >
-                                  <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
-                                  <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
-                                </radialGradient>
-                              ))}
-                            </defs>
-                          </RechartsPieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
-                        {chartData.categoryData.slice(0, 6).map((item, index) => (
-                          <div 
-                            key={index} 
-                            className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-gray-50 transition-colors cursor-default"
-                            title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
+            )}
+            
+            {chartData.categoryData.length > 0 && (
+              <div className="h-64 sm:h-80 lg:h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPieChart>
+                          <Pie
+                            data={chartData.categoryData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={90}
+                            paddingAngle={3}
+                            dataKey="amount"
+                            animationDuration={1000}
+                            animationBegin={200}
                           >
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                            <div className="flex-1 min-w-0">
-                              <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
-                              <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
-                            </div>
+                            {chartData.categoryData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={`url(#categoryGradient-${index})`}
+                                stroke="#ffffff"
+                                strokeWidth={2}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<CategoryTooltip />} />
+                          <defs>
+                            {chartData.categoryData.map((entry, index) => (
+                              <radialGradient 
+                                key={`gradient-${index}`} 
+                                id={`categoryGradient-${index}`} 
+                                cx="50%" 
+                                cy="50%" 
+                                r="50%" 
+                                fx="50%" 
+                                fy="50%"
+                              >
+                                <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
+                                <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
+                              </radialGradient>
+                            ))}
+                          </defs>
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                      {chartData.categoryData.slice(0, 6).map((item, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-gray-50 transition-colors cursor-default"
+                          title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
+                        >
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
+                            <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
                           </div>
-                        ))}
-                      </div>
-                      
-                      <div className="mt-3 border-t border-gray-100 pt-3">
-                        <div className="flex flex-wrap justify-between text-xs text-gray-500">
-                          <div className="flex items-center space-x-1 mb-1">
-                            <span>Összes kiadás:</span>
-                            <span className="font-medium text-purple-700">
-                              {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
-                            </span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="mt-3 border-t border-gray-100 pt-3">
+                      <div className="flex justify-between items-center">
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500">Összes kiadás:</div>
+                          <div className="text-sm font-medium text-purple-700">
+                            {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <span>Összes számla:</span>
-                            <span className="font-medium text-gray-700">
-                              {chartData.categoryData.reduce((sum, item) => sum + item.count, 0)} db
-                            </span>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500">Összes számla:</div>
+                          <div className="text-sm font-medium text-gray-700">
+                            {chartData.categoryData.reduce((sum, item) => sum + item.count, 0)} db
                           </div>
                         </div>
                       </div>
                     </div>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
+                  </div>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1659,6 +1673,113 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* All Munkaszám Modal */}
+      {showAllMunkaszam && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
+                <Hash className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-blue-600" />
+                Összes munkaszám megoszlás
+              </h3>
+              <button 
+                onClick={() => setShowAllMunkaszam(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className="h-[600px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={chartData.munkaszamData} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} horizontal={false} />
+                    <XAxis 
+                      type="number"
+                      stroke="#374151" 
+                      fontSize={11}
+                      fontWeight={500}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <YAxis 
+                      type="category"
+                      dataKey="munkaszam" 
+                      stroke="#374151" 
+                      fontSize={10}
+                      fontWeight={500}
+                      width={120}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <Tooltip content={<MunkaszamTooltip />} />
+                    <Bar 
+                      dataKey="amount" 
+                      radius={[0, 6, 6, 0]}
+                      barSize={20}
+                      animationDuration={1000}
+                    >
+                      {chartData.munkaszamData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={`url(#allMunkaszamGradient-${index})`} 
+                        />
+                      ))}
+                    </Bar>
+                    <defs>
+                      {chartData.munkaszamData.map((entry, index) => (
+                        <linearGradient 
+                          key={`gradient-${index}`} 
+                          id={`allMunkaszamGradient-${index}`} 
+                          x1="0" 
+                          y1="0" 
+                          x2="1" 
+                          y2="0"
+                        >
+                          <stop offset="0%" stopColor={entry.color} stopOpacity={0.8}/>
+                          <stop offset="100%" stopColor={entry.color} stopOpacity={1}/>
+                        </linearGradient>
+                      ))}
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {chartData.munkaszamData.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <p className="font-medium text-gray-900">{item.fullMunkaszam || item.munkaszam}</p>
+                    </div>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p>Összeg: <span className="text-blue-700 font-medium">{formatCurrency(item.amount)}</span></p>
+                      <p>Számlák: <span className="text-gray-700">{item.count} db</span></p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-200 p-4 sm:p-6">
+              <button
+                onClick={() => setShowAllMunkaszam(false)}
+                className="w-full sm:w-auto px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors font-medium"
+              >
+                Bezárás
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
