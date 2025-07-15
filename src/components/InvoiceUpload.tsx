@@ -16,6 +16,7 @@ interface ProcessedData {
   paymentType?: 'bank_transfer' | 'card_cash_afterpay';
   specificPaymentMethod?: string; // Specific payment method for non-bank transfer payments
   Munkaszám?: string;
+  category?: string; // Invoice category classification
 }
 
 interface UploadedFile {
@@ -401,6 +402,40 @@ export const InvoiceUpload: React.FC = () => {
       
       processedData.Munkaszám = '';
       
+      // Determine invoice category based on subject and raw response
+      let category = '';
+      
+      // Try to extract category from the raw response
+      if (rawResponse && typeof rawResponse === 'string') {
+        // Look for category indicators in the raw response
+        const categoryMatch = rawResponse.match(/kategória:\s*"([^"]+)"/i) || 
+                             rawResponse.match(/category:\s*"([^"]+)"/i);
+        
+        if (categoryMatch && categoryMatch[1]) {
+          category = categoryMatch[1].trim();
+        }
+      }
+      
+      // Validate and normalize category
+      const validCategories = [
+        'Bérleti díjak',
+        'Közüzemi díjak',
+        'Szolgáltatások',
+        'Étkeztetés költségei',
+        'Személyi jellegű kifizetések',
+        'Anyagköltség',
+        'Tárgyi eszközök',
+        'Felújítás, beruházások',
+        'Egyéb'
+      ];
+      
+      // If category is not valid, set to 'Egyéb'
+      if (!validCategories.includes(category)) {
+        category = 'Egyéb';
+      }
+      
+      processedData.category = category;
+      
       // Parse the amount to ensure it's a valid number
       processedData.Összeg = parseHungarianCurrency(processedData.Összeg);
 
@@ -495,6 +530,7 @@ export const InvoiceUpload: React.FC = () => {
           payment_method: processedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (processedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
           invoice_type: processedData.paymentType,
           munkaszam: processedData.Munkaszám || '',
+          category: processedData.category || 'Egyéb',
           processed_at: new Date().toISOString()
         })
         .select()
@@ -650,6 +686,7 @@ export const InvoiceUpload: React.FC = () => {
           payment_method: uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
           invoice_type: uploadedFile.extractedData.paymentType,
           munkaszam: uploadedFile.extractedData.Munkaszám || '',
+          category: uploadedFile.extractedData.category || 'Egyéb',
           updated_at: new Date().toISOString()
         })
         .eq('id', invoiceId);
@@ -1305,6 +1342,43 @@ export const InvoiceUpload: React.FC = () => {
                         'sm:col-span-2'
                       )}
 
+                      {/* Category Selection */}
+                      <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span className="text-xs sm:text-sm font-medium text-gray-500">Kategória</span>
+                        </div>
+                        <select
+                          value={uploadedFile.extractedData.category || 'Egyéb'}
+                          onChange={(e) => {
+                            setUploadedFiles(prev => prev.map(file => {
+                              if (file.id === uploadedFile.id && file.extractedData) {
+                                return {
+                                  ...file,
+                                  extractedData: {
+                                    ...file.extractedData,
+                                    category: e.target.value
+                                  }
+                                };
+                              }
+                              return file;
+                            }));
+                            setHasUnsavedChanges(prev => new Set(prev).add(uploadedFile.id));
+                          }}
+                          className="w-full text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="Bérleti díjak">Bérleti díjak</option>
+                          <option value="Közüzemi díjak">Közüzemi díjak</option>
+                          <option value="Szolgáltatások">Szolgáltatások</option>
+                          <option value="Étkeztetés költségei">Étkeztetés költségei</option>
+                          <option value="Személyi jellegű kifizetések">Személyi jellegű kifizetések</option>
+                          <option value="Anyagköltség">Anyagköltség</option>
+                          <option value="Tárgyi eszközök">Tárgyi eszközök</option>
+                          <option value="Felújítás, beruházások">Felújítás, beruházások</option>
+                          <option value="Egyéb">Egyéb</option>
+                        </select>
+                      </div>
+                      
                       {/* Work Number - Manual Input */}
                       <div className="border border-yellow-200 bg-yellow-50 rounded-lg p-3 sm:p-4">
                         <div className="flex items-center space-x-2 mb-2">
