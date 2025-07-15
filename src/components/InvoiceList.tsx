@@ -50,6 +50,7 @@ interface Invoice {
   payment_method: string;
   invoice_type: 'bank_transfer' | 'card_cash_afterpay';
   munkaszam?: string; // Work number field
+  category?: string; // Invoice category classification
 }
 
 interface Notification {
@@ -442,6 +443,17 @@ export const InvoiceList: React.FC = () => {
                   </div>
                 )}
                 
+                {invoice.category && (
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Kategória:</span>
+                    <p className="text-gray-900 truncate mt-1">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        {invoice.category}
+                      </span>
+                    </p>
+                  </div>
+                )}
+                
                 <div className="col-span-2">
                   <span className="text-gray-500">Dátum:</span>
                   <p className="text-gray-900 mt-1">
@@ -520,6 +532,13 @@ export const InvoiceList: React.FC = () => {
                       {invoice.munkaszam && (
                         <div className="text-xs text-blue-600 font-medium truncate mt-1">
                           Munkaszám: {invoice.munkaszam}
+                        </div>
+                      )}
+                      {invoice.category && (
+                        <div className="text-xs truncate mt-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {invoice.category}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -717,6 +736,7 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
           payment_method: editedInvoice.payment_method,
           invoice_type: editedInvoice.invoice_type,
           munkaszam: editedInvoice.munkaszam,
+          category: editedInvoice.category || 'Egyéb',
           updated_at: new Date().toISOString()
         })
         .eq('id', editedInvoice.id);
@@ -881,6 +901,25 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Munkaszám"
                 />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kategória</label>
+                <select
+                  value={editedInvoice.category || 'Egyéb'}
+                  onChange={(e) => setEditedInvoice(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="Bérleti díjak">Bérleti díjak</option>
+                  <option value="Közüzemi díjak">Közüzemi díjak</option>
+                  <option value="Szolgáltatások">Szolgáltatások</option>
+                  <option value="Étkeztetés költségei">Étkeztetés költségei</option>
+                  <option value="Személyi jellegű kifizetések">Személyi jellegű kifizetések</option>
+                  <option value="Anyagköltség">Anyagköltség</option>
+                  <option value="Tárgyi eszközök">Tárgyi eszközök</option>
+                  <option value="Felújítás, beruházások">Felújítás, beruházások</option>
+                  <option value="Egyéb">Egyéb</option>
+                </select>
               </div>
             </div>
           </div>
