@@ -494,6 +494,7 @@ export const InvoiceUpload: React.FC = () => {
           payment_deadline: processedData['Fizetési határidő'],
           payment_method: processedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (processedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
           invoice_type: processedData.paymentType,
+          munkaszam: processedData.Munkaszám || '',
           processed_at: new Date().toISOString()
         })
         .select()
@@ -648,6 +649,7 @@ export const InvoiceUpload: React.FC = () => {
           payment_deadline: uploadedFile.extractedData['Fizetési határidő'],
           payment_method: uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
           invoice_type: uploadedFile.extractedData.paymentType,
+          munkaszam: uploadedFile.extractedData.Munkaszám || '',
           updated_at: new Date().toISOString()
         })
         .eq('id', invoiceId);
