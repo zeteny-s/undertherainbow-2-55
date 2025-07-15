@@ -1663,7 +1663,7 @@ export const InvoiceUpload: React.FC = () => {
                                     newMunkaszam
                                   );
                                 }}
-                                className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-yellow-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-500 pr-8"
+                                className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 bg-white border border-yellow-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-500 pr-10"
                                 placeholder="Adja meg a munkaszámot"
                               />
                               <button 
@@ -1680,7 +1680,7 @@ export const InvoiceUpload: React.FC = () => {
                                     setOpenDropdowns(prev => new Set(prev).add(dropdownId));
                                   }
                                 }}
-                                className="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                                className="absolute inset-y-0 right-2 px-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
                                 aria-label="Open munkaszám options"
                                 title="Munkaszám opciók"
                               >
@@ -1698,7 +1698,7 @@ export const InvoiceUpload: React.FC = () => {
                             id={`munkaszam-dropdown-${uploadedFile.id}`} 
                             className={`absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg ${openDropdowns.has(`munkaszam-dropdown-${uploadedFile.id}`) ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'} transition-all duration-150 ease-in-out`}
                           >
-                            <div className="py-1 max-h-60 overflow-auto">
+                            <div className="py-1 pb-4 max-h-60 overflow-auto">
                               <div className="px-3 py-2 text-xs text-gray-500 font-medium border-b border-gray-100">
                                 Válasszon munkaszámot
                               </div>
