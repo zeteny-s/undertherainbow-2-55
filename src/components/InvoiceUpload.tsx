@@ -358,6 +358,23 @@ export const InvoiceUpload: React.FC = () => {
 
       const processedData = geminiResult.data;
       
+      // Log the full Gemini response for debugging
+      console.log('Full Gemini result:', geminiResult);
+      
+      // Check if the Gemini result already contains a category field
+      if (geminiResult.data && typeof geminiResult.data === 'object') {
+        // Check for category with different possible field names
+        const categoryFields = ['category', 'Category', 'kategória', 'Kategória'];
+        for (const field of categoryFields) {
+          if (geminiResult.data[field]) {
+            console.log(`Category found in geminiResult.data.${field}:`, geminiResult.data[field]);
+            // Store the category in the processed data
+            processedData.category = geminiResult.data[field];
+            break;
+          }
+        }
+      }
+      
       // Extract payment type information from the raw response
       let specificPaymentMethod = '';
       const rawResponse = geminiResult.rawResponse || '';
@@ -402,17 +419,107 @@ export const InvoiceUpload: React.FC = () => {
       
       processedData.Munkaszám = '';
       
-      // Determine invoice category based on subject and raw response
+      // Determine invoice category based on the Gemini response
       let category = '';
       
-      // Try to extract category from the raw response
+      // First check if the category is directly available in the processedData
+      if (processedData.category) {
+        category = processedData.category;
+        console.log('Category found directly in processedData:', category);
+      } else {
+        // Try to parse the category from the raw JSON in the response
+        try {
+          // Look for JSON in the raw response
+          const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const jsonData = JSON.parse(jsonMatch[0]);
+            // Check various possible field names for category
+            const categoryFields = ['category', 'Category', 'kategória', 'Kategória'];
+            for (const field of categoryFields) {
+              if (jsonData[field]) {
+                category = jsonData[field];
+                console.log(`Category found in raw JSON response (${field}):`, category);
+                break;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error extracting category from raw JSON:', error);
+        }
+      }
+      
+      // Extract category from the Gemini API response
       if (rawResponse && typeof rawResponse === 'string') {
-        // Look for category indicators in the raw response
-        const categoryMatch = rawResponse.match(/kategória:\s*"([^"]+)"/i) || 
-                             rawResponse.match(/category:\s*"([^"]+)"/i);
+        console.log('Checking for category in raw response');
         
-        if (categoryMatch && categoryMatch[1]) {
-          category = categoryMatch[1].trim();
+        // First, try to find exact category mentions with quotes
+        const categoryPatterns = [
+          /kategória:\s*"([^"]+)"/i,
+          /category:\s*"([^"]+)"/i,
+          /"kategória":\s*"([^"]+)"/i,
+          /"category":\s*"([^"]+)"/i,
+          /kategória:\s*(\S+)/i,
+          /category:\s*(\S+)/i
+        ];
+        
+        // Try each pattern
+        for (const pattern of categoryPatterns) {
+          const match = rawResponse.match(pattern);
+          if (match && match[1]) {
+            category = match[1].trim();
+            console.log('Found category in raw response using pattern:', category);
+            break;
+          }
+        }
+        
+        // If no match found with patterns, try to extract from the JSON structure
+        if (!category) {
+          try {
+            // Look for JSON in the response
+            const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const jsonData = JSON.parse(jsonMatch[0]);
+              // Check for category field with various possible names
+              if (jsonData.category) {
+                category = jsonData.category;
+                console.log('Found category in JSON (category field):', category);
+              } else if (jsonData.Category) {
+                category = jsonData.Category;
+                console.log('Found category in JSON (Category field):', category);
+              } else if (jsonData.kategória) {
+                category = jsonData.kategória;
+                console.log('Found category in JSON (kategória field):', category);
+              } else if (jsonData.Kategória) {
+                category = jsonData.Kategória;
+                console.log('Found category in JSON (Kategória field):', category);
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing JSON from raw response:', error);
+          }
+        }
+        
+        // If still no category found, try to find it in the text using more general patterns
+        if (!category) {
+          const validCategories = [
+            'Bérleti díjak',
+            'Közüzemi díjak',
+            'Szolgáltatások',
+            'Étkeztetés költségei',
+            'Személyi jellegű kifizetések',
+            'Anyagköltség',
+            'Tárgyi eszközök',
+            'Felújítás, beruházások',
+            'Egyéb'
+          ];
+          
+          for (const validCategory of validCategories) {
+            if (rawResponse.includes(validCategory)) {
+              category = validCategory;
+              console.log('Found category by direct text match:', category);
+              break;
+            }
+          }
         }
       }
       
@@ -430,10 +537,14 @@ export const InvoiceUpload: React.FC = () => {
       ];
       
       // If category is not valid, set to 'Egyéb'
-      if (!validCategories.includes(category)) {
+      if (!category || !validCategories.includes(category)) {
+        console.log('Category not valid or not found, defaulting to Egyéb');
         category = 'Egyéb';
+      } else {
+        console.log('Final validated category:', category);
       }
       
+      // Set the category in the processed data
       processedData.category = category;
       
       // Parse the amount to ensure it's a valid number
@@ -476,6 +587,9 @@ export const InvoiceUpload: React.FC = () => {
       await saveToDatabase(uploadedFile, processedData, extractedText, finalFileUrl, finalOrganization);
 
       if (checkCancelled()) return;
+
+      // Log the final category before updating UI
+      console.log('Final category being set in UI:', processedData.category);
 
       setUploadedFiles(prev => prev.map(file => 
         file.id === uploadedFile.id ? { 
