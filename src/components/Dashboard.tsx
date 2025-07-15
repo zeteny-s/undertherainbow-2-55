@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, AlertCircle } from 'lucide-react';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, AlertCircle, Hash } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart, Line, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../lib/supabase';
 
@@ -33,6 +33,8 @@ interface ChartData {
   weeklyTrend: Array<{ day: string; date: string; invoices: number; amount: number }>;
   expenseData: Array<{ month: string; expenses: number; count: number }>;
   topPartnersData: Array<{ partner: string; amount: number; invoiceCount: number; color: string }>;
+  munkaszamData: Array<{ munkaszam: string; count: number; amount: number; color: string }>;
+  categoryData: Array<{ category: string; count: number; amount: number; color: string }>;
 }
 
 interface WeekData {
@@ -137,6 +139,8 @@ export const Dashboard: React.FC = () => {
       const expenseData = generateExpenseData(invoices || []);
       const topPartnersData = generateTopPartnersData(invoices || []);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
+      const munkaszamData = generateMunkaszamData(invoices || []);
+      const categoryData = generateCategoryData(invoices || []);
 
       setStats(calculatedStats);
       setRecentInvoices(invoices?.slice(0, 5) || []);
@@ -147,7 +151,9 @@ export const Dashboard: React.FC = () => {
         weeklyTrend,
         expenseData,
         topPartnersData,
-        weeklyExpenseTrend
+        weeklyExpenseTrend,
+        munkaszamData,
+        categoryData
       });
 
       addNotification('success', 'Adatok sikeresen frissítve');
@@ -332,6 +338,111 @@ export const Dashboard: React.FC = () => {
       .slice(0, 5); // Top 5 partners
     
     return partnersArray;
+  };
+  
+  const generateMunkaszamData = (invoices: any[]) => {
+    // Group invoices by munkaszam and calculate total spending
+    const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
+    
+    invoices.forEach(invoice => {
+      if (invoice.amount && invoice.amount > 0) {
+        // Use 'Nincs munkaszám' for invoices without a munkaszam
+        const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
+        
+        if (!munkaszamSpending[munkaszam]) {
+          munkaszamSpending[munkaszam] = { amount: 0, count: 0 };
+        }
+        munkaszamSpending[munkaszam].amount += invoice.amount;
+        munkaszamSpending[munkaszam].count += 1;
+      }
+    });
+    
+    // Color palette for the chart
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6'];
+    
+    // Convert to array and sort by amount (descending)
+    const munkaszamArray = Object.entries(munkaszamSpending)
+      .filter(([, data]) => data.amount > 0) // Only include munkaszams with positive spending
+      .map(([munkaszam, data], index) => ({
+        munkaszam: munkaszam.length > 15 ? munkaszam.substring(0, 15) + '...' : munkaszam,
+        fullMunkaszam: munkaszam,
+        count: data.count,
+        amount: data.amount,
+        color: colors[index % colors.length]
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 8); // Top 8 munkaszams
+    
+    return munkaszamArray;
+  };
+  
+  const generateCategoryData = (invoices: any[]) => {
+    // Group invoices by category and calculate total spending
+    const categorySpending: { [key: string]: { amount: number; count: number } } = {};
+    
+    // Define valid categories
+    const validCategories = [
+      'Bérleti díjak',
+      'Közüzemi díjak',
+      'Szolgáltatások',
+      'Étkeztetés költségei',
+      'Személyi jellegű kifizetések',
+      'Anyagköltség',
+      'Tárgyi eszközök',
+      'Felújítás, beruházások',
+      'Egyéb'
+    ];
+    
+    // Initialize categories with zero values
+    validCategories.forEach(category => {
+      categorySpending[category] = { amount: 0, count: 0 };
+    });
+    
+    invoices.forEach(invoice => {
+      if (invoice.amount && invoice.amount > 0) {
+        // Use 'Egyéb' for invoices without a category or with invalid category
+        let category = 'Egyéb';
+        
+        if (invoice.category && invoice.category.trim()) {
+          // Remove any " (AI)" suffix if present
+          const cleanCategory = invoice.category.trim().replace(/ \(AI\)$/, '');
+          
+          // Check if it's a valid category
+          if (validCategories.includes(cleanCategory)) {
+            category = cleanCategory;
+          }
+        }
+        
+        categorySpending[category].amount += invoice.amount;
+        categorySpending[category].count += 1;
+      }
+    });
+    
+    // Color mapping for categories
+    const categoryColors: { [key: string]: string } = {
+      'Bérleti díjak': '#3b82f6',
+      'Közüzemi díjak': '#10b981',
+      'Szolgáltatások': '#f59e0b',
+      'Étkeztetés költségei': '#8b5cf6',
+      'Személyi jellegű kifizetések': '#ef4444',
+      'Anyagköltség': '#06b6d4',
+      'Tárgyi eszközök': '#84cc16',
+      'Felújítás, beruházások': '#ec4899',
+      'Egyéb': '#6366f1'
+    };
+    
+    // Convert to array and sort by amount (descending)
+    const categoryArray = Object.entries(categorySpending)
+      .filter(([, data]) => data.amount > 0) // Only include categories with positive spending
+      .map(([category, data]) => ({
+        category,
+        count: data.count,
+        amount: data.amount,
+        color: categoryColors[category] || '#6b7280'
+      }))
+      .sort((a, b) => b.amount - a.amount);
+    
+    return categoryArray;
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -623,6 +734,54 @@ export const Dashboard: React.FC = () => {
     }
     return null;
   };
+  
+  const MunkaszamTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
+          <p className="font-semibold text-gray-900 mb-2">{data.fullMunkaszam || data.munkaszam}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-blue-600 font-medium">
+              💰 Összeg: {formatCurrency(data.amount)}
+            </p>
+            <p className="text-sm text-gray-600">
+              📄 Számlák: {data.count} db
+            </p>
+            <p className="text-xs text-gray-500">
+              📊 Átlag/számla: {formatCurrency(data.amount / data.count)}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  const CategoryTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
+          <p className="font-semibold text-gray-900 mb-2">{data.category}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-purple-600 font-medium">
+              💰 Összeg: {formatCurrency(data.amount)}
+            </p>
+            <p className="text-sm text-gray-600">
+              📄 Számlák: {data.count} db
+            </p>
+            {data.count > 0 && (
+              <p className="text-xs text-gray-500">
+                📊 Átlag/számla: {formatCurrency(data.amount / data.count)}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (loading) {
     return (
@@ -855,7 +1014,130 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Weekly Expense Trend - MOVED TO 3RD POSITION */}
+        {/* Second Row: Munkaszám Distribution and Category Spending */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+          {/* Munkaszám Distribution Chart */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                Munkaszám megoszlás
+              </h3>
+            </div>
+            
+            {chartData.munkaszamData.length === 0 && (
+              <div className="text-center py-12">
+                <Hash className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek munkaszám adatok</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  A számlák feldolgozása után itt jelennek meg a munkaszámok szerinti kiadások.
+                </p>
+              </div>
+            )}
+            
+            {chartData.munkaszamData.length > 0 && (
+              <div className="h-64 sm:h-80 lg:h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={chartData.munkaszamData} 
+                    margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} horizontal={false} />
+                    <XAxis 
+                      type="number"
+                      stroke="#374151" 
+                      fontSize={11}
+                      fontWeight={500}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <YAxis 
+                      type="category"
+                      dataKey="munkaszam" 
+                      stroke="#374151" 
+                      fontSize={10}
+                      fontWeight={500}
+                      width={100}
+                      tick={{ fill: '#374151' }}
+                    />
+                    <Tooltip content={<MunkaszamTooltip />} />
+                    <Bar 
+                      dataKey="amount" 
+                      radius={[0, 6, 6, 0]}
+                      barSize={20}
+                    >
+                      {chartData.munkaszamData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Category Spending Chart */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+                Kategória szerinti kiadások
+              </h3>
+            </div>
+            
+            {chartData.categoryData.length === 0 && (
+              <div className="text-center py-12">
+                <PieChart className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek kategória adatok</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  A számlák feldolgozása után itt jelennek meg a kategóriák szerinti kiadások.
+                </p>
+              </div>
+            )}
+            
+            {chartData.categoryData.length > 0 && (
+              <div className="h-64 sm:h-80 lg:h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPieChart>
+                          <Pie
+                            data={chartData.categoryData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={2}
+                            dataKey="amount"
+                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            labelLine={false}
+                          >
+                            {chartData.categoryData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<CategoryTooltip />} />
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      {chartData.categoryData.slice(0, 6).map((item, index) => (
+                        <div key={index} className="flex items-center space-x-1">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                          <span className="text-xs text-gray-600 truncate">{item.category}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Weekly Expense Trend - MOVED TO 5TH POSITION */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
           <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
             <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
