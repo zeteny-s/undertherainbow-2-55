@@ -912,48 +912,29 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
                 <label className="block text-sm font-medium text-gray-700 mb-2">Fizetési mód</label>
                 <div className="space-y-3">
                   <select
-                    value={editedInvoice.invoice_type || 'bank_transfer'}
+                    value={editedInvoice.payment_method || (editedInvoice.invoice_type === 'bank_transfer' ? 'Banki átutalás' : '')}
                     onChange={(e) => {
                       const value = e.target.value;
                       setEditedInvoice(prev => ({ 
                         ...prev, 
-                        invoice_type: value === 'bank_transfer' ? 'bank_transfer' : 'card_cash_afterpay',
-                        payment_method: value === 'custom' ? (prev.payment_method === 'Banki átutalás' ? '' : prev.payment_method) : 
-                                       value === 'bank_transfer' ? 'Banki átutalás' : value
+                        invoice_type: value === 'Banki átutalás' ? 'bank_transfer' : 'card_cash_afterpay',
+                        payment_method: value
                       }))
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="bank_transfer">Banki átutalás</option>
+                    <option value="Banki átutalás">Banki átutalás</option>
                     <option value="Bankkártya">Bankkártya</option>
                     <option value="Készpénz">Készpénz</option>
                     <option value="Utánvét">Utánvét</option>
                     <option value="Online fizetés">Online fizetés</option>
-                    <option value="custom">Egyéb</option>
+                    <option value="Csoportos beszedés">Csoportos beszedés</option>
                   </select>
                   
-                  {/* Custom payment method input */}
-                  {(editedInvoice.invoice_type === 'card_cash_afterpay' && editedInvoice.payment_method === 'custom') || 
-                   (editedInvoice.invoice_type === 'card_cash_afterpay' && 
-                    editedInvoice.payment_method !== 'Bankkártya' &&
-                    editedInvoice.payment_method !== 'Készpénz' &&
-                    editedInvoice.payment_method !== 'Utánvét' &&
-                    editedInvoice.payment_method !== 'Online fizetés' && 
-                    editedInvoice.payment_method !== 'custom') ? (
-                    <div className="mt-2">
-                      <input
-                        type="text"
-                        value={editedInvoice.payment_method !== 'custom' ? editedInvoice.payment_method : ''}
-                        onChange={(e) => setEditedInvoice(prev => ({ 
-                          ...prev, 
-                          payment_method: e.target.value 
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Adja meg a fizetési módot"
-                        autoFocus
-                      />
-                    </div>
-                  ) : null}
+                  {/* Note about payment types */}
+                  <p className="text-xs text-gray-500 mt-1">
+                    A fizetési mód automatikusan beállítja a számla típusát.
+                  </p>
                 </div>
               </div>
               
