@@ -49,6 +49,7 @@ interface Invoice {
   payment_deadline: string;
   payment_method: string;
   invoice_type: 'bank_transfer' | 'card_cash_afterpay';
+  munkaszam?: string; // Work number field
 }
 
 interface Notification {
@@ -701,6 +702,7 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
           payment_deadline: editedInvoice.payment_deadline,
           payment_method: editedInvoice.payment_method,
           invoice_type: editedInvoice.invoice_type,
+          munkaszam: editedInvoice.munkaszam,
           updated_at: new Date().toISOString()
         })
         .eq('id', editedInvoice.id);
@@ -855,6 +857,17 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
                   placeholder="Számla tárgya vagy szolgáltatás leírása"
                 />
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Munkaszám</label>
+                <input
+                  type="text"
+                  value={editedInvoice.munkaszam || ''}
+                  onChange={(e) => setEditedInvoice(prev => ({ ...prev, munkaszam: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Munkaszám"
+                />
+              </div>
             </div>
           </div>
 
@@ -883,17 +896,48 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Fizetési mód</label>
-                <select
-                  value={editedInvoice.invoice_type || 'bank_transfer'}
-                  onChange={(e) => setEditedInvoice(prev => ({ 
-                    ...prev, 
-                    invoice_type: e.target.value as 'bank_transfer' | 'card_cash_afterpay'
-                  }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="bank_transfer">Banki átutalás</option>
-                  <option value="card_cash_afterpay">Kártya/Készpénz/Utánvét</option>
-                </select>
+                <div className="space-y-3">
+                  <select
+                    value={editedInvoice.invoice_type || 'bank_transfer'}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setEditedInvoice(prev => ({ 
+                        ...prev, 
+                        invoice_type: value === 'bank_transfer' ? 'bank_transfer' : 'card_cash_afterpay',
+                        payment_method: value === 'custom' ? (prev.payment_method === 'Banki átutalás' ? '' : prev.payment_method) : 
+                                       value === 'bank_transfer' ? 'Banki átutalás' : value
+                      }))
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="bank_transfer">Banki átutalás</option>
+                    <option value="Bankkártya">Bankkártya</option>
+                    <option value="Készpénz">Készpénz</option>
+                    <option value="Utánvét">Utánvét</option>
+                    <option value="Online fizetés">Online fizetés</option>
+                    <option value="custom">Egyedi fizetési mód</option>
+                  </select>
+                  
+                  {/* Custom payment method input */}
+                  {editedInvoice.invoice_type === 'card_cash_afterpay' && 
+                   editedInvoice.payment_method !== 'Bankkártya' &&
+                   editedInvoice.payment_method !== 'Készpénz' &&
+                   editedInvoice.payment_method !== 'Utánvét' &&
+                   editedInvoice.payment_method !== 'Online fizetés' && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        value={editedInvoice.payment_method || ''}
+                        onChange={(e) => setEditedInvoice(prev => ({ 
+                          ...prev, 
+                          payment_method: e.target.value 
+                        }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Adja meg a fizetési módot"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               
               {editedInvoice.invoice_type === 'bank_transfer' && (
