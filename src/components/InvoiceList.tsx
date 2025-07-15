@@ -433,6 +433,15 @@ export const InvoiceList: React.FC = () => {
                   </p>
                 </div>
                 
+                {invoice.munkaszam && (
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Munkaszám:</span>
+                    <p className="text-gray-900 truncate mt-1 font-medium">
+                      {invoice.munkaszam}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="col-span-2">
                   <span className="text-gray-500">Dátum:</span>
                   <p className="text-gray-900 mt-1">
@@ -508,6 +517,11 @@ export const InvoiceList: React.FC = () => {
                       <div className="text-sm text-gray-500 truncate">
                         {invoice.subject || ''}
                       </div>
+                      {invoice.munkaszam && (
+                        <div className="text-xs text-blue-600 font-medium truncate mt-1">
+                          Munkaszám: {invoice.munkaszam}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -915,28 +929,31 @@ const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice, onSave, onCa
                     <option value="Készpénz">Készpénz</option>
                     <option value="Utánvét">Utánvét</option>
                     <option value="Online fizetés">Online fizetés</option>
-                    <option value="custom">Egyedi fizetési mód</option>
+                    <option value="custom">Egyéb</option>
                   </select>
                   
                   {/* Custom payment method input */}
-                  {editedInvoice.invoice_type === 'card_cash_afterpay' && 
-                   editedInvoice.payment_method !== 'Bankkártya' &&
-                   editedInvoice.payment_method !== 'Készpénz' &&
-                   editedInvoice.payment_method !== 'Utánvét' &&
-                   editedInvoice.payment_method !== 'Online fizetés' && (
+                  {(editedInvoice.invoice_type === 'card_cash_afterpay' && editedInvoice.payment_method === 'custom') || 
+                   (editedInvoice.invoice_type === 'card_cash_afterpay' && 
+                    editedInvoice.payment_method !== 'Bankkártya' &&
+                    editedInvoice.payment_method !== 'Készpénz' &&
+                    editedInvoice.payment_method !== 'Utánvét' &&
+                    editedInvoice.payment_method !== 'Online fizetés' && 
+                    editedInvoice.payment_method !== 'custom') ? (
                     <div className="mt-2">
                       <input
                         type="text"
-                        value={editedInvoice.payment_method || ''}
+                        value={editedInvoice.payment_method !== 'custom' ? editedInvoice.payment_method : ''}
                         onChange={(e) => setEditedInvoice(prev => ({ 
                           ...prev, 
                           payment_method: e.target.value 
                         }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Adja meg a fizetési módot"
+                        autoFocus
                       />
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
               
