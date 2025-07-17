@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
     },
     {
       id: 'upload',
-      label: 'Feltöltés',
+      label: 'Iktató',
       icon: Upload,
     },
     {
