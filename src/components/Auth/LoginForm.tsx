@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, AlertCircle, User } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, AlertCircle, User, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface LoginFormProps {
@@ -14,6 +14,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profileType, setProfileType] = useState<'irodai' | 'vezetoi'>('irodai');
+  const [managerPassword, setManagerPassword] = useState('');
+  const [showManagerPassword, setShowManagerPassword] = useState(false);
 
   const { signIn, signUp } = useAuth();
 
@@ -34,9 +37,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
         if (!name.trim()) {
           throw new Error('Név megadása kötelező');
         }
+        if (profileType === 'vezetoi' && managerPassword !== 'Feketerigo123.') {
+          throw new Error('Hibás vezetői jelszó');
+        }
 
         console.log('Attempting to sign up user:', { email, name });
-        const { error } = await signUp(email.trim(), password, name.trim());
+        const { error } = await signUp(email.trim(), password, name.trim(), profileType);
 
         if (error) {
           console.error('Sign up error:', error);
@@ -146,6 +152,56 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                     placeholder="Kovács János"
                   />
                 </div>
+              </div>
+            )}
+
+            {isSignUp && (
+              <div>
+                <label htmlFor="profileType" className="block text-sm font-medium text-gray-700 mb-2">
+                  Profil típus *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <select
+                    id="profileType"
+                    value={profileType}
+                    onChange={(e) => setProfileType(e.target.value as 'irodai' | 'vezetoi')}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors appearance-none bg-white"
+                  >
+                    <option value="irodai">Irodai Profil</option>
+                    <option value="vezetoi">Vezetői Profil</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {isSignUp && profileType === 'vezetoi' && (
+              <div>
+                <label htmlFor="managerPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Vezetői jelszó *
+                </label>
+                <div className="relative">
+                  <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    id="managerPassword"
+                    type={showManagerPassword ? 'text' : 'password'}
+                    value={managerPassword}
+                    onChange={(e) => setManagerPassword(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Vezetői hozzáférési jelszó"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowManagerPassword(!showManagerPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showManagerPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Vezetői profil létrehozásához szükséges speciális jelszó
+                </p>
               </div>
             )}
 

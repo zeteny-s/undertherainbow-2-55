@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, User, ChevronRight, ChevronLeft, Settings, Menu, X } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, User, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 
@@ -26,7 +26,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
     }
   };
 
-  const menuItems = [
+  // Base menu items for all users
+  const baseMenuItems = [
     {
       id: 'dashboard',
       label: 'Áttekintés',
@@ -48,6 +49,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       icon: Settings,
     },
   ];
+
+  // Additional menu items for manager profile
+  const managerMenuItems = [
+    {
+      id: 'payroll',
+      label: 'Bérköltségek',
+      icon: DollarSign,
+    },
+  ];
+
+  // Combine menu items based on user profile
+  const menuItems = user?.user_metadata?.profile_type === 'vezetoi' 
+    ? [...baseMenuItems, ...managerMenuItems]
+    : baseMenuItems;
 
   // Get user initials for profile picture
   const getUserInitials = (email: string, name?: string) => {

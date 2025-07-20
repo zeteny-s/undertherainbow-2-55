@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name?: string, profileType?: 'irodai' | 'vezetoi') => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (data: { name?: string }) => Promise<{ error: any }>;
 }
@@ -69,9 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, name?: string) => {
+  const signUp = async (email: string, password: string, name?: string, profileType: 'irodai' | 'vezetoi' = 'irodai') => {
     try {
-      console.log('Attempting sign up for:', email, 'with name:', name);
+      console.log('Attempting sign up for:', email, 'with name:', name, 'profile type:', profileType);
       
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -79,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             name: name?.trim() || '',
+            profile_type: profileType,
           },
           // Disable email confirmation for internal tool
           emailRedirectTo: undefined,

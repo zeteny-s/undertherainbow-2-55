@@ -4,9 +4,11 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthPage } from './components/Auth/AuthPage';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
+import { ManagerDashboard } from './components/ManagerDashboard';
 import { InvoiceUpload } from './components/InvoiceUpload';
 import { InvoiceList } from './components/InvoiceList';
 import { Settings } from './components/Settings';
+import { PayrollCosts } from './components/PayrollCosts';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -39,11 +41,17 @@ const AppContent: React.FC = () => {
   const renderActiveComponent = () => {
     switch (activeTab) {
       case 'dashboard':
+        // Check if user has manager profile
+        if (user?.user_metadata?.profile_type === 'vezetoi') {
+          return <ManagerDashboard />;
+        }
         return <Dashboard />;
       case 'upload':
         return <InvoiceUpload />;
       case 'invoices':
         return <InvoiceList />;
+      case 'payroll':
+        return <PayrollCosts />;
       case 'settings':
         return <Settings />;
       default:
