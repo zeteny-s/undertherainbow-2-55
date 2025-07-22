@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, AlertCircle, Hash } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart, Line, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../lib/supabase';
+import { useNotifications } from '../hooks/useNotifications';
+import { NotificationContainer } from './common/NotificationContainer';
+import { LoadingSpinner } from './common/LoadingSpinner';
+import { StatsSection } from './dashboard/StatsSection';
+import { ChartsSection } from './dashboard/ChartsSection';
+import { RecentInvoicesTable } from './dashboard/RecentInvoicesTable';
+import { formatCurrency, formatDate } from '../utils/formatters';
 
 interface Stats {
   totalInvoices: number;
@@ -44,12 +51,6 @@ interface WeekData {
   data: Array<{ day: string; date: string; invoices: number; amount: number }>;
 }
 
-interface Notification {
-  id: string;
-  type: 'success' | 'error' | 'info';
-  message: string;
-}
-
 export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats>({
     totalInvoices: 0,
@@ -77,22 +78,8 @@ export const Dashboard: React.FC = () => {
   const [expenseWeekHistory, setExpenseWeekHistory] = useState<WeekData[]>([]);
   const [showWeekHistory, setShowWeekHistory] = useState(false);
   const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications, addNotification, removeNotification } = useNotifications();
   const [showAllMunkaszam, setShowAllMunkaszam] = useState(false);
-
-  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const notification = { id, type, message };
-    setNotifications(prev => [...prev, notification]);
-    
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 4000);
-  };
-
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -534,24 +521,6 @@ export const Dashboard: React.FC = () => {
     setShowWeekHistory(false);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('hu-HU', {
-      style: 'currency',
-      currency: 'HUF',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('hu-HU', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(dateString));
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -643,92 +612,6 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
       );
-        {/* Heti Aktivitás Chart - MOVED TO 5TH POSITION */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-              Heti aktivitás
-            </h3>
-            <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
-              {weekHistory[currentWeekIndex] && (
-                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
-                  {weekHistory[currentWeekIndex].weekLabel}
-                </span>
-              )}
-              <div className="flex items-center justify-center space-x-2">
-                <button
-                  onClick={() => navigateWeek('prev')}
-                  disabled={currentWeekIndex >= weekHistory.length - 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Előző hét"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setShowWeekHistory(!showWeekHistory)}
-                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                >
-                  <History className="h-4 w-4" />
-                  <span>Előzmények</span>
-                </button>
-                <button
-                  onClick={() => navigateWeek('next')}
-                  disabled={currentWeekIndex <= 0}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Következő hét"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Week History Dropdown */}
-          {showWeekHistory && (
-            <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Heti előzmények</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                {weekHistory.map((week, index) => (
-                  <button
-                    key={index}
-                    onClick={() => selectWeek(index)}
-                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
-                      index === currentWeekIndex
-                        ? 'bg-blue-100 border-blue-300 text-blue-800'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-medium truncate">{week.weekLabel}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {week.data.reduce((sum, day) => sum + day.invoices, 0)} számla
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="h-48 sm:h-64 lg:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData.weeklyTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
-                <YAxis stroke="#6b7280" fontSize={10} />
-                <Tooltip content={<WeeklyTooltip />} />
-                <Area 
-                  type="monotone" 
-                  dataKey="invoices" 
-                  stroke="#059669" 
-                  fill="#10b981" 
-                  fillOpacity={0.3}
-                  name="Számlák száma"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
     }
     return null;
   };
@@ -834,8 +717,7 @@ export const Dashboard: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-lg text-gray-600">Adatok betöltése...</span>
+          <LoadingSpinner size="lg" text="Adatok betöltése..." />
         </div>
       </div>
     );
@@ -846,50 +728,10 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-      {/* Notifications */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
-        {notifications.map((notification) => (
-          <div
-            key={notification.id}
-            className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out"
-          >
-            <div className="p-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  {notification.type === 'success' && (
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    </div>
-                  )}
-                  {notification.type === 'error' && (
-                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                    </div>
-                  )}
-                  {notification.type === 'info' && (
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <AlertCircle className="h-4 w-4 text-blue-600" />
-                    </div>
-                  )}
-                </div>
-                <div className="ml-3 flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 break-words">
-                    {notification.message}
-                  </p>
-                </div>
-                <div className="ml-4 flex-shrink-0">
-                  <button
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                    onClick={() => removeNotification(notification.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <NotificationContainer 
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
 
       {/* Header */}
       <div className="mb-4 sm:mb-6 lg:mb-8">
