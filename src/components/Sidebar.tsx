@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, User, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 

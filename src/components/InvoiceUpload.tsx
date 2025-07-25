@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, ArrowLeft, Camera, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, Camera, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
 import { MobileScanner } from './MobileScanner';
@@ -46,8 +46,6 @@ interface Notification {
 export const InvoiceUpload: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
-  const [editingData, setEditingData] = useState<ProcessedData | null>(null);
   const [exportingToSheets, setExportingToSheets] = useState<string | null>(null);
   const [cancellingFiles, setCancellingFiles] = useState<Set<string>>(new Set());
   const [editingField, setEditingField] = useState<{fileId: string, field: string} | null>(null);

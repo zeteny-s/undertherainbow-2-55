@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Banknote, Clock, CheckCircle, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, AlertCircle, Hash } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, LineChart, Line, Area, AreaChart, Pie } from 'recharts';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../lib/supabase';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationContainer } from './common/NotificationContainer';
 import { LoadingSpinner } from './common/LoadingSpinner';
-import { StatsSection } from './dashboard/StatsSection';
-import { ChartsSection } from './dashboard/ChartsSection';
-import { RecentInvoicesTable } from './dashboard/RecentInvoicesTable';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
 interface Stats {
@@ -40,6 +37,7 @@ interface ChartData {
   weeklyTrend: Array<{ day: string; date: string; invoices: number; amount: number }>;
   expenseData: Array<{ month: string; expenses: number; count: number }>;
   topPartnersData: Array<{ partner: string; amount: number; invoiceCount: number; color: string }>;
+  weeklyExpenseTrend: Array<{ day: string; date: string; amount: number }>;
   munkaszamData: Array<{ munkaszam: string; count: number; amount: number; color: string }>;
   categoryData: Array<{ category: string; count: number; amount: number; color: string }>;
 }
@@ -69,7 +67,10 @@ export const Dashboard: React.FC = () => {
     paymentTypeData: [],
     weeklyTrend: [],
     expenseData: [],
-    topPartnersData: []
+    topPartnersData: [],
+    weeklyExpenseTrend: [],
+    munkaszamData: [],
+    categoryData: []
   });
   const [loading, setLoading] = useState(true);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
@@ -170,7 +171,7 @@ export const Dashboard: React.FC = () => {
       
       const weekLabel = `${formatDateShort(weekStart)} - ${formatDateShort(weekEnd)}`;
       
-      const weekData = generateWeeklyTrend(invoices, weekStart, weekEnd);
+      const weekData = generateWeeklyTrend(invoices, weekStart);
       
       weeks.push({
         weekStart,
@@ -253,7 +254,7 @@ export const Dashboard: React.FC = () => {
     ];
   };
 
-  const generateWeeklyTrend = (invoices: any[], weekStart: Date, weekEnd: Date) => {
+  const generateWeeklyTrend = (invoices: any[], weekStart: Date) => {
     const days = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
     
     return days.map((day, index) => {
@@ -316,11 +317,11 @@ export const Dashboard: React.FC = () => {
     // Convert to array and sort by amount (descending)
     const partnersArray = Object.entries(partnerSpending)
       .filter(([, data]) => data.amount > 0) // Only include partners with positive spending
-      .map(([partner, data]) => ({
+      .map(([partner, data], index) => ({
         partner: partner.length > 12 ? partner.substring(0, 12) + '...' : partner,
-        fullPartner: partner,
         amount: data.amount,
         invoiceCount: data.count,
+        color: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'][index % 5]
       }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5); // Top 5 partners
@@ -521,35 +522,6 @@ export const Dashboard: React.FC = () => {
     setShowWeekHistory(false);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'processing':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'uploaded':
-        return 'bg-blue-100 text-blue-800';
-      case 'error':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Feldolgozva';
-      case 'processing':
-        return 'Feldolgozás alatt';
-      case 'uploaded':
-        return 'Feltöltve';
-      case 'error':
-        return 'Hiba';
-      default:
-        return 'Ismeretlen';
-    }
-  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -616,23 +588,6 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
-  const ExpenseTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-red-600">
-            Kiadás: {formatCurrency(data.expenses)}
-          </p>
-          <p className="text-sm text-gray-500">
-            Számlák: {data.count} db
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const WeeklyExpenseTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -723,8 +678,6 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  const currentWeek = weekHistory[currentWeekIndex];
-  const currentExpenseWeek = expenseWeekHistory[currentExpenseWeekIndex];
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -1600,7 +1553,7 @@ export const Dashboard: React.FC = () => {
                   >
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <p className="font-medium text-gray-900">{item.fullMunkaszam || item.munkaszam}</p>
+                      <p className="font-medium text-gray-900">{item.munkaszam}</p>
                     </div>
                     <div className="text-xs text-gray-500 space-y-1">
                       <p>Összeg: <span className="text-blue-700 font-medium">{formatCurrency(item.amount)}</span></p>

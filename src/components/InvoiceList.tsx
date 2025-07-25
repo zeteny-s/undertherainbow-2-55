@@ -1,35 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Building2, GraduationCap, Search, Filter, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote, CreditCard } from 'lucide-react';
+import { FileText, Building2, GraduationCap, Search, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-
-// Utility functions for status display
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'processing':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'error':
-      return 'bg-red-100 text-red-800';
-    case 'uploaded':
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return 'Feldolgozva';
-    case 'processing':
-      return 'Feldolgozás alatt';
-    case 'error':
-      return 'Hiba';
-    case 'uploaded':
-    default:
-      return 'Feltöltve';
-  }
-};
 
 interface Invoice {
   id: string;

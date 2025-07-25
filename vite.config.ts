@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     minify: false,
     rollupOptions: {
-      onwarn(warning, defaultHandler) {
+      onwarn() {
         // Suppress all warnings
         return;
       },

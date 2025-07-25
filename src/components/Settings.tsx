@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Shield, Database, Download, Upload, Palette, Globe, Clock, Save, Check, AlertCircle, X } from 'lucide-react';
+import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Shield, Database, Download, Upload, Palette, Globe, Save, Check, AlertCircle, X } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { BackupManager } from './BackupManager';
 
@@ -33,7 +33,7 @@ export const Settings: React.FC = () => {
     const newSettings = {
       ...settings,
       [section]: {
-        ...settings[section as keyof typeof settings],
+        ...(settings[section as keyof typeof settings] as any),
         [key]: value,
       },
     };
