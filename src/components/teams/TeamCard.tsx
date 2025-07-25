@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Calendar, Edit, Trash2, UserMinus } from 'lucide-react';
+import { Users, Calendar, Edit, Trash2, UserMinus, Crown, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { Team, TeamMember, Task } from '../../types/teams';
 
 interface TeamCardProps {
@@ -9,6 +9,8 @@ interface TeamCardProps {
   onEdit: (team: Team) => void;
   onDelete: (teamId: string) => void;
   onRemoveUser: (teamId: string, userId: string) => void;
+  onUpdateUserRole: (teamId: string, userId: string, role: 'member' | 'lead') => void;
+  onUpdateTaskStatus: (taskId: string, status: 'pending' | 'in_progress' | 'completed' | 'cancelled') => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
 }
@@ -20,6 +22,8 @@ export const TeamCard: React.FC<TeamCardProps> = ({
   onEdit,
   onDelete,
   onRemoveUser,
+  onUpdateUserRole,
+  onUpdateTaskStatus,
   onDragOver,
   onDrop
 }) => {
@@ -83,20 +87,32 @@ export const TeamCard: React.FC<TeamCardProps> = ({
         <div className="space-y-1">
           {members.map(member => (
             <div key={member.id} className="flex items-center justify-between bg-gray-50 rounded px-2 py-1">
-              <div className="text-sm">
+              <div className="text-sm flex items-center gap-2">
                 <span className="font-medium">
                   {member.profiles?.name || 'Névtelen'}
                 </span>
-                <span className="text-gray-500 ml-2">
+                <span className="text-gray-500">
                   ({member.profiles?.profile_type})
                 </span>
+                {member.role === 'lead' && (
+                  <Crown className="h-3 w-3 text-yellow-500" />
+                )}
               </div>
-              <button
-                onClick={() => onRemoveUser(team.id, member.user_id)}
-                className="text-gray-400 hover:text-red-600"
-              >
-                <UserMinus className="h-3 w-3" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => onUpdateUserRole(team.id, member.user_id, member.role === 'lead' ? 'member' : 'lead')}
+                  className="text-gray-400 hover:text-yellow-600"
+                  title={member.role === 'lead' ? 'Lemondás a vezetésről' : 'Kinevezés vezetőnek'}
+                >
+                  <Crown className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={() => onRemoveUser(team.id, member.user_id)}
+                  className="text-gray-400 hover:text-red-600"
+                >
+                  <UserMinus className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           ))}
           {members.length === 0 && (
@@ -116,7 +132,7 @@ export const TeamCard: React.FC<TeamCardProps> = ({
         <div className="space-y-1">
           {tasks.slice(0, 3).map(task => (
             <div key={task.id} className="bg-gray-50 rounded px-2 py-1">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium truncate">{task.title}</span>
                 <div className="flex gap-1">
                   <span className={`text-xs px-1 rounded ${getPriorityColor(task.priority)}`}>
@@ -125,6 +141,31 @@ export const TeamCard: React.FC<TeamCardProps> = ({
                   <span className={`text-xs px-1 rounded ${getStatusColor(task.status)}`}>
                     {task.status}
                   </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">
+                  {task.assigned_to_profile?.name || 'Ismeretlen'}
+                </span>
+                <div className="flex gap-1">
+                  {task.status !== 'completed' && (
+                    <button
+                      onClick={() => onUpdateTaskStatus(task.id, task.status === 'pending' ? 'in_progress' : 'completed')}
+                      className="text-gray-400 hover:text-green-600"
+                      title={task.status === 'pending' ? 'Megkezdés' : 'Befejezés'}
+                    >
+                      {task.status === 'pending' ? <Clock className="h-3 w-3" /> : <CheckCircle className="h-3 w-3" />}
+                    </button>
+                  )}
+                  {task.status !== 'cancelled' && task.status !== 'completed' && (
+                    <button
+                      onClick={() => onUpdateTaskStatus(task.id, 'cancelled')}
+                      className="text-gray-400 hover:text-red-600"
+                      title="Megszakítás"
+                    >
+                      <XCircle className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

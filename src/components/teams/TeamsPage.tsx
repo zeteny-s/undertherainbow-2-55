@@ -81,24 +81,48 @@ export const TeamsPage: React.FC = () => {
   };
 
   const fetchTeamMembers = async () => {
-    // Simplified query without join for now
-    const { data, error } = await supabase
+    const { data: membersData, error: membersError } = await supabase
       .from('team_members')
       .select('*');
 
-    if (error) throw error;
-    setTeamMembers((data || []) as TeamMember[]);
+    if (membersError) throw membersError;
+
+    // Fetch profiles separately and merge
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, name, email, profile_type');
+
+    if (profilesError) throw profilesError;
+
+    const membersWithProfiles = (membersData || []).map(member => ({
+      ...member,
+      profiles: profilesData?.find(profile => profile.id === member.user_id) || null
+    }));
+
+    setTeamMembers(membersWithProfiles as TeamMember[]);
   };
 
   const fetchTasks = async () => {
-    // Simplified query without join for now
-    const { data, error } = await supabase
+    const { data: tasksData, error: tasksError } = await supabase
       .from('tasks')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    setTasks((data || []) as Task[]);
+    if (tasksError) throw tasksError;
+
+    // Fetch profiles separately and merge
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, name, email');
+
+    if (profilesError) throw profilesError;
+
+    const tasksWithProfiles = (tasksData || []).map(task => ({
+      ...task,
+      assigned_to_profile: profilesData?.find(profile => profile.id === task.assigned_to) || null
+    }));
+
+    setTasks(tasksWithProfiles as Task[]);
   };
 
   const handleCreateTeam = async (teamData: { name: string; description?: string }) => {
@@ -237,6 +261,46 @@ export const TeamsPage: React.FC = () => {
     }
   };
 
+  const handleUpdateTaskStatus = async (taskId: string, status: 'pending' | 'in_progress' | 'completed' | 'cancelled') => {
+    try {
+      const updateData: any = { status };
+      if (status === 'completed') {
+        updateData.completed_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      await fetchTasks();
+      addNotification('success', 'Feladat státusza frissítve');
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      addNotification('error', 'Hiba a feladat státusz frissítése során');
+    }
+  };
+
+  const handleUpdateUserRole = async (teamId: string, userId: string, role: 'member' | 'lead') => {
+    try {
+      const { error } = await supabase
+        .from('team_members')
+        .update({ role })
+        .eq('team_id', teamId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      await fetchTeamMembers();
+      addNotification('success', 'Felhasználó szerepe frissítve');
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      addNotification('error', 'Hiba a szerepkör frissítése során');
+    }
+  };
+
   const getTeamMembers = (teamId: string) => {
     return teamMembers.filter(member => member.team_id === teamId);
   };
@@ -325,6 +389,8 @@ export const TeamsPage: React.FC = () => {
                   }}
                   onDelete={handleDeleteTeam}
                   onRemoveUser={handleRemoveUserFromTeam}
+                  onUpdateUserRole={handleUpdateUserRole}
+                  onUpdateTaskStatus={handleUpdateTaskStatus}
                   onDragOver={handleDragOver}
                   onDrop={(e: React.DragEvent) => handleDrop(e, team.id)}
                 />
