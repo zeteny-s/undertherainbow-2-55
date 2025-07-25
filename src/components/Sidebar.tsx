@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 
@@ -52,6 +52,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
 
   // Additional menu items for manager profile
   const managerMenuItems = [
+    {
+      id: 'teams',
+      label: 'Csapatok',
+      icon: Users,
+    },
     {
       id: 'payroll',
       label: 'Bérköltségek',
