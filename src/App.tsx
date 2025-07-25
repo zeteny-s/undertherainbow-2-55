@@ -5,6 +5,7 @@ import { AuthPage } from './components/Auth/AuthPage';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { ManagerDashboard } from './components/ManagerDashboard';
+import { TeamsPage } from './components/teams/TeamsPage';
 import { InvoiceUpload } from './components/InvoiceUpload';
 import { InvoiceList } from './components/InvoiceList';
 import { Settings } from './components/Settings';
@@ -46,6 +47,8 @@ const AppContent: React.FC = () => {
           return <ManagerDashboard />;
         }
         return <Dashboard />;
+      case 'teams':
+        return <TeamsPage />;
       case 'upload':
         return <InvoiceUpload />;
       case 'invoices':
