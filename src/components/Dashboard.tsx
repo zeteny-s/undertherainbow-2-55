@@ -102,6 +102,7 @@ export const Dashboard: React.FC = () => {
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
       const thisMonthInvoices = invoices?.filter(inv => {
+        if (!inv.uploaded_at) return false;
         const invDate = new Date(inv.uploaded_at);
         return invDate >= thisMonth && invDate < nextMonth;
       }) || [];
@@ -132,7 +133,7 @@ export const Dashboard: React.FC = () => {
       const categoryData = generateCategoryData(invoices || []);
 
       setStats(calculatedStats);
-      setRecentInvoices(invoices?.slice(0, 5) || []);
+      setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
       setChartData({
         monthlyData,
         organizationData,

@@ -79,7 +79,7 @@ export const InvoiceList: React.FC = () => {
         return invoice;
       });
       
-      setInvoices(cleanedData);
+      setInvoices(cleanedData as Invoice[]);
       addNotification('success', 'Számlák sikeresen betöltve');
     } catch (error) {
       console.error('Error fetching invoices:', error);

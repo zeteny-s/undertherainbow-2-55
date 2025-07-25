@@ -9,7 +9,8 @@ interface BackupSchedule {
   day_of_week: number;
   hour: number;
   enabled: boolean;
-  updated_at: string;
+  updated_at: string | null;
+  created_at: string | null;
 }
 
 interface BackupHistory {
@@ -19,12 +20,13 @@ interface BackupHistory {
   invoice_count: number;
   files_downloaded: number;
   backup_size_mb: number;
-  google_drive_file_id: string;
+  google_drive_file_id: string | null;
   status: string;
-  error_message?: string;
+  error_message?: string | null;
   backup_period_start: string;
   backup_period_end: string;
-  execution_time_seconds?: number;
+  execution_time_seconds?: number | null;
+  created_at: string | null;
 }
 
 interface Notification {
