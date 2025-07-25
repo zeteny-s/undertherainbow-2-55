@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Calendar, Save, Edit3, Check, X, AlertCircle, Shield, Key, Eye, EyeOff, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../integrations/supabase/client';
 
 interface UserProfile {
   id: string;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationContainer } from './common/NotificationContainer';
 import { LoadingSpinner } from './common/LoadingSpinner';

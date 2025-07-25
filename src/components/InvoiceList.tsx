@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Building2, GraduationCap, Search, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../integrations/supabase/client';
 
 interface Invoice {
   id: string;

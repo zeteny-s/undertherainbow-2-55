@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, Camera, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../integrations/supabase/client';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
 import { MobileScanner } from './MobileScanner';
 

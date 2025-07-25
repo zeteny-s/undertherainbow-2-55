@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Calendar, Clock, Database, AlertCircle, CheckCircle, RefreshCw, Play, Settings, History, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../integrations/supabase/client';
 
 interface BackupSchedule {
   id: number;
