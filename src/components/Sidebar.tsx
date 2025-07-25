@@ -44,6 +44,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       icon: FileText,
     },
     {
+      id: 'teams',
+      label: 'Csapatok',
+      icon: Users,
+    },
+    {
       id: 'settings',
       label: 'Beállítások',
       icon: Settings,
@@ -52,11 +57,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
 
   // Additional menu items for manager profile
   const managerMenuItems = [
-    {
-      id: 'teams',
-      label: 'Csapatok',
-      icon: Users,
-    },
     {
       id: 'payroll',
       label: 'Bérköltségek',
