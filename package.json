@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/supabase-js": "^2.52.1",
     "@techstark/opencv-js": "^4.11.0-release.1",
     "jspdf": "^2.5.2",
     "konva": "^9.2.0",
