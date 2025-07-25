@@ -608,7 +608,7 @@ export const ManagerDashboard: React.FC = () => {
     return null;
   };
   
-  const MunkaszamTooltip = ({ active, payload, label }: any) => {
+  const MunkaszamTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -637,7 +637,7 @@ export const ManagerDashboard: React.FC = () => {
     return null;
   };
   
-  const CategoryTooltip = ({ active, payload, label }: any) => {
+  const CategoryTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -836,7 +836,7 @@ export const ManagerDashboard: React.FC = () => {
                       radius={[6, 6, 0, 0]}
                       fill="url(#partnerGradient)"
                     >
-                      {chartData.topPartnersData.map((entry, index) => (
+                      {chartData.topPartnersData.map((_, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'][index]} 
@@ -918,7 +918,7 @@ export const ManagerDashboard: React.FC = () => {
                       barSize={24}
                       animationDuration={1000}
                     >
-                      {chartData.munkaszamData.slice(0, 5).map((entry, index) => (
+                      {chartData.munkaszamData.slice(0, 5).map((_, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={`url(#munkaszamGradient-${index})`} 
@@ -1002,7 +1002,7 @@ export const ManagerDashboard: React.FC = () => {
                             animationDuration={1000}
                             animationBegin={200}
                           >
-                            {chartData.categoryData.map((entry, index) => (
+                            {chartData.categoryData.map((_, index) => (
                               <Cell 
                                 key={`cell-${index}`} 
                                 fill={`url(#categoryGradient-${index})`}
@@ -1519,7 +1519,7 @@ export const ManagerDashboard: React.FC = () => {
                       barSize={20}
                       animationDuration={1000}
                     >
-                      {chartData.munkaszamData.map((entry, index) => (
+                      {chartData.munkaszamData.map((_, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={`url(#allMunkaszamGradient-${index})`} 

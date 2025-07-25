@@ -72,7 +72,8 @@ const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints,
       }
     };
     img.src = imageData;
-    imageRef.current = img;
+    // Store reference for cleanup
+    (imageRef as any).current = img;
   }, [imageData, initialPoints]);
 
   const drawOverlay = (ctx: CanvasRenderingContext2D, currentPoints: Point[]) => {
@@ -311,7 +312,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [openCVReady, setOpenCVReady] = useState(false);
-  const [documentDetected, setDocumentDetected] = useState(false);
+  const [, setDocumentDetected] = useState(false);
   const [fileName, setFileName] = useState('');
   
   // Manual cropping state
@@ -810,19 +811,18 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   // Process captured image with live-detected contour
   const processImage = async (originalCanvas: HTMLCanvasElement, detectedContour: Point[] | null) => {
     try {
-      let processedCanvas = originalCanvas;
       const imageData = originalCanvas.toDataURL('image/jpeg', 0.9);
 
       // Use the live-detected contour if available
       if (detectedContour && detectedContour.length === 4) {
         console.log('Using live-detected edges for cropping');
-        processedCanvas = await performPerspectiveCorrection(originalCanvas, detectedContour);
+        await performPerspectiveCorrection(originalCanvas, detectedContour);
       } else {
         console.log('No live detection available, attempting edge detection on captured image');
         // Fallback: try to detect edges on the captured image
         const fallbackContour = detectDocumentEdges(originalCanvas);
         if (fallbackContour && fallbackContour.length === 4) {
-          processedCanvas = await performPerspectiveCorrection(originalCanvas, fallbackContour);
+          await performPerspectiveCorrection(originalCanvas, fallbackContour);
           detectedContour = fallbackContour;
         } else {
           console.log('No document edges detected, offering manual crop');

@@ -363,7 +363,7 @@ export const InvoiceUpload: React.FC = () => {
       const simpleFilename = createSimpleFilename(uploadedFile.file.name);
       const tempFileName = `temp/${Date.now()}_${simpleFilename}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('invoices')
         .upload(tempFileName, uploadedFile.file);
 
@@ -691,7 +691,7 @@ export const InvoiceUpload: React.FC = () => {
 
   const saveToDatabase = async (uploadedFile: UploadedFile, processedData: ProcessedData, extractedText: string, fileUrl: string, organization: 'alapitvany' | 'ovoda') => {
     try {
-      const { data: invoiceData, error: dbError } = await supabase
+      const { error: dbError } = await supabase
         .from('invoices')
         .insert({
           file_name: uploadedFile.file.name,
