@@ -6,6 +6,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { NotificationContainer } from './common/NotificationContainer';
 import { LoadingSpinner } from './common/LoadingSpinner';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Stats {
   totalInvoices: number;
@@ -50,6 +51,7 @@ interface WeekData {
 }
 
 export const ManagerDashboard: React.FC = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState<Stats>({
     totalInvoices: 0,
     totalAmount: 0,
@@ -81,6 +83,21 @@ export const ManagerDashboard: React.FC = () => {
   const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
   const { notifications, addNotification, removeNotification } = useNotifications();
   const [showAllMunkaszam, setShowAllMunkaszam] = useState(false);
+
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Felhasználó';
+    
+    if (hour >= 4 && hour < 10) {
+      return `Jó Reggelt, ${userName}!`;
+    } else if (hour >= 10 && hour < 18) {
+      return `Szia, ${userName}!`;
+    } else if (hour >= 18 && hour < 21) {
+      return `Jó estét, ${userName}!`;
+    } else {
+      return `Jó éjszakát, ${userName}!`;
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -691,7 +708,7 @@ export const ManagerDashboard: React.FC = () => {
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Áttekintés</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{getTimeBasedGreeting()}</h2>
             <p className="text-gray-600 text-sm sm:text-base">Számla feldolgozási statisztikák és üzleti elemzések</p>
           </div>
           {/* Hide refresh button on mobile */}
