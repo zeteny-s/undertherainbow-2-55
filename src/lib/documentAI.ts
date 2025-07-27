@@ -83,6 +83,16 @@ export async function processDocumentWithAI(fileBase64: string, mimeType: string
       throw new Error(`Document AI API error: ${error.message}`);
     }
 
+    // Check if the response contains an error
+    if (data?.error) {
+      throw new Error(`Document AI processing failed: ${data.error.message || 'Unknown error'}`);
+    }
+
+    // Check if response has the expected structure
+    if (!data?.document?.text) {
+      throw new Error('Invalid response from Document AI: missing document text');
+    }
+
     const result: DocumentAIResponse = data;
     return result.document.text;
   } catch (error) {
