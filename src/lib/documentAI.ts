@@ -1,3 +1,5 @@
+import { supabase } from '../integrations/supabase/client';
+
 interface DocumentAIResponse {
   document: {
     text: string;
@@ -64,11 +66,6 @@ interface DocumentAIResponse {
 
 export async function processDocumentWithAI(fileBase64: string, mimeType: string): Promise<string> {
   try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      'https://xtovmknldanpipgddsrd.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0b3Zta25sZGFucGlwZ2Rkc3JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyODIyNjYsImV4cCI6MjA2NTg1ODI2Nn0.S2Nr8XrHmFkDlI_LrUrXhA_2h4qczAQ1nb6EE8sDC5k'
-    );
 
     const { data, error } = await supabase.functions.invoke('process-document', {
       body: {
