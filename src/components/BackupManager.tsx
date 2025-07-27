@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Calendar, Clock, Database, AlertCircle, CheckCircle, RefreshCw, Play, Settings, History, X } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
+import { SUPABASE_CONFIG } from '../config/supabase';
 
 interface BackupSchedule {
   id: number;
@@ -104,10 +105,10 @@ export const BackupManager: React.FC = () => {
       setManualBackupRunning(true);
       addNotification('info', 'Manuális biztonsági mentés indítása...');
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manual-backup`, {
+      const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/manual-backup`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -117,6 +118,14 @@ export const BackupManager: React.FC = () => {
           }
         }),
       });
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Unexpected response type from manual backup:', contentType, 'Response:', responseText);
+        throw new Error(`A biztonsági mentés funkcióhívás váratlan tartalmat adott vissza: ${contentType || 'ismeretlen'}`);
+      }
 
       const result = await response.json();
 
@@ -137,13 +146,21 @@ export const BackupManager: React.FC = () => {
 
   const setupBackupCron = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/setup-backup-cron`, {
+      const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/setup-backup-cron`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
           'Content-Type': 'application/json',
         },
       });
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Unexpected response type from setup backup cron:', contentType, 'Response:', responseText);
+        throw new Error(`Az automatikus mentés beállítás funkcióhívás váratlan tartalmat adott vissza: ${contentType || 'ismeretlen'}`);
+      }
 
       const result = await response.json();
 

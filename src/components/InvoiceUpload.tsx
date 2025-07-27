@@ -3,6 +3,7 @@ import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, X, FileSpreads
 import { supabase } from '../integrations/supabase/client';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
 import { MobileScanner } from './MobileScanner';
+import { SUPABASE_CONFIG } from '../config/supabase';
 
 interface ProcessedData {
   Szervezet?: string;
@@ -398,10 +399,10 @@ export const InvoiceUpload: React.FC = () => {
         file.id === uploadedFile.id ? { ...file, status: 'ai_processing', progress: 80 } : file
       ));
 
-      const geminiResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-with-gemini`, {
+      const geminiResponse = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/process-with-gemini`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -410,7 +411,30 @@ export const InvoiceUpload: React.FC = () => {
       });
 
       if (!geminiResponse.ok) {
-        throw new Error(`Gemini feldolgozás sikertelen: ${geminiResponse.statusText}`);
+        // Check if the response is JSON or HTML
+        const contentType = geminiResponse.headers.get('content-type');
+        let errorMessage = `Gemini feldolgozás sikertelen: ${geminiResponse.statusText}`;
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await geminiResponse.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            // If JSON parsing fails, use the default error message
+          }
+        } else if (contentType && contentType.includes('text/html')) {
+          errorMessage = `A Supabase funkcióhívás HTML hibát adott vissza (státusz: ${geminiResponse.status}). Ez általában autentikációs vagy konfigurációs problémát jelez.`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Check if response is JSON before parsing
+      const contentType = geminiResponse.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await geminiResponse.text();
+        console.error('Unexpected response type from Gemini function:', contentType, 'Response:', responseText);
+        throw new Error(`A Gemini funkcióhívás váratlan tartalmat adott vissza: ${contentType || 'ismeretlen'}`);
       }
 
       const geminiResult = await geminiResponse.json();
@@ -734,10 +758,10 @@ export const InvoiceUpload: React.FC = () => {
     try {
       setExportingToSheets(file.id);
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-to-sheets`, {
+      const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/export-to-sheets`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -747,8 +771,30 @@ export const InvoiceUpload: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Google Sheets exportálás sikertelen');
+        // Check if the response is JSON or HTML
+        const contentType = response.headers.get('content-type');
+        let errorMessage = `Google Sheets exportálás sikertelen: ${response.statusText}`;
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            // If JSON parsing fails, use the default error message
+          }
+        } else if (contentType && contentType.includes('text/html')) {
+          errorMessage = `A Supabase funkcióhívás HTML hibát adott vissza (státusz: ${response.status}). Ez általában autentikációs vagy konfigurációs problémát jelez.`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Unexpected response type from export function:', contentType, 'Response:', responseText);
+        throw new Error(`Az exportálási funkcióhívás váratlan tartalmat adott vissza: ${contentType || 'ismeretlen'}`);
       }
 
       const result = await response.json();
