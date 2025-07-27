@@ -731,7 +731,7 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Összes számla</p>
-              <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{stats.totalInvoices}</p>
+              <p className={`${stats.totalInvoices > 999 ? 'text-base sm:text-xl lg:text-2xl' : 'text-lg sm:text-2xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{stats.totalInvoices}</p>
               <p className="text-xs text-green-600 mt-1">+{stats.thisMonthCount} e hónapban</p>
             </div>
             <div className="bg-blue-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
@@ -743,9 +743,9 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Teljes összeg</p>
-              <p className="text-sm sm:text-xl lg:text-3xl font-bold text-gray-900 truncate">{formatCurrency(stats.totalAmount)}</p>
-              <p className="text-xs text-gray-500 mt-1 truncate">Összes feldolgozott</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Teljes összeg</p>
+              <p className={`${stats.totalAmount > 9999999 ? 'text-xs sm:text-sm lg:text-xl' : stats.totalAmount > 999999 ? 'text-xs sm:text-base lg:text-2xl' : 'text-sm sm:text-xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{formatCurrency(stats.totalAmount)}</p>
+              <p className="text-xs text-gray-500 mt-1">Összes feldolgozott</p>
             </div>
             <div className="bg-green-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
               <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-800" />
@@ -756,8 +756,8 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi számlák</p>
-              <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{stats.thisMonthCount}</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">E havi számlák</p>
+              <p className={`${stats.thisMonthCount > 999 ? 'text-base sm:text-xl lg:text-2xl' : 'text-lg sm:text-2xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{stats.thisMonthCount}</p>
               <p className="text-xs text-blue-600 mt-1">Aktív hónap</p>
             </div>
             <div className="bg-orange-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
@@ -769,8 +769,8 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">E havi kiadás</p>
-              <p className="text-sm sm:text-xl lg:text-3xl font-bold text-gray-900 truncate">{formatCurrency(stats.thisMonthAmount)}</p>
+              <p className="text-xs sm:text-sm font-medium text-gray-600">E havi kiadás</p>
+              <p className={`${stats.thisMonthAmount > 9999999 ? 'text-xs sm:text-sm lg:text-xl' : stats.thisMonthAmount > 999999 ? 'text-xs sm:text-base lg:text-2xl' : 'text-sm sm:text-xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{formatCurrency(stats.thisMonthAmount)}</p>
               <p className="text-xs text-red-600 mt-1">Aktuális hónap</p>
             </div>
             <div className="bg-red-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
