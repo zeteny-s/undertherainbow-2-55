@@ -1,4 +1,3 @@
-import { InvoiceData } from '../types';
 
 interface ParsedInvoiceData {
   partner?: string;
