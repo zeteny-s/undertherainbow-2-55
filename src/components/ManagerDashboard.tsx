@@ -119,8 +119,8 @@ export const ManagerDashboard: React.FC = () => {
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
       const thisMonthInvoices = invoices?.filter(inv => {
-        if (!inv.uploaded_at) return false;
-        const invDate = new Date(inv.uploaded_at);
+        if (!inv.invoice_date) return false;
+        const invDate = new Date(inv.invoice_date);
         return invDate >= thisMonth && invDate < nextMonth;
       }) || [];
 
@@ -215,7 +215,8 @@ export const ManagerDashboard: React.FC = () => {
     
     return months.map((month, index) => {
       const monthInvoices = invoices.filter(inv => {
-        const date = new Date(inv.uploaded_at);
+        if (!inv.invoice_date) return false;
+        const date = new Date(inv.invoice_date);
         return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
@@ -280,7 +281,8 @@ export const ManagerDashboard: React.FC = () => {
       dayDate.setDate(weekStart.getDate() + index);
       
       const dayInvoices = invoices.filter(inv => {
-        const invDate = new Date(inv.uploaded_at);
+        if (!inv.invoice_date) return false;
+        const invDate = new Date(inv.invoice_date);
         const dayStart = new Date(dayDate);
         dayStart.setHours(0, 0, 0, 0);
         const dayEnd = new Date(dayDate);
@@ -303,7 +305,8 @@ export const ManagerDashboard: React.FC = () => {
     
     return months.map((month, index) => {
       const monthInvoices = invoices.filter(inv => {
-        const date = new Date(inv.uploaded_at);
+        if (!inv.invoice_date) return false;
+        const date = new Date(inv.invoice_date);
         return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
