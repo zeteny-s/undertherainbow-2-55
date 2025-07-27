@@ -1,4 +1,5 @@
 
+
 interface ParsedInvoiceData {
   partner?: string;
   bankszamlaszam?: string;

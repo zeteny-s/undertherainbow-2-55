@@ -64,27 +64,36 @@ interface DocumentAIResponse {
 
 export async function processDocumentWithAI(fileBase64: string, mimeType: string): Promise<string> {
   try {
-    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-document`;
-    
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      'https://xtovmknldanpipgddsrd.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0b3Zta25sZGFucGlwZ2Rkc3JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyODIyNjYsImV4cCI6MjA2NTg1ODI2Nn0.S2Nr8XrHmFkDlI_LrUrXhA_2h4qczAQ1nb6EE8sDC5k'
+    );
+
+    const { data, error } = await supabase.functions.invoke('process-document', {
+      body: {
         document: {
           content: fileBase64,
           mimeType: mimeType,
         },
-      }),
+      },
     });
 
-    if (!response.ok) {
-      throw new Error(`Document AI API error: ${response.statusText}`);
+    if (error) {
+      throw new Error(`Document AI API error: ${error.message}`);
     }
 
-    const result: DocumentAIResponse = await response.json();
+    // Check if the response contains an error
+    if (data?.error) {
+      throw new Error(`Document AI processing failed: ${data.error.message || 'Unknown error'}`);
+    }
+
+    // Check if response has the expected structure
+    if (!data?.document?.text) {
+      throw new Error('Invalid response from Document AI: missing document text');
+    }
+
+    const result: DocumentAIResponse = data;
     return result.document.text;
   } catch (error) {
     console.error('Error processing document with AI:', error);

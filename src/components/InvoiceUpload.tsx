@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, Edit3, Save, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, ArrowLeft, Camera, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Eye, X, FileSpreadsheet, Building2, GraduationCap, Calendar, DollarSign, Hash, User, CreditCard, Banknote, Trash2, Check, Play, Camera, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { supabase } from '../integrations/supabase/client';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
 import { MobileScanner } from './MobileScanner';
 
@@ -46,8 +46,6 @@ interface Notification {
 export const InvoiceUpload: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
-  const [editingData, setEditingData] = useState<ProcessedData | null>(null);
   const [exportingToSheets, setExportingToSheets] = useState<string | null>(null);
   const [cancellingFiles, setCancellingFiles] = useState<Set<string>>(new Set());
   const [editingField, setEditingField] = useState<{fileId: string, field: string} | null>(null);
@@ -365,7 +363,7 @@ export const InvoiceUpload: React.FC = () => {
       const simpleFilename = createSimpleFilename(uploadedFile.file.name);
       const tempFileName = `temp/${Date.now()}_${simpleFilename}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('invoices')
         .upload(tempFileName, uploadedFile.file);
 
@@ -693,7 +691,7 @@ export const InvoiceUpload: React.FC = () => {
 
   const saveToDatabase = async (uploadedFile: UploadedFile, processedData: ProcessedData, extractedText: string, fileUrl: string, organization: 'alapitvany' | 'ovoda') => {
     try {
-      const { data: invoiceData, error: dbError } = await supabase
+      const { error: dbError } = await supabase
         .from('invoices')
         .insert({
           file_name: uploadedFile.file.name,
@@ -705,7 +703,7 @@ export const InvoiceUpload: React.FC = () => {
           bank_account: processedData.Bankszámlaszám,
           subject: processedData.Tárgy,
           invoice_number: processedData['Számla sorszáma'],
-          amount: processedData.Összeg,
+          amount: typeof processedData.Összeg === 'number' ? processedData.Összeg : (processedData.Összeg ? parseFloat(processedData.Összeg.toString()) : null),
           invoice_date: processedData['Számla kelte'],
           payment_deadline: processedData['Fizetési határidő'],
           payment_method: processedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (processedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
@@ -862,7 +860,7 @@ export const InvoiceUpload: React.FC = () => {
           bank_account: uploadedFile.extractedData.Bankszámlaszám,
           subject: uploadedFile.extractedData.Tárgy,
           invoice_number: uploadedFile.extractedData['Számla sorszáma'],
-          amount: uploadedFile.extractedData.Összeg,
+          amount: typeof uploadedFile.extractedData.Összeg === 'number' ? uploadedFile.extractedData.Összeg : (uploadedFile.extractedData.Összeg ? parseFloat(uploadedFile.extractedData.Összeg.toString()) : null),
           invoice_date: uploadedFile.extractedData['Számla kelte'],
           payment_deadline: uploadedFile.extractedData['Fizetési határidő'],
           payment_method: uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
