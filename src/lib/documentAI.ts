@@ -64,27 +64,26 @@ interface DocumentAIResponse {
 
 export async function processDocumentWithAI(fileBase64: string, mimeType: string): Promise<string> {
   try {
-    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-document`;
-    
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL!,
+      import.meta.env.VITE_SUPABASE_ANON_KEY!
+    );
+
+    const { data, error } = await supabase.functions.invoke('process-document', {
+      body: {
         document: {
           content: fileBase64,
           mimeType: mimeType,
         },
-      }),
+      },
     });
 
-    if (!response.ok) {
-      throw new Error(`Document AI API error: ${response.statusText}`);
+    if (error) {
+      throw new Error(`Document AI API error: ${error.message}`);
     }
 
-    const result: DocumentAIResponse = await response.json();
+    const result: DocumentAIResponse = data;
     return result.document.text;
   } catch (error) {
     console.error('Error processing document with AI:', error);
