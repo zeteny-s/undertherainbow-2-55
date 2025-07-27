@@ -187,8 +187,35 @@ ${extractedText}`;
       })
     });
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
+      const contentType = response.headers.get('content-type');
+      let errorMessage = `Gemini API error: ${response.status} ${response.statusText}`;
+      
+      // Try to get more detailed error information
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          errorMessage = `Gemini API error: ${errorData.error?.message || errorData.message || response.statusText}`;
+        } catch (e) {
+          // If JSON parsing fails, stick with the basic error message
+        }
+      } else if (contentType && contentType.includes('text/html')) {
+        // If we got HTML (error page), don't try to parse it
+        const htmlText = await response.text();
+        console.error('Received HTML error response from Gemini:', htmlText);
+        errorMessage = `Gemini API returned HTML error page (status ${response.status}). This often indicates an API key or configuration issue.`;
+      }
+      
+      throw new Error(errorMessage);
     }
+    
+    // Check if response is JSON before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await response.text();
+      console.error('Unexpected response type from Gemini:', contentType, 'Response:', responseText);
+      throw new Error(`Expected JSON response from Gemini but got ${contentType}`);
+    }
+    
     const result = await response.json();
     const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!generatedText) {

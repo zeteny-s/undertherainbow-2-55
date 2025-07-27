@@ -35,8 +35,35 @@ serve(async (req)=>{
         assertion: await createJWT(serviceAccountKey)
       })
     });
+    
+    // Check if the token response is OK
+    if (!tokenResponse.ok) {
+      const contentType = tokenResponse.headers.get('content-type');
+      let errorMessage = `OAuth token error: ${tokenResponse.status} ${tokenResponse.statusText}`;
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const errorData = await tokenResponse.json();
+          errorMessage = `OAuth token error: ${errorData.error_description || errorData.error || tokenResponse.statusText}`;
+        } catch (e) {
+          // If JSON parsing fails, stick with the basic error message
+        }
+      } else if (contentType && contentType.includes('text/html')) {
+        const htmlText = await tokenResponse.text();
+        console.error('Received HTML error response from OAuth:', htmlText);
+        errorMessage = `OAuth endpoint returned HTML error page (status ${tokenResponse.status})`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
+    
+    if (!accessToken) {
+      throw new Error('No access token received from OAuth endpoint');
+    }
+    
     // Process document with Document AI
     const response = await fetch('https://eu-documentai.googleapis.com/v1/projects/450340369741/locations/eu/processors/f35e912f88693cf9:process', {
       method: 'POST',
@@ -51,6 +78,38 @@ serve(async (req)=>{
         }
       })
     });
+    
+    // Check if the response is OK
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let errorMessage = `Document AI API error: ${response.status} ${response.statusText}`;
+      
+      // Try to get more detailed error information
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const errorData = await response.json();
+          errorMessage = `Document AI API error: ${errorData.error?.message || errorData.message || response.statusText}`;
+        } catch (e) {
+          // If JSON parsing fails, stick with the basic error message
+        }
+      } else if (contentType && contentType.includes('text/html')) {
+        // If we got HTML (error page), extract text content
+        const htmlText = await response.text();
+        console.error('Received HTML error response:', htmlText);
+        errorMessage = `Document AI API returned HTML error page (status ${response.status}). This often indicates an authentication or configuration issue.`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    // Check if response is JSON before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await response.text();
+      console.error('Unexpected response type:', contentType, 'Response:', responseText);
+      throw new Error(`Expected JSON response but got ${contentType}`);
+    }
+    
     const result = await response.json();
     return new Response(JSON.stringify(result), {
       headers: {
