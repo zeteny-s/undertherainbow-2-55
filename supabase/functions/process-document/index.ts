@@ -1,23 +1,21 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-serve(async (req) => {
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
+serve(async (req)=>{
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', {
+      headers: corsHeaders
+    });
   }
-
   try {
-    const { document } = await req.json()
-    
+    const { document } = await req.json();
     const serviceAccountKey = {
       "type": "service_account",
       "project_id": "alert-ability-434512-h1",
-      "private_key_id": "99f342d1d16ebe165f61abdbfe89c6dcef0d5b03",
-      "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCmvfSVepGsgfDk\n+hGs1O2ycZLzorgQJ9+L6tj61XPTaFlQKssOb6YOHD662WoFmeNH2S0N3Afu5X1T\nYoVF/5RMhSen2Ej4stcXr5skVxwidiJZOMrQ5xKypLkNCxMjxk5/vlgOJWW8OrBB\n/eWrnXVrppgE7XGozHFtHZ1sX0ft+QXjtEvVIeCr4DUrc+sTg6aEQI71oPTmViSF\nsnIk/vCifQKhnH+Q+uBhOT/3b1HiOizSRwodsUOmjm/f+HmLLkYsRES6sVqNRzqb\nnEfCRAQzi2D75nsaycS7T59VPoUlkKznYxwkqJcihp1PTW41BIuf+JODNzupbsmB\np1tY+fM5AgMBAAECggEAAtVH+lV+5/kCso5k08MLhcurUXLO+xl5nP7oFi6fkDG9\n+UvrBsnbxLf43lgRXHfpXYdur4slRYs9mIkzjZm+NLB1ak7D2Y3vopRk0IgTeAfi\nvJ0ta5MUc/qbnw00fCPDc7DALKJy8fyhS7Cp4+Yk6/k+w9MIR3PeMeAplFKificQ\noIjp/RPHeO/khPE2T0Zc5sgvqkk5z+lJK4gODVEQ2kqT4J9uO/B87J5Uu6N//VUi\nS3MyYPBWCiQKMnU2fWKb4JbhUjKYpk6lg5O1lQWyBkWY8ufKFm2xyEJ49rdxV+0z\nYKfFNTkDNiGVsMpnAK32Ox6/7whs3BzLrzHQa8K5cQKBgQDjhVZNzoCYIHCr+EE6\nUD+/UIPcom229lwu1LRTM3ey1EHeclwI2HHqO9/yMTKlTVcJZ+x3xkRi7CO+aWyH\n2l1HFWlwpnFFB5D0ojIroJZVR/B2ZQY2MxtMl5fK/tqPmS8EDbpcpQW5aibM2B1I\nsiJrfIcV4jKqGjZPCvRwjdVR/QKBgQC7nQZ9jsLY5rRGRoIiiHdWpcmNNABJcUfw\nR1Bk5JB2BvVRjbB0xpSs/lVLO0jG5BborbR1bU9ktFZtLIfBW8t127kDMKFS0oNM\nYYGV3wHl7475RU1YmueKJQn0oDK/YAhedal9dQ1Va92by7Syq2/TMBzrFrR2xJK1\nBtrMa2j87QKBgFcAtPj533jM5ukL/L101HuvKU1km3nciXGrCu3J/5rVyf5rUsBb\nLGx6yu9NWuWVRpQlNmqy2ZHOZPi6TbNBkGvPR0u5ihTwiMDTiUXfmb0wzkYn6ZEu\nR+EpEvWgMSm6VR1CtqIYxLCbZAzvE3uqCrl5nBqFLgSYE250bPbhddJtAoGAG/6T\nQFr0Ag9yqOXOdz6rp/c2+uXegRbxKA5MFbHxSFtDcbbVtKcI+kM9EOu4sUzJilCZ\nE8iKxzkNiF7Tput+kYiGs84m1EfrJZOLFYTgMKItUE6h+u2qTPe345Of3uSCey3N\na5XytmNQ/vVHcj2Ygwez2PRbWzl7tp1eOpBwawUCgYEA375wPH3sjIEnw3vUGssN\nf6U37b+tbzLGBFHlkTab8XYUxdLIrFrg6aQNl+r4T8ghW3tm/T47KLRYdjDHM6yo\nkeicrT1vqo5w/1dF3S4KFr77CaeaPiXtrNDYcHTv/P3jb+S0lr1au7tDZ2IBByPO\nGjXg0geMqFWNxMyac+rbdas=\n-----END PRIVATE KEY-----\n",
+      "private_key_id": "37d9db96d27ad7ad3c5db7f7cc4298c5a6462130",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCZQu44w9dcjU1i\nsATweMaabxBAhEsacR11Cx+AsGtdxyEDYd3UCRA/ZkIcKz/rvRGE8pDGzWXbmHhs\nhQmhFoJBMHnXO+i6gl4Sx9uvSZlscOqh+G0FjGoOjFDEfNxxmwco2iiui4N7uM8I\n2D9UUP5Gtpev+4YSztPGjMy0vVhEGh0P19zr3V2vlKwDJzLzvlsWIk05+WdebpQm\nO4GZnGDGam5dS8vqxtKmkkdbkFzwh4jXrX6JZUXi5/jZ3UwaATlC3KZcVVZeQfer\ndauIDQZubnvOOTsW8rNjVMEeJPMAJyGeuMdqkEEqVpW4j4P/lQOgTeuUkOFpNZJI\n3LkApGuVAgMBAAECggEABQ/RV12cfMmL70D6AMk0YgBeDItyAY8P1oBGC5WIDkJX\n5Ek0rt6Xw0hI0a5Z/5qwe/AY+P/qp8yK2aaxMTlRlv6XX5TydEp++ebQ6iKnpw25\nqhzO2PqQvCdFOaAYFcZ1f5No+Y7RCmKJr/SYbtv38fTw4JaRkIh1NR8MWcHRKvqW\nupmqZ4W31yg/L1ORPTDL0C9DwcDCV7bsRPMmcXbMD275vToZgj+SJBUt2pe/UyDE\nbRXCcWX1Kbdwj0Pfa4rfgx1s96HCM9vmBzBL7wI0oSJ9nB8tBVvhtJu0dds24I1x\nlMfeFQuj/ee0FuBbK8i70Wb942HV3QRQFbj2UqYWZwKBgQDGFc1AOzUXWCTuj6KF\nS+v8MBJeiXnfk+1f1BmdJtjAbF+8PQp08yFqOlFCZl4ZxYGTLcN/ISR+QpwOI9SQ\nGOHKSrLVg5T2efRPACoU+8lP/43q+kvqBw44VGYaAe2dJzPOj2uEoLm8I10KbVHa\n5d8ojWNlLTbihVqik9WtZAO/uwKBgQDGEi5yrmVKMzwiCHPB98UBaCcAmwemfFrE\nkZhLoJDxovPKK6DgLlZqTAvN7dn7ZEGP95jM8g1D2bSdN/bLVKW5mbr8L8Xk0NXr\n9KUL5ZpFgItwpP+So82lhOtVQjhQI4rQsoX9E8pzk6LpEwJIRzKAo4a6ZjOWWuAR\ntMkQvliE7wKBgQDBhKci6zTw+4IJNnYWN5fyppwrk69nB8PN7Q6hA0SaqMXWxuOi\nYazxdMvSTOP91YDDYuAtIRnf5/9BqSuPI1/jG5sfEQ/ExFwzmfuCyIFiEE57k8/6\ncK4pxfqBygRzlcr9MAxgZA1QilPpTee8LPsZSRgjzkpiftmPH1KPtLgc5QKBgHo9\n+Fqg1TSRIFikvMSGZRi0LfYKuBMBBofwj3yFUU9AUZOBj50sG/soidSDKhgjzO7M\nUYqTDKrGbtjlFDRzPoCopyVDWrAYTx5782y/PJIOfoB75Juc6qtvuEn7P4P+G4sn\n0tfZYgYopM+SAsOW5U1NHzZlIwt1dHqZB8qEn18TAoGBAIFJg1glfm91N863hmHu\nxuK6KdASy4RENIbE2HyeC6hUz3f9R5n/tHiuEuCfIRvZSKZ3xTZ0n/2LhEbQajrj\npQfSPt9NtNKxMSX96MLgIvbR2G7I+eRUgMb0Bj+fUEbEnq+CmO+CP3b5slXVLNVI\nHXvSSNtrwEIex+3TuYTMIc9B\n-----END PRIVATE KEY-----\n",
       "client_email": "feketerigo-iktato@alert-ability-434512-h1.iam.gserviceaccount.com",
       "client_id": "118345220069273630953",
       "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -25,112 +23,88 @@ serve(async (req) => {
       "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
       "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/feketerigo-iktato%40alert-ability-434512-h1.iam.gserviceaccount.com",
       "universe_domain": "googleapis.com"
-    }
-
+    };
     // Get access token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion: await createJWT(serviceAccountKey),
-      }),
-    })
-
-    const tokenData = await tokenResponse.json()
-    const accessToken = tokenData.access_token
-
+        assertion: await createJWT(serviceAccountKey)
+      })
+    });
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
     // Process document with Document AI
-    const response = await fetch(
-      'https://eu-documentai.googleapis.com/v1/projects/450340369741/locations/eu/processors/f35e912f88693cf9:process',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rawDocument: {
-            content: document.content,
-            mimeType: document.mimeType,
-          },
-        }),
-      }
-    )
-
-    const result = await response.json()
-
-    return new Response(
-      JSON.stringify(result),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+    const response = await fetch('https://eu-documentai.googleapis.com/v1/projects/450340369741/locations/eu/processors/f35e912f88693cf9:process', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
       },
-    )
+      body: JSON.stringify({
+        rawDocument: {
+          content: document.content,
+          mimeType: document.mimeType
+        }
+      })
+    });
+    const result = await response.json();
+    return new Response(JSON.stringify(result), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      },
+      status: 200
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       },
-    )
+      status: 400
+    });
   }
-})
-
-async function createJWT(serviceAccount: any) {
+});
+async function createJWT(serviceAccount) {
   const header = {
     alg: 'RS256',
-    typ: 'JWT',
-  }
-
-  const now = Math.floor(Date.now() / 1000)
+    typ: 'JWT'
+  };
+  const now = Math.floor(Date.now() / 1000);
   const payload = {
     iss: serviceAccount.client_email,
     scope: 'https://www.googleapis.com/auth/cloud-platform',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600,
-    iat: now,
-  }
-
-  const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-  const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-
-  const signatureInput = `${encodedHeader}.${encodedPayload}`
-  
+    iat: now
+  };
+  const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
   // Import the private key
-  const privateKey = await crypto.subtle.importKey(
-    'pkcs8',
-    pemToArrayBuffer(serviceAccount.private_key),
-    {
-      name: 'RSASSA-PKCS1-v1_5',
-      hash: 'SHA-256',
-    },
-    false,
-    ['sign']
-  )
-
+  const privateKey = await crypto.subtle.importKey('pkcs8', pemToArrayBuffer(serviceAccount.private_key), {
+    name: 'RSASSA-PKCS1-v1_5',
+    hash: 'SHA-256'
+  }, false, [
+    'sign'
+  ]);
   // Sign the JWT
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    privateKey,
-    new TextEncoder().encode(signatureInput)
-  )
-
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-
-  return `${signatureInput}.${encodedSignature}`
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', privateKey, new TextEncoder().encode(signatureInput));
+  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  return `${signatureInput}.${encodedSignature}`;
 }
-
-function pemToArrayBuffer(pem: string): ArrayBuffer {
-  const pemContents = pem.replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '')
-  const binaryString = atob(pemContents)
-  const bytes = new Uint8Array(binaryString.length)
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
+function pemToArrayBuffer(pem) {
+  const pemContents = pem.replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '');
+  const binaryString = atob(pemContents);
+  const bytes = new Uint8Array(binaryString.length);
+  for(let i = 0; i < binaryString.length; i++){
+    bytes[i] = binaryString.charCodeAt(i);
   }
-  return bytes.buffer
+  return bytes.buffer;
 }
