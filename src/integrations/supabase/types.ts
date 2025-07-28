@@ -167,6 +167,96 @@ export type Database = {
         }
         Relationships: []
       }
+      payroll_records: {
+        Row: {
+          amount: number
+          created_at: string
+          employee_name: string
+          extracted_text: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          is_rental: boolean
+          organization: string
+          project_code: string | null
+          record_date: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          employee_name: string
+          extracted_text?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          is_rental?: boolean
+          organization: string
+          project_code?: string | null
+          record_date: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          employee_name?: string
+          extracted_text?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          is_rental?: boolean
+          organization?: string
+          project_code?: string | null
+          record_date?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      payroll_summaries: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          month: number
+          non_rental_costs: number
+          organization: string
+          record_count: number
+          rental_costs: number
+          total_payroll: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          month: number
+          non_rental_costs?: number
+          organization: string
+          record_count?: number
+          rental_costs?: number
+          total_payroll?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          month?: number
+          non_rental_costs?: number
+          organization?: string
+          record_count?: number
+          rental_costs?: number
+          total_payroll?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
