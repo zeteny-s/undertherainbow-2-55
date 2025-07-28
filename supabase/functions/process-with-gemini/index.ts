@@ -22,7 +22,7 @@ First, determine which organization this invoice belongs to by looking for these
 - "Feketerigó Alapítvány" or similar → should be "Alapítvány"
 - "Feketerigó Alapítványi Óvoda" or "óvoda" or similar → should be "Óvoda"
 
-Then check if the invoice is paid by átutalás (bank transfer) or kártya/kézpénz/utánvét/online or any other payment method. If you see a payment method called "Csoportos beszédes" treat that as a bank transfer invoice. Plus make sure define the exact payment method when its kártya/kézpénz/utánvét/online, so its either "Bankkártya", "Kézpénz", "Utánvét", "Online" payment should called "Bankkártya". These can be on the invoice as these as well if you don't find the original name: 
+Then check if the invoice is paid by átutalás (bank transfer) or kártya/készpénz/utánvét/online or any other payment method. If you see a payment method called "Csoportos beszédes" treat that as a bank transfer invoice. Plus make sure define the exact payment method when its kártya/készpénz/utánvét/online, so its either "Bankkártya", "Készpénz", "Utánvét", "Online" payment should called "Bankkártya". These can be on the invoice as these as well if you don't find the original name: 
 
 - **Kártya**  
   - Bankkártya  
@@ -30,21 +30,21 @@ Then check if the invoice is paid by átutalás (bank transfer) or kártya/kézp
   - Betéti kártya  
   - Kártyás fizetés
 
-- **Kézpénz**
-  - Kézpénzes fizetés  
-  - Kézpénzes tranzakció  
+- **Készpénz**
+  - Készpénzes fizetés  
+  - Készpénzes tranzakció  
 
 - **Utánvét**  
   - Utánvétes fizetés  
   - Fizetés átvételkor  
   - Kézbesítéskori fizetés  
 
-Its not going to be "Egyéb fizetési mód" in 99% of the cases, you can find the payment type. For bank card write "Bankkártya", for cash write "Kézpénz", for after pay write "Utánvét", for online write "Bankkártya". 
+Its not going to be "Egyéb fizetési mód" in 99% of the cases, you can find the payment type. For bank card write "Bankkártya", for cash write "Készpénz", for after pay write "Utánvét", for online write "Bankkártya". 
 
 If the invoice is átutalásos (bank transfer) then I need these values:
 Szervezet, Partner, Bankszámlaszám, Tárgy, Számla sorszáma, Összeg, Számla kelte, Fizetési határidő
 
-If it's kártya/kézpénz/utánvét/online or any other payment method then I need these values:
+If it's kártya/készpénz/utánvét/online or any other payment method then I need these values:
 Szervezet, Partner, Tárgy, Számla sorszáma, Összeg, Számla kelte
 
 # Invoice Data Field Synonyms
