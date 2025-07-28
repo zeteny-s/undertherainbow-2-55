@@ -715,16 +715,29 @@ export const InvoiceUpload: React.FC = () => {
 
   const saveToDatabase = async (uploadedFile: UploadedFile, processedData: ProcessedData, extractedText: string, fileUrl: string, organization: 'alapitvany' | 'ovoda') => {
     try {
-      // Determine payment method display text
+      // Determine payment method display text with standardized terms
       let displayPaymentMethod = '';
       if (processedData.paymentType === 'bank_transfer') {
-        displayPaymentMethod = 'Banki átutalás';
+        displayPaymentMethod = 'Átutalásos';
       } else if (processedData.specificPaymentMethod) {
-        // Use the specific payment method detected by AI
-        displayPaymentMethod = processedData.specificPaymentMethod;
+        // Standardize the payment method terminology based on the AI detection
+        const specificMethod = processedData.specificPaymentMethod.toLowerCase();
+        
+        if (specificMethod.includes('kártya') || specificMethod.includes('kartya') || 
+            specificMethod.includes('bankkártya') || specificMethod.includes('online')) {
+          displayPaymentMethod = 'Bankkártya';
+        } else if (specificMethod.includes('készpénz') || specificMethod.includes('keszpenz') || 
+                  specificMethod.includes('cash')) {
+          displayPaymentMethod = 'Készpénz';
+        } else if (specificMethod.includes('utánvét') || specificMethod.includes('utanvet')) {
+          displayPaymentMethod = 'Utánvét';
+        } else {
+          // Keep the original if it doesn't match any of the standard terms
+          displayPaymentMethod = processedData.specificPaymentMethod;
+        }
       } else {
         // Fallback for non-bank payments without specific type detected
-        displayPaymentMethod = 'Kártya/Készpénz/Utánvét';
+        displayPaymentMethod = 'Bankkártya';
       }
       
       const { error: dbError } = await supabase
@@ -910,16 +923,29 @@ export const InvoiceUpload: React.FC = () => {
 
       const invoiceId = existingInvoices[0].id;
       
-      // Determine payment method display text
+      // Determine payment method display text with standardized terms
       let displayPaymentMethod = '';
       if (uploadedFile.extractedData.paymentType === 'bank_transfer') {
-        displayPaymentMethod = 'Banki átutalás';
+        displayPaymentMethod = 'Átutalásos';
       } else if (uploadedFile.extractedData.specificPaymentMethod) {
-        // Use the specific payment method detected by AI
-        displayPaymentMethod = uploadedFile.extractedData.specificPaymentMethod;
+        // Standardize the payment method terminology based on the AI detection
+        const specificMethod = uploadedFile.extractedData.specificPaymentMethod.toLowerCase();
+        
+        if (specificMethod.includes('kártya') || specificMethod.includes('kartya') || 
+            specificMethod.includes('bankkártya') || specificMethod.includes('online')) {
+          displayPaymentMethod = 'Bankkártya';
+        } else if (specificMethod.includes('készpénz') || specificMethod.includes('keszpenz') || 
+                  specificMethod.includes('cash')) {
+          displayPaymentMethod = 'Készpénz';
+        } else if (specificMethod.includes('utánvét') || specificMethod.includes('utanvet')) {
+          displayPaymentMethod = 'Utánvét';
+        } else {
+          // Keep the original if it doesn't match any of the standard terms
+          displayPaymentMethod = uploadedFile.extractedData.specificPaymentMethod;
+        }
       } else {
         // Fallback for non-bank payments without specific type detected
-        displayPaymentMethod = 'Kártya/Készpénz/Utánvét';
+        displayPaymentMethod = 'Bankkártya';
       }
 
       // Update the invoice with the new data
@@ -1553,7 +1579,7 @@ export const InvoiceUpload: React.FC = () => {
                         </div>
                         <p className="text-xs sm:text-sm font-semibold text-gray-900">
                           {uploadedFile.extractedData.paymentType === 'bank_transfer' ? 
-                            'Banki átutalás' : 
+                            'Átutalásos' : 
                             (uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét')
                           }
                         </p>
