@@ -22,7 +22,7 @@ First, determine which organization this invoice belongs to by looking for these
 - "Feketerigó Alapítvány" or similar → should be "Alapítvány"
 - "Feketerigó Alapítványi Óvoda" or "óvoda" or similar → should be "Óvoda"
 
-Then check if the invoice is paid by átutalás (bank transfer) or kártya/készpénz/utánvét/online or any other payment method. If you see a payment method called "Csoportos beszédes" treat that as a bank transfer invoice. Plus make sure define the exact payment method when its kártya/készpénz/utánvét/online, so its either "Bankkártya", "Kézpénz", "Utánvét", "Online" payment should called "Bankkártya". These can be on the invoice as these as well if you don't find the original name: 
+Then check if the invoice is paid by átutalás (bank transfer) or kártya/kézpénz/utánvét/online or any other payment method. If you see a payment method called "Csoportos beszédes" treat that as a bank transfer invoice. Plus make sure define the exact payment method when its kártya/kézpénz/utánvét/online, so its either "Bankkártya", "Kézpénz", "Utánvét", "Online" payment should called "Bankkártya". These can be on the invoice as these as well if you don't find the original name: 
 
 - **Kártya**  
   - Bankkártya  
@@ -30,9 +30,9 @@ Then check if the invoice is paid by átutalás (bank transfer) or kártya/kész
   - Betéti kártya  
   - Kártyás fizetés
 
-- **Készpénz**
+- **Kézpénz**
   - Kézpénzes fizetés  
-  - Készpénzes tranzakció  
+  - Kézpénzes tranzakció  
 
 - **Utánvét**  
   - Utánvétes fizetés  
@@ -44,10 +44,10 @@ Its not going to be "Egyéb fizetési mód" in 99% of the cases, you can find th
 If the invoice is átutalásos (bank transfer) then I need these values:
 Szervezet, Partner, Bankszámlaszám, Tárgy, Számla sorszáma, Összeg, Számla kelte, Fizetési határidő
 
-If it's kártya/készpénz/utánvét/online or any other payment method then I need these values:
+If it's kártya/kézpénz/utánvét/online or any other payment method then I need these values:
 Szervezet, Partner, Tárgy, Számla sorszáma, Összeg, Számla kelte
 
-# Invoice Data Fields
+# Invoice Data Field Synonyms
 
 ### Partner  
 Could be:  
@@ -189,14 +189,13 @@ ${extractedText}`;
     if (!response.ok) {
       const contentType = response.headers.get('content-type');
       let errorMessage = `Gemini API error: ${response.status} ${response.statusText}`;
-      
       // Try to get more detailed error information
       if (contentType && contentType.includes('application/json')) {
         try {
           const errorData = await response.json();
           errorMessage = `Gemini API error: ${errorData.error?.message || errorData.message || response.statusText}`;
         } catch (e) {
-          // If JSON parsing fails, stick with the basic error message
+        // If JSON parsing fails, stick with the basic error message
         }
       } else if (contentType && contentType.includes('text/html')) {
         // If we got HTML (error page), don't try to parse it
@@ -204,10 +203,8 @@ ${extractedText}`;
         console.error('Received HTML error response from Gemini:', htmlText);
         errorMessage = `Gemini API returned HTML error page (status ${response.status}). This often indicates an API key or configuration issue.`;
       }
-      
       throw new Error(errorMessage);
     }
-    
     // Check if response is JSON before parsing
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
@@ -215,7 +212,6 @@ ${extractedText}`;
       console.error('Unexpected response type from Gemini:', contentType, 'Response:', responseText);
       throw new Error(`Expected JSON response from Gemini but got ${contentType}`);
     }
-    
     const result = await response.json();
     const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!generatedText) {
