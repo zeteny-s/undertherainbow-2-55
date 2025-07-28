@@ -715,6 +715,18 @@ export const InvoiceUpload: React.FC = () => {
 
   const saveToDatabase = async (uploadedFile: UploadedFile, processedData: ProcessedData, extractedText: string, fileUrl: string, organization: 'alapitvany' | 'ovoda') => {
     try {
+      // Determine payment method display text
+      let displayPaymentMethod = '';
+      if (processedData.paymentType === 'bank_transfer') {
+        displayPaymentMethod = 'Banki átutalás';
+      } else if (processedData.specificPaymentMethod) {
+        // Use the specific payment method detected by AI
+        displayPaymentMethod = processedData.specificPaymentMethod;
+      } else {
+        // Fallback for non-bank payments without specific type detected
+        displayPaymentMethod = 'Kártya/Készpénz/Utánvét';
+      }
+      
       const { error: dbError } = await supabase
         .from('invoices')
         .insert({
@@ -730,7 +742,7 @@ export const InvoiceUpload: React.FC = () => {
           amount: typeof processedData.Összeg === 'number' ? processedData.Összeg : (processedData.Összeg ? parseFloat(processedData.Összeg.toString()) : null),
           invoice_date: processedData['Számla kelte'],
           payment_deadline: processedData['Fizetési határidő'],
-          payment_method: processedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (processedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
+          payment_method: displayPaymentMethod,
           invoice_type: processedData.paymentType,
           munkaszam: processedData.Munkaszám || '',
           category: processedData.category || 'Egyéb',
@@ -897,6 +909,18 @@ export const InvoiceUpload: React.FC = () => {
       }
 
       const invoiceId = existingInvoices[0].id;
+      
+      // Determine payment method display text
+      let displayPaymentMethod = '';
+      if (uploadedFile.extractedData.paymentType === 'bank_transfer') {
+        displayPaymentMethod = 'Banki átutalás';
+      } else if (uploadedFile.extractedData.specificPaymentMethod) {
+        // Use the specific payment method detected by AI
+        displayPaymentMethod = uploadedFile.extractedData.specificPaymentMethod;
+      } else {
+        // Fallback for non-bank payments without specific type detected
+        displayPaymentMethod = 'Kártya/Készpénz/Utánvét';
+      }
 
       // Update the invoice with the new data
       const { error: updateError } = await supabase
@@ -909,7 +933,7 @@ export const InvoiceUpload: React.FC = () => {
           amount: typeof uploadedFile.extractedData.Összeg === 'number' ? uploadedFile.extractedData.Összeg : (uploadedFile.extractedData.Összeg ? parseFloat(uploadedFile.extractedData.Összeg.toString()) : null),
           invoice_date: uploadedFile.extractedData['Számla kelte'],
           payment_deadline: uploadedFile.extractedData['Fizetési határidő'],
-          payment_method: uploadedFile.extractedData.paymentType === 'bank_transfer' ? 'Banki átutalás' : (uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'),
+          payment_method: displayPaymentMethod,
           invoice_type: uploadedFile.extractedData.paymentType,
           munkaszam: uploadedFile.extractedData.Munkaszám || '',
           category: uploadedFile.extractedData.category || 'Egyéb',
@@ -1530,7 +1554,7 @@ export const InvoiceUpload: React.FC = () => {
                         <p className="text-xs sm:text-sm font-semibold text-gray-900">
                           {uploadedFile.extractedData.paymentType === 'bank_transfer' ? 
                             'Banki átutalás' : 
-                            uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét'
+                            (uploadedFile.extractedData.specificPaymentMethod || 'Kártya/Készpénz/Utánvét')
                           }
                         </p>
                       </div>
