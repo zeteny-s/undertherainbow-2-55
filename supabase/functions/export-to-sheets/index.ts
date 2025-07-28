@@ -56,7 +56,7 @@ serve(async (req)=>{
         invoiceData['Fizetési határidő'] || ''
       ];
     } else {
-      // KP sheet: Szervezet, Partner, Tárgy, Számla sorszáma, Összeg, Számla kelte, MUNKASZÁM
+      // KP sheet: Szervezet, Partner, Tárgy, Számla sorszáma, Összeg, Számla kelte, MUNKASZÁM, Fizetési Mód
       rowData = [
         organization === 'alapitvany' ? 'Alapítvány' : 'Óvoda',
         invoiceData.Partner || '',
@@ -64,7 +64,8 @@ serve(async (req)=>{
         invoiceData['Számla sorszáma'] || '',
         invoiceData.Összeg || '',
         invoiceData['Számla kelte'] || '',
-        invoiceData.Munkaszám || ''
+        invoiceData.Munkaszám || '',
+        invoiceData['Fizetési Mód'] || ''
       ];
     }
     // Add to Google Sheets
