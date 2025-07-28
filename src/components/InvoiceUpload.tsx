@@ -729,7 +729,7 @@ export const InvoiceUpload: React.FC = () => {
             specificMethod.includes('hitelkártya') || specificMethod.includes('betéti kártya')) {
           displayPaymentMethod = 'Bankkártya';
         } else if (specificMethod.includes('készpénz') || specificMethod.includes('keszpenz') || 
-                   specificMethod.includes('cash') || specificMethod.includes('kézpénz')) {
+                   specificMethod.includes('cash') || specificMethod.includes('készpénz')) {
           displayPaymentMethod = 'Készpénz';
         } else if (specificMethod.includes('utánvét') || specificMethod.includes('utanvet') ||
                    specificMethod.includes('fizetés átvételkor') || specificMethod.includes('kézbesítéskori')) {
@@ -948,7 +948,7 @@ export const InvoiceUpload: React.FC = () => {
             specificMethod.includes('hitelkártya') || specificMethod.includes('betéti kártya')) {
           displayPaymentMethod = 'Bankkártya';
         } else if (specificMethod.includes('készpénz') || specificMethod.includes('keszpenz') || 
-                   specificMethod.includes('cash') || specificMethod.includes('kézpénz')) {
+                   specificMethod.includes('cash') || specificMethod.includes('készpénz')) {
           displayPaymentMethod = 'Készpénz';
         } else if (specificMethod.includes('utánvét') || specificMethod.includes('utanvet') ||
                    specificMethod.includes('fizetés átvételkor') || specificMethod.includes('kézbesítéskori')) {
