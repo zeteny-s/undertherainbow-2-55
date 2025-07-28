@@ -65,7 +65,7 @@ serve(async (req)=>{
         invoiceData.Összeg || '',
         invoiceData['Számla kelte'] || '',
         invoiceData.Munkaszám || '',
-        invoiceData['Fizetési Mód'] || ''
+        invoiceData.specificPaymentMethod || invoiceData.payment_method || 'Bankkártya'
       ];
     }
     // Add to Google Sheets
