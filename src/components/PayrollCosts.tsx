@@ -23,13 +23,13 @@ interface PayrollSummary {
   rental_costs: number;
   non_rental_costs: number;
   record_count: number;
+  tax_amount: number;
   created_at: string;
 }
 
 export const PayrollCosts: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [extractedRecords, setExtractedRecords] = useState<PayrollRecord[]>([]);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<PayrollRecord | null>(null);
   const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<PayrollRecord | null>(null);
@@ -38,6 +38,15 @@ export const PayrollCosts: React.FC = () => {
   const [payrollSummaries, setPayrollSummaries] = useState<PayrollSummary[]>([]);
   const [viewingRecords, setViewingRecords] = useState<PayrollRecord[]>([]);
   const [viewingMonth, setViewingMonth] = useState<string>('');
+  
+  // New states for the workflow
+  const [uploadedPayrollFile, setUploadedPayrollFile] = useState<File | null>(null);
+  const [payrollFileUrl, setPayrollFileUrl] = useState<string>('');
+  const [showTaxModal, setShowTaxModal] = useState(false);
+  const [taxAmount, setTaxAmount] = useState<number>(0);
+  const [isProcessingTax, setIsProcessingTax] = useState(false);
+  const [step, setStep] = useState<'upload' | 'preview' | 'confirm'>('upload');
+  
   const { addNotification } = useNotifications();
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,10 +63,15 @@ export const PayrollCosts: React.FC = () => {
     setIsUploading(true);
     
     try {
+      // Store file and create preview URL
+      setUploadedPayrollFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setPayrollFileUrl(previewUrl);
+
       // Convert file to base64 and process with Document AI first
       const base64Data = await convertFileToBase64(file);
       
-      // Send directly to payroll-gemini with document processing
+      // Send to process-document function first
       const { data, error } = await supabase.functions.invoke('process-document', {
         body: {
           document: {
@@ -89,6 +103,7 @@ export const PayrollCosts: React.FC = () => {
 
       if (payrollData?.success) {
         setExtractedRecords(payrollData.data);
+        setStep('preview');
         addNotification('success', 'Bérköltség adatok sikeresen kinyerve!');
       } else {
         throw new Error(payrollData?.error || 'Ismeretlen hiba történt');
@@ -102,11 +117,74 @@ export const PayrollCosts: React.FC = () => {
     }
   }, [addNotification]);
 
-  const updateRecord = (index: number, field: keyof PayrollRecord, value: any) => {
-    const updated = [...extractedRecords];
-    updated[index] = { ...updated[index], [field]: value };
-    setExtractedRecords(updated);
+  const handleRendbenClick = () => {
+    setShowTaxModal(true);
   };
+
+  const handleTaxFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      addNotification('error', 'Csak JPG, PNG és PDF fájlokat lehet feltölteni.');
+      return;
+    }
+
+    setIsProcessingTax(true);
+    
+    try {
+      // Convert file to base64 and process with Document AI first
+      const base64Data = await convertFileToBase64(file);
+      
+      // Send to process-document function first
+      const { data, error } = await supabase.functions.invoke('process-document', {
+        body: {
+          document: {
+            content: base64Data,
+            mimeType: file.type,
+          },
+        },
+      });
+
+      if (error) {
+        throw new Error(`Document processing error: ${error.message}`);
+      }
+
+      if (!data?.document?.text) {
+        throw new Error('No text extracted from document');
+      }
+
+      // Now send to tax-gemini edge function
+      const { data: taxData, error: taxError } = await supabase.functions.invoke('tax-gemini', {
+        body: {
+          extractedText: data.document.text,
+          organization: 'Alapítvány'
+        }
+      });
+
+      if (taxError) {
+        throw new Error(`Tax processing error: ${taxError.message}`);
+      }
+
+      if (taxData?.success) {
+        setTaxAmount(taxData.data.totalTaxAmount || 0);
+        setShowTaxModal(false);
+        setStep('confirm');
+        addNotification('success', 'Adóadatok sikeresen kinyerve!');
+      } else {
+        throw new Error(taxData?.error || 'Ismeretlen hiba történt');
+      }
+    } catch (error) {
+      console.error('Error processing tax file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
+      addNotification('error', `Hiba történt az adóadatok feldolgozása során: ${errorMessage}`);
+    } finally {
+      setIsProcessingTax(false);
+    }
+  }, [addNotification]);
+
 
   const saveRecords = async () => {
     if (extractedRecords.length === 0) return;
@@ -151,10 +229,11 @@ export const PayrollCosts: React.FC = () => {
           year,
           month,
           organization: firstRecord.organization,
-          total_payroll: totalPayroll,
+          total_payroll: totalPayroll + taxAmount,
           rental_costs: rentalCosts,
           non_rental_costs: nonRentalCosts,
           record_count: extractedRecords.length,
+          tax_amount: taxAmount,
           created_by: user.id
         }, {
           onConflict: 'year,month,organization'
@@ -181,7 +260,14 @@ export const PayrollCosts: React.FC = () => {
         .order('month', { ascending: false });
 
       if (error) throw error;
-      setPayrollSummaries(data || []);
+      
+      // Ensure tax_amount exists in the data, default to 0 if missing
+      const summariesWithTax = (data || []).map(summary => ({
+        ...summary,
+        tax_amount: (summary as any).tax_amount || 0
+      }));
+      
+      setPayrollSummaries(summariesWithTax);
     } catch (error) {
       console.error('Error loading payroll summaries:', error);
       addNotification('error', 'Hiba történt az összesítők betöltése során');
@@ -387,68 +473,145 @@ export const PayrollCosts: React.FC = () => {
         </p>
       </div>
 
-      {/* Upload Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Upload className="h-5 w-5 mr-2 text-blue-600" />
-          Fájl feltöltés
-        </h3>
-        
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-          <FileImage className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <div className="space-y-2">
-            <label htmlFor="payroll-upload" className="cursor-pointer">
-              <span className="text-sm text-gray-600">
-                Válassz fájlt a feltöltéshez (JPG, PNG, PDF)
-              </span>
-              <input
-                id="payroll-upload"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="hidden"
-              />
-            </label>
-            <div>
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                disabled={isUploading}
-                onClick={() => document.getElementById('payroll-upload')?.click()}
-              >
-                {isUploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Feldolgozás...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    Feldolgozásra küldés
-                  </>
-                )}
-              </button>
+      {/* Upload Section - Only show when no file is uploaded */}
+      {step === 'upload' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Upload className="h-5 w-5 mr-2 text-blue-600" />
+            Bérköltség dokumentum feltöltése
+          </h3>
+          
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+            <FileImage className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <div className="space-y-2">
+              <label htmlFor="payroll-upload" className="cursor-pointer">
+                <span className="text-sm text-gray-600">
+                  Válassz fájlt a feltöltéshez (JPG, PNG, PDF)
+                </span>
+                <input
+                  id="payroll-upload"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+              </label>
+              <div>
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                  disabled={isUploading}
+                  onClick={() => document.getElementById('payroll-upload')?.click()}
+                >
+                  {isUploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Feldolgozás...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Feldolgozásra küldés
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Extracted Records Table */}
-      {extractedRecords.length > 0 && (
+      {/* Preview Section - Show document preview and extracted data side by side */}
+      {step === 'preview' && uploadedPayrollFile && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
-              Kinyert bérköltség adatok
-            </h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
+            Bérköltség dokumentum előnézet és kinyert adatok
+          </h3>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Document Preview */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Dokumentum előnézet</h4>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                {uploadedPayrollFile.type === 'application/pdf' ? (
+                  <div className="h-96 bg-gray-100 flex items-center justify-center">
+                    <div className="text-center">
+                      <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600">PDF dokumentum</p>
+                      <p className="text-sm text-gray-500">{uploadedPayrollFile.name}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <img 
+                    src={payrollFileUrl} 
+                    alt="Bérköltség dokumentum" 
+                    className="w-full h-96 object-contain bg-gray-50"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Extracted Data */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Kinyert bérköltség adatok</h4>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="max-h-96 overflow-y-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Alkalmazott
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Összeg
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Munkaszám
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {extractedRecords.map((record, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-sm font-medium text-gray-900">
+                            {record.employeeName}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            {formatCurrency(record.amount)}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            {record.projectCode || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Rendben van button */}
+          <div className="flex justify-center mt-6">
             <button
-              onClick={saveRecords}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+              onClick={handleRendbenClick}
+              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 text-lg font-medium"
             >
-              <Save className="h-4 w-4" />
-              Adatok mentése
+              <CheckCircle2 className="h-5 w-5" />
+              Rendben van
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Final confirmation section */}
+      {step === 'confirm' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
+            Végleges bérköltség adatok
+          </h3>
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -464,110 +627,140 @@ export const PayrollCosts: React.FC = () => {
                     Összeg (HUF)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Járulékok (HUF)
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Dátum
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Bérleti költség?
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Műveletek
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {extractedRecords.map((record, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingIndex === index ? (
-                        <input
-                          type="text"
-                          value={record.employeeName}
-                          onChange={(e) => updateRecord(index, 'employeeName', e.target.value)}
-                          className="w-full p-1 border rounded"
-                        />
-                      ) : (
-                        <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {record.employeeName}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingIndex === index ? (
-                        <input
-                          type="text"
-                          value={record.projectCode || ''}
-                          onChange={(e) => updateRecord(index, 'projectCode', e.target.value)}
-                          className="w-full p-1 border rounded"
-                        />
-                      ) : (
-                        <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {record.projectCode || '—'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingIndex === index ? (
-                        <input
-                          type="number"
-                          value={record.amount}
-                          onChange={(e) => updateRecord(index, 'amount', Number(e.target.value))}
-                          className="w-full p-1 border rounded"
-                        />
-                      ) : (
-                        <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatCurrency(record.amount)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingIndex === index ? (
-                        <input
-                          type="date"
-                          value={record.date}
-                          onChange={(e) => updateRecord(index, 'date', e.target.value)}
-                          className="w-full p-1 border rounded"
-                        />
-                      ) : (
-                        <span className="text-sm text-gray-900">{record.date}</span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatCurrency((record.amount * taxAmount) / extractedRecords.reduce((sum, r) => sum + r.amount, 0))}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingIndex === index ? (
-                        <input
-                          type="checkbox"
-                          checked={record.isRental}
-                          onChange={(e) => updateRecord(index, 'isRental', e.target.checked)}
-                          className="w-4 h-4"
-                        />
-                      ) : (
-                        <span className="text-sm">
-                          {record.isRental ? '✅' : '❌'}
-                        </span>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {record.date}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingIndex === index ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setEditingIndex(null)}
-                            className="text-green-600 hover:text-green-800"
-                          >
-                            <Save className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setEditingIndex(null)}
-                            className="text-gray-600 hover:text-gray-800"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setEditingIndex(index)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </button>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {record.isRental ? '✅' : '❌'}
                     </td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot className="bg-gray-50">
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900" colSpan={2}>
+                    Összesen:
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    {formatCurrency(extractedRecords.reduce((sum, r) => sum + r.amount, 0))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    {formatCurrency(taxAmount)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                    Teljes költség: {formatCurrency(extractedRecords.reduce((sum, r) => sum + r.amount, 0) + taxAmount)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap"></td>
+                </tr>
+              </tfoot>
             </table>
+          </div>
+
+          <div className="flex justify-center mt-6 space-x-4">
+            <button
+              onClick={() => {
+                setStep('upload');
+                setExtractedRecords([]);
+                setUploadedPayrollFile(null);
+                setPayrollFileUrl('');
+                setTaxAmount(0);
+              }}
+              className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              Újra kezdés
+            </button>
+            <button
+              onClick={saveRecords}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Adatok mentése
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tax Document Upload Modal */}
+      {showTaxModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Adó dokumentum feltöltése
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Kérjük, töltse fel az adó dokumentumot a járulékok kinyeréséhez.
+            </p>
+            
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <FileImage className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <label htmlFor="tax-upload" className="cursor-pointer">
+                <span className="text-sm text-gray-600">
+                  Válassz adó dokumentumot (JPG, PNG, PDF)
+                </span>
+                <input
+                  id="tax-upload"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleTaxFileUpload}
+                  disabled={isProcessingTax}
+                  className="hidden"
+                />
+              </label>
+              <div className="mt-2">
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                  disabled={isProcessingTax}
+                  onClick={() => document.getElementById('tax-upload')?.click()}
+                >
+                  {isProcessingTax ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Feldolgozás...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Feltöltés
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowTaxModal(false)}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              >
+                Mégse
+              </button>
+            </div>
           </div>
         </div>
       )}
