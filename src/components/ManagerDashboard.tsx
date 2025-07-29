@@ -1669,7 +1669,7 @@ export const ManagerDashboard: React.FC = () => {
                 onChange={(e) => setPayrollFilter(e.target.value as 'both' | 'rental' | 'nonRental')}
                 className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white"
               >
-                <option value="both">Mindkettő</option>
+                <option value="both">Összes</option>
                 <option value="rental">Bérleti</option>
                 <option value="nonRental">Nem bérleti</option>
               </select>
@@ -1687,6 +1687,8 @@ export const ManagerDashboard: React.FC = () => {
                       return [formatCurrency(value), "Bérleti"];
                     } else if (name === "Nem bérleti díjak") {
                       return [formatCurrency(value), "Alkalmazotti"];
+                    } else if (name === "Járulékok") {
+                      return [formatCurrency(value), "Járulékok"];
                     }
                     return [formatCurrency(value), ""];
                   }}
@@ -1713,6 +1715,14 @@ export const ManagerDashboard: React.FC = () => {
                     name="Nem bérleti díjak"
                   />
                 )}
+                <Area 
+                  type="monotone" 
+                  dataKey="tax" 
+                  stroke="#8b5cf6" 
+                  fill="#8b5cf6" 
+                  fillOpacity={0.3}
+                  name="Járulékok"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
