@@ -219,8 +219,12 @@ export const PayrollCosts: React.FC = () => {
     }
   };
 
-  const deleteRecord = async (recordId: string) => {
-    if (!confirm('Biztosan törölni szeretnéd ezt a bérköltség rekordot?')) return;
+  const deleteRecord = async (recordId: string, employeeName: string) => {
+    const isConfirmed = window.confirm(
+      `Biztosan törölni szeretnéd ezt a bérköltség rekordot?\n\nAlkalmazott: ${employeeName}\n\nEz a művelet nem visszavonható.`
+    );
+    
+    if (!isConfirmed) return;
     
     try {
       const { error } = await supabase
@@ -244,6 +248,64 @@ export const PayrollCosts: React.FC = () => {
     } catch (error) {
       console.error('Error deleting record:', error);
       addNotification('error', 'Hiba történt a rekord törlése során');
+    }
+  };
+
+  const deleteMonthlyPayroll = async (year: number, month: number, organization: string, recordCount: number, totalAmount: number) => {
+    const monthName = new Intl.DateTimeFormat('hu-HU', { month: 'long' }).format(new Date(year, month - 1));
+    
+    const isConfirmed = window.confirm(
+      `Biztosan törölni szeretnéd a teljes havi bérköltség összesítőt?\n\n` +
+      `Hónap: ${year}. ${monthName}\n` +
+      `Szervezet: ${organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda'}\n` +
+      `Rekordok száma: ${recordCount} db\n` +
+      `Összeg: ${formatCurrency(totalAmount)}\n\n` +
+      `Ez törölni fogja az összes kapcsolódó bérköltség rekordot és a havi összesítőt is.\n` +
+      `Ez a művelet nem visszavonható!`
+    );
+    
+    if (!isConfirmed) return;
+    
+    try {
+      // First delete all payroll records for this month/year/organization
+      const { error: recordsError } = await supabase
+        .from('payroll_records')
+        .delete()
+        .eq('organization', organization)
+        .gte('record_date', `${year}-${month.toString().padStart(2, '0')}-01`)
+        .lt('record_date', `${year}-${(month + 1).toString().padStart(2, '0')}-01`);
+
+      if (recordsError) throw recordsError;
+
+      // Then delete the summary
+      const { error: summaryError } = await supabase
+        .from('payroll_summaries')
+        .delete()
+        .eq('year', year)
+        .eq('month', month)
+        .eq('organization', organization);
+
+      if (summaryError) throw summaryError;
+
+      addNotification('success', 'Havi bérköltség összesítő és kapcsolódó rekordok sikeresen törölve');
+      
+      // Refresh the data
+      loadPayrollSummaries();
+      
+      // Close detail modal if it was showing the deleted month
+      if (viewingRecords.length > 0) {
+        const currentMonth = viewingMonth.split('.');
+        const currentYear = parseInt(currentMonth[0]);
+        const currentMonthNum = parseInt(currentMonth[1]);
+        
+        if (currentYear === year && currentMonthNum === month) {
+          setViewingRecords([]);
+          setViewingMonth('');
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting monthly payroll:', error);
+      addNotification('error', 'Hiba történt a havi bérköltség törlése során');
     }
   };
 
@@ -569,15 +631,26 @@ export const PayrollCosts: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{summary.record_count}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
-                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        Részletek
-                      </button>
-                    </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <div className="flex gap-2">
+                         <button
+                           onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
+                           className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                           title="Részletek megtekintése"
+                         >
+                           <CheckCircle2 className="h-4 w-4" />
+                           Részletek
+                         </button>
+                         <button
+                           onClick={() => deleteMonthlyPayroll(summary.year, summary.month, summary.organization, summary.record_count, summary.total_payroll)}
+                           className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                           title="Teljes havi összesítő törlése"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                           Törlés
+                         </button>
+                       </div>
+                     </td>
                   </tr>
                 ))}
               </tbody>
@@ -725,7 +798,7 @@ export const PayrollCosts: React.FC = () => {
                                  <Edit3 className="h-4 w-4" />
                                </button>
                                <button
-                                 onClick={() => deleteRecord(record.id!)}
+                                 onClick={() => deleteRecord(record.id!, record.employeeName)}
                                  className="text-red-600 hover:text-red-800"
                                  title="Törlés"
                                >
