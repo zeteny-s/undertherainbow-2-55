@@ -144,8 +144,16 @@ export const Dashboard: React.FC = () => {
         return recDate >= thisMonth && recDate < nextMonth;
       }) || [];
 
-      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0) || 0;
+      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => sum + (summary.total_payroll || 0) + ((summary as any).tax_amount || 0), 0) || 0;
       const thisMonthPayrollAmount = thisMonthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
+
+      // Find tax amount for this month from payroll summaries
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const thisMonthTaxAmount = payrollSummaries?.find(summary => 
+        summary.year === currentYear && summary.month === currentMonth
+      ) as any;
+      const thisMonthTax = thisMonthTaxAmount?.tax_amount || 0;
 
       const calculatedStats: Stats = {
         totalInvoices: invoices?.length || 0,
@@ -155,7 +163,7 @@ export const Dashboard: React.FC = () => {
         bankTransferCount: invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
         cardCashCount: invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
         thisMonthCount: thisMonthInvoices.length,
-        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
+        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount + thisMonthTax
       };
 
       const weekHistoryData = generateWeekHistory(invoices || []);
