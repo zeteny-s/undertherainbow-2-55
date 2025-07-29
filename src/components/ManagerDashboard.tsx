@@ -42,7 +42,6 @@ interface ChartData {
   munkaszamData: Array<{ munkaszam: string; count: number; amount: number; color: string }>;
   categoryData: Array<{ category: string; count: number; amount: number; color: string }>;
   payrollOverTimeData: Array<{ month: string; rental: number; nonRental: number; total: number }>;
-  payrollByEmployeeData: Array<{ employee: string; munkaszam: string; amount: number; color: string }>;
   payrollByProjectData: Array<{ munkaszam: string; amount: number; color: string }>;
   rentalVsNonRentalData: Array<{ name: string; value: number; color: string }>;
 }
@@ -78,7 +77,6 @@ export const ManagerDashboard: React.FC = () => {
     munkaszamData: [],
     categoryData: [],
     payrollOverTimeData: [],
-    payrollByEmployeeData: [],
     payrollByProjectData: [],
     rentalVsNonRentalData: []
   });
@@ -92,8 +90,6 @@ export const ManagerDashboard: React.FC = () => {
   const { notifications, addNotification, removeNotification } = useNotifications();
   const [showAllMunkaszam, setShowAllMunkaszam] = useState(false);
   const [payrollFilter, setPayrollFilter] = useState<'both' | 'rental' | 'nonRental'>('both');
-  const [currentEmployeeWeekIndex, setCurrentEmployeeWeekIndex] = useState(0);
-  const [employeeWeekHistory, setEmployeeWeekHistory] = useState<WeekData[]>([]);
   const [payrollProjectFilter, setPayrollProjectFilter] = useState<'all' | string>('all');
   const [rentalFilter, setRentalFilter] = useState<'all' | string>('all');
 
@@ -127,13 +123,11 @@ export const ManagerDashboard: React.FC = () => {
         if (payrollRecords) {
           const payrollByProjectData = generatePayrollByProjectData(payrollRecords);
           const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords);
-          const payrollByEmployeeData = generatePayrollByEmployeeData(payrollRecords);
           
           setChartData(prev => ({
             ...prev,
             payrollByProjectData,
-            rentalVsNonRentalData,
-            payrollByEmployeeData
+            rentalVsNonRentalData
           }));
         }
       } catch (error) {
@@ -142,7 +136,7 @@ export const ManagerDashboard: React.FC = () => {
     };
 
     updateChartData();
-  }, [payrollFilter, payrollProjectFilter, rentalFilter, currentEmployeeWeekIndex]);
+  }, [payrollFilter, payrollProjectFilter, rentalFilter]);
 
   const fetchDashboardData = async () => {
     try {
@@ -207,11 +201,8 @@ export const ManagerDashboard: React.FC = () => {
       const categoryData = generateCategoryData(invoices || []);
       
       // Generate payroll charts data
-      const employeeWeekHistoryData = generateEmployeeWeekHistory();
-      setEmployeeWeekHistory(employeeWeekHistoryData);
       
       const payrollOverTimeData = generatePayrollOverTimeData(payrollRecords || []);
-      const payrollByEmployeeData = generatePayrollByEmployeeData(payrollRecords || []);
       const payrollByProjectData = generatePayrollByProjectData(payrollRecords || []);
       const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords || []);
 
@@ -228,7 +219,6 @@ export const ManagerDashboard: React.FC = () => {
         munkaszamData,
         categoryData,
         payrollOverTimeData,
-        payrollByEmployeeData,
         payrollByProjectData,
         rentalVsNonRentalData
       });
@@ -604,74 +594,6 @@ export const ManagerDashboard: React.FC = () => {
     });
   };
 
-  // Generate employee week history
-  const generateEmployeeWeekHistory = (): WeekData[] => {
-    const weeks: WeekData[] = [];
-    const now = new Date();
-    
-    for (let i = 0; i < 12; i++) {
-      const weekStart = new Date(now);
-      const dayOfWeek = now.getDay();
-      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      weekStart.setDate(now.getDate() - daysToMonday - (i * 7));
-      weekStart.setHours(0, 0, 0, 0);
-      
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
-      
-      const weekLabel = `${formatDateShort(weekStart)} - ${formatDateShort(weekEnd)}`;
-      
-      weeks.push({
-        weekStart,
-        weekEnd,
-        weekLabel,
-        data: [] // Will be populated when needed
-      });
-    }
-    
-    return weeks;
-  };
-
-  // Generate payroll by employee data
-  const generatePayrollByEmployeeData = (payrollRecords: any[]) => {
-    let filteredRecords = payrollRecords;
-    
-    const selectedWeek = employeeWeekHistory[currentEmployeeWeekIndex];
-    if (selectedWeek) {
-      filteredRecords = payrollRecords.filter(rec => {
-        if (!rec.record_date) return false;
-        const recDate = new Date(rec.record_date);
-        return recDate >= selectedWeek.weekStart && recDate <= selectedWeek.weekEnd;
-      });
-    }
-    
-    const employeeSpending: { [key: string]: { amount: number; munkaszam: string } } = {};
-    
-    filteredRecords.forEach(record => {
-      if (record.employee_name && record.amount && record.amount > 0) {
-        const employee = record.employee_name.trim();
-        const munkaszam = record.project_code || 'Nincs munkaszám';
-        
-        if (!employeeSpending[employee]) {
-          employeeSpending[employee] = { amount: 0, munkaszam };
-        }
-        employeeSpending[employee].amount += record.amount;
-      }
-    });
-    
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899'];
-    
-    return Object.entries(employeeSpending)
-      .map(([employee, data], index) => ({
-        employee: employee.length > 20 ? employee.substring(0, 20) + '...' : employee,
-        munkaszam: data.munkaszam,
-        amount: data.amount,
-        color: colors[index % colors.length]
-      }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 10); // Top 10 employees
-  };
 
   // Generate payroll by project data
   const generatePayrollByProjectData = (payrollRecords: any[]) => {
@@ -1776,68 +1698,6 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Payroll by Employee */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-              Alkalmazotti bérköltségek
-            </h3>
-            <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
-              {employeeWeekHistory[currentEmployeeWeekIndex] && (
-                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
-                  {employeeWeekHistory[currentEmployeeWeekIndex].weekLabel}
-                </span>
-              )}
-              <div className="flex items-center justify-center space-x-2">
-                <button
-                  onClick={() => setCurrentEmployeeWeekIndex(Math.min(employeeWeekHistory.length - 1, currentEmployeeWeekIndex + 1))}
-                  disabled={currentEmployeeWeekIndex >= employeeWeekHistory.length - 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Előző hét"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setCurrentEmployeeWeekIndex(Math.max(0, currentEmployeeWeekIndex - 1))}
-                  disabled={currentEmployeeWeekIndex <= 0}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Következő hét"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="h-48 sm:h-64 lg:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData.payrollByEmployeeData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" stroke="#6b7280" fontSize={10} />
-                <YAxis 
-                  type="category" 
-                  dataKey="employee" 
-                  stroke="#6b7280" 
-                  fontSize={10}
-                  width={120}
-                />
-                <Tooltip 
-                  formatter={(value: number, _, props) => [
-                    formatCurrency(value), 
-                    `${props.payload.employee} (${props.payload.munkaszam})`
-                  ]}
-                  labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                  contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                />
-                <Bar dataKey="amount" radius={[0, 6, 6, 0]}>
-                  {chartData.payrollByEmployeeData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={chartData.payrollByEmployeeData[index].color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
 
         {/* Donut Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
