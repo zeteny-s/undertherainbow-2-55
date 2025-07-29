@@ -41,7 +41,7 @@ interface ChartData {
   weeklyExpenseTrend: Array<{ day: string; date: string; amount: number }>;
   munkaszamData: Array<{ munkaszam: string; count: number; amount: number; color: string }>;
   categoryData: Array<{ category: string; count: number; amount: number; color: string }>;
-  payrollOverTimeData: Array<{ month: string; rental: number; nonRental: number; total: number }>;
+  payrollOverTimeData: Array<{ month: string; rental: number; nonRental: number; tax: number; total: number }>;
   payrollByProjectData: Array<{ munkaszam: string; amount: number; color: string }>;
   rentalVsNonRentalData: Array<{ name: string; value: number; color: string }>;
 }
@@ -149,12 +149,18 @@ export const ManagerDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Fetch payroll records
+      // Fetch payroll records and summaries
       const { data: payrollRecords, error: payrollError } = await supabase
         .from('payroll_records')
         .select('*');
 
       if (payrollError) throw payrollError;
+
+      const { data: payrollSummaries, error: summariesError } = await supabase
+        .from('payroll_summaries')
+        .select('*');
+
+      if (summariesError) throw summariesError;
 
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -202,7 +208,7 @@ export const ManagerDashboard: React.FC = () => {
       
       // Generate payroll charts data
       
-      const payrollOverTimeData = generatePayrollOverTimeData(payrollRecords || []);
+      const payrollOverTimeData = generatePayrollOverTimeData(payrollRecords || [], payrollSummaries || []);
       const payrollByProjectData = generatePayrollByProjectData(payrollRecords || []);
       const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords || []);
 
@@ -566,11 +572,17 @@ export const ManagerDashboard: React.FC = () => {
   };
 
   // Generate payroll over time data
-  const generatePayrollOverTimeData = (payrollRecords: any[]) => {
+  const generatePayrollOverTimeData = (payrollRecords: any[], payrollSummaries: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
     return months.map((month, index) => {
+      // Get tax amount from summaries
+      const monthSummary = payrollSummaries.find(summary => 
+        summary.year === currentYear && summary.month === (index + 1)
+      );
+      const taxAmount = monthSummary?.tax_amount || 0;
+      
       const monthPayroll = payrollRecords.filter(rec => {
         if (!rec.record_date) return false;
         const date = new Date(rec.record_date);
@@ -589,7 +601,8 @@ export const ManagerDashboard: React.FC = () => {
         month,
         rental: rentalAmount,
         nonRental: nonRentalAmount,
-        total: rentalAmount + nonRentalAmount
+        tax: taxAmount,
+        total: rentalAmount + nonRentalAmount + taxAmount
       };
     });
   };

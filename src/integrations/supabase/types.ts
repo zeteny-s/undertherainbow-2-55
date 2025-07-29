@@ -225,6 +225,7 @@ export type Database = {
           organization: string
           record_count: number
           rental_costs: number
+          tax_amount: number
           total_payroll: number
           updated_at: string
           year: number
@@ -238,6 +239,7 @@ export type Database = {
           organization: string
           record_count?: number
           rental_costs?: number
+          tax_amount?: number
           total_payroll?: number
           updated_at?: string
           year: number
@@ -251,6 +253,7 @@ export type Database = {
           organization?: string
           record_count?: number
           rental_costs?: number
+          tax_amount?: number
           total_payroll?: number
           updated_at?: string
           year?: number

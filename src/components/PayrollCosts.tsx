@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle, Play } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
@@ -22,12 +22,12 @@ interface PayrollSummary {
   total_payroll: number;
   rental_costs: number;
   non_rental_costs: number;
+  tax_amount: number;
   record_count: number;
   created_at: string;
 }
 
 export const PayrollCosts: React.FC = () => {
-  const [isUploading, setIsUploading] = useState(false);
   const [extractedRecords, setExtractedRecords] = useState<PayrollRecord[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
@@ -38,48 +38,89 @@ export const PayrollCosts: React.FC = () => {
   const [payrollSummaries, setPayrollSummaries] = useState<PayrollSummary[]>([]);
   const [viewingRecords, setViewingRecords] = useState<PayrollRecord[]>([]);
   const [viewingMonth, setViewingMonth] = useState<string>('');
+  
+  // New state for dual upload system
+  const [payrollFile, setPayrollFile] = useState<File | null>(null);
+  const [taxFile, setTaxFile] = useState<File | null>(null);
+  const [payrollPreview, setPayrollPreview] = useState<string>('');
+  const [taxPreview, setTaxPreview] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [extractedTaxAmount, setExtractedTaxAmount] = useState<number>(0);
+  
   const { addNotification } = useNotifications();
 
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const createFilePreview = (file: File): string => {
+    if (file.type.startsWith('image/')) {
+      return URL.createObjectURL(file);
+    } else if (file.type === 'application/pdf') {
+      return 'PDF dokumentum: ' + file.name;
+    }
+    return file.name;
+  };
+
+  const handlePayrollFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
       addNotification('error', 'Csak JPG, PNG és PDF fájlokat lehet feltölteni.');
       return;
     }
 
-    setIsUploading(true);
+    setPayrollFile(file);
+    setPayrollPreview(createFilePreview(file));
+  };
+
+  const handleTaxFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      addNotification('error', 'Csak JPG, PNG és PDF fájlokat lehet feltölteni.');
+      return;
+    }
+
+    setTaxFile(file);
+    setTaxPreview(createFilePreview(file));
+  };
+
+  const processFiles = async () => {
+    if (!payrollFile) {
+      addNotification('error', 'Kérjük töltse fel a bérköltség dokumentumot!');
+      return;
+    }
+
+    setIsProcessing(true);
     
     try {
-      // Convert file to base64 and process with Document AI first
-      const base64Data = await convertFileToBase64(file);
+      // Process payroll file
+      const payrollBase64 = await convertFileToBase64(payrollFile);
       
-      // Send directly to payroll-gemini with document processing
-      const { data, error } = await supabase.functions.invoke('process-document', {
+      // Send to Document AI first
+      const { data: docData, error: docError } = await supabase.functions.invoke('process-document', {
         body: {
           document: {
-            content: base64Data,
-            mimeType: file.type,
+            content: payrollBase64,
+            mimeType: payrollFile.type,
           },
         },
       });
 
-      if (error) {
-        throw new Error(`Document processing error: ${error.message}`);
+      if (docError) {
+        throw new Error(`Document processing error: ${docError.message}`);
       }
 
-      if (!data?.document?.text) {
-        throw new Error('No text extracted from document');
+      if (!docData?.document?.text) {
+        throw new Error('No text extracted from payroll document');
       }
 
-      // Now send to payroll-gemini edge function
+      // Process with payroll-gemini
       const { data: payrollData, error: payrollError } = await supabase.functions.invoke('payroll-gemini', {
         body: {
-          extractedText: data.document.text,
-          organization: 'Alapítvány' // Default, can be dynamic based on user
+          extractedText: docData.document.text,
+          organization: 'Alapítvány'
         }
       });
 
@@ -87,20 +128,62 @@ export const PayrollCosts: React.FC = () => {
         throw new Error(`Payroll processing error: ${payrollError.message}`);
       }
 
-      if (payrollData?.success) {
-        setExtractedRecords(payrollData.data);
-        addNotification('success', 'Bérköltség adatok sikeresen kinyerve!');
-      } else {
-        throw new Error(payrollData?.error || 'Ismeretlen hiba történt');
+      if (!payrollData?.success) {
+        throw new Error(payrollData?.error || 'Failed to process payroll data');
       }
+
+      setExtractedRecords(payrollData.data);
+
+      // Process tax file if uploaded
+      let taxAmount = 0;
+      if (taxFile) {
+        const taxBase64 = await convertFileToBase64(taxFile);
+        
+        // Send to Document AI first
+        const { data: taxDocData, error: taxDocError } = await supabase.functions.invoke('process-document', {
+          body: {
+            document: {
+              content: taxBase64,
+              mimeType: taxFile.type,
+            },
+          },
+        });
+
+        if (taxDocError) {
+          throw new Error(`Tax document processing error: ${taxDocError.message}`);
+        }
+
+        if (!taxDocData?.document?.text) {
+          throw new Error('No text extracted from tax document');
+        }
+
+        // Process with tax-gemini
+        const { data: taxData, error: taxError } = await supabase.functions.invoke('tax-gemini', {
+          body: {
+            extractedText: taxDocData.document.text,
+            organization: 'Alapítvány'
+          }
+        });
+
+        if (taxError) {
+          console.error('Tax processing error:', taxError);
+          addNotification('error', 'Járulék dokumentum feldolgozása sikertelen, de a bérköltségek sikeresen feldolgozva.');
+        } else if (taxData?.success) {
+          taxAmount = taxData.data.totalTaxAmount;
+          setExtractedTaxAmount(taxAmount);
+          addNotification('success', `Járulék összeg kinyerve: ${formatCurrency(taxAmount)}`);
+        }
+      }
+
+      addNotification('success', 'Dokumentumok sikeresen feldolgozva!');
     } catch (error) {
-      console.error('Error processing payroll file:', error);
+      console.error('Error processing files:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
       addNotification('error', `Hiba történt a feldolgozás során: ${errorMessage}`);
     } finally {
-      setIsUploading(false);
+      setIsProcessing(false);
     }
-  }, [addNotification]);
+  };
 
   const updateRecord = (index: number, field: keyof PayrollRecord, value: any) => {
     const updated = [...extractedRecords];
@@ -154,6 +237,7 @@ export const PayrollCosts: React.FC = () => {
           total_payroll: totalPayroll,
           rental_costs: rentalCosts,
           non_rental_costs: nonRentalCosts,
+          tax_amount: extractedTaxAmount,
           record_count: extractedRecords.length,
           created_by: user.id
         }, {
@@ -164,6 +248,11 @@ export const PayrollCosts: React.FC = () => {
 
       addNotification('success', 'Bérköltség adatok sikeresen mentve!');
       setExtractedRecords([]);
+      setExtractedTaxAmount(0);
+      setPayrollFile(null);
+      setTaxFile(null);
+      setPayrollPreview('');
+      setTaxPreview('');
       await loadPayrollSummaries();
     } catch (error) {
       console.error('Error saving payroll records:', error);
@@ -383,53 +472,128 @@ export const PayrollCosts: React.FC = () => {
           Bérköltségek és Járulékok
         </h2>
         <p className="text-gray-600 text-sm sm:text-base">
-          Töltsd fel a havi bérköltségeket. A rendszer automatikusan felismeri az adatokat és hozzárendeli a munkaszámokat.
+          Töltsd fel a havi bérköltségeket és járulékokat. A rendszer automatikusan felismeri az adatokat.
         </p>
       </div>
 
-      {/* Upload Section */}
+      {/* Dual Upload Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
           <Upload className="h-5 w-5 mr-2 text-blue-600" />
-          Fájl feltöltés
+          Dokumentum feltöltés
         </h3>
         
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-          <FileImage className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <div className="space-y-2">
-            <label htmlFor="payroll-upload" className="cursor-pointer">
-              <span className="text-sm text-gray-600">
-                Válassz fájlt a feltöltéshez (JPG, PNG, PDF)
-              </span>
-              <input
-                id="payroll-upload"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="hidden"
-              />
-            </label>
-            <div>
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                disabled={isUploading}
-                onClick={() => document.getElementById('payroll-upload')?.click()}
-              >
-                {isUploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Feldolgozás...
-                  </>
-                ) : (
-                  <>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Payroll Upload */}
+          <div className="space-y-4">
+            <h4 className="text-md font-medium text-gray-900">Bérek</h4>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <FileImage className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+              <div className="space-y-2">
+                <label htmlFor="payroll-upload" className="cursor-pointer">
+                  <span className="text-sm text-gray-600">
+                    Bérköltség dokumentum (JPG, PNG, PDF)
+                  </span>
+                  <input
+                    id="payroll-upload"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handlePayrollFileUpload}
+                    disabled={isProcessing}
+                    className="hidden"
+                  />
+                </label>
+                <div>
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                    disabled={isProcessing}
+                    onClick={() => document.getElementById('payroll-upload')?.click()}
+                  >
                     <Upload className="h-4 w-4" />
-                    Feldolgozásra küldés
-                  </>
-                )}
-              </button>
+                    Fájl kiválasztása
+                  </button>
+                </div>
+              </div>
             </div>
+            
+            {/* Payroll Preview */}
+            {payrollPreview && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
+                {payrollFile?.type.startsWith('image/') ? (
+                  <img src={payrollPreview} alt="Payroll preview" className="max-w-full h-32 object-contain rounded" />
+                ) : (
+                  <p className="text-sm text-gray-600">{payrollPreview}</p>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Tax Upload */}
+          <div className="space-y-4">
+            <h4 className="text-md font-medium text-gray-900">Járulékok</h4>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <FileImage className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+              <div className="space-y-2">
+                <label htmlFor="tax-upload" className="cursor-pointer">
+                  <span className="text-sm text-gray-600">
+                    Járulék dokumentum (JPG, PNG, PDF)
+                  </span>
+                  <input
+                    id="tax-upload"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleTaxFileUpload}
+                    disabled={isProcessing}
+                    className="hidden"
+                  />
+                </label>
+                <div>
+                  <button
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                    disabled={isProcessing}
+                    onClick={() => document.getElementById('tax-upload')?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Fájl kiválasztása
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Tax Preview */}
+            {taxPreview && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
+                {taxFile?.type.startsWith('image/') ? (
+                  <img src={taxPreview} alt="Tax preview" className="max-w-full h-32 object-contain rounded" />
+                ) : (
+                  <p className="text-sm text-gray-600">{taxPreview}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Process Button */}
+        <div className="flex justify-center">
+          <button
+            onClick={processFiles}
+            disabled={!payrollFile || isProcessing}
+            className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 text-lg font-medium"
+          >
+            {isProcessing ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Feldolgozás...
+              </>
+            ) : (
+              <>
+                <Play className="h-5 w-5" />
+                Indítás
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -440,6 +604,11 @@ export const PayrollCosts: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
               Kinyert bérköltség adatok
+              {extractedTaxAmount > 0 && (
+                <span className="ml-3 text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                  Járulék: {formatCurrency(extractedTaxAmount)}
+                </span>
+              )}
             </h3>
             <button
               onClick={saveRecords}
@@ -601,6 +770,12 @@ export const PayrollCosts: React.FC = () => {
                     Nem bérleti
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Járulékok
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Teljes költség
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rekordok száma
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -624,6 +799,12 @@ export const PayrollCosts: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{formatCurrency(summary.non_rental_costs)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{formatCurrency(summary.tax_amount || 0)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.total_payroll + (summary.tax_amount || 0))}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{summary.record_count}</span>
