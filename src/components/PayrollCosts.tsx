@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar } from 'lucide-react';
+import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2 } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
@@ -30,6 +30,8 @@ export const PayrollCosts: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [extractedRecords, setExtractedRecords] = useState<PayrollRecord[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [editingRecord, setEditingRecord] = useState<PayrollRecord | null>(null);
   const [payrollSummaries, setPayrollSummaries] = useState<PayrollSummary[]>([]);
   const [viewingRecords, setViewingRecords] = useState<PayrollRecord[]>([]);
   const [viewingMonth, setViewingMonth] = useState<string>('');
@@ -214,6 +216,90 @@ export const PayrollCosts: React.FC = () => {
     } catch (error) {
       console.error('Error loading monthly records:', error);
       addNotification('error', 'Hiba történt a havi rekordok betöltése során');
+    }
+  };
+
+  const deleteRecord = async (recordId: string) => {
+    if (!confirm('Biztosan törölni szeretnéd ezt a bérköltség rekordot?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('payroll_records')
+        .delete()
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      addNotification('success', 'Rekord sikeresen törölve');
+      
+      // Refresh the data
+      loadPayrollSummaries();
+      if (viewingRecords.length > 0) {
+        const currentMonth = viewingMonth.split('.');
+        const year = parseInt(currentMonth[0]);
+        const month = parseInt(currentMonth[1]);
+        const org = viewingRecords[0]?.organization || 'alapitvany';
+        viewMonthlyRecords(year, month, org);
+      }
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      addNotification('error', 'Hiba történt a rekord törlése során');
+    }
+  };
+
+  const startEditingRecord = (record: PayrollRecord) => {
+    setEditingRecordId(record.id!);
+    setEditingRecord({ ...record });
+  };
+
+  const cancelEditingRecord = () => {
+    setEditingRecordId(null);
+    setEditingRecord(null);
+  };
+
+  const updateEditingRecord = (field: keyof PayrollRecord, value: any) => {
+    if (editingRecord) {
+      setEditingRecord({
+        ...editingRecord,
+        [field]: value
+      });
+    }
+  };
+
+  const saveEditedRecord = async () => {
+    if (!editingRecord || !editingRecordId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('payroll_records')
+        .update({
+          employee_name: editingRecord.employeeName,
+          project_code: editingRecord.projectCode,
+          amount: editingRecord.amount,
+          record_date: editingRecord.date,
+          is_rental: editingRecord.isRental,
+          organization: editingRecord.organization
+        })
+        .eq('id', editingRecordId);
+
+      if (error) throw error;
+
+      addNotification('success', 'Rekord sikeresen frissítve');
+      
+      // Refresh the data
+      loadPayrollSummaries();
+      if (viewingRecords.length > 0) {
+        const currentMonth = viewingMonth.split('.');
+        const year = parseInt(currentMonth[0]);
+        const month = parseInt(currentMonth[1]);
+        const org = viewingRecords[0]?.organization || 'alapitvany';
+        viewMonthlyRecords(year, month, org);
+      }
+      
+      cancelEditingRecord();
+    } catch (error) {
+      console.error('Error updating record:', error);
+      addNotification('error', 'Hiba történt a rekord frissítése során');
     }
   };
 
@@ -538,32 +624,117 @@ export const PayrollCosts: React.FC = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Dátum
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Bérleti költség?
-                      </th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                         Bérleti költség?
+                       </th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                         Műveletek
+                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {viewingRecords.map((record) => (
-                      <tr key={record.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{record.date}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm">
-                            {record.isRental ? '✅' : '❌'}
-                          </span>
-                        </td>
-                      </tr>
+                     {viewingRecords.map((record) => (
+                       <tr key={record.id} className="hover:bg-gray-50">
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="text"
+                               value={editingRecord?.employeeName || ''}
+                               onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="text"
+                               value={editingRecord?.projectCode || ''}
+                               onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="number"
+                               value={editingRecord?.amount || 0}
+                               onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="date"
+                               value={editingRecord?.date || ''}
+                               onChange={(e) => updateEditingRecord('date', e.target.value)}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm text-gray-900">{record.date}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="checkbox"
+                               checked={editingRecord?.isRental || false}
+                               onChange={(e) => updateEditingRecord('isRental', e.target.checked)}
+                               className="w-4 h-4"
+                             />
+                           ) : (
+                             <span className="text-sm">
+                               {record.isRental ? '✅' : '❌'}
+                             </span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <div className="flex gap-2">
+                               <button
+                                 onClick={saveEditedRecord}
+                                 className="text-green-600 hover:text-green-800"
+                                 title="Mentés"
+                               >
+                                 <Save className="h-4 w-4" />
+                               </button>
+                               <button
+                                 onClick={cancelEditingRecord}
+                                 className="text-gray-600 hover:text-gray-800"
+                                 title="Mégse"
+                               >
+                                 <X className="h-4 w-4" />
+                               </button>
+                             </div>
+                           ) : (
+                             <div className="flex gap-2">
+                               <button
+                                 onClick={() => startEditingRecord(record)}
+                                 className="text-blue-600 hover:text-blue-800"
+                                 title="Szerkesztés"
+                               >
+                                 <Edit3 className="h-4 w-4" />
+                               </button>
+                               <button
+                                 onClick={() => deleteRecord(record.id!)}
+                                 className="text-red-600 hover:text-red-800"
+                                 title="Törlés"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </button>
+                             </div>
+                           )}
+                         </td>
+                       </tr>
                     ))}
                   </tbody>
                 </table>
