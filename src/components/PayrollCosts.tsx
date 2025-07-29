@@ -25,6 +25,8 @@ interface PayrollSummary {
   tax_amount: number;
   record_count: number;
   created_at: string;
+  payroll_file_url?: string | null;
+  tax_file_url?: string | null;
 }
 
 export const PayrollCosts: React.FC = () => {
@@ -46,6 +48,8 @@ export const PayrollCosts: React.FC = () => {
   const [taxPreview, setTaxPreview] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedTaxAmount, setExtractedTaxAmount] = useState<number>(0);
+  const [currentPayrollFileUrl, setCurrentPayrollFileUrl] = useState<string>('');
+  const [currentTaxFileUrl, setCurrentTaxFileUrl] = useState<string>('');
   
   const { addNotification } = useNotifications();
 
@@ -95,6 +99,36 @@ export const PayrollCosts: React.FC = () => {
     setIsProcessing(true);
     
     try {
+      // Upload files to storage first
+      const { data: user } = await supabase.auth.getUser();
+      const userId = user?.user?.id;
+      
+      // Upload payroll file
+      const payrollFileName = `${userId}/${Date.now()}_${payrollFile.name}`;
+      const { data: payrollUpload, error: payrollUploadError } = await supabase.storage
+        .from('payroll')
+        .upload(payrollFileName, payrollFile);
+
+      if (payrollUploadError) {
+        throw new Error('Payroll file upload failed: ' + payrollUploadError.message);
+      }
+
+      setCurrentPayrollFileUrl(payrollUpload.path);
+
+      // Upload tax file if provided
+      if (taxFile) {
+        const taxFileName = `${userId}/${Date.now()}_${taxFile.name}`;
+        const { data: taxUpload, error: taxUploadError } = await supabase.storage
+          .from('tax-documents')
+          .upload(taxFileName, taxFile);
+
+        if (taxUploadError) {
+          throw new Error('Tax file upload failed: ' + taxUploadError.message);
+        }
+
+        setCurrentTaxFileUrl(taxUpload.path);
+      }
+
       // Process payroll file
       const payrollBase64 = await convertFileToBase64(payrollFile);
       
@@ -239,7 +273,9 @@ export const PayrollCosts: React.FC = () => {
           non_rental_costs: nonRentalCosts,
           tax_amount: extractedTaxAmount,
           record_count: extractedRecords.length,
-          created_by: user.id
+          created_by: user.id,
+          payroll_file_url: currentPayrollFileUrl,
+          tax_file_url: currentTaxFileUrl || null
         }, {
           onConflict: 'year,month,organization'
         });
@@ -249,6 +285,8 @@ export const PayrollCosts: React.FC = () => {
       addNotification('success', 'Bérköltség adatok sikeresen mentve!');
       setExtractedRecords([]);
       setExtractedTaxAmount(0);
+      setCurrentPayrollFileUrl('');
+      setCurrentTaxFileUrl('');
       setPayrollFile(null);
       setTaxFile(null);
       setPayrollPreview('');
@@ -461,6 +499,59 @@ export const PayrollCosts: React.FC = () => {
 
   const formatMonth = (year: number, month: number) => {
     return `${year}.${month.toString().padStart(2, '0')}`;
+  };
+
+  const downloadFiles = async (summary: PayrollSummary) => {
+    try {
+      const downloads = [];
+      
+      // Download payroll file if exists
+      if (summary.payroll_file_url) {
+        const { data: payrollData, error: payrollError } = await supabase.storage
+          .from('payroll')
+          .download(summary.payroll_file_url);
+          
+        if (!payrollError && payrollData) {
+          const url = URL.createObjectURL(payrollData);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `berek_${summary.year}_${summary.month.toString().padStart(2, '0')}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          downloads.push('bérek');
+        }
+      }
+      
+      // Download tax file if exists
+      if (summary.tax_file_url) {
+        const { data: taxData, error: taxError } = await supabase.storage
+          .from('tax-documents')
+          .download(summary.tax_file_url);
+          
+        if (!taxError && taxData) {
+          const url = URL.createObjectURL(taxData);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `jarulekok_${summary.year}_${summary.month.toString().padStart(2, '0')}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          downloads.push('járulékok');
+        }
+      }
+      
+      if (downloads.length > 0) {
+        addNotification('success', `Fájlok letöltve: ${downloads.join(', ')}`);
+      } else {
+        addNotification('info', 'Nincs elérhető fájl a letöltéshez');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      addNotification('error', 'Hiba történt a letöltés során');
+    }
   };
 
   return (
@@ -810,24 +901,32 @@ export const PayrollCosts: React.FC = () => {
                       <span className="text-sm text-gray-900">{summary.record_count}</span>
                     </td>
                      <td className="px-6 py-4 whitespace-nowrap">
-                       <div className="flex gap-2">
-                         <button
-                           onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
-                           className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                           title="Részletek megtekintése"
-                         >
-                           <CheckCircle2 className="h-4 w-4" />
-                           Részletek
-                         </button>
-                         <button
-                           onClick={() => setDeleteConfirmSummary(summary)}
-                           className="text-red-600 hover:text-red-800 flex items-center gap-1"
-                           title="Teljes havi összesítő törlése"
-                         >
-                           <Trash2 className="h-4 w-4" />
-                           Törlés
-                         </button>
-                       </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
+                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                            title="Részletek megtekintése"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            Részletek
+                          </button>
+                          <button
+                            onClick={() => downloadFiles(summary)}
+                            className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                            title="Dokumentumok letöltése"
+                          >
+                            <Upload className="h-4 w-4" />
+                            Letöltés
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmSummary(summary)}
+                            className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                            title="Teljes havi összesítő törlése"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Törlés
+                          </button>
+                        </div>
                      </td>
                   </tr>
                 ))}
