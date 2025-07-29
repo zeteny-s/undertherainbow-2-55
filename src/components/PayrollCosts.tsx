@@ -97,28 +97,36 @@ export const PayrollCosts: React.FC = () => {
   };
 
   const processFiles = async () => {
+    console.log('processFiles called');
     if (!payrollFile) {
+      console.log('No payroll file selected');
       addNotification('error', 'Kérjük töltse fel a bérköltség dokumentumot!');
       return;
     }
 
+    console.log('Starting processing with files:', { payrollFile: payrollFile.name, taxFile: taxFile?.name });
     setIsProcessing(true);
     
     try {
+      console.log('Getting user for file upload');
       // Upload files to storage first
       const { data: user } = await supabase.auth.getUser();
       const userId = user?.user?.id;
+      console.log('User ID:', userId);
       
       // Upload payroll file
+      console.log('Uploading payroll file to storage');
       const payrollFileName = `${userId}/${Date.now()}_${payrollFile.name}`;
       const { data: payrollUpload, error: payrollUploadError } = await supabase.storage
         .from('payroll')
         .upload(payrollFileName, payrollFile);
 
       if (payrollUploadError) {
+        console.error('Payroll upload error:', payrollUploadError);
         throw new Error('Payroll file upload failed: ' + payrollUploadError.message);
       }
 
+      console.log('Payroll file uploaded successfully:', payrollUpload.path);
       setCurrentPayrollFileUrl(payrollUpload.path);
 
       // Upload tax file if provided
@@ -136,9 +144,12 @@ export const PayrollCosts: React.FC = () => {
       }
 
       // Process payroll file
+      console.log('Converting payroll file to base64');
       const payrollBase64 = await convertFileToBase64(payrollFile);
+      console.log('Base64 conversion completed, length:', payrollBase64.length);
       
       // Send to Document AI first
+      console.log('Calling process-document function');
       const { data: docData, error: docError } = await supabase.functions.invoke('process-document', {
         body: {
           document: {
@@ -149,10 +160,13 @@ export const PayrollCosts: React.FC = () => {
       });
 
       if (docError) {
+        console.error('Document processing error:', docError);
         throw new Error(`Document processing error: ${docError.message}`);
       }
 
+      console.log('Document processing response:', docData);
       if (!docData?.document?.text) {
+        console.error('No text extracted from document. Response:', docData);
         throw new Error('No text extracted from payroll document');
       }
 
@@ -215,12 +229,14 @@ export const PayrollCosts: React.FC = () => {
         }
       }
 
+      console.log('Processing completed successfully');
       addNotification('success', 'Dokumentumok sikeresen feldolgozva!');
     } catch (error) {
       console.error('Error processing files:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
       addNotification('error', `Hiba történt a feldolgozás során: ${errorMessage}`);
     } finally {
+      console.log('Processing finished, setting isProcessing to false');
       setIsProcessing(false);
     }
   };
@@ -587,7 +603,7 @@ export const PayrollCosts: React.FC = () => {
           Dokumentum feltöltés
         </h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">{/* Changed from lg to xl for better spacing */}
           {/* Payroll Upload */}
           <div className="space-y-4">
             <h4 className="text-md font-medium text-gray-900">Bérek</h4>
@@ -624,12 +640,12 @@ export const PayrollCosts: React.FC = () => {
             {payrollPreview && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
-                <div className="max-w-full h-64 overflow-hidden rounded border border-gray-200">
+                <div className="w-full h-96 overflow-hidden rounded border border-gray-200 bg-white">
                   {payrollFile?.type.startsWith('image/') ? (
                     <img 
                       src={payrollPreview} 
                       alt="Payroll preview" 
-                      className="max-w-full h-full object-contain" 
+                      className="w-full h-full object-contain" 
                     />
                   ) : payrollFile?.type === 'application/pdf' ? (
                     <iframe
@@ -683,12 +699,12 @@ export const PayrollCosts: React.FC = () => {
             {taxPreview && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
-                <div className="max-w-full h-64 overflow-hidden rounded border border-gray-200">
+                <div className="w-full h-96 overflow-hidden rounded border border-gray-200 bg-white">
                   {taxFile?.type.startsWith('image/') ? (
                     <img 
                       src={taxPreview} 
                       alt="Tax preview" 
-                      className="max-w-full h-full object-contain" 
+                      className="w-full h-full object-contain" 
                     />
                   ) : taxFile?.type === 'application/pdf' ? (
                     <iframe
@@ -710,10 +726,15 @@ export const PayrollCosts: React.FC = () => {
         {/* Process Button */}
         <div className="flex justify-center">
           <button
-            onClick={processFiles}
+            onClick={(e) => {
+              console.log('Button clicked! Event:', e);
+              console.log('Button state check:', { payrollFile: !!payrollFile, isProcessing });
+              processFiles();
+            }}
             disabled={!payrollFile || isProcessing}
             className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 text-lg font-medium"
           >
+            <span className="hidden">Debug: payrollFile={payrollFile?.name}, isProcessing={isProcessing}</span>{/* Debug info */}
             {isProcessing ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
