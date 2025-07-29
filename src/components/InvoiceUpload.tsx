@@ -235,8 +235,8 @@ export const InvoiceUpload: React.FC = () => {
       return;
     }
 
-    // Limit the maximum number of files that can be processed at once to 50
-    const MAX_FILES = 50;
+    // Limit the maximum number of files that can be processed at once to 20
+    const MAX_FILES = 20;
     const currentFileCount = uploadedFiles.length;
     
     if (currentFileCount + validFiles.length > MAX_FILES) {
