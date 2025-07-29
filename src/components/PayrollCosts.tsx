@@ -515,9 +515,13 @@ export const PayrollCosts: React.FC = () => {
         .from('payroll_summaries')
         .select('payroll_file_url, tax_file_url')
         .eq('id', summary.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!summaryWithFiles) {
+        addNotification('error', 'Összesítő nem található');
+        return;
+      }
 
       const downloads = [];
       
@@ -1143,19 +1147,15 @@ export const PayrollCosts: React.FC = () => {
                        </td>
                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                          {(() => {
-                           const currentSummary = payrollSummaries.find(s => 
+                           const summaryForMonth = payrollSummaries.find(s => 
                              s.year === parseInt(viewingMonth.split('.')[0]) && 
                              s.month === parseInt(viewingMonth.split('.')[1])
                            );
-                           return formatCurrency(currentSummary?.tax_amount || 0);
+                           return formatCurrency((summaryForMonth?.tax_amount || 0) * viewingRecords.length / (summaryForMonth?.record_count || 1));
                          })()}
                        </td>
                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                          {(() => {
-                           const currentSummary = payrollSummaries.find(s => 
-                             s.year === parseInt(viewingMonth.split('.')[0]) && 
-                             s.month === parseInt(viewingMonth.split('.')[1])
-                           );
                            const rentalCosts = viewingRecords.filter(r => r.isRental).reduce((sum, r) => sum + r.amount, 0);
                            const nonRentalCosts = viewingRecords.reduce((sum, r) => sum + r.amount, 0) - rentalCosts;
                            return `Bérleti: ${formatCurrency(rentalCosts)} | Nem bérleti: ${formatCurrency(nonRentalCosts)}`;
