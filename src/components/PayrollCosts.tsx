@@ -380,7 +380,7 @@ export const PayrollCosts: React.FC = () => {
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center">
           <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-green-600" />
-          Bérköltségek – Költségfeltöltés képfájlból
+          Bérköltségek és Járulékok
         </h2>
         <p className="text-gray-600 text-sm sm:text-base">
           Töltsd fel a havi bérköltségeket. A rendszer automatikusan felismeri az adatokat és hozzárendeli a munkaszámokat.
