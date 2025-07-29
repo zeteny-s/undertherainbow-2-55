@@ -114,12 +114,19 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Fetch payroll records
-      const { data: payrollRecords, error: payrollError } = await supabase
-        .from('payroll_records')
+      // Fetch payroll summaries
+      const { data: payrollSummaries, error: payrollError } = await supabase
+        .from('payroll_summaries')
         .select('*');
 
       if (payrollError) throw payrollError;
+      
+      // Fetch payroll records for monthly calculations
+      const { data: payrollRecords, error: payrollRecordsError } = await supabase
+        .from('payroll_records')
+        .select('*');
+
+      if (payrollRecordsError) throw payrollRecordsError;
 
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -137,7 +144,7 @@ export const Dashboard: React.FC = () => {
         return recDate >= thisMonth && recDate < nextMonth;
       }) || [];
 
-      const totalPayrollAmount = payrollRecords?.reduce((sum, rec) => sum + (rec.amount || 0), 0) || 0;
+      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0) || 0;
       const thisMonthPayrollAmount = thisMonthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
 
       const calculatedStats: Stats = {
