@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle, Play } from 'lucide-react';
+import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
@@ -41,12 +41,14 @@ export const PayrollCosts: React.FC = () => {
   const [viewingRecords, setViewingRecords] = useState<PayrollRecord[]>([]);
   const [viewingMonth, setViewingMonth] = useState<string>('');
   
-  // New state for dual upload system
+  // Step-by-step workflow state
+  const [currentStep, setCurrentStep] = useState<'payroll' | 'tax' | 'complete'>('payroll');
   const [payrollFile, setPayrollFile] = useState<File | null>(null);
   const [taxFile, setTaxFile] = useState<File | null>(null);
   const [payrollPreview, setPayrollPreview] = useState<string>('');
   const [taxPreview, setTaxPreview] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessingPayroll, setIsProcessingPayroll] = useState(false);
+  const [isProcessingTax, setIsProcessingTax] = useState(false);
   const [extractedTaxAmount, setExtractedTaxAmount] = useState<number>(0);
   const [currentPayrollFileUrl, setCurrentPayrollFileUrl] = useState<string>('');
   const [currentTaxFileUrl, setCurrentTaxFileUrl] = useState<string>('');
@@ -58,7 +60,7 @@ export const PayrollCosts: React.FC = () => {
     return URL.createObjectURL(file);
   };
 
-  const handlePayrollFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePayrollFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -75,9 +77,12 @@ export const PayrollCosts: React.FC = () => {
     
     setPayrollFile(file);
     setPayrollPreview(createFilePreview(file));
+
+    // Auto-process payroll file immediately
+    await processPayrollFile(file);
   };
 
-  const handleTaxFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTaxFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -94,86 +99,58 @@ export const PayrollCosts: React.FC = () => {
     
     setTaxFile(file);
     setTaxPreview(createFilePreview(file));
+
+    // Auto-process tax file immediately
+    await processTaxFile(file);
   };
 
-  const processFiles = async () => {
-    console.log('🚀 processFiles called');
-    if (!payrollFile) {
-      console.log('❌ No payroll file selected');
-      addNotification('error', 'Kérjük töltse fel a bérköltség dokumentumot!');
-      return;
-    }
-
-    console.log('✅ Starting processing with files:', { payrollFile: payrollFile.name, taxFile: taxFile?.name });
-    setIsProcessing(true);
+  const processPayrollFile = async (file: File) => {
+    console.log('🚀 Processing payroll file:', file.name);
+    setIsProcessingPayroll(true);
     
     try {
-      console.log('📁 Getting user for file upload');
-      // Upload files to storage first
+      // Get user for file upload
       const { data: user } = await supabase.auth.getUser();
       const userId = user?.user?.id;
-      console.log('👤 User ID:', userId);
       
-      // Upload payroll file
+      // Upload payroll file to storage
       console.log('📤 Uploading payroll file to storage');
-      const payrollFileName = `${userId}/${Date.now()}_${payrollFile.name}`;
+      const payrollFileName = `${userId}/${Date.now()}_${file.name}`;
       const { data: payrollUpload, error: payrollUploadError } = await supabase.storage
         .from('payroll')
-        .upload(payrollFileName, payrollFile);
+        .upload(payrollFileName, file);
 
       if (payrollUploadError) {
-        console.error('❌ Payroll upload error:', payrollUploadError);
         throw new Error('Payroll file upload failed: ' + payrollUploadError.message);
       }
 
-      console.log('✅ Payroll file uploaded successfully:', payrollUpload.path);
       setCurrentPayrollFileUrl(payrollUpload.path);
 
-      // Upload tax file if provided
-      if (taxFile) {
-        console.log('📤 Uploading tax file to storage');
-        const taxFileName = `${userId}/${Date.now()}_${taxFile.name}`;
-        const { data: taxUpload, error: taxUploadError } = await supabase.storage
-          .from('tax-documents')
-          .upload(taxFileName, taxFile);
-
-        if (taxUploadError) {
-          console.error('❌ Tax upload error:', taxUploadError);
-          throw new Error('Tax file upload failed: ' + taxUploadError.message);
-        }
-
-        console.log('✅ Tax file uploaded successfully:', taxUpload.path);
-        setCurrentTaxFileUrl(taxUpload.path);
-      }
-
-      // STEP 1: Process PAYROLL document with OCR
-      console.log('🔍 STEP 1: Converting payroll file to base64 for OCR');
-      const payrollBase64 = await convertFileToBase64(payrollFile);
-      console.log('✅ Base64 conversion completed, length:', payrollBase64.length);
+      // Convert to base64 for OCR
+      console.log('🔍 Converting payroll file to base64 for OCR');
+      const payrollBase64 = await convertFileToBase64(file);
       
-      console.log('🤖 STEP 2: Calling process-document function for PAYROLL');
+      // Step 1: OCR with process-document
+      console.log('🤖 Calling process-document function for payroll');
       const { data: docData, error: docError } = await supabase.functions.invoke('process-document', {
         body: {
           document: {
             content: payrollBase64,
-            mimeType: payrollFile.type,
+            mimeType: file.type,
           },
         },
       });
 
       if (docError) {
-        console.error('❌ Payroll document processing error:', docError);
-        throw new Error(`Payroll document processing error: ${docError.message}`);
+        throw new Error(`Document processing error: ${docError.message}`);
       }
 
-      console.log('✅ Payroll OCR completed. Response:', docData);
       if (!docData?.document?.text) {
-        console.error('❌ No text extracted from payroll document. Response:', docData);
         throw new Error('No text extracted from payroll document');
       }
 
-      // STEP 3: Process payroll data with payroll-gemini
-      console.log('🧠 STEP 3: Calling payroll-gemini function');
+      // Step 2: Process with payroll-gemini
+      console.log('🧠 Calling payroll-gemini function');
       const { data: payrollData, error: payrollError } = await supabase.functions.invoke('payroll-gemini', {
         body: {
           extractedText: docData.document.text,
@@ -182,78 +159,99 @@ export const PayrollCosts: React.FC = () => {
       });
 
       if (payrollError) {
-        console.error('❌ Payroll gemini processing error:', payrollError);
         throw new Error(`Payroll processing error: ${payrollError.message}`);
       }
 
       if (!payrollData?.success) {
-        console.error('❌ Payroll gemini failed. Response:', payrollData);
         throw new Error(payrollData?.error || 'Failed to process payroll data');
       }
 
-      console.log('✅ Payroll data extracted:', payrollData.data);
       setExtractedRecords(payrollData.data);
+      setCurrentStep('tax');
+      addNotification('success', 'Bérköltség dokumentum sikeresen feldolgozva! Most töltse fel a járulék dokumentumot.');
+      
+    } catch (error) {
+      console.error('💥 Error processing payroll file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
+      addNotification('error', `Hiba történt a bérköltség feldolgozása során: ${errorMessage}`);
+    } finally {
+      setIsProcessingPayroll(false);
+    }
+  };
 
-      // STEP 4: Process TAX document (if provided)
-      let taxAmount = 0;
-      if (taxFile) {
-        console.log('🔍 STEP 4: Converting tax file to base64 for OCR');
-        const taxBase64 = await convertFileToBase64(taxFile);
-        console.log('✅ Tax base64 conversion completed, length:', taxBase64.length);
-        
-        console.log('🤖 STEP 5: Calling process-document function for TAX');
-        const { data: taxDocData, error: taxDocError } = await supabase.functions.invoke('process-document', {
-          body: {
-            document: {
-              content: taxBase64,
-              mimeType: taxFile.type,
-            },
-          },
-        });
+  const processTaxFile = async (file: File) => {
+    console.log('🚀 Processing tax file:', file.name);
+    setIsProcessingTax(true);
+    
+    try {
+      // Get user for file upload
+      const { data: user } = await supabase.auth.getUser();
+      const userId = user?.user?.id;
+      
+      // Upload tax file to storage
+      console.log('📤 Uploading tax file to storage');
+      const taxFileName = `${userId}/${Date.now()}_${file.name}`;
+      const { data: taxUpload, error: taxUploadError } = await supabase.storage
+        .from('tax-documents')
+        .upload(taxFileName, file);
 
-        if (taxDocError) {
-          console.error('❌ Tax document processing error:', taxDocError);
-          throw new Error(`Tax document processing error: ${taxDocError.message}`);
-        }
-
-        console.log('✅ Tax OCR completed. Response:', taxDocData);
-        if (!taxDocData?.document?.text) {
-          console.error('❌ No text extracted from tax document. Response:', taxDocData);
-          throw new Error('No text extracted from tax document');
-        }
-
-        console.log('🧠 STEP 6: Calling tax-gemini function');
-        const { data: taxData, error: taxError } = await supabase.functions.invoke('tax-gemini', {
-          body: {
-            extractedText: taxDocData.document.text,
-            organization: 'Alapítvány'
-          }
-        });
-
-        if (taxError) {
-          console.error('❌ Tax gemini processing error:', taxError);
-          addNotification('error', 'Járulék dokumentum feldolgozása sikertelen, de a bérköltségek sikeresen feldolgozva.');
-        } else if (taxData?.success) {
-          taxAmount = taxData.data.totalTaxAmount;
-          setExtractedTaxAmount(taxAmount);
-          console.log('✅ Tax amount extracted:', taxAmount);
-          addNotification('success', `Járulék összeg kinyerve: ${formatCurrency(taxAmount)}`);
-        } else {
-          console.error('❌ Tax gemini failed. Response:', taxData);
-        }
-      } else {
-        console.log('ℹ️ No tax file provided - skipping tax processing');
+      if (taxUploadError) {
+        throw new Error('Tax file upload failed: ' + taxUploadError.message);
       }
 
-      console.log('🎉 Processing completed successfully');
-      addNotification('success', 'Dokumentumok sikeresen feldolgozva!');
+      setCurrentTaxFileUrl(taxUpload.path);
+
+      // Convert to base64 for OCR
+      console.log('🔍 Converting tax file to base64 for OCR');
+      const taxBase64 = await convertFileToBase64(file);
+      
+      // Step 1: OCR with process-document
+      console.log('🤖 Calling process-document function for tax');
+      const { data: taxDocData, error: taxDocError } = await supabase.functions.invoke('process-document', {
+        body: {
+          document: {
+            content: taxBase64,
+            mimeType: file.type,
+          },
+        },
+      });
+
+      if (taxDocError) {
+        throw new Error(`Tax document processing error: ${taxDocError.message}`);
+      }
+
+      if (!taxDocData?.document?.text) {
+        throw new Error('No text extracted from tax document');
+      }
+
+      // Step 2: Process with tax-gemini
+      console.log('🧠 Calling tax-gemini function');
+      const { data: taxData, error: taxError } = await supabase.functions.invoke('tax-gemini', {
+        body: {
+          extractedText: taxDocData.document.text,
+          organization: 'Alapítvány'
+        }
+      });
+
+      if (taxError) {
+        throw new Error(`Tax processing error: ${taxError.message}`);
+      }
+
+      if (taxData?.success) {
+        const taxAmount = taxData.data.totalTaxAmount;
+        setExtractedTaxAmount(taxAmount);
+        setCurrentStep('complete');
+        addNotification('success', `Járulék dokumentum sikeresen feldolgozva! Összeg: ${formatCurrency(taxAmount)}`);
+      } else {
+        throw new Error(taxData?.error || 'Failed to process tax data');
+      }
+      
     } catch (error) {
-      console.error('💥 Error processing files:', error);
+      console.error('💥 Error processing tax file:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
-      addNotification('error', `Hiba történt a feldolgozás során: ${errorMessage}`);
+      addNotification('error', `Hiba történt a járulék feldolgozása során: ${errorMessage}`);
     } finally {
-      console.log('🏁 Processing finished, setting isProcessing to false');
-      setIsProcessing(false);
+      setIsProcessingTax(false);
     }
   };
 
@@ -321,6 +319,7 @@ export const PayrollCosts: React.FC = () => {
       if (summaryError) throw summaryError;
 
       addNotification('success', 'Bérköltség adatok sikeresen mentve!');
+      // Clear form
       setExtractedRecords([]);
       setExtractedTaxAmount(0);
       setCurrentPayrollFileUrl('');
@@ -336,6 +335,7 @@ export const PayrollCosts: React.FC = () => {
         URL.revokeObjectURL(taxPreview);
         setTaxPreview('');
       }
+      setCurrentStep('payroll');
       await loadPayrollSummaries();
     } catch (error) {
       console.error('Error saving payroll records:', error);
@@ -608,55 +608,128 @@ export const PayrollCosts: React.FC = () => {
           Bérköltségek és Járulékok
         </h2>
         <p className="text-gray-600 text-sm sm:text-base">
-          Töltsd fel a havi bérköltségeket és járulékokat. A rendszer automatikusan felismeri az adatokat.
+          Töltsd fel a havi bérköltségeket és járulékokat lépésről lépésre. A rendszer automatikusan felismeri az adatokat.
         </p>
       </div>
 
-      {/* Dual Upload Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-          <Upload className="h-5 w-5 mr-2 text-blue-600" />
-          Dokumentum feltöltés
-        </h3>
-        
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">{/* Changed from lg to xl for better spacing */}
-          {/* Payroll Upload */}
-          <div className="space-y-4">
-            <h4 className="text-md font-medium text-gray-900">Bérek</h4>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <FileImage className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-              <div className="space-y-2">
-                <label htmlFor="payroll-upload" className="cursor-pointer">
-                  <span className="text-sm text-gray-600">
-                    Bérköltség dokumentum (JPG, PNG, PDF)
-                  </span>
-                  <input
-                    id="payroll-upload"
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={handlePayrollFileUpload}
-                    disabled={isProcessing}
-                    className="hidden"
-                  />
-                </label>
-                <div>
-                  <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                    disabled={isProcessing}
-                    onClick={() => document.getElementById('payroll-upload')?.click()}
-                  >
-                    <Upload className="h-4 w-4" />
-                    Fájl kiválasztása
-                  </button>
+      {/* Step-by-Step Upload Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
+        {/* Progress Steps */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center space-x-4">
+            {/* Step 1 - Payroll */}
+            <div className="flex items-center">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                currentStep === 'payroll' ? 'bg-blue-600 text-white' : 
+                (currentStep === 'tax' || currentStep === 'complete') ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+              }`}>
+                1
+              </div>
+              <span className={`ml-2 text-sm font-medium ${
+                currentStep === 'payroll' ? 'text-blue-600' : 
+                (currentStep === 'tax' || currentStep === 'complete') ? 'text-green-600' : 'text-gray-500'
+              }`}>
+                Bérek feltöltése
+              </span>
+            </div>
+            
+            {/* Arrow */}
+            <div className="w-8 h-px bg-gray-300"></div>
+            
+            {/* Step 2 - Tax */}
+            <div className="flex items-center">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                currentStep === 'tax' ? 'bg-blue-600 text-white' : 
+                currentStep === 'complete' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+              }`}>
+                2
+              </div>
+              <span className={`ml-2 text-sm font-medium ${
+                currentStep === 'tax' ? 'text-blue-600' : 
+                currentStep === 'complete' ? 'text-green-600' : 'text-gray-500'
+              }`}>
+                Járulékok feltöltése
+              </span>
+            </div>
+            
+            {/* Arrow */}
+            <div className="w-8 h-px bg-gray-300"></div>
+            
+            {/* Step 3 - Complete */}
+            <div className="flex items-center">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                currentStep === 'complete' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+              }`}>
+                3
+              </div>
+              <span className={`ml-2 text-sm font-medium ${
+                currentStep === 'complete' ? 'text-green-600' : 'text-gray-500'
+              }`}>
+                Kész
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 1: Payroll Upload */}
+        {currentStep === 'payroll' && (
+          <div className="max-w-2xl mx-auto text-center">
+            <h3 className="text-2xl font-semibold text-gray-900 mb-4">
+              1. Bérköltség dokumentum feltöltése
+            </h3>
+            <p className="text-gray-600 mb-8">
+              Töltse fel a havi bérköltség dokumentumot. A rendszer automatikusan feldolgozza és kinyeri az adatokat.
+            </p>
+            
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 hover:border-blue-400 transition-colors bg-gray-50">
+              <div className="mx-auto max-w-sm">
+                <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-gray-900">Bérköltség dokumentum</h4>
+                  <p className="text-sm text-gray-600">JPG, PNG vagy PDF fájl</p>
+                  
+                  {!payrollFile ? (
+                    <div>
+                      <label htmlFor="payroll-upload" className="cursor-pointer">
+                        <input
+                          id="payroll-upload"
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={handlePayrollFileUpload}
+                          disabled={isProcessingPayroll}
+                          className="hidden"
+                        />
+                        <div className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 inline-flex items-center gap-2 font-medium">
+                          <Upload className="h-5 w-5" />
+                          Fájl kiválasztása
+                        </div>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {isProcessingPayroll ? (
+                        <div className="flex items-center justify-center space-x-2 text-blue-600">
+                          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <span className="font-medium">Feldolgozás folyamatban...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center space-x-2 text-green-600">
+                          <CheckCircle2 className="h-5 w-5" />
+                          <span className="font-medium">Sikeres feldolgozás!</span>
+                        </div>
+                      )}
+                      <p className="text-sm text-gray-600">{payrollFile.name}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-            
+
             {/* Payroll Preview */}
             {payrollPreview && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
-                <div className="w-full h-96 overflow-hidden rounded border border-gray-200 bg-white">
+              <div className="mt-8 p-6 bg-white rounded-xl border border-gray-200">
+                <h5 className="text-lg font-medium text-gray-900 mb-4">Dokumentum előnézet</h5>
+                <div className="w-full h-96 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                   {payrollFile?.type.startsWith('image/') ? (
                     <img 
                       src={payrollPreview} 
@@ -678,44 +751,67 @@ export const PayrollCosts: React.FC = () => {
               </div>
             )}
           </div>
+        )}
 
-          {/* Tax Upload */}
-          <div className="space-y-4">
-            <h4 className="text-md font-medium text-gray-900">Járulékok</h4>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <FileImage className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-              <div className="space-y-2">
-                <label htmlFor="tax-upload" className="cursor-pointer">
-                  <span className="text-sm text-gray-600">
-                    Járulék dokumentum (JPG, PNG, PDF)
-                  </span>
-                  <input
-                    id="tax-upload"
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={handleTaxFileUpload}
-                    disabled={isProcessing}
-                    className="hidden"
-                  />
-                </label>
-                <div>
-                  <button
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                    disabled={isProcessing}
-                    onClick={() => document.getElementById('tax-upload')?.click()}
-                  >
-                    <Upload className="h-4 w-4" />
-                    Fájl kiválasztása
-                  </button>
+        {/* Step 2: Tax Upload */}
+        {currentStep === 'tax' && (
+          <div className="max-w-2xl mx-auto text-center">
+            <h3 className="text-2xl font-semibold text-gray-900 mb-4">
+              2. Járulék dokumentum feltöltése
+            </h3>
+            <p className="text-gray-600 mb-8">
+              Töltse fel a járulék dokumentumot. A rendszer automatikusan feldolgozza és kinyeri a járulék összeget.
+            </p>
+            
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 hover:border-purple-400 transition-colors bg-gray-50">
+              <div className="mx-auto max-w-sm">
+                <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-gray-900">Járulék dokumentum</h4>
+                  <p className="text-sm text-gray-600">JPG, PNG vagy PDF fájl</p>
+                  
+                  {!taxFile ? (
+                    <div>
+                      <label htmlFor="tax-upload" className="cursor-pointer">
+                        <input
+                          id="tax-upload"
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={handleTaxFileUpload}
+                          disabled={isProcessingTax}
+                          className="hidden"
+                        />
+                        <div className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 inline-flex items-center gap-2 font-medium">
+                          <Upload className="h-5 w-5" />
+                          Fájl kiválasztása
+                        </div>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {isProcessingTax ? (
+                        <div className="flex items-center justify-center space-x-2 text-purple-600">
+                          <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                          <span className="font-medium">Feldolgozás folyamatban...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center space-x-2 text-green-600">
+                          <CheckCircle2 className="h-5 w-5" />
+                          <span className="font-medium">Sikeres feldolgozás!</span>
+                        </div>
+                      )}
+                      <p className="text-sm text-gray-600">{taxFile.name}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-            
+
             {/* Tax Preview */}
             {taxPreview && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
-                <div className="w-full h-96 overflow-hidden rounded border border-gray-200 bg-white">
+              <div className="mt-8 p-6 bg-white rounded-xl border border-gray-200">
+                <h5 className="text-lg font-medium text-gray-900 mb-4">Dokumentum előnézet</h5>
+                <div className="w-full h-96 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                   {taxFile?.type.startsWith('image/') ? (
                     <img 
                       src={taxPreview} 
@@ -736,69 +832,64 @@ export const PayrollCosts: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Option to skip tax document */}
+            <div className="mt-8">
+              <button
+                onClick={() => setCurrentStep('complete')}
+                className="text-gray-600 hover:text-gray-800 text-sm font-medium underline"
+              >
+                Átugrás (csak bérköltségek mentése)
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Debug Section - Remove this after testing */}
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h4 className="font-semibold text-yellow-800 mb-2">Debug Info:</h4>
-          <p className="text-sm text-yellow-700">
-            Payroll File: {payrollFile ? `✅ ${payrollFile.name}` : '❌ No file selected'}
-          </p>
-          <p className="text-sm text-yellow-700">
-            Tax File: {taxFile ? `✅ ${taxFile.name}` : '❌ No file selected (optional)'}
-          </p>
-          <p className="text-sm text-yellow-700">
-            Is Processing: {isProcessing ? '✅ Yes' : '❌ No'}
-          </p>
-          <p className="text-sm text-yellow-700">
-            Button Disabled: {(!payrollFile || isProcessing) ? '✅ Yes' : '❌ No'}
-          </p>
-        </div>
+        {/* Step 3: Complete */}
+        {currentStep === 'complete' && (
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="mb-8">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                Feldolgozás befejezve!
+              </h3>
+              <p className="text-gray-600">
+                {taxFile ? 'Mindkét dokumentum sikeresen feldolgozva.' : 'Bérköltség dokumentum sikeresen feldolgozva.'} Most mentheti az adatokat.
+              </p>
+            </div>
 
-        {/* Process Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🔥 BUTTON CLICKED! Event:', e);
-              console.log('🔥 Button state check:', { 
-                payrollFile: !!payrollFile, 
-                payrollFileName: payrollFile?.name,
-                isProcessing,
-                disabled: !payrollFile || isProcessing 
-              });
-              if (!payrollFile) {
-                console.log('❌ No payroll file - button should be disabled');
-                return;
-              }
-              if (isProcessing) {
-                console.log('❌ Already processing - button should be disabled');
-                return;
-              }
-              console.log('✅ Calling processFiles...');
-              processFiles();
-            }}
-            disabled={!payrollFile || isProcessing}
-            className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 text-lg font-medium"
-          >
-            {isProcessing ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Feldolgozás...
-              </>
-            ) : (
-              <>
-                <Play className="h-5 w-5" />
-                Indítás
-              </>
-            )}
-          </button>
-        </div>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => {
+                  setCurrentStep('payroll');
+                  setPayrollFile(null);
+                  setTaxFile(null);
+                  setExtractedRecords([]);
+                  setExtractedTaxAmount(0);
+                  if (payrollPreview) URL.revokeObjectURL(payrollPreview);
+                  if (taxPreview) URL.revokeObjectURL(taxPreview);
+                  setPayrollPreview('');
+                  setTaxPreview('');
+                }}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Új feltöltés
+              </button>
+              <button
+                onClick={saveRecords}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center gap-2"
+              >
+                <Save className="h-5 w-5" />
+                Adatok mentése
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Extracted Records Table */}
+      {/* Results Section - Only show when we have extracted records */}
       {extractedRecords.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -806,18 +897,20 @@ export const PayrollCosts: React.FC = () => {
               <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
               Kinyert bérköltség adatok
               {extractedTaxAmount > 0 && (
-                <span className="ml-3 text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                <span className="ml-3 text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
                   Járulék: {formatCurrency(extractedTaxAmount)}
                 </span>
               )}
             </h3>
-            <button
-              onClick={saveRecords}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Adatok mentése
-            </button>
+            {currentStep === 'complete' && (
+              <button
+                onClick={saveRecords}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Adatok mentése
+              </button>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -1011,32 +1104,32 @@ export const PayrollCosts: React.FC = () => {
                       <span className="text-sm text-gray-900">{summary.record_count}</span>
                     </td>
                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                            title="Részletek megtekintése"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                            Részletek
-                          </button>
-                          <button
-                            onClick={() => downloadFiles(summary)}
-                            className="text-green-600 hover:text-green-800 flex items-center gap-1"
-                            title="Dokumentumok letöltése"
-                          >
-                            <Upload className="h-4 w-4" />
-                            Letöltés
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirmSummary(summary)}
-                            className="text-red-600 hover:text-red-800 flex items-center gap-1"
-                            title="Teljes havi összesítő törlése"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Törlés
-                          </button>
-                        </div>
+                       <div className="flex gap-2">
+                         <button
+                           onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
+                           className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                           title="Részletek megtekintése"
+                         >
+                           <CheckCircle2 className="h-4 w-4" />
+                           Részletek
+                         </button>
+                         <button
+                           onClick={() => downloadFiles(summary)}
+                           className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                           title="Dokumentumok letöltése"
+                         >
+                           <Upload className="h-4 w-4" />
+                           Letöltés
+                         </button>
+                         <button
+                           onClick={() => setDeleteConfirmSummary(summary)}
+                           className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                           title="Teljes havi összesítő törlése"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                           Törlés
+                         </button>
+                       </div>
                      </td>
                   </tr>
                 ))}
@@ -1085,124 +1178,120 @@ export const PayrollCosts: React.FC = () => {
                         Dátum
                       </th>
                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                         Bérleti költség?
-                       </th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                         Műveletek
-                       </th>
+                        Bérleti költség?
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Műveletek
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                     {viewingRecords.map((record) => (
-                       <tr key={record.id} className="hover:bg-gray-50">
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="text"
-                               value={editingRecord?.employeeName || ''}
-                               onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="text"
-                               value={editingRecord?.projectCode || ''}
-                               onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="number"
-                               value={editingRecord?.amount || 0}
-                               onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="date"
-                               value={editingRecord?.date || ''}
-                               onChange={(e) => updateEditingRecord('date', e.target.value)}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm text-gray-900">{record.date}</span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="checkbox"
-                               checked={editingRecord?.isRental || false}
-                               onChange={(e) => updateEditingRecord('isRental', e.target.checked)}
-                               className="w-4 h-4"
-                             />
-                           ) : (
-                             <span className="text-sm">
-                               {record.isRental ? '✅' : '❌'}
-                             </span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <div className="flex gap-2">
-                               <button
-                                 onClick={saveEditedRecord}
-                                 className="text-green-600 hover:text-green-800"
-                                 title="Mentés"
-                               >
-                                 <Save className="h-4 w-4" />
-                               </button>
-                               <button
-                                 onClick={cancelEditingRecord}
-                                 className="text-gray-600 hover:text-gray-800"
-                                 title="Mégse"
-                               >
-                                 <X className="h-4 w-4" />
-                               </button>
-                             </div>
-                           ) : (
-                             <div className="flex gap-2">
-                               <button
-                                 onClick={() => startEditingRecord(record)}
-                                 className="text-blue-600 hover:text-blue-800"
-                                 title="Szerkesztés"
-                               >
-                                 <Edit3 className="h-4 w-4" />
-                               </button>
-                               <button
-                                 onClick={() => setDeleteConfirmRecord(record)}
-                                 className="text-red-600 hover:text-red-800"
-                                 title="Törlés"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </button>
-                             </div>
-                           )}
-                         </td>
-                       </tr>
+                    {viewingRecords.map((record) => (
+                      <tr key={record.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="text"
+                              value={editingRecord?.employeeName || ''}
+                              onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
+                              className="w-full p-1 border rounded"
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="text"
+                              value={editingRecord?.projectCode || ''}
+                              onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
+                              className="w-full p-1 border rounded"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="number"
+                              value={editingRecord?.amount || 0}
+                              onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
+                              className="w-full p-1 border rounded"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="date"
+                              value={editingRecord?.date || ''}
+                              onChange={(e) => updateEditingRecord('date', e.target.value)}
+                              className="w-full p-1 border rounded"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-900">{record.date}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="checkbox"
+                              checked={editingRecord?.isRental || false}
+                              onChange={(e) => updateEditingRecord('isRental', e.target.checked)}
+                              className="w-4 h-4"
+                            />
+                          ) : (
+                            <span className="text-sm">
+                              {record.isRental ? '✅' : '❌'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={saveEditedRecord}
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <Save className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={cancelEditingRecord}
+                                className="text-gray-600 hover:text-gray-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => startEditingRecord(record)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmRecord(record)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
-          </div>
-        )}
+        </div>
+      )}
 
         {/* Delete Record Confirmation Modal */}
         {deleteConfirmRecord && (
@@ -1213,48 +1302,35 @@ export const PayrollCosts: React.FC = () => {
                   <AlertTriangle className="h-6 w-6 text-red-600" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-lg font-medium text-gray-900">Bérköltség rekord törlése</h3>
+                  <h3 className="text-lg font-medium text-gray-900">Rekord törlése</h3>
                 </div>
               </div>
               
               <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-4">
-                  Biztosan törölni szeretné ezt a bérköltség rekordot? Ez a művelet nem vonható vissza.
+                <p className="text-sm text-gray-500">
+                  Biztosan törölni szeretné ezt a bérköltség rekordot?
                 </p>
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-900">{deleteConfirmRecord.employeeName}</p>
-                  <p className="text-xs text-gray-500">
-                    {deleteConfirmRecord.projectCode && `Munkaszám: ${deleteConfirmRecord.projectCode}`}
-                    {` • Összeg: ${formatCurrency(deleteConfirmRecord.amount)}`}
-                    {` • Dátum: ${deleteConfirmRecord.date}`}
-                  </p>
+                  <p className="text-sm text-gray-600">{formatCurrency(deleteConfirmRecord.amount)} - {deleteConfirmRecord.date}</p>
                 </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+              <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setDeleteConfirmRecord(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                   disabled={deleting}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   Mégse
                 </button>
                 <button
                   onClick={() => handleDeleteRecord(deleteConfirmRecord)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
                   disabled={deleting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
                 >
-                  {deleting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Törlés...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4" />
-                      <span>Törlés</span>
-                    </>
-                  )}
+                  {deleting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                  Törlés
                 </button>
               </div>
             </div>
@@ -1275,49 +1351,42 @@ export const PayrollCosts: React.FC = () => {
               </div>
               
               <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-4">
-                  Biztosan törölni szeretné a teljes havi bérköltség összesítőt? Ez törölni fogja az összes kapcsolódó bérköltség rekordot és a havi összesítőt is. Ez a művelet nem vonható vissza.
+                <p className="text-sm text-gray-500">
+                  Biztosan törölni szeretné ezt a havi bérköltség összesítőt és az összes kapcsolódó rekordot?
                 </p>
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-900">
-                    {formatMonth(deleteConfirmSummary.year, deleteConfirmSummary.month)} - {deleteConfirmSummary.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda'}
+                    {formatMonth(deleteConfirmSummary.year, deleteConfirmSummary.month)} - {deleteConfirmSummary.organization}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {`Rekordok száma: ${deleteConfirmSummary.record_count} db`}
-                    {` • Összeg: ${formatCurrency(deleteConfirmSummary.total_payroll)}`}
+                  <p className="text-sm text-gray-600">
+                    {deleteConfirmSummary.record_count} rekord - {formatCurrency(deleteConfirmSummary.total_payroll)}
                   </p>
                 </div>
+                <p className="text-xs text-red-600 mt-2">
+                  ⚠️ Ez a művelet nem vonható vissza!
+                </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+              <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setDeleteConfirmSummary(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                   disabled={deleting}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   Mégse
                 </button>
                 <button
                   onClick={() => handleDeleteMonthlyPayroll(deleteConfirmSummary)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
                   disabled={deleting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
                 >
-                  {deleting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Törlés...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4" />
-                      <span>Törlés</span>
-                    </>
-                  )}
+                  {deleting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                  Összes törlése
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
-    );
-  };
+    </div>
+  );
+};
