@@ -169,7 +169,7 @@ export const PayrollCosts: React.FC = () => {
       }
 
       if (taxData?.success) {
-        setTaxAmount(taxData.data.totalTaxAmount || 0);
+        setTaxAmount(taxData.totalTaxAmount || 0);
         setShowTaxModal(false);
         setStep('confirm');
         addNotification('success', 'Adóadatok sikeresen kinyerve!');
@@ -291,6 +291,11 @@ export const PayrollCosts: React.FC = () => {
 
       addNotification('success', 'Bérköltség adatok sikeresen mentve!');
       setExtractedRecords([]);
+      setUploadedPayrollFile(null);
+      setPayrollFileUrl('');
+      setTaxAmount(0);
+      setStep('upload');
+      setShowTaxModal(false);
       await loadPayrollSummaries();
     } catch (error) {
       console.error('Error saving payroll records:', error);
