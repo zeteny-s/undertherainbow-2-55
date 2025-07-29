@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2 } from 'lucide-react';
+import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
@@ -32,6 +32,9 @@ export const PayrollCosts: React.FC = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<PayrollRecord | null>(null);
+  const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<PayrollRecord | null>(null);
+  const [deleteConfirmSummary, setDeleteConfirmSummary] = useState<PayrollSummary | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [payrollSummaries, setPayrollSummaries] = useState<PayrollSummary[]>([]);
   const [viewingRecords, setViewingRecords] = useState<PayrollRecord[]>([]);
   const [viewingMonth, setViewingMonth] = useState<string>('');
@@ -219,18 +222,16 @@ export const PayrollCosts: React.FC = () => {
     }
   };
 
-  const deleteRecord = async (recordId: string, employeeName: string) => {
-    const isConfirmed = window.confirm(
-      `Biztosan törölni szeretnéd ezt a bérköltség rekordot?\n\nAlkalmazott: ${employeeName}\n\nEz a művelet nem visszavonható.`
-    );
-    
-    if (!isConfirmed) return;
+  const handleDeleteRecord = async (record: PayrollRecord) => {
+    if (!record.id) return;
     
     try {
+      setDeleting(true);
+      
       const { error } = await supabase
         .from('payroll_records')
         .delete()
-        .eq('id', recordId);
+        .eq('id', record.id);
 
       if (error) throw error;
 
@@ -245,35 +246,27 @@ export const PayrollCosts: React.FC = () => {
         const org = viewingRecords[0]?.organization || 'alapitvany';
         viewMonthlyRecords(year, month, org);
       }
+      
+      setDeleteConfirmRecord(null);
     } catch (error) {
       console.error('Error deleting record:', error);
       addNotification('error', 'Hiba történt a rekord törlése során');
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const deleteMonthlyPayroll = async (year: number, month: number, organization: string, recordCount: number, totalAmount: number) => {
-    const monthName = new Intl.DateTimeFormat('hu-HU', { month: 'long' }).format(new Date(year, month - 1));
-    
-    const isConfirmed = window.confirm(
-      `Biztosan törölni szeretnéd a teljes havi bérköltség összesítőt?\n\n` +
-      `Hónap: ${year}. ${monthName}\n` +
-      `Szervezet: ${organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda'}\n` +
-      `Rekordok száma: ${recordCount} db\n` +
-      `Összeg: ${formatCurrency(totalAmount)}\n\n` +
-      `Ez törölni fogja az összes kapcsolódó bérköltség rekordot és a havi összesítőt is.\n` +
-      `Ez a művelet nem visszavonható!`
-    );
-    
-    if (!isConfirmed) return;
-    
+  const handleDeleteMonthlyPayroll = async (summary: PayrollSummary) => {
     try {
+      setDeleting(true);
+      
       // First delete all payroll records for this month/year/organization
       const { error: recordsError } = await supabase
         .from('payroll_records')
         .delete()
-        .eq('organization', organization)
-        .gte('record_date', `${year}-${month.toString().padStart(2, '0')}-01`)
-        .lt('record_date', `${year}-${(month + 1).toString().padStart(2, '0')}-01`);
+        .eq('organization', summary.organization)
+        .gte('record_date', `${summary.year}-${summary.month.toString().padStart(2, '0')}-01`)
+        .lt('record_date', `${summary.year}-${(summary.month + 1).toString().padStart(2, '0')}-01`);
 
       if (recordsError) throw recordsError;
 
@@ -281,9 +274,9 @@ export const PayrollCosts: React.FC = () => {
       const { error: summaryError } = await supabase
         .from('payroll_summaries')
         .delete()
-        .eq('year', year)
-        .eq('month', month)
-        .eq('organization', organization);
+        .eq('year', summary.year)
+        .eq('month', summary.month)
+        .eq('organization', summary.organization);
 
       if (summaryError) throw summaryError;
 
@@ -298,14 +291,18 @@ export const PayrollCosts: React.FC = () => {
         const currentYear = parseInt(currentMonth[0]);
         const currentMonthNum = parseInt(currentMonth[1]);
         
-        if (currentYear === year && currentMonthNum === month) {
+        if (currentYear === summary.year && currentMonthNum === summary.month) {
           setViewingRecords([]);
           setViewingMonth('');
         }
       }
+      
+      setDeleteConfirmSummary(null);
     } catch (error) {
       console.error('Error deleting monthly payroll:', error);
       addNotification('error', 'Hiba történt a havi bérköltség törlése során');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -642,7 +639,7 @@ export const PayrollCosts: React.FC = () => {
                            Részletek
                          </button>
                          <button
-                           onClick={() => deleteMonthlyPayroll(summary.year, summary.month, summary.organization, summary.record_count, summary.total_payroll)}
+                           onClick={() => setDeleteConfirmSummary(summary)}
                            className="text-red-600 hover:text-red-800 flex items-center gap-1"
                            title="Teljes havi összesítő törlése"
                          >
@@ -798,7 +795,7 @@ export const PayrollCosts: React.FC = () => {
                                  <Edit3 className="h-4 w-4" />
                                </button>
                                <button
-                                 onClick={() => deleteRecord(record.id!, record.employeeName)}
+                                 onClick={() => setDeleteConfirmRecord(record)}
                                  className="text-red-600 hover:text-red-800"
                                  title="Törlés"
                                >
@@ -814,8 +811,123 @@ export const PayrollCosts: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+          </div>
+        )}
+
+        {/* Delete Record Confirmation Modal */}
+        {deleteConfirmRecord && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Bérköltség rekord törlése</h3>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-500 mb-4">
+                  Biztosan törölni szeretné ezt a bérköltség rekordot? Ez a művelet nem vonható vissza.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm font-medium text-gray-900">{deleteConfirmRecord.employeeName}</p>
+                  <p className="text-xs text-gray-500">
+                    {deleteConfirmRecord.projectCode && `Munkaszám: ${deleteConfirmRecord.projectCode}`}
+                    {` • Összeg: ${formatCurrency(deleteConfirmRecord.amount)}`}
+                    {` • Dátum: ${deleteConfirmRecord.date}`}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={() => setDeleteConfirmRecord(null)}
+                  disabled={deleting}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Mégse
+                </button>
+                <button
+                  onClick={() => handleDeleteRecord(deleteConfirmRecord)}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Törlés...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      <span>Törlés</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Monthly Summary Confirmation Modal */}
+        {deleteConfirmSummary && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Havi bérköltség összesítő törlése</h3>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-500 mb-4">
+                  Biztosan törölni szeretné a teljes havi bérköltség összesítőt? Ez törölni fogja az összes kapcsolódó bérköltség rekordot és a havi összesítőt is. Ez a művelet nem vonható vissza.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatMonth(deleteConfirmSummary.year, deleteConfirmSummary.month)} - {deleteConfirmSummary.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {`Rekordok száma: ${deleteConfirmSummary.record_count} db`}
+                    {` • Összeg: ${formatCurrency(deleteConfirmSummary.total_payroll)}`}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={() => setDeleteConfirmSummary(null)}
+                  disabled={deleting}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Mégse
+                </button>
+                <button
+                  onClick={() => handleDeleteMonthlyPayroll(deleteConfirmSummary)}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Törlés...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      <span>Törlés</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
