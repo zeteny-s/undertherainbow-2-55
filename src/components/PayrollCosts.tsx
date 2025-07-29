@@ -871,69 +871,85 @@ export const PayrollCosts: React.FC = () => {
             </div>
             
             <div className="p-6">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Alkalmazott neve
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Munkaszám
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Összeg (HUF)
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dátum
-                      </th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                         Bérleti költség?
-                       </th>
-                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                         Műveletek
-                       </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                     {viewingRecords.map((record) => (
-                       <tr key={record.id} className="hover:bg-gray-50">
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="text"
-                               value={editingRecord?.employeeName || ''}
-                               onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="text"
-                               value={editingRecord?.projectCode || ''}
-                               onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="number"
-                               value={editingRecord?.amount || 0}
-                               onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
-                           )}
-                         </td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Alkalmazott neve
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Munkaszám
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Összeg (HUF)
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ebből Járulékok (HUF)
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Dátum
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Bérleti költség?
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Műveletek
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {viewingRecords.map((record) => {
+                    // Find the summary for this month to get tax_amount
+                    const currentSummary = payrollSummaries.find(s => 
+                      s.year === parseInt(viewingMonth.split('.')[0]) && 
+                      s.month === parseInt(viewingMonth.split('.')[1])
+                    );
+                    const monthlyTaxAmount = currentSummary?.tax_amount || 0;
+                    const totalPayrollForMonth = viewingRecords.reduce((sum, r) => sum + r.amount, 0);
+                    const employeeTaxShare = totalPayrollForMonth > 0 ? (record.amount * monthlyTaxAmount) / totalPayrollForMonth : 0;
+
+                    return (
+                      <tr key={record.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="text"
+                              value={editingRecord?.employeeName || ''}
+                              onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
+                              className="w-full p-1 border rounded"
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="text"
+                              value={editingRecord?.projectCode || ''}
+                              onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
+                              className="w-full p-1 border rounded"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingRecordId === record.id ? (
+                            <input
+                              type="number"
+                              value={editingRecord?.amount || 0}
+                              onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
+                              className="w-full p-1 border rounded"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">{formatCurrency(employeeTaxShare)}</span>
+                        </td>
                          <td className="px-6 py-4 whitespace-nowrap">
                            {editingRecordId === record.id ? (
                              <input
@@ -997,8 +1013,9 @@ export const PayrollCosts: React.FC = () => {
                              </div>
                            )}
                          </td>
-                       </tr>
-                    ))}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
