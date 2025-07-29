@@ -114,9 +114,9 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Fetch payroll summaries to include tax in total costs
-      const { data: payrollSummaries, error: payrollError } = await supabase
-        .from('payroll_summaries')
+      // Fetch payroll records
+      const { data: payrollRecords, error: payrollError } = await supabase
+        .from('payroll_records')
         .select('*');
 
       if (payrollError) throw payrollError;
@@ -131,12 +131,14 @@ export const Dashboard: React.FC = () => {
         return invDate >= thisMonth && invDate < nextMonth;
       }) || [];
 
-      const thisMonthPayroll = payrollSummaries?.filter(summary => {
-        return summary.year === now.getFullYear() && summary.month === (now.getMonth() + 1);
+      const thisMonthPayroll = payrollRecords?.filter(rec => {
+        if (!rec.record_date) return false;
+        const recDate = new Date(rec.record_date);
+        return recDate >= thisMonth && recDate < nextMonth;
       }) || [];
 
-      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0) || 0;
-      const thisMonthPayrollAmount = thisMonthPayroll.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0);
+      const totalPayrollAmount = payrollRecords?.reduce((sum, rec) => sum + (rec.amount || 0), 0) || 0;
+      const thisMonthPayrollAmount = thisMonthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
 
       const calculatedStats: Stats = {
         totalInvoices: invoices?.length || 0,
@@ -153,11 +155,11 @@ export const Dashboard: React.FC = () => {
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
 
-      const monthlyData = generateMonthlyData(invoices || [], payrollSummaries || []);
+      const monthlyData = generateMonthlyData(invoices || [], payrollRecords || []);
       const organizationData = generateOrganizationData(invoices || []);
       const paymentTypeData = generatePaymentTypeData(invoices || []);
       const weeklyTrend = weekHistoryData[0]?.data || [];
-      const expenseData = generateExpenseData(invoices || [], payrollSummaries || []);
+      const expenseData = generateExpenseData(invoices || [], payrollRecords || []);
       const topPartnersData = generateTopPartnersData(invoices || []);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
       const munkaszamData = generateMunkaszamData(invoices || []);
@@ -223,7 +225,7 @@ export const Dashboard: React.FC = () => {
     }).format(date);
   };
 
-  const generateMonthlyData = (invoices: any[], payrollSummaries: any[]) => {
+  const generateMonthlyData = (invoices: any[], payrollRecords: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
@@ -234,15 +236,17 @@ export const Dashboard: React.FC = () => {
         return date.getFullYear() === currentYear && date.getMonth() === index;
       });
 
-      const monthPayroll = payrollSummaries.filter(summary => {
-        return summary.year === currentYear && summary.month === (index + 1);
+      const monthPayroll = payrollRecords.filter(rec => {
+        if (!rec.record_date) return false;
+        const date = new Date(rec.record_date);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
       const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
       const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
       
       const invoiceAmount = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-      const payrollAmount = monthPayroll.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0);
+      const payrollAmount = monthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
       
       return {
         month,
@@ -320,7 +324,7 @@ export const Dashboard: React.FC = () => {
     });
   };
 
-  const generateExpenseData = (invoices: any[], payrollSummaries: any[]) => {
+  const generateExpenseData = (invoices: any[], payrollRecords: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
@@ -331,12 +335,14 @@ export const Dashboard: React.FC = () => {
         return date.getFullYear() === currentYear && date.getMonth() === index;
       });
 
-      const monthPayroll = payrollSummaries.filter(summary => {
-        return summary.year === currentYear && summary.month === (index + 1);
+      const monthPayroll = payrollRecords.filter(rec => {
+        if (!rec.record_date) return false;
+        const date = new Date(rec.record_date);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
       const invoiceExpenses = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-      const payrollExpenses = monthPayroll.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0);
+      const payrollExpenses = monthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
       
       return {
         month,
