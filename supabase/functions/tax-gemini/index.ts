@@ -32,13 +32,18 @@ serve(async (req) => {
 
     // Create prompt for extracting tax information
     const prompt = `
-Analyze the following Hungarian tax document and extract the total tax amount paid. 
+Analyze the following Hungarian tax document and extract the total tax amount paid and the tax period. 
 The document contains tax information (járulékok, adók) that needs to be extracted.
 
 Please extract:
 - Total tax amount (teljes járulék/adó összeg)
-- Tax period (adózási időszak) 
+- Tax period (adózási időszak) - CRITICAL: Extract the actual tax period in YYYY-MM-DD format
 - Any specific tax breakdown if available
+
+IMPORTANT for date extraction:
+- Look for tax period dates like "2025-06", "2025. 06. hónap", "2025 ÉV 06 HÓNAP", etc.
+- Convert to YYYY-MM-DD format (use the first day of the month)
+- This date should match the payroll period this tax belongs to
 
 Text to analyze:
 ${extractedText}
@@ -46,13 +51,14 @@ ${extractedText}
 Please respond with a JSON object in the following format:
 {
   "totalTaxAmount": <number>,
-  "taxPeriod": "<string>",
+  "taxPeriod": "<string in YYYY-MM-DD format>",
   "taxBreakdown": "<optional string with breakdown details>"
 }
 
 IMPORTANT: 
 - Return only valid JSON
 - totalTaxAmount must be a number (not string)
+- taxPeriod must be in YYYY-MM-DD format (first day of the tax period month)
 - If you cannot extract the tax amount, return 0
 - Extract numbers without currency symbols or formatting
 `;

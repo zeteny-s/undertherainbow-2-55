@@ -179,18 +179,28 @@ export const ManagerDashboard: React.FC = () => {
         return recDate >= thisMonth && recDate < nextMonth;
       }) || [];
 
-      const totalPayrollAmount = payrollRecords?.reduce((sum, rec) => sum + (rec.amount || 0), 0) || 0;
+      // Calculate total payroll and tax amounts from summaries
+      const totalPayrollAndTaxAmount = payrollSummaries?.reduce((sum, summary) => 
+        sum + (summary.total_payroll || 0) + ((summary as any).tax_amount || 0), 0) || 0;
       const thisMonthPayrollAmount = thisMonthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
+
+      // Find tax amount for this month from payroll summaries
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const thisMonthTaxAmount = payrollSummaries?.find(summary => 
+        summary.year === currentYear && summary.month === currentMonth
+      ) as any;
+      const thisMonthTax = thisMonthTaxAmount?.tax_amount || 0;
 
       const calculatedStats: Stats = {
         totalInvoices: invoices?.length || 0,
-        totalAmount: (invoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAmount,
+        totalAmount: (invoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAndTaxAmount,
         alapitvanyCount: invoices?.filter(inv => inv.organization === 'alapitvany').length || 0,
         ovodaCount: invoices?.filter(inv => inv.organization === 'ovoda').length || 0,
         bankTransferCount: invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
         cardCashCount: invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
         thisMonthCount: thisMonthInvoices.length,
-        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
+        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount + thisMonthTax
       };
 
       const weekHistoryData = generateWeekHistory(invoices || []);

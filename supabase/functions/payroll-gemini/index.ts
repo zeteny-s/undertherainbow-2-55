@@ -90,19 +90,21 @@ serve(async (req) => {
 
 1. Employee Name
 2. Amount (salary/payment amount in HUF, number only)
-3. Date (YYYY-MM-DD format)
+3. Date (YYYY-MM-DD format) - This should be the actual payroll period or payment date from the document
 
 Important guidelines:
 - Look for employee names that match Hungarian naming conventions
 - Extract the gross salary amount for each employee
-- Use the document date or payment date
+- CRITICAL: Extract the actual payroll period date or payment month/year from the document
+- Look for dates in formats like "2025-06", "2025. 06. hónap", "2025 ÉV 06 HÓNAP", etc.
+- Convert the period to YYYY-MM-DD format (use the first day of the month)
 - Return each employee as a separate record
-- If no specific date is found, use the first available date in the document
+- If multiple dates are found, use the payroll period date, not the document creation date
 
 Please respond with a JSON array containing objects with these fields:
 - employeeName: string
 - amount: number (no currency symbols)
-- date: string (YYYY-MM-DD format)
+- date: string (YYYY-MM-DD format, representing the payroll period)
 
 Payroll document text:
 ${extractedText}`;
