@@ -54,12 +54,8 @@ export const PayrollCosts: React.FC = () => {
   const { addNotification } = useNotifications();
 
   const createFilePreview = (file: File): string => {
-    if (file.type.startsWith('image/')) {
-      return URL.createObjectURL(file);
-    } else if (file.type === 'application/pdf') {
-      return 'PDF dokumentum: ' + file.name;
-    }
-    return file.name;
+    // Always create object URL for both images and PDFs
+    return URL.createObjectURL(file);
   };
 
   const handlePayrollFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,6 +68,11 @@ export const PayrollCosts: React.FC = () => {
       return;
     }
 
+    // Clean up previous object URL
+    if (payrollPreview) {
+      URL.revokeObjectURL(payrollPreview);
+    }
+    
     setPayrollFile(file);
     setPayrollPreview(createFilePreview(file));
   };
@@ -86,6 +87,11 @@ export const PayrollCosts: React.FC = () => {
       return;
     }
 
+    // Clean up previous object URL
+    if (taxPreview) {
+      URL.revokeObjectURL(taxPreview);
+    }
+    
     setTaxFile(file);
     setTaxPreview(createFilePreview(file));
   };
@@ -289,8 +295,15 @@ export const PayrollCosts: React.FC = () => {
       setCurrentTaxFileUrl('');
       setPayrollFile(null);
       setTaxFile(null);
-      setPayrollPreview('');
-      setTaxPreview('');
+      // Clean up object URLs to prevent memory leaks
+      if (payrollPreview) {
+        URL.revokeObjectURL(payrollPreview);
+        setPayrollPreview('');
+      }
+      if (taxPreview) {
+        URL.revokeObjectURL(taxPreview);
+        setTaxPreview('');
+      }
       await loadPayrollSummaries();
     } catch (error) {
       console.error('Error saving payroll records:', error);
@@ -611,11 +624,25 @@ export const PayrollCosts: React.FC = () => {
             {payrollPreview && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
-                {payrollFile?.type.startsWith('image/') ? (
-                  <img src={payrollPreview} alt="Payroll preview" className="max-w-full h-32 object-contain rounded" />
-                ) : (
-                  <p className="text-sm text-gray-600">{payrollPreview}</p>
-                )}
+                <div className="max-w-full h-64 overflow-hidden rounded border border-gray-200">
+                  {payrollFile?.type.startsWith('image/') ? (
+                    <img 
+                      src={payrollPreview} 
+                      alt="Payroll preview" 
+                      className="max-w-full h-full object-contain" 
+                    />
+                  ) : payrollFile?.type === 'application/pdf' ? (
+                    <iframe
+                      src={payrollPreview}
+                      className="w-full h-full border-0"
+                      title="Payroll PDF Preview"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <p>{payrollFile?.name}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -656,11 +683,25 @@ export const PayrollCosts: React.FC = () => {
             {taxPreview && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h5 className="text-sm font-medium text-gray-700 mb-2">Előnézet:</h5>
-                {taxFile?.type.startsWith('image/') ? (
-                  <img src={taxPreview} alt="Tax preview" className="max-w-full h-32 object-contain rounded" />
-                ) : (
-                  <p className="text-sm text-gray-600">{taxPreview}</p>
-                )}
+                <div className="max-w-full h-64 overflow-hidden rounded border border-gray-200">
+                  {taxFile?.type.startsWith('image/') ? (
+                    <img 
+                      src={taxPreview} 
+                      alt="Tax preview" 
+                      className="max-w-full h-full object-contain" 
+                    />
+                  ) : taxFile?.type === 'application/pdf' ? (
+                    <iframe
+                      src={taxPreview}
+                      className="w-full h-full border-0"
+                      title="Tax PDF Preview"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <p>{taxFile?.name}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
