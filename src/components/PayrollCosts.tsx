@@ -1,357 +1,933 @@
-import React, { useState } from 'react';
-import { Upload, RotateCw, Receipt } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
-import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
+import { useNotifications } from '../hooks/useNotifications';
+import { convertFileToBase64 } from '../lib/documentAI';
 
 interface PayrollRecord {
+  id?: string;
   employeeName: string;
-  projectCode: string;
+  projectCode: string | null;
   amount: number;
   date: string;
   isRental: boolean;
-  jarulek?: number; // Tax amount for each employee
+  organization: string;
 }
 
-
-interface ExtractedData {
-  records: PayrollRecord[];
-  totalPayroll: number;
-  totalTax: number;
+interface PayrollSummary {
+  id: string;
+  year: number;
+  month: number;
+  organization: string;
+  total_payroll: number;
+  rental_costs: number;
+  non_rental_costs: number;
+  record_count: number;
+  created_at: string;
 }
 
 export const PayrollCosts: React.FC = () => {
-  const [payrollFile, setPayrollFile] = useState<File | null>(null);
-  const [payrollData, setPayrollData] = useState<PayrollRecord[]>([]);
-  
-  const [isProcessingPayroll, setIsProcessingPayroll] = useState(false);
-  const [isProcessingTax, setIsProcessingTax] = useState(false);
-  const [payrollPreviewUrl, setPayrollPreviewUrl] = useState<string | null>(null);
-  const [showTaxModal, setShowTaxModal] = useState(false);
-  const [finalData, setFinalData] = useState<ExtractedData | null>(null);
-  const [payrollProcessed, setPayrollProcessed] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [extractedRecords, setExtractedRecords] = useState<PayrollRecord[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [editingRecord, setEditingRecord] = useState<PayrollRecord | null>(null);
+  const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<PayrollRecord | null>(null);
+  const [deleteConfirmSummary, setDeleteConfirmSummary] = useState<PayrollSummary | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [payrollSummaries, setPayrollSummaries] = useState<PayrollSummary[]>([]);
+  const [viewingRecords, setViewingRecords] = useState<PayrollRecord[]>([]);
+  const [viewingMonth, setViewingMonth] = useState<string>('');
+  const { addNotification } = useNotifications();
 
-
-  const handlePayrollFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log('🚀 Processing payroll file:', file.name);
-    setPayrollFile(file);
-    setPayrollPreviewUrl(URL.createObjectURL(file));
-    setIsProcessingPayroll(true);
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      addNotification('error', 'Csak JPG, PNG és PDF fájlokat lehet feltölteni.');
+      return;
+    }
 
+    setIsUploading(true);
+    
     try {
-      // Upload to storage first
-      console.log('📤 Uploading payroll file to storage');
-      const fileName = `${Date.now()}_${file.name}`;
-      const filePath = `${crypto.randomUUID()}/${fileName}`;
+      // Convert file to base64 and process with Document AI first
+      const base64Data = await convertFileToBase64(file);
       
-      const { error: uploadError } = await supabase.storage
-        .from('payroll')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw new Error(`Payroll file upload failed: ${uploadError.message}`);
-      }
-
-      // Step 1: Process with Document AI (just like invoice processing)
-      console.log('🔍 Processing with Document AI...');
-      const base64Content = await convertFileToBase64(file);
-      const extractedText = await processDocumentWithAI(base64Content, file.type);
-      
-      console.log('📄 Extracted text:', extractedText);
-
-      // Step 2: Process with Gemini (just like invoice processing)
-      console.log('🤖 Processing with Gemini AI...');
-      const { data, error } = await supabase.functions.invoke('payroll-gemini', {
+      // Send directly to payroll-gemini with document processing
+      const { data, error } = await supabase.functions.invoke('process-document', {
         body: {
-          extractedText: extractedText,
-          organization: 'auto'
-        }
+          document: {
+            content: base64Data,
+            mimeType: file.type,
+          },
+        },
       });
 
       if (error) {
-        throw new Error(`Gemini processing failed: ${error.message}`);
+        throw new Error(`Document processing error: ${error.message}`);
       }
 
-      console.log('✅ Payroll processing successful:', data);
-      setPayrollData(data.records || []);
-      setPayrollProcessed(true);
-      
-    } catch (error) {
-      console.error('💥 Error processing payroll file:', error);
-    } finally {
-      setIsProcessingPayroll(false);
-    }
-  };
-
-  const handleTaxFileUpload = async (file: File) => {
-    console.log('🚀 Processing tax file:', file.name);
-    setIsProcessingTax(true);
-
-    try {
-      // Upload to storage
-      const fileName = `${Date.now()}_${file.name}`;
-      const filePath = `${crypto.randomUUID()}/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('tax-documents')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw new Error(`Tax file upload failed: ${uploadError.message}`);
+      if (!data?.document?.text) {
+        throw new Error('No text extracted from document');
       }
 
-      // Step 1: Process with Document AI (just like invoice processing)
-      const base64Content = await convertFileToBase64(file);
-      const extractedText = await processDocumentWithAI(base64Content, file.type);
-      
-      // Step 2: Process with tax-gemini (just like invoice processing)
-      const { data, error } = await supabase.functions.invoke('tax-gemini', {
+      // Now send to payroll-gemini edge function
+      const { data: payrollData, error: payrollError } = await supabase.functions.invoke('payroll-gemini', {
         body: {
-          extractedText: extractedText,
-          organization: 'auto'
+          extractedText: data.document.text,
+          organization: 'Alapítvány' // Default, can be dynamic based on user
         }
       });
 
-      if (error) {
-        throw new Error(`Tax processing failed: ${error.message}`);
+      if (payrollError) {
+        throw new Error(`Payroll processing error: ${payrollError.message}`);
       }
 
-      console.log('✅ Tax processing successful:', data);
-      
-      // Combine data
-      const combinedData: ExtractedData = {
-        records: payrollData.map(record => ({
-          ...record,
-          jarulek: data.amount / payrollData.length // Distribute tax equally
-        })),
-        totalPayroll: payrollData.reduce((sum, record) => sum + record.amount, 0),
-        totalTax: data.amount
-      };
-      
-      setFinalData(combinedData);
-      setShowTaxModal(false);
-      
+      if (payrollData?.success) {
+        setExtractedRecords(payrollData.data);
+        addNotification('success', 'Bérköltség adatok sikeresen kinyerve!');
+      } else {
+        throw new Error(payrollData?.error || 'Ismeretlen hiba történt');
+      }
     } catch (error) {
-      console.error('💥 Error processing tax file:', error);
+      console.error('Error processing payroll file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
+      addNotification('error', `Hiba történt a feldolgozás során: ${errorMessage}`);
     } finally {
-      setIsProcessingTax(false);
+      setIsUploading(false);
     }
+  }, [addNotification]);
+
+  const updateRecord = (index: number, field: keyof PayrollRecord, value: any) => {
+    const updated = [...extractedRecords];
+    updated[index] = { ...updated[index], [field]: value };
+    setExtractedRecords(updated);
   };
 
-  const handleConfirmPayroll = () => {
-    setShowTaxModal(true);
-  };
-
-  const handleSave = async () => {
-    if (!finalData) return;
+  const saveRecords = async () => {
+    if (extractedRecords.length === 0) return;
 
     try {
-      // Get user first
+      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        throw new Error('Nem vagy bejelentkezve');
+      }
 
-      // Save payroll records
-      for (const record of finalData.records) {
-        await supabase.from('payroll_records').insert({
+      // Save individual records
+      const { error: recordsError } = await supabase
+        .from('payroll_records')
+        .insert(extractedRecords.map(record => ({
           employee_name: record.employeeName,
           project_code: record.projectCode,
           amount: record.amount,
           record_date: record.date,
           is_rental: record.isRental,
-          organization: 'auto',
+          organization: record.organization,
           uploaded_by: user.id
+        })));
+
+      if (recordsError) throw recordsError;
+
+      // Update or create monthly summary
+      const firstRecord = extractedRecords[0];
+      const recordDate = new Date(firstRecord.date);
+      const year = recordDate.getFullYear();
+      const month = recordDate.getMonth() + 1;
+
+      console.log('Creating summary for:', { year, month, organization: firstRecord.organization });
+
+      const totalPayroll = extractedRecords.reduce((sum, r) => sum + r.amount, 0);
+      const rentalCosts = extractedRecords.filter(r => r.isRental).reduce((sum, r) => sum + r.amount, 0);
+      const nonRentalCosts = totalPayroll - rentalCosts;
+
+      const { error: summaryError } = await supabase
+        .from('payroll_summaries')
+        .upsert({
+          year,
+          month,
+          organization: firstRecord.organization,
+          total_payroll: totalPayroll,
+          rental_costs: rentalCosts,
+          non_rental_costs: nonRentalCosts,
+          record_count: extractedRecords.length,
+          created_by: user.id
+        }, {
+          onConflict: 'year,month,organization'
         });
-      }
 
-      // Save summary
-      const currentDate = new Date();
-      await supabase.from('payroll_summaries').insert({
-        year: currentDate.getFullYear(),
-        month: currentDate.getMonth() + 1,
-        total_payroll: finalData.totalPayroll + finalData.totalTax,
-        rental_costs: finalData.records.filter(r => r.isRental).reduce((sum, r) => sum + r.amount, 0),
-        non_rental_costs: finalData.records.filter(r => !r.isRental).reduce((sum, r) => sum + r.amount, 0),
-        tax_amount: finalData.totalTax,
-        record_count: finalData.records.length,
-        organization: 'auto',
-        created_by: user.id
-      });
+      if (summaryError) throw summaryError;
 
-      // Reset state
-      setPayrollFile(null);
-      setPayrollData([]);
-      setFinalData(null);
-      setPayrollProcessed(false);
-      setShowTaxModal(false);
-      
+      addNotification('success', 'Bérköltség adatok sikeresen mentve!');
+      setExtractedRecords([]);
+      await loadPayrollSummaries();
     } catch (error) {
-      console.error('Error saving data:', error);
+      console.error('Error saving payroll records:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
+      addNotification('error', `Hiba történt a mentés során: ${errorMessage}`);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-card rounded-lg p-6 border">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Receipt className="h-5 w-5" />
-          Bérköltség feldolgozás
-        </h2>
+  const loadPayrollSummaries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payroll_summaries')
+        .select('*')
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+
+      if (error) throw error;
+      setPayrollSummaries(data || []);
+    } catch (error) {
+      console.error('Error loading payroll summaries:', error);
+      addNotification('error', 'Hiba történt az összesítők betöltése során');
+    }
+  };
+
+  React.useEffect(() => {
+    loadPayrollSummaries();
+  }, []);
+
+  const viewMonthlyRecords = async (year: number, month: number, organization: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('payroll_records')
+        .select('*')
+        .eq('organization', organization)
+        .gte('record_date', `${year}-${month.toString().padStart(2, '0')}-01`)
+        .lt('record_date', `${year}-${(month + 1).toString().padStart(2, '0')}-01`)
+        .order('record_date', { ascending: true });
+
+      if (error) throw error;
+      
+      const records: PayrollRecord[] = (data || []).map(record => ({
+        id: record.id,
+        employeeName: record.employee_name,
+        projectCode: record.project_code,
+        amount: record.amount,
+        date: record.record_date,
+        isRental: record.is_rental,
+        organization: record.organization
+      }));
+      
+      setViewingRecords(records);
+      setViewingMonth(`${year}.${month.toString().padStart(2, '0')}`);
+    } catch (error) {
+      console.error('Error loading monthly records:', error);
+      addNotification('error', 'Hiba történt a havi rekordok betöltése során');
+    }
+  };
+
+  const handleDeleteRecord = async (record: PayrollRecord) => {
+    if (!record.id) return;
+    
+    try {
+      setDeleting(true);
+      
+      const { error } = await supabase
+        .from('payroll_records')
+        .delete()
+        .eq('id', record.id);
+
+      if (error) throw error;
+
+      addNotification('success', 'Rekord sikeresen törölve');
+      
+      // Refresh the data
+      loadPayrollSummaries();
+      if (viewingRecords.length > 0) {
+        const currentMonth = viewingMonth.split('.');
+        const year = parseInt(currentMonth[0]);
+        const month = parseInt(currentMonth[1]);
+        const org = viewingRecords[0]?.organization || 'alapitvany';
+        viewMonthlyRecords(year, month, org);
+      }
+      
+      setDeleteConfirmRecord(null);
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      addNotification('error', 'Hiba történt a rekord törlése során');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteMonthlyPayroll = async (summary: PayrollSummary) => {
+    try {
+      setDeleting(true);
+      
+      // First delete all payroll records for this month/year/organization
+      const { error: recordsError } = await supabase
+        .from('payroll_records')
+        .delete()
+        .eq('organization', summary.organization)
+        .gte('record_date', `${summary.year}-${summary.month.toString().padStart(2, '0')}-01`)
+        .lt('record_date', `${summary.year}-${(summary.month + 1).toString().padStart(2, '0')}-01`);
+
+      if (recordsError) throw recordsError;
+
+      // Then delete the summary
+      const { error: summaryError } = await supabase
+        .from('payroll_summaries')
+        .delete()
+        .eq('year', summary.year)
+        .eq('month', summary.month)
+        .eq('organization', summary.organization);
+
+      if (summaryError) throw summaryError;
+
+      addNotification('success', 'Havi bérköltség összesítő és kapcsolódó rekordok sikeresen törölve');
+      
+      // Refresh the data
+      loadPayrollSummaries();
+      
+      // Close detail modal if it was showing the deleted month
+      if (viewingRecords.length > 0) {
+        const currentMonth = viewingMonth.split('.');
+        const currentYear = parseInt(currentMonth[0]);
+        const currentMonthNum = parseInt(currentMonth[1]);
         
-        {!payrollProcessed ? (
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+        if (currentYear === summary.year && currentMonthNum === summary.month) {
+          setViewingRecords([]);
+          setViewingMonth('');
+        }
+      }
+      
+      setDeleteConfirmSummary(null);
+    } catch (error) {
+      console.error('Error deleting monthly payroll:', error);
+      addNotification('error', 'Hiba történt a havi bérköltség törlése során');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const startEditingRecord = (record: PayrollRecord) => {
+    setEditingRecordId(record.id!);
+    setEditingRecord({ ...record });
+  };
+
+  const cancelEditingRecord = () => {
+    setEditingRecordId(null);
+    setEditingRecord(null);
+  };
+
+  const updateEditingRecord = (field: keyof PayrollRecord, value: any) => {
+    if (editingRecord) {
+      setEditingRecord({
+        ...editingRecord,
+        [field]: value
+      });
+    }
+  };
+
+  const saveEditedRecord = async () => {
+    if (!editingRecord || !editingRecordId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('payroll_records')
+        .update({
+          employee_name: editingRecord.employeeName,
+          project_code: editingRecord.projectCode,
+          amount: editingRecord.amount,
+          record_date: editingRecord.date,
+          is_rental: editingRecord.isRental,
+          organization: editingRecord.organization
+        })
+        .eq('id', editingRecordId);
+
+      if (error) throw error;
+
+      addNotification('success', 'Rekord sikeresen frissítve');
+      
+      // Refresh the data
+      loadPayrollSummaries();
+      if (viewingRecords.length > 0) {
+        const currentMonth = viewingMonth.split('.');
+        const year = parseInt(currentMonth[0]);
+        const month = parseInt(currentMonth[1]);
+        const org = viewingRecords[0]?.organization || 'alapitvany';
+        viewMonthlyRecords(year, month, org);
+      }
+      
+      cancelEditingRecord();
+    } catch (error) {
+      console.error('Error updating record:', error);
+      addNotification('error', 'Hiba történt a rekord frissítése során');
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('hu-HU', {
+      style: 'currency',
+      currency: 'HUF',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const formatMonth = (year: number, month: number) => {
+    return `${year}.${month.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+      {/* Header */}
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center">
+          <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-green-600" />
+          Bérköltségek és Járulékok
+        </h2>
+        <p className="text-gray-600 text-sm sm:text-base">
+          Töltsd fel a havi bérköltségeket. A rendszer automatikusan felismeri az adatokat és hozzárendeli a munkaszámokat.
+        </p>
+      </div>
+
+      {/* Upload Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Upload className="h-5 w-5 mr-2 text-blue-600" />
+          Fájl feltöltés
+        </h3>
+        
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+          <FileImage className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <div className="space-y-2">
             <label htmlFor="payroll-upload" className="cursor-pointer">
-              <div className="text-lg font-medium mb-2">Kattintson ide a bérszámfejtés feltöltéséhez</div>
-              <div className="text-gray-600">PDF, JPG, PNG (max. 10MB)</div>
+              <span className="text-sm text-gray-600">
+                Válassz fájlt a feltöltéshez (JPG, PNG, PDF)
+              </span>
               <input
                 id="payroll-upload"
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handlePayrollFileUpload}
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={handleFileUpload}
+                disabled={isUploading}
                 className="hidden"
               />
             </label>
+            <div>
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                disabled={isUploading}
+                onClick={() => document.getElementById('payroll-upload')?.click()}
+              >
+                {isUploading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Feldolgozás...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    Feldolgozásra küldés
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Extracted Data Column */}
-            <div className="space-y-4">
-              <h3 className="font-semibold">Kivont adatok</h3>
-              {isProcessingPayroll ? (
-                <div className="flex items-center gap-2">
-                  <RotateCw className="h-4 w-4 animate-spin" />
-                  <span>Feldolgozás...</span>
-                </div>
-              ) : payrollData.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="bg-muted p-4 rounded">
-                    <h4 className="font-medium mb-2">Dolgozók:</h4>
-                    {payrollData.map((record, index) => (
-                      <div key={index} className="text-sm border-b pb-1 mb-1">
-                        <span className="font-medium">{record.employeeName}</span> - 
-                        <span className="text-green-600 font-medium"> {record.amount.toLocaleString()} Ft</span>
-                        {record.isRental && <span className="text-orange-500 ml-2">(Kölcsönzött)</span>}
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={handleConfirmPayroll}
-                    className="w-full bg-primary text-primary-foreground py-2 px-4 rounded hover:bg-primary/90"
-                  >
-                    Rendben
-                  </button>
-                </div>
-              ) : (
-                <div className="text-gray-500">Nincs feldolgozott adat</div>
-              )}
+        </div>
+      </div>
+
+      {/* Extracted Records Table */}
+      {extractedRecords.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
+              Kinyert bérköltség adatok
+            </h3>
+            <button
+              onClick={saveRecords}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Adatok mentése
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Alkalmazott neve
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Munkaszám
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Összeg (HUF)
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Dátum
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Bérleti költség?
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Műveletek
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {extractedRecords.map((record, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingIndex === index ? (
+                        <input
+                          type="text"
+                          value={record.employeeName}
+                          onChange={(e) => updateRecord(index, 'employeeName', e.target.value)}
+                          className="w-full p-1 border rounded"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingIndex === index ? (
+                        <input
+                          type="text"
+                          value={record.projectCode || ''}
+                          onChange={(e) => updateRecord(index, 'projectCode', e.target.value)}
+                          className="w-full p-1 border rounded"
+                        />
+                      ) : (
+                        <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingIndex === index ? (
+                        <input
+                          type="number"
+                          value={record.amount}
+                          onChange={(e) => updateRecord(index, 'amount', Number(e.target.value))}
+                          className="w-full p-1 border rounded"
+                        />
+                      ) : (
+                        <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingIndex === index ? (
+                        <input
+                          type="date"
+                          value={record.date}
+                          onChange={(e) => updateRecord(index, 'date', e.target.value)}
+                          className="w-full p-1 border rounded"
+                        />
+                      ) : (
+                        <span className="text-sm text-gray-900">{record.date}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingIndex === index ? (
+                        <input
+                          type="checkbox"
+                          checked={record.isRental}
+                          onChange={(e) => updateRecord(index, 'isRental', e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                      ) : (
+                        <span className="text-sm">
+                          {record.isRental ? '✅' : '❌'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {editingIndex === index ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setEditingIndex(null)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            <Save className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setEditingIndex(null)}
+                            className="text-gray-600 hover:text-gray-800"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setEditingIndex(index)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Monthly Summaries */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+            <Calendar className="h-5 w-5 mr-2 text-purple-600" />
+            Havi bérköltség összesítők
+          </h3>
+        </div>
+
+        <div className="overflow-x-auto">
+          {payrollSummaries.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">Még nincsenek mentett bérköltség adatok</p>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Hónap
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Összes bérköltség
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Bérleti költségek
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nem bérleti
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rekordok száma
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Műveletek
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {payrollSummaries.map((summary) => (
+                  <tr key={summary.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatMonth(summary.year, summary.month)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{formatCurrency(summary.total_payroll)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{formatCurrency(summary.rental_costs)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{formatCurrency(summary.non_rental_costs)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{summary.record_count}</span>
+                    </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <div className="flex gap-2">
+                         <button
+                           onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
+                           className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                           title="Részletek megtekintése"
+                         >
+                           <CheckCircle2 className="h-4 w-4" />
+                           Részletek
+                         </button>
+                         <button
+                           onClick={() => setDeleteConfirmSummary(summary)}
+                           className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                           title="Teljes havi összesítő törlése"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                           Törlés
+                         </button>
+                       </div>
+                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Monthly Records Detail Modal */}
+      {viewingRecords.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Bérköltség részletek - {viewingMonth}
+                </h3>
+                <button
+                  onClick={() => {
+                    setViewingRecords([]);
+                    setViewingMonth('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
             </div>
             
-            {/* Document Preview Column */}
-            <div className="space-y-4">
-              <h3 className="font-semibold">Dokumentum előnézet</h3>
-              {payrollPreviewUrl && (
-                <div className="border rounded">
-                  {payrollFile?.type === 'application/pdf' ? (
-                    <iframe src={payrollPreviewUrl} className="w-full h-96" />
-                  ) : (
-                    <img src={payrollPreviewUrl} alt="Preview" className="w-full h-96 object-contain" />
-                  )}
+            <div className="p-6">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Alkalmazott neve
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Munkaszám
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Összeg (HUF)
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Dátum
+                      </th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                         Bérleti költség?
+                       </th>
+                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                         Műveletek
+                       </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                     {viewingRecords.map((record) => (
+                       <tr key={record.id} className="hover:bg-gray-50">
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="text"
+                               value={editingRecord?.employeeName || ''}
+                               onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="text"
+                               value={editingRecord?.projectCode || ''}
+                               onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="number"
+                               value={editingRecord?.amount || 0}
+                               onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="date"
+                               value={editingRecord?.date || ''}
+                               onChange={(e) => updateEditingRecord('date', e.target.value)}
+                               className="w-full p-1 border rounded"
+                             />
+                           ) : (
+                             <span className="text-sm text-gray-900">{record.date}</span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <input
+                               type="checkbox"
+                               checked={editingRecord?.isRental || false}
+                               onChange={(e) => updateEditingRecord('isRental', e.target.checked)}
+                               className="w-4 h-4"
+                             />
+                           ) : (
+                             <span className="text-sm">
+                               {record.isRental ? '✅' : '❌'}
+                             </span>
+                           )}
+                         </td>
+                         <td className="px-6 py-4 whitespace-nowrap">
+                           {editingRecordId === record.id ? (
+                             <div className="flex gap-2">
+                               <button
+                                 onClick={saveEditedRecord}
+                                 className="text-green-600 hover:text-green-800"
+                                 title="Mentés"
+                               >
+                                 <Save className="h-4 w-4" />
+                               </button>
+                               <button
+                                 onClick={cancelEditingRecord}
+                                 className="text-gray-600 hover:text-gray-800"
+                                 title="Mégse"
+                               >
+                                 <X className="h-4 w-4" />
+                               </button>
+                             </div>
+                           ) : (
+                             <div className="flex gap-2">
+                               <button
+                                 onClick={() => startEditingRecord(record)}
+                                 className="text-blue-600 hover:text-blue-800"
+                                 title="Szerkesztés"
+                               >
+                                 <Edit3 className="h-4 w-4" />
+                               </button>
+                               <button
+                                 onClick={() => setDeleteConfirmRecord(record)}
+                                 className="text-red-600 hover:text-red-800"
+                                 title="Törlés"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </button>
+                             </div>
+                           )}
+                         </td>
+                       </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          </div>
+        )}
+
+        {/* Delete Record Confirmation Modal */}
+        {deleteConfirmRecord && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
                 </div>
-              )}
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Bérköltség rekord törlése</h3>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-500 mb-4">
+                  Biztosan törölni szeretné ezt a bérköltség rekordot? Ez a művelet nem vonható vissza.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm font-medium text-gray-900">{deleteConfirmRecord.employeeName}</p>
+                  <p className="text-xs text-gray-500">
+                    {deleteConfirmRecord.projectCode && `Munkaszám: ${deleteConfirmRecord.projectCode}`}
+                    {` • Összeg: ${formatCurrency(deleteConfirmRecord.amount)}`}
+                    {` • Dátum: ${deleteConfirmRecord.date}`}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={() => setDeleteConfirmRecord(null)}
+                  disabled={deleting}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Mégse
+                </button>
+                <button
+                  onClick={() => handleDeleteRecord(deleteConfirmRecord)}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Törlés...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      <span>Törlés</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Monthly Summary Confirmation Modal */}
+        {deleteConfirmSummary && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Havi bérköltség összesítő törlése</h3>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-500 mb-4">
+                  Biztosan törölni szeretné a teljes havi bérköltség összesítőt? Ez törölni fogja az összes kapcsolódó bérköltség rekordot és a havi összesítőt is. Ez a művelet nem vonható vissza.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatMonth(deleteConfirmSummary.year, deleteConfirmSummary.month)} - {deleteConfirmSummary.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {`Rekordok száma: ${deleteConfirmSummary.record_count} db`}
+                    {` • Összeg: ${formatCurrency(deleteConfirmSummary.total_payroll)}`}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={() => setDeleteConfirmSummary(null)}
+                  disabled={deleting}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Mégse
+                </button>
+                <button
+                  onClick={() => handleDeleteMonthlyPayroll(deleteConfirmSummary)}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Törlés...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      <span>Törlés</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Tax Document Modal */}
-      {showTaxModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Járulék dokumentum feltöltése</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <label htmlFor="tax-upload" className="cursor-pointer">
-                <div className="font-medium mb-1">Járulék dokumentum feltöltése</div>
-                <div className="text-sm text-gray-600">PDF, JPG, PNG (max. 10MB)</div>
-                <input
-                  id="tax-upload"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleTaxFileUpload(file);
-                  }}
-                  className="hidden"
-                />
-              </label>
-            </div>
-            {isProcessingTax && (
-              <div className="mt-4 flex items-center gap-2 justify-center">
-                <RotateCw className="h-4 w-4 animate-spin" />
-                <span>Feldolgozás...</span>
-              </div>
-            )}
-            <button
-              onClick={() => setShowTaxModal(false)}
-              className="mt-4 w-full bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400"
-            >
-              Mégse
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Final Results */}
-      {finalData && (
-        <div className="bg-card rounded-lg p-6 border mt-6">
-          <h3 className="text-lg font-semibold mb-4">Végső eredmény</h3>
-          <div className="space-y-4">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border">
-                <thead>
-                  <tr className="bg-muted">
-                    <th className="border p-2 text-left">Dolgozó</th>
-                    <th className="border p-2 text-left">Projektkód</th>
-                    <th className="border p-2 text-right">Bér</th>
-                    <th className="border p-2 text-right">Járulékok</th>
-                    <th className="border p-2 text-left">Típus</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {finalData.records.map((record, index) => (
-                    <tr key={index}>
-                      <td className="border p-2">{record.employeeName}</td>
-                      <td className="border p-2">{record.projectCode}</td>
-                      <td className="border p-2 text-right">{record.amount.toLocaleString()} Ft</td>
-                      <td className="border p-2 text-right">{record.jarulek?.toLocaleString()} Ft</td>
-                      <td className="border p-2">{record.isRental ? 'Kölcsönzött' : 'Alkalmazott'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-muted font-semibold">
-                    <td className="border p-2" colSpan={2}>Összesen:</td>
-                    <td className="border p-2 text-right">{finalData.totalPayroll.toLocaleString()} Ft</td>
-                    <td className="border p-2 text-right">{finalData.totalTax.toLocaleString()} Ft</td>
-                    <td className="border p-2 text-right font-bold">
-                      {(finalData.totalPayroll + finalData.totalTax).toLocaleString()} Ft
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            
-            <button
-              onClick={handleSave}
-              className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
-            >
-              Mentés és hozzáadás az előzményekhez
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+    );
+  };

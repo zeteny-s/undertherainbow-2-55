@@ -223,11 +223,8 @@ export type Database = {
           month: number
           non_rental_costs: number
           organization: string
-          payroll_file_url: string | null
           record_count: number
           rental_costs: number
-          tax_amount: number
-          tax_file_url: string | null
           total_payroll: number
           updated_at: string
           year: number
@@ -239,11 +236,8 @@ export type Database = {
           month: number
           non_rental_costs?: number
           organization: string
-          payroll_file_url?: string | null
           record_count?: number
           rental_costs?: number
-          tax_amount?: number
-          tax_file_url?: string | null
           total_payroll?: number
           updated_at?: string
           year: number
@@ -255,11 +249,8 @@ export type Database = {
           month?: number
           non_rental_costs?: number
           organization?: string
-          payroll_file_url?: string | null
           record_count?: number
           rental_costs?: number
-          tax_amount?: number
-          tax_file_url?: string | null
           total_payroll?: number
           updated_at?: string
           year?: number

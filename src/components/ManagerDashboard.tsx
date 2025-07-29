@@ -41,7 +41,7 @@ interface ChartData {
   weeklyExpenseTrend: Array<{ day: string; date: string; amount: number }>;
   munkaszamData: Array<{ munkaszam: string; count: number; amount: number; color: string }>;
   categoryData: Array<{ category: string; count: number; amount: number; color: string }>;
-  payrollOverTimeData: Array<{ month: string; rental: number; nonRental: number; tax: number; total: number }>;
+  payrollOverTimeData: Array<{ month: string; rental: number; nonRental: number; total: number }>;
   payrollByProjectData: Array<{ munkaszam: string; amount: number; color: string }>;
   rentalVsNonRentalData: Array<{ name: string; value: number; color: string }>;
 }
@@ -149,18 +149,12 @@ export const ManagerDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Fetch payroll records and summaries
+      // Fetch payroll records
       const { data: payrollRecords, error: payrollError } = await supabase
         .from('payroll_records')
         .select('*');
 
       if (payrollError) throw payrollError;
-
-      const { data: payrollSummaries, error: summariesError } = await supabase
-        .from('payroll_summaries')
-        .select('*');
-
-      if (summariesError) throw summariesError;
 
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -208,7 +202,7 @@ export const ManagerDashboard: React.FC = () => {
       
       // Generate payroll charts data
       
-      const payrollOverTimeData = generatePayrollOverTimeData(payrollRecords || [], payrollSummaries || []);
+      const payrollOverTimeData = generatePayrollOverTimeData(payrollRecords || []);
       const payrollByProjectData = generatePayrollByProjectData(payrollRecords || []);
       const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords || []);
 
@@ -572,17 +566,11 @@ export const ManagerDashboard: React.FC = () => {
   };
 
   // Generate payroll over time data
-  const generatePayrollOverTimeData = (payrollRecords: any[], payrollSummaries: any[]) => {
+  const generatePayrollOverTimeData = (payrollRecords: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
     return months.map((month, index) => {
-      // Get tax amount from summaries
-      const monthSummary = payrollSummaries.find(summary => 
-        summary.year === currentYear && summary.month === (index + 1)
-      );
-      const taxAmount = monthSummary?.tax_amount || 0;
-      
       const monthPayroll = payrollRecords.filter(rec => {
         if (!rec.record_date) return false;
         const date = new Date(rec.record_date);
@@ -601,8 +589,7 @@ export const ManagerDashboard: React.FC = () => {
         month,
         rental: rentalAmount,
         nonRental: nonRentalAmount,
-        tax: taxAmount,
-        total: rentalAmount + nonRentalAmount + taxAmount
+        total: rentalAmount + nonRentalAmount
       };
     });
   };
@@ -1669,7 +1656,7 @@ export const ManagerDashboard: React.FC = () => {
                 onChange={(e) => setPayrollFilter(e.target.value as 'both' | 'rental' | 'nonRental')}
                 className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white"
               >
-                <option value="both">Összes</option>
+                <option value="both">Mindkettő</option>
                 <option value="rental">Bérleti</option>
                 <option value="nonRental">Nem bérleti</option>
               </select>
@@ -1687,8 +1674,6 @@ export const ManagerDashboard: React.FC = () => {
                       return [formatCurrency(value), "Bérleti"];
                     } else if (name === "Nem bérleti díjak") {
                       return [formatCurrency(value), "Alkalmazotti"];
-                    } else if (name === "Járulékok") {
-                      return [formatCurrency(value), "Járulékok"];
                     }
                     return [formatCurrency(value), ""];
                   }}
@@ -1715,14 +1700,6 @@ export const ManagerDashboard: React.FC = () => {
                     name="Nem bérleti díjak"
                   />
                 )}
-                <Area 
-                  type="monotone" 
-                  dataKey="tax" 
-                  stroke="#8b5cf6" 
-                  fill="#8b5cf6" 
-                  fillOpacity={0.3}
-                  name="Járulékok"
-                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
