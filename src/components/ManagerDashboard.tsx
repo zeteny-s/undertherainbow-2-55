@@ -1611,132 +1611,6 @@ export const ManagerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Invoices */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-        <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-          <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-600" />
-          Legutóbbi számlák
-        </h3>
-        
-        {/* Mobile Card View */}
-        <div className="block sm:hidden space-y-3">
-          {recentInvoices.map((invoice) => (
-            <div key={invoice.id} className="border border-gray-200 rounded-lg p-3">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center space-x-2 flex-1 min-w-0">
-                  <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {invoice.file_name}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-1 ml-2">
-                  {invoice.organization === 'alapitvany' ? (
-                    <Building2 className="h-4 w-4 text-blue-800" />
-                  ) : (
-                    <GraduationCap className="h-4 w-4 text-orange-800" />
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-gray-500">Partner:</span>
-                  <p className="font-medium text-gray-900 truncate">
-                    {invoice.partner || '-'}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Összeg:</span>
-                  <p className="font-medium text-gray-900">
-                    {invoice.amount ? formatCurrency(invoice.amount) : '-'}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-gray-500">Feltöltve:</span>
-                  <p className="text-gray-900">
-                    {formatDate(invoice.uploaded_at)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fájl név
-                </th>
-                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Szervezet
-                </th>
-                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Feltöltve
-                </th>
-                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Partner
-                </th>
-                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Összeg
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {recentInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
-                        {invoice.file_name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {invoice.organization === 'alapitvany' ? (
-                        <>
-                          <Building2 className="h-4 w-4 text-blue-800 mr-2" />
-                          <span className="text-sm text-gray-900">Alapítvány</span>
-                        </>
-                      ) : (
-                        <>
-                          <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
-                          <span className="text-sm text-gray-900">Óvoda</span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(invoice.uploaded_at)}
-                  </td>
-                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {invoice.partner || '-'}
-                  </td>
-                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {invoice.amount ? formatCurrency(invoice.amount) : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {recentInvoices.length === 0 && (
-          <div className="text-center py-8">
-            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek számlák</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Kezdje el a számlák feltöltésével a "Feltöltés" menüpontban.
-            </p>
-          </div>
-        )}
-      </div>
 
       {/* All Munkaszám Modal */}
       {showAllMunkaszam && (
@@ -2066,6 +1940,133 @@ export const ManagerDashboard: React.FC = () => {
               </ResponsiveContainer>
             </div>
           </div>
+        </div>
+
+        {/* Recent Invoices */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-600" />
+            Legutóbbi számlák
+          </h3>
+          
+          {/* Mobile Card View */}
+          <div className="block sm:hidden space-y-3">
+            {recentInvoices.map((invoice) => (
+              <div key={invoice.id} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {invoice.file_name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1 ml-2">
+                    {invoice.organization === 'alapitvany' ? (
+                      <Building2 className="h-4 w-4 text-blue-800" />
+                    ) : (
+                      <GraduationCap className="h-4 w-4 text-orange-800" />
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-500">Partner:</span>
+                    <p className="font-medium text-gray-900 truncate">
+                      {invoice.partner || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Összeg:</span>
+                    <p className="font-medium text-gray-900">
+                      {invoice.amount ? formatCurrency(invoice.amount) : '-'}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Feltöltve:</span>
+                    <p className="text-gray-900">
+                      {formatDate(invoice.uploaded_at)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fájl név
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Szervezet
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Feltöltve
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Partner
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Összeg
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {recentInvoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                          {invoice.file_name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {invoice.organization === 'alapitvany' ? (
+                          <>
+                            <Building2 className="h-4 w-4 text-blue-800 mr-2" />
+                            <span className="text-sm text-gray-900">Alapítvány</span>
+                          </>
+                        ) : (
+                          <>
+                            <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
+                            <span className="text-sm text-gray-900">Óvoda</span>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(invoice.uploaded_at)}
+                    </td>
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {invoice.partner || '-'}
+                    </td>
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {invoice.amount ? formatCurrency(invoice.amount) : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {recentInvoices.length === 0 && (
+            <div className="text-center py-8">
+              <FileText className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek számlák</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Kezdje el a számlák feltöltésével a "Feltöltés" menüpontban.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
