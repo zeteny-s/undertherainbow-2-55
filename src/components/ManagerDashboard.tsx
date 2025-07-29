@@ -1671,9 +1671,9 @@ export const ManagerDashboard: React.FC = () => {
                 <Tooltip 
                   formatter={(value: number, name: string) => {
                     if (name === "Bérleti díjak") {
-                      return [`${formatCurrency(value)} Bérleti`, ""];
+                      return [formatCurrency(value), "Bérleti"];
                     } else if (name === "Nem bérleti díjak") {
-                      return [`${formatCurrency(value)} Alkalmazotti`, ""];
+                      return [formatCurrency(value), "Alkalmazotti"];
                     }
                     return [formatCurrency(value), ""];
                   }}
