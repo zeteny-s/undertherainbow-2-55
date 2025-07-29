@@ -1669,7 +1669,14 @@ export const ManagerDashboard: React.FC = () => {
                 <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
                 <YAxis stroke="#6b7280" fontSize={10} />
                 <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value), ""]}
+                  formatter={(value: number, name: string) => {
+                    if (name === "Bérleti díjak") {
+                      return [`${formatCurrency(value)} Bérleti`, ""];
+                    } else if (name === "Nem bérleti díjak") {
+                      return [`${formatCurrency(value)} Alkalmazotti`, ""];
+                    }
+                    return [formatCurrency(value), ""];
+                  }}
                   labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                   contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                 />
