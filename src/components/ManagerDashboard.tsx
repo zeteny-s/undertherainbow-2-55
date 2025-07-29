@@ -41,6 +41,10 @@ interface ChartData {
   weeklyExpenseTrend: Array<{ day: string; date: string; amount: number }>;
   munkaszamData: Array<{ munkaszam: string; count: number; amount: number; color: string }>;
   categoryData: Array<{ category: string; count: number; amount: number; color: string }>;
+  payrollOverTimeData: Array<{ month: string; rental: number; nonRental: number; total: number }>;
+  payrollByEmployeeData: Array<{ employee: string; munkaszam: string; amount: number; color: string }>;
+  payrollByProjectData: Array<{ munkaszam: string; amount: number; color: string }>;
+  rentalVsNonRentalData: Array<{ name: string; value: number; color: string }>;
 }
 
 interface WeekData {
@@ -72,7 +76,11 @@ export const ManagerDashboard: React.FC = () => {
     topPartnersData: [],
     weeklyExpenseTrend: [],
     munkaszamData: [],
-    categoryData: []
+    categoryData: [],
+    payrollOverTimeData: [],
+    payrollByEmployeeData: [],
+    payrollByProjectData: [],
+    rentalVsNonRentalData: []
   });
   const [loading, setLoading] = useState(true);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
@@ -83,6 +91,11 @@ export const ManagerDashboard: React.FC = () => {
   const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
   const { notifications, addNotification, removeNotification } = useNotifications();
   const [showAllMunkaszam, setShowAllMunkaszam] = useState(false);
+  const [payrollFilter, setPayrollFilter] = useState<'both' | 'rental' | 'nonRental'>('both');
+  const [currentEmployeeWeekIndex, setCurrentEmployeeWeekIndex] = useState(0);
+  const [employeeWeekHistory, setEmployeeWeekHistory] = useState<WeekData[]>([]);
+  const [payrollProjectFilter, setPayrollProjectFilter] = useState<'all' | string>('all');
+  const [rentalFilter, setRentalFilter] = useState<'all' | string>('all');
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
@@ -102,6 +115,34 @@ export const ManagerDashboard: React.FC = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Update charts when filters change
+  useEffect(() => {
+    const updateChartData = async () => {
+      try {
+        const { data: payrollRecords } = await supabase
+          .from('payroll_records')
+          .select('*');
+
+        if (payrollRecords) {
+          const payrollByProjectData = generatePayrollByProjectData(payrollRecords);
+          const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords);
+          const payrollByEmployeeData = generatePayrollByEmployeeData(payrollRecords);
+          
+          setChartData(prev => ({
+            ...prev,
+            payrollByProjectData,
+            rentalVsNonRentalData,
+            payrollByEmployeeData
+          }));
+        }
+      } catch (error) {
+        console.error('Error updating chart data:', error);
+      }
+    };
+
+    updateChartData();
+  }, [payrollFilter, payrollProjectFilter, rentalFilter, currentEmployeeWeekIndex]);
 
   const fetchDashboardData = async () => {
     try {
@@ -164,6 +205,15 @@ export const ManagerDashboard: React.FC = () => {
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
       const munkaszamData = generateMunkaszamData(invoices || []);
       const categoryData = generateCategoryData(invoices || []);
+      
+      // Generate payroll charts data
+      const employeeWeekHistoryData = generateEmployeeWeekHistory();
+      setEmployeeWeekHistory(employeeWeekHistoryData);
+      
+      const payrollOverTimeData = generatePayrollOverTimeData(payrollRecords || []);
+      const payrollByEmployeeData = generatePayrollByEmployeeData(payrollRecords || []);
+      const payrollByProjectData = generatePayrollByProjectData(payrollRecords || []);
+      const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords || []);
 
       setStats(calculatedStats);
       setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
@@ -176,7 +226,11 @@ export const ManagerDashboard: React.FC = () => {
         topPartnersData,
         weeklyExpenseTrend,
         munkaszamData,
-        categoryData
+        categoryData,
+        payrollOverTimeData,
+        payrollByEmployeeData,
+        payrollByProjectData,
+        rentalVsNonRentalData
       });
 
       addNotification('success', 'Adatok sikeresen frissítve');
@@ -519,6 +573,168 @@ export const ManagerDashboard: React.FC = () => {
       .sort((a, b) => b.amount - a.amount);
     
     return categoryArray;
+  };
+
+  // Generate payroll over time data
+  const generatePayrollOverTimeData = (payrollRecords: any[]) => {
+    const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+    
+    return months.map((month, index) => {
+      const monthPayroll = payrollRecords.filter(rec => {
+        if (!rec.record_date) return false;
+        const date = new Date(rec.record_date);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
+      });
+      
+      const rentalAmount = monthPayroll
+        .filter(rec => rec.is_rental)
+        .reduce((sum, rec) => sum + (rec.amount || 0), 0);
+      
+      const nonRentalAmount = monthPayroll
+        .filter(rec => !rec.is_rental)
+        .reduce((sum, rec) => sum + (rec.amount || 0), 0);
+      
+      return {
+        month,
+        rental: rentalAmount,
+        nonRental: nonRentalAmount,
+        total: rentalAmount + nonRentalAmount
+      };
+    });
+  };
+
+  // Generate employee week history
+  const generateEmployeeWeekHistory = (): WeekData[] => {
+    const weeks: WeekData[] = [];
+    const now = new Date();
+    
+    for (let i = 0; i < 12; i++) {
+      const weekStart = new Date(now);
+      const dayOfWeek = now.getDay();
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      weekStart.setDate(now.getDate() - daysToMonday - (i * 7));
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+      
+      const weekLabel = `${formatDateShort(weekStart)} - ${formatDateShort(weekEnd)}`;
+      
+      weeks.push({
+        weekStart,
+        weekEnd,
+        weekLabel,
+        data: [] // Will be populated when needed
+      });
+    }
+    
+    return weeks;
+  };
+
+  // Generate payroll by employee data
+  const generatePayrollByEmployeeData = (payrollRecords: any[]) => {
+    let filteredRecords = payrollRecords;
+    
+    const selectedWeek = employeeWeekHistory[currentEmployeeWeekIndex];
+    if (selectedWeek) {
+      filteredRecords = payrollRecords.filter(rec => {
+        if (!rec.record_date) return false;
+        const recDate = new Date(rec.record_date);
+        return recDate >= selectedWeek.weekStart && recDate <= selectedWeek.weekEnd;
+      });
+    }
+    
+    const employeeSpending: { [key: string]: { amount: number; munkaszam: string } } = {};
+    
+    filteredRecords.forEach(record => {
+      if (record.employee_name && record.amount && record.amount > 0) {
+        const employee = record.employee_name.trim();
+        const munkaszam = record.project_code || 'Nincs munkaszám';
+        
+        if (!employeeSpending[employee]) {
+          employeeSpending[employee] = { amount: 0, munkaszam };
+        }
+        employeeSpending[employee].amount += record.amount;
+      }
+    });
+    
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899'];
+    
+    return Object.entries(employeeSpending)
+      .map(([employee, data], index) => ({
+        employee: employee.length > 20 ? employee.substring(0, 20) + '...' : employee,
+        munkaszam: data.munkaszam,
+        amount: data.amount,
+        color: colors[index % colors.length]
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 10); // Top 10 employees
+  };
+
+  // Generate payroll by project data
+  const generatePayrollByProjectData = (payrollRecords: any[]) => {
+    let filteredRecords = payrollRecords;
+    
+    if (payrollProjectFilter !== 'all') {
+      const [year, month] = payrollProjectFilter.split('-');
+      filteredRecords = payrollRecords.filter(rec => {
+        if (!rec.record_date) return false;
+        const date = new Date(rec.record_date);
+        return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month);
+      });
+    }
+    
+    const projectSpending: { [key: string]: number } = {};
+    
+    filteredRecords.forEach(record => {
+      if (record.amount && record.amount > 0) {
+        const project = record.project_code || 'Nincs munkaszám';
+        if (!projectSpending[project]) {
+          projectSpending[project] = 0;
+        }
+        projectSpending[project] += record.amount;
+      }
+    });
+    
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6'];
+    
+    return Object.entries(projectSpending)
+      .filter(([, amount]) => amount > 0)
+      .map(([projekt, amount], index) => ({
+        munkaszam: projekt.length > 15 ? projekt.substring(0, 15) + '...' : projekt,
+        amount,
+        color: colors[index % colors.length]
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  };
+
+  // Generate rental vs non-rental data
+  const generateRentalVsNonRentalData = (payrollRecords: any[]) => {
+    let filteredRecords = payrollRecords;
+    
+    if (rentalFilter !== 'all') {
+      const [year, month] = rentalFilter.split('-');
+      filteredRecords = payrollRecords.filter(rec => {
+        if (!rec.record_date) return false;
+        const date = new Date(rec.record_date);
+        return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month);
+      });
+    }
+    
+    const rentalAmount = filteredRecords
+      .filter(rec => rec.is_rental)
+      .reduce((sum, rec) => sum + (rec.amount || 0), 0);
+    
+    const nonRentalAmount = filteredRecords
+      .filter(rec => !rec.is_rental)
+      .reduce((sum, rec) => sum + (rec.amount || 0), 0);
+    
+    return [
+      { name: 'Bérleti díjak', value: rentalAmount, color: '#ef4444' },
+      { name: 'Nem bérleti díjak', value: nonRentalAmount, color: '#10b981' }
+    ].filter(item => item.value > 0);
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -1628,6 +1844,230 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Payroll Charts Section */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mt-6">
+        {/* Total Payroll Over Time */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+              📈 Bérköltségek időbeli alakulása
+            </h3>
+            <div className="flex items-center space-x-2">
+              <select
+                value={payrollFilter}
+                onChange={(e) => setPayrollFilter(e.target.value as 'both' | 'rental' | 'nonRental')}
+                className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white"
+              >
+                <option value="both">Mindkettő</option>
+                <option value="rental">Bérleti</option>
+                <option value="nonRental">Nem bérleti</option>
+              </select>
+            </div>
+          </div>
+          <div className="h-48 sm:h-64 lg:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData.payrollOverTimeData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                <YAxis stroke="#6b7280" fontSize={10} />
+                <Tooltip 
+                  formatter={(value: number) => [formatCurrency(value), ""]}
+                  labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                  contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                />
+                {(payrollFilter === 'both' || payrollFilter === 'rental') && (
+                  <Area 
+                    type="monotone" 
+                    dataKey="rental" 
+                    stroke="#ef4444" 
+                    fill="#ef4444" 
+                    fillOpacity={0.3}
+                    name="Bérleti díjak"
+                  />
+                )}
+                {(payrollFilter === 'both' || payrollFilter === 'nonRental') && (
+                  <Area 
+                    type="monotone" 
+                    dataKey="nonRental" 
+                    stroke="#10b981" 
+                    fill="#10b981" 
+                    fillOpacity={0.3}
+                    name="Nem bérleti díjak"
+                  />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Payroll by Employee */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+              🧑‍💼 Alkalmazotti bérköltségek
+            </h3>
+            <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+              {employeeWeekHistory[currentEmployeeWeekIndex] && (
+                <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+                  {employeeWeekHistory[currentEmployeeWeekIndex].weekLabel}
+                </span>
+              )}
+              <div className="flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => setCurrentEmployeeWeekIndex(Math.min(employeeWeekHistory.length - 1, currentEmployeeWeekIndex + 1))}
+                  disabled={currentEmployeeWeekIndex >= employeeWeekHistory.length - 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Előző hét"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setCurrentEmployeeWeekIndex(Math.max(0, currentEmployeeWeekIndex - 1))}
+                  disabled={currentEmployeeWeekIndex <= 0}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Következő hét"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="h-48 sm:h-64 lg:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData.payrollByEmployeeData} layout="horizontal">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis type="number" stroke="#6b7280" fontSize={10} />
+                <YAxis 
+                  type="category" 
+                  dataKey="employee" 
+                  stroke="#6b7280" 
+                  fontSize={10}
+                  width={120}
+                />
+                <Tooltip 
+                  formatter={(value: number, _, props) => [
+                    formatCurrency(value), 
+                    `${props.payload.employee} (${props.payload.munkaszam})`
+                  ]}
+                  labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                  contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                />
+                <Bar dataKey="amount" radius={[0, 6, 6, 0]}>
+                  {chartData.payrollByEmployeeData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={chartData.payrollByEmployeeData[index].color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Donut Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          {/* Payroll by Project Code */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                🧮 Munkaszámok szerinti bérköltségek
+              </h3>
+              <select
+                value={payrollProjectFilter}
+                onChange={(e) => setPayrollProjectFilter(e.target.value)}
+                className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white"
+              >
+                <option value="all">Minden idő</option>
+                {Array.from({length: 12}, (_, i) => {
+                  const date = new Date();
+                  date.setMonth(date.getMonth() - i);
+                  const year = date.getFullYear();
+                  const month = date.getMonth();
+                  const monthName = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'][month];
+                  return (
+                    <option key={`${year}-${month}`} value={`${year}-${month}`}>
+                      {year} {monthName}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div className="h-48 sm:h-64 lg:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={chartData.payrollByProjectData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="amount"
+                    label={(entry) => `${entry.munkaszam}`}
+                  >
+                    {chartData.payrollByProjectData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), "Összeg"]}
+                    labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Rental vs Non-Rental Split */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                🏢 Bérleti vs Nem bérleti megoszlás
+              </h3>
+              <select
+                value={rentalFilter}
+                onChange={(e) => setRentalFilter(e.target.value)}
+                className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white"
+              >
+                <option value="all">Minden idő</option>
+                {Array.from({length: 12}, (_, i) => {
+                  const date = new Date();
+                  date.setMonth(date.getMonth() - i);
+                  const year = date.getFullYear();
+                  const month = date.getMonth();
+                  const monthName = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'][month];
+                  return (
+                    <option key={`${year}-${month}`} value={`${year}-${month}`}>
+                      {year} {monthName}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div className="h-48 sm:h-64 lg:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={chartData.rentalVsNonRentalData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    label={(entry) => `${entry.name}`}
+                  >
+                    {chartData.rentalVsNonRentalData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), "Összeg"]}
+                    labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
