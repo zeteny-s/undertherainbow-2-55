@@ -1447,12 +1447,12 @@ export const ManagerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Heti Aktivitás Chart - 5TH POSITION */}
+      {/* Heti Számla Iktatási Aktivitás Chart - 5TH POSITION */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
         <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
           <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
             <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-            Heti aktivitás
+            Heti Számla Iktatási Aktivitás
           </h3>
           <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
             {weekHistory[currentWeekIndex] && (
