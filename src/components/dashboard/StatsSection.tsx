@@ -28,7 +28,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ stats, formatCurrenc
       />
       
       <StatCard
-        title="Teljes összeg"
+        title="Teljes Kiadás"
         value={formatCurrency(stats.totalAmount)}
         icon={DollarSign}
         iconColor="text-green-600"
