@@ -41,6 +41,7 @@ export const PayrollCosts: React.FC = () => {
   
   // New states for the workflow
   const [uploadedPayrollFile, setUploadedPayrollFile] = useState<File | null>(null);
+  const [uploadedTaxFile, setUploadedTaxFile] = useState<File | null>(null);
   const [payrollFileUrl, setPayrollFileUrl] = useState<string>('');
   const [showTaxModal, setShowTaxModal] = useState(false);
   const [taxAmount, setTaxAmount] = useState<number>(0);
@@ -132,6 +133,9 @@ export const PayrollCosts: React.FC = () => {
       return;
     }
 
+    // Store the tax file
+    setUploadedTaxFile(file);
+
     setIsProcessingTax(true);
     
     try {
@@ -187,7 +191,12 @@ export const PayrollCosts: React.FC = () => {
 
 
   const saveRecords = async () => {
-    if (extractedRecords.length === 0) return;
+    if (extractedRecords.length === 0) {
+      addNotification('error', 'Nincsenek bérköltség adatok a mentéshez');
+      return;
+    }
+
+    console.log('Starting save records...');
 
     try {
       // Get current user
@@ -217,30 +226,36 @@ export const PayrollCosts: React.FC = () => {
         payrollFileUrl = publicUrl;
       }
 
-      // Upload tax file to storage (if exists from tax modal)
+      // Upload tax file to storage (if exists)
       let taxFileUrl = '';
-      const taxFileInput = document.querySelector('#tax-file-input') as HTMLInputElement;
-      if (taxFileInput?.files?.[0]) {
-        const taxFile = taxFileInput.files[0];
+      if (uploadedTaxFile) {
+        console.log('Uploading tax file to storage...');
         const firstRecord = extractedRecords[0];
         const recordDate = new Date(firstRecord.date);
         const year = recordDate.getFullYear();
         const month = recordDate.getMonth() + 1;
-        const fileName = `${year}-${month.toString().padStart(2, '0')}-tax-${Date.now()}.${taxFile.name.split('.').pop()}`;
+        const fileName = `${year}-${month.toString().padStart(2, '0')}-tax-${Date.now()}.${uploadedTaxFile.name.split('.').pop()}`;
         
         const { error: uploadError } = await supabase.storage
           .from('tax-documents')
-          .upload(fileName, taxFile);
+          .upload(fileName, uploadedTaxFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Tax file upload error:', uploadError);
+          throw uploadError;
+        }
         
         const { data: { publicUrl } } = supabase.storage
           .from('tax-documents')
           .getPublicUrl(fileName);
         taxFileUrl = publicUrl;
+        console.log('Tax file uploaded successfully:', taxFileUrl);
+      } else {
+        console.log('No tax file to upload');
       }
 
       // Save individual records
+      console.log('Saving payroll records...', extractedRecords.length);
       const { error: recordsError } = await supabase
         .from('payroll_records')
         .insert(extractedRecords.map(record => ({
@@ -255,7 +270,10 @@ export const PayrollCosts: React.FC = () => {
           file_url: payrollFileUrl || null
         })));
 
-      if (recordsError) throw recordsError;
+      if (recordsError) {
+        console.error('Records insert error:', recordsError);
+        throw recordsError;
+      }
 
       // Update or create monthly summary
       const firstRecord = extractedRecords[0];
@@ -263,7 +281,7 @@ export const PayrollCosts: React.FC = () => {
       const year = recordDate.getFullYear();
       const month = recordDate.getMonth() + 1;
 
-      console.log('Creating summary for:', { year, month, organization: firstRecord.organization });
+      console.log('Creating summary for:', { year, month, organization: firstRecord.organization, taxAmount });
 
       const totalPayroll = extractedRecords.reduce((sum, r) => sum + r.amount, 0);
       const rentalCosts = extractedRecords.filter(r => r.isRental).reduce((sum, r) => sum + r.amount, 0);
@@ -292,11 +310,13 @@ export const PayrollCosts: React.FC = () => {
       addNotification('success', 'Bérköltség adatok sikeresen mentve!');
       setExtractedRecords([]);
       setUploadedPayrollFile(null);
+      setUploadedTaxFile(null);
       setPayrollFileUrl('');
       setTaxAmount(0);
       setStep('upload');
       setShowTaxModal(false);
       await loadPayrollSummaries();
+      console.log('Save completed successfully!');
     } catch (error) {
       console.error('Error saving payroll records:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
@@ -798,6 +818,7 @@ export const PayrollCosts: React.FC = () => {
                 setStep('upload');
                 setExtractedRecords([]);
                 setUploadedPayrollFile(null);
+                setUploadedTaxFile(null);
                 setPayrollFileUrl('');
                 setTaxAmount(0);
               }}

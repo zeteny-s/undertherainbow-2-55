@@ -1756,7 +1756,7 @@ export const ManagerDashboard: React.FC = () => {
                   const month = date.getMonth();
                   const monthName = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'][month];
                   return (
-                    <option key={`${year}-${month}`} value={`${year}-${month}`}>
+                    <option key={`payroll-${year}-${month}`} value={`${year}-${month}`}>
                       {year} {monthName}
                     </option>
                   );
@@ -1808,7 +1808,7 @@ export const ManagerDashboard: React.FC = () => {
                   const month = date.getMonth();
                   const monthName = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'][month];
                   return (
-                    <option key={`${year}-${month}`} value={`${year}-${month}`}>
+                    <option key={`rental-${year}-${month}`} value={`${year}-${month}`}>
                       {year} {monthName}
                     </option>
                   );
