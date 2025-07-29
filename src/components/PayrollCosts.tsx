@@ -97,59 +97,61 @@ export const PayrollCosts: React.FC = () => {
   };
 
   const processFiles = async () => {
-    console.log('processFiles called');
+    console.log('🚀 processFiles called');
     if (!payrollFile) {
-      console.log('No payroll file selected');
+      console.log('❌ No payroll file selected');
       addNotification('error', 'Kérjük töltse fel a bérköltség dokumentumot!');
       return;
     }
 
-    console.log('Starting processing with files:', { payrollFile: payrollFile.name, taxFile: taxFile?.name });
+    console.log('✅ Starting processing with files:', { payrollFile: payrollFile.name, taxFile: taxFile?.name });
     setIsProcessing(true);
     
     try {
-      console.log('Getting user for file upload');
+      console.log('📁 Getting user for file upload');
       // Upload files to storage first
       const { data: user } = await supabase.auth.getUser();
       const userId = user?.user?.id;
-      console.log('User ID:', userId);
+      console.log('👤 User ID:', userId);
       
       // Upload payroll file
-      console.log('Uploading payroll file to storage');
+      console.log('📤 Uploading payroll file to storage');
       const payrollFileName = `${userId}/${Date.now()}_${payrollFile.name}`;
       const { data: payrollUpload, error: payrollUploadError } = await supabase.storage
         .from('payroll')
         .upload(payrollFileName, payrollFile);
 
       if (payrollUploadError) {
-        console.error('Payroll upload error:', payrollUploadError);
+        console.error('❌ Payroll upload error:', payrollUploadError);
         throw new Error('Payroll file upload failed: ' + payrollUploadError.message);
       }
 
-      console.log('Payroll file uploaded successfully:', payrollUpload.path);
+      console.log('✅ Payroll file uploaded successfully:', payrollUpload.path);
       setCurrentPayrollFileUrl(payrollUpload.path);
 
       // Upload tax file if provided
       if (taxFile) {
+        console.log('📤 Uploading tax file to storage');
         const taxFileName = `${userId}/${Date.now()}_${taxFile.name}`;
         const { data: taxUpload, error: taxUploadError } = await supabase.storage
           .from('tax-documents')
           .upload(taxFileName, taxFile);
 
         if (taxUploadError) {
+          console.error('❌ Tax upload error:', taxUploadError);
           throw new Error('Tax file upload failed: ' + taxUploadError.message);
         }
 
+        console.log('✅ Tax file uploaded successfully:', taxUpload.path);
         setCurrentTaxFileUrl(taxUpload.path);
       }
 
-      // Process payroll file
-      console.log('Converting payroll file to base64');
+      // STEP 1: Process PAYROLL document with OCR
+      console.log('🔍 STEP 1: Converting payroll file to base64 for OCR');
       const payrollBase64 = await convertFileToBase64(payrollFile);
-      console.log('Base64 conversion completed, length:', payrollBase64.length);
+      console.log('✅ Base64 conversion completed, length:', payrollBase64.length);
       
-      // Send to Document AI first
-      console.log('Calling process-document function');
+      console.log('🤖 STEP 2: Calling process-document function for PAYROLL');
       const { data: docData, error: docError } = await supabase.functions.invoke('process-document', {
         body: {
           document: {
@@ -160,17 +162,18 @@ export const PayrollCosts: React.FC = () => {
       });
 
       if (docError) {
-        console.error('Document processing error:', docError);
-        throw new Error(`Document processing error: ${docError.message}`);
+        console.error('❌ Payroll document processing error:', docError);
+        throw new Error(`Payroll document processing error: ${docError.message}`);
       }
 
-      console.log('Document processing response:', docData);
+      console.log('✅ Payroll OCR completed. Response:', docData);
       if (!docData?.document?.text) {
-        console.error('No text extracted from document. Response:', docData);
+        console.error('❌ No text extracted from payroll document. Response:', docData);
         throw new Error('No text extracted from payroll document');
       }
 
-      // Process with payroll-gemini
+      // STEP 3: Process payroll data with payroll-gemini
+      console.log('🧠 STEP 3: Calling payroll-gemini function');
       const { data: payrollData, error: payrollError } = await supabase.functions.invoke('payroll-gemini', {
         body: {
           extractedText: docData.document.text,
@@ -179,21 +182,26 @@ export const PayrollCosts: React.FC = () => {
       });
 
       if (payrollError) {
+        console.error('❌ Payroll gemini processing error:', payrollError);
         throw new Error(`Payroll processing error: ${payrollError.message}`);
       }
 
       if (!payrollData?.success) {
+        console.error('❌ Payroll gemini failed. Response:', payrollData);
         throw new Error(payrollData?.error || 'Failed to process payroll data');
       }
 
+      console.log('✅ Payroll data extracted:', payrollData.data);
       setExtractedRecords(payrollData.data);
 
-      // Process tax file if uploaded
+      // STEP 4: Process TAX document (if provided)
       let taxAmount = 0;
       if (taxFile) {
+        console.log('🔍 STEP 4: Converting tax file to base64 for OCR');
         const taxBase64 = await convertFileToBase64(taxFile);
+        console.log('✅ Tax base64 conversion completed, length:', taxBase64.length);
         
-        // Send to Document AI first
+        console.log('🤖 STEP 5: Calling process-document function for TAX');
         const { data: taxDocData, error: taxDocError } = await supabase.functions.invoke('process-document', {
           body: {
             document: {
@@ -204,14 +212,17 @@ export const PayrollCosts: React.FC = () => {
         });
 
         if (taxDocError) {
+          console.error('❌ Tax document processing error:', taxDocError);
           throw new Error(`Tax document processing error: ${taxDocError.message}`);
         }
 
+        console.log('✅ Tax OCR completed. Response:', taxDocData);
         if (!taxDocData?.document?.text) {
+          console.error('❌ No text extracted from tax document. Response:', taxDocData);
           throw new Error('No text extracted from tax document');
         }
 
-        // Process with tax-gemini
+        console.log('🧠 STEP 6: Calling tax-gemini function');
         const { data: taxData, error: taxError } = await supabase.functions.invoke('tax-gemini', {
           body: {
             extractedText: taxDocData.document.text,
@@ -220,23 +231,28 @@ export const PayrollCosts: React.FC = () => {
         });
 
         if (taxError) {
-          console.error('Tax processing error:', taxError);
+          console.error('❌ Tax gemini processing error:', taxError);
           addNotification('error', 'Járulék dokumentum feldolgozása sikertelen, de a bérköltségek sikeresen feldolgozva.');
         } else if (taxData?.success) {
           taxAmount = taxData.data.totalTaxAmount;
           setExtractedTaxAmount(taxAmount);
+          console.log('✅ Tax amount extracted:', taxAmount);
           addNotification('success', `Járulék összeg kinyerve: ${formatCurrency(taxAmount)}`);
+        } else {
+          console.error('❌ Tax gemini failed. Response:', taxData);
         }
+      } else {
+        console.log('ℹ️ No tax file provided - skipping tax processing');
       }
 
-      console.log('Processing completed successfully');
+      console.log('🎉 Processing completed successfully');
       addNotification('success', 'Dokumentumok sikeresen feldolgozva!');
     } catch (error) {
-      console.error('Error processing files:', error);
+      console.error('💥 Error processing files:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
       addNotification('error', `Hiba történt a feldolgozás során: ${errorMessage}`);
     } finally {
-      console.log('Processing finished, setting isProcessing to false');
+      console.log('🏁 Processing finished, setting isProcessing to false');
       setIsProcessing(false);
     }
   };
@@ -723,18 +739,50 @@ export const PayrollCosts: React.FC = () => {
           </div>
         </div>
 
+        {/* Debug Section - Remove this after testing */}
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h4 className="font-semibold text-yellow-800 mb-2">Debug Info:</h4>
+          <p className="text-sm text-yellow-700">
+            Payroll File: {payrollFile ? `✅ ${payrollFile.name}` : '❌ No file selected'}
+          </p>
+          <p className="text-sm text-yellow-700">
+            Tax File: {taxFile ? `✅ ${taxFile.name}` : '❌ No file selected (optional)'}
+          </p>
+          <p className="text-sm text-yellow-700">
+            Is Processing: {isProcessing ? '✅ Yes' : '❌ No'}
+          </p>
+          <p className="text-sm text-yellow-700">
+            Button Disabled: {(!payrollFile || isProcessing) ? '✅ Yes' : '❌ No'}
+          </p>
+        </div>
+
         {/* Process Button */}
         <div className="flex justify-center">
           <button
             onClick={(e) => {
-              console.log('Button clicked! Event:', e);
-              console.log('Button state check:', { payrollFile: !!payrollFile, isProcessing });
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔥 BUTTON CLICKED! Event:', e);
+              console.log('🔥 Button state check:', { 
+                payrollFile: !!payrollFile, 
+                payrollFileName: payrollFile?.name,
+                isProcessing,
+                disabled: !payrollFile || isProcessing 
+              });
+              if (!payrollFile) {
+                console.log('❌ No payroll file - button should be disabled');
+                return;
+              }
+              if (isProcessing) {
+                console.log('❌ Already processing - button should be disabled');
+                return;
+              }
+              console.log('✅ Calling processFiles...');
               processFiles();
             }}
             disabled={!payrollFile || isProcessing}
             className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 text-lg font-medium"
           >
-            <span className="hidden">Debug: payrollFile={payrollFile?.name}, isProcessing={isProcessing}</span>{/* Debug info */}
             {isProcessing ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
