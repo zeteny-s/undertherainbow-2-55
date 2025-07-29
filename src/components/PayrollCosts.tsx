@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Eye, Calendar } from 'lucide-react';
+import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
@@ -31,7 +31,6 @@ export const PayrollCosts: React.FC = () => {
   const [extractedRecords, setExtractedRecords] = useState<PayrollRecord[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [payrollSummaries, setPayrollSummaries] = useState<PayrollSummary[]>([]);
-  const [showSummaries, setShowSummaries] = useState(false);
   const { addNotification } = useNotifications();
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,6 +132,8 @@ export const PayrollCosts: React.FC = () => {
       const year = recordDate.getFullYear();
       const month = recordDate.getMonth() + 1;
 
+      console.log('Creating summary for:', { year, month, organization: firstRecord.organization });
+
       const totalPayroll = extractedRecords.reduce((sum, r) => sum + r.amount, 0);
       const rentalCosts = extractedRecords.filter(r => r.isRental).reduce((sum, r) => sum + r.amount, 0);
       const nonRentalCosts = totalPayroll - rentalCosts;
@@ -148,6 +149,8 @@ export const PayrollCosts: React.FC = () => {
           non_rental_costs: nonRentalCosts,
           record_count: extractedRecords.length,
           created_by: user.id
+        }, {
+          onConflict: 'year,month,organization'
         });
 
       if (summaryError) throw summaryError;
@@ -394,22 +397,17 @@ export const PayrollCosts: React.FC = () => {
 
       {/* Monthly Summaries */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <Calendar className="h-5 w-5 mr-2 text-purple-600" />
             Havi bérköltség összesítők
           </h3>
-          <button
-            onClick={() => setShowSummaries(!showSummaries)}
-            className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            {showSummaries ? 'Elrejtés' : 'Megtekintés'}
-          </button>
         </div>
 
-        {showSummaries && (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
+          {payrollSummaries.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">Még nincsenek mentett bérköltség adatok</p>
+          ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -454,8 +452,8 @@ export const PayrollCosts: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
