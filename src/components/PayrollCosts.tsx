@@ -766,6 +766,9 @@ export const PayrollCosts: React.FC = () => {
                     Rekordok száma
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Járulékok
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Műveletek
                   </th>
                 </tr>
@@ -789,6 +792,9 @@ export const PayrollCosts: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{summary.record_count}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{formatCurrency(summary.tax_amount)}</span>
                     </td>
                      <td className="px-6 py-4 whitespace-nowrap">
                        <div className="flex gap-2">
@@ -1019,6 +1025,9 @@ export const PayrollCosts: React.FC = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Rekordok száma
                             </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Járulékok
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white">
@@ -1044,6 +1053,11 @@ export const PayrollCosts: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="text-sm font-bold text-gray-900">
                                 {currentSummary?.record_count || 0}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-purple-600">
+                                {formatCurrency(currentSummary?.tax_amount || 0)}
                               </span>
                             </td>
                           </tr>
