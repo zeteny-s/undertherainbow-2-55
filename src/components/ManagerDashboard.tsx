@@ -1845,14 +1845,25 @@ export const ManagerDashboard: React.FC = () => {
                 Munkaszámok szerinti bérköltségek
               </h3>
               
-              <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+              <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-3 lg:space-x-4">
                 {/* View Mode Toggle */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <span className={`text-xs font-medium transition-colors ${munkaszamViewMode === 'all' ? 'text-purple-600' : 'text-gray-500'}`}>
                     Minden idő
                   </span>
                   <button
-                    onClick={() => setMunkaszamViewMode(munkaszamViewMode === 'all' ? 'monthly' : 'all')}
+                    onClick={() => {
+                      const newMode = munkaszamViewMode === 'all' ? 'monthly' : 'all';
+                      setMunkaszamViewMode(newMode);
+                      if (newMode === 'monthly') {
+                        setCurrentMunkaszamMonthIndex(0);
+                        if (monthHistory[0]) {
+                          setPayrollProjectFilter(monthHistory[0].value);
+                        }
+                      } else {
+                        setPayrollProjectFilter('all');
+                      }
+                    }}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
                       munkaszamViewMode === 'monthly' ? 'bg-purple-600' : 'bg-gray-200'
                     }`}
@@ -1870,35 +1881,37 @@ export const ManagerDashboard: React.FC = () => {
 
                 {/* Month Navigation Controls - only show in monthly mode */}
                 {munkaszamViewMode === 'monthly' && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-wrap">
                     {monthHistory[currentMunkaszamMonthIndex] && (
-                      <span className="text-xs sm:text-sm font-medium text-gray-600">
+                      <span className="text-xs sm:text-sm font-medium text-gray-600 whitespace-nowrap">
                         {monthHistory[currentMunkaszamMonthIndex].month}
                       </span>
                     )}
-                    <button
-                      onClick={() => navigateMunkaszamMonth('prev')}
-                      disabled={currentMunkaszamMonthIndex >= monthHistory.length - 1}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Előző hónap"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setShowMunkaszamMonthHistory(!showMunkaszamMonthHistory)}
-                      className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                    >
-                      <History className="h-4 w-4" />
-                      <span>Hónapok</span>
-                    </button>
-                    <button
-                      onClick={() => navigateMunkaszamMonth('next')}
-                      disabled={currentMunkaszamMonthIndex <= 0}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Következő hónap"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => navigateMunkaszamMonth('prev')}
+                        disabled={currentMunkaszamMonthIndex >= monthHistory.length - 1}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Előző hónap"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setShowMunkaszamMonthHistory(!showMunkaszamMonthHistory)}
+                        className="px-2 py-2 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-1"
+                      >
+                        <History className="h-3 w-3" />
+                        <span className="hidden sm:inline">Hónapok</span>
+                      </button>
+                      <button
+                        onClick={() => navigateMunkaszamMonth('next')}
+                        disabled={currentMunkaszamMonthIndex <= 0}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Következő hónap"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1974,14 +1987,25 @@ export const ManagerDashboard: React.FC = () => {
                 Bérleti vs Nem bérleti vs Járulékok megoszlása
               </h3>
               
-              <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+              <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-3 lg:space-x-4">
                 {/* View Mode Toggle */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <span className={`text-xs font-medium transition-colors ${rentalViewMode === 'all' ? 'text-orange-600' : 'text-gray-500'}`}>
                     Minden idő
                   </span>
                   <button
-                    onClick={() => setRentalViewMode(rentalViewMode === 'all' ? 'monthly' : 'all')}
+                    onClick={() => {
+                      const newMode = rentalViewMode === 'all' ? 'monthly' : 'all';
+                      setRentalViewMode(newMode);
+                      if (newMode === 'monthly') {
+                        setCurrentRentalMonthIndex(0);
+                        if (monthHistory[0]) {
+                          setRentalFilter(monthHistory[0].value);
+                        }
+                      } else {
+                        setRentalFilter('all');
+                      }
+                    }}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
                       rentalViewMode === 'monthly' ? 'bg-orange-600' : 'bg-gray-200'
                     }`}
@@ -1999,35 +2023,37 @@ export const ManagerDashboard: React.FC = () => {
 
                 {/* Month Navigation Controls - only show in monthly mode */}
                 {rentalViewMode === 'monthly' && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-wrap">
                     {monthHistory[currentRentalMonthIndex] && (
-                      <span className="text-xs sm:text-sm font-medium text-gray-600">
+                      <span className="text-xs sm:text-sm font-medium text-gray-600 whitespace-nowrap">
                         {monthHistory[currentRentalMonthIndex].month}
                       </span>
                     )}
-                    <button
-                      onClick={() => navigateRentalMonth('prev')}
-                      disabled={currentRentalMonthIndex >= monthHistory.length - 1}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Előző hónap"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setShowRentalMonthHistory(!showRentalMonthHistory)}
-                      className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                    >
-                      <History className="h-4 w-4" />
-                      <span>Hónapok</span>
-                    </button>
-                    <button
-                      onClick={() => navigateRentalMonth('next')}
-                      disabled={currentRentalMonthIndex <= 0}
-                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Következő hónap"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => navigateRentalMonth('prev')}
+                        disabled={currentRentalMonthIndex >= monthHistory.length - 1}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Előző hónap"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setShowRentalMonthHistory(!showRentalMonthHistory)}
+                        className="px-2 py-2 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-1"
+                      >
+                        <History className="h-3 w-3" />
+                        <span className="hidden sm:inline">Hónapok</span>
+                      </button>
+                      <button
+                        onClick={() => navigateRentalMonth('next')}
+                        disabled={currentRentalMonthIndex <= 0}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Következő hónap"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
