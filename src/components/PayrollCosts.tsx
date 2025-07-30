@@ -985,14 +985,48 @@ export const PayrollCosts: React.FC = () => {
                         </tr>
                       );
                     })}
+                   {/* Summary Row */}
+                   {viewingRecords.length > 0 && (
+                     <tr className="bg-gray-100 font-bold border-t-2 border-gray-300">
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="text-sm font-bold text-gray-900">Összesen</span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="text-sm font-bold text-gray-900">—</span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="text-sm font-bold text-gray-900">
+                           {formatCurrency(viewingRecords.reduce((sum, r) => sum + r.amount, 0))}
+                         </span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="text-sm font-bold text-gray-900">
+                           {(() => {
+                             const currentSummary = payrollSummaries.find(s => 
+                               s.year === parseInt(viewingMonth.split('.')[0]) && 
+                               s.month === parseInt(viewingMonth.split('.')[1])
+                             );
+                             return formatCurrency(currentSummary?.tax_amount || 0);
+                           })()}
+                         </span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="text-sm font-bold text-gray-900">—</span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="text-sm font-bold text-gray-900">
+                           {viewingRecords.filter(r => r.isRental).length}/{viewingRecords.length}
+                         </span>
+                       </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                         <span className="text-sm font-bold text-gray-900">—</span>
+                       </td>
+                     </tr>
+                   )}
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
-        )}
-
-        
+              
               {/* Summary Table for Current Month */}
               {viewingRecords.length > 0 && (() => {
                 const currentSummary = payrollSummaries.find(s => 
