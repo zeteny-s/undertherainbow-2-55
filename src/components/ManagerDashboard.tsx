@@ -1822,6 +1822,9 @@ export const ManagerDashboard: React.FC = () => {
                     fill="#ef4444" 
                     fillOpacity={0.3}
                     name="Bérleti díjak"
+                    animationDuration={1000}
+                    animationEasing="ease-in-out"
+                    isAnimationActive={true}
                   />
                 )}
                 {(payrollFilter === 'all' || payrollFilter === 'nonRental') && (
@@ -1832,6 +1835,9 @@ export const ManagerDashboard: React.FC = () => {
                     fill="#10b981" 
                     fillOpacity={0.3}
                     name="Nem bérleti díjak"
+                    animationDuration={1000}
+                    animationEasing="ease-in-out"
+                    isAnimationActive={true}
                   />
                 )}
                 {(payrollFilter === 'all' || payrollFilter === 'tax') && (
@@ -1842,6 +1848,9 @@ export const ManagerDashboard: React.FC = () => {
                     fill="#8b5cf6" 
                     fillOpacity={0.3}
                     name="Járulékok"
+                    animationDuration={1000}
+                    animationEasing="ease-in-out"
+                    isAnimationActive={true}
                   />
                 )}
               </AreaChart>
