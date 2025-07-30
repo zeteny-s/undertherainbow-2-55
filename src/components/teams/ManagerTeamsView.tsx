@@ -301,8 +301,8 @@ export const ManagerTeamsView: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6 relative">
-      {/* Coming Soon Overlay - fixed to only cover content area, not sidebar */}
-      <div className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm z-10 flex items-center justify-center pointer-events-auto">
+      {/* Coming Soon Overlay - fixed to cover full content area */}
+      <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-10 flex items-center justify-center pointer-events-auto">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-xl max-w-md text-center">
           <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
