@@ -538,19 +538,31 @@ export const PayrollCosts: React.FC = () => {
               <h4 className="font-medium text-gray-900">Dokumentum előnézet</h4>
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 {uploadedPayrollFile.type === 'application/pdf' ? (
-                  <div className="h-96 bg-gray-100 flex items-center justify-center">
-                    <div className="text-center">
+                  <div className="min-h-96 bg-gray-100 flex flex-col items-center justify-center p-4">
+                    <div className="text-center mb-4">
                       <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600">PDF dokumentum</p>
+                      <p className="text-gray-600 font-medium">PDF dokumentum</p>
                       <p className="text-sm text-gray-500">{uploadedPayrollFile.name}</p>
+                    </div>
+                    {/* PDF Viewer */}
+                    <div className="w-full">
+                      <iframe
+                        src={payrollFileUrl}
+                        title="PDF előnézet"
+                        className="w-full h-[600px] border-0 rounded"
+                        style={{ minHeight: '600px' }}
+                      />
                     </div>
                   </div>
                 ) : (
-                  <img 
-                    src={payrollFileUrl} 
-                    alt="Bérköltség dokumentum" 
-                    className="w-full h-96 object-contain bg-gray-50"
-                  />
+                  <div className="bg-gray-50 p-4">
+                    <img 
+                      src={payrollFileUrl} 
+                      alt="Bérköltség dokumentum" 
+                      className="w-full max-w-none h-auto object-contain mx-auto"
+                      style={{ maxHeight: 'none' }}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -1014,6 +1026,70 @@ export const PayrollCosts: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+              
+              {/* Summary Table for Current Month */}
+              {viewingRecords.length > 0 && (() => {
+                const currentSummary = payrollSummaries.find(s => 
+                  s.year === parseInt(viewingMonth.split('.')[0]) && 
+                  s.month === parseInt(viewingMonth.split('.')[1])
+                );
+                
+                return (
+                  <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Havi összesítő</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow-sm">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Hónap
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Összes bérköltség
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Bérleti költségek
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Nem bérleti
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Rekordok száma
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white">
+                          <tr>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-medium text-gray-900">{viewingMonth}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-blue-600">
+                                {formatCurrency(currentSummary?.total_payroll || 0)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-green-600">
+                                {formatCurrency(currentSummary?.rental_costs || 0)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-orange-600">
+                                {formatCurrency(currentSummary?.non_rental_costs || 0)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-gray-900">
+                                {currentSummary?.record_count || 0}
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
           </div>
