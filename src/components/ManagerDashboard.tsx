@@ -1797,28 +1797,11 @@ export const ManagerDashboard: React.FC = () => {
           <div className="h-48 sm:h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart 
-                data={chartData.payrollOverTimeData} 
-                animationDuration={2000}
-                animationEasing="ease-in-out"
-                animationBegin={0}
-                isAnimationActive={true}
+                data={chartData.payrollOverTimeData}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="month" 
-                  stroke="#6b7280" 
-                  fontSize={10}
-                  animationDuration={1800}
-                  animationEasing="ease-in-out"
-                />
-                <YAxis 
-                  stroke="#6b7280" 
-                  fontSize={10}
-                  domain={[0, 'auto']}
-                  allowDataOverflow={false}
-                  animationDuration={1800}
-                  animationEasing="ease-in-out"
-                />
+                <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                <YAxis stroke="#6b7280" fontSize={10} />
                 <Tooltip 
                   formatter={(value: number, name: string) => {
                     if (name === "Bérleti díjak") {
@@ -1830,53 +1813,38 @@ export const ManagerDashboard: React.FC = () => {
                     }
                     return [formatCurrency(value), ""];
                   }}
-                  labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                   contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                  animationDuration={600}
-                  animationEasing="ease-in-out"
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="rental" 
-                  stroke="#ef4444" 
-                  fill="#ef4444" 
-                  fillOpacity={(payrollFilter === 'all' || payrollFilter === 'rental') ? 0.3 : 0}
-                  strokeOpacity={(payrollFilter === 'all' || payrollFilter === 'rental') ? 1 : 0}
-                  name="Bérleti díjak"
-                  animationDuration={2000}
-                  animationEasing="ease-in-out"
-                  isAnimationActive={true}
-                  dot={false}
-                  activeDot={payrollFilter === 'all' || payrollFilter === 'rental'}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="nonRental" 
-                  stroke="#10b981" 
-                  fill="#10b981" 
-                  fillOpacity={(payrollFilter === 'all' || payrollFilter === 'nonRental') ? 0.3 : 0}
-                  strokeOpacity={(payrollFilter === 'all' || payrollFilter === 'nonRental') ? 1 : 0}
-                  name="Nem bérleti díjak"
-                  animationDuration={2000}
-                  animationEasing="ease-in-out"
-                  isAnimationActive={true}
-                  dot={false}
-                  activeDot={payrollFilter === 'all' || payrollFilter === 'nonRental'}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="tax" 
-                  stroke="#8b5cf6" 
-                  fill="#8b5cf6" 
-                  fillOpacity={(payrollFilter === 'all' || payrollFilter === 'tax') ? 0.3 : 0}
-                  strokeOpacity={(payrollFilter === 'all' || payrollFilter === 'tax') ? 1 : 0}
-                  name="Járulékok"
-                  animationDuration={2000}
-                  animationEasing="ease-in-out"
-                  isAnimationActive={true}
-                  dot={false}
-                  activeDot={payrollFilter === 'all' || payrollFilter === 'tax'}
-                />
+                {(payrollFilter === 'all' || payrollFilter === 'rental') && (
+                  <Area 
+                    type="monotone" 
+                    dataKey="rental" 
+                    stroke="#ef4444" 
+                    fill="#ef4444" 
+                    fillOpacity={0.3}
+                    name="Bérleti díjak"
+                  />
+                )}
+                {(payrollFilter === 'all' || payrollFilter === 'nonRental') && (
+                  <Area 
+                    type="monotone" 
+                    dataKey="nonRental" 
+                    stroke="#10b981" 
+                    fill="#10b981" 
+                    fillOpacity={0.3}
+                    name="Nem bérleti díjak"
+                  />
+                )}
+                {(payrollFilter === 'all' || payrollFilter === 'tax') && (
+                  <Area 
+                    type="monotone" 
+                    dataKey="tax" 
+                    stroke="#8b5cf6" 
+                    fill="#8b5cf6" 
+                    fillOpacity={0.3}
+                    name="Járulékok"
+                  />
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>
