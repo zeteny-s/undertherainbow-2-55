@@ -135,7 +135,7 @@ Could be:
 
 Important guidelines:
 - Szervezet: Must be exactly "Alapítvány" or "Óvoda" based on the document content
-- Partner: Include the company formation (Kft., Bt., Zrt., etc.) in the name
+- Partner: Include the company formation (Kft., Bt., Zrt., etc.) in the name, but if there is no company formation than just only the name. 
 - Bankszámlaszám: Only include if it's a bank transfer payment
 - Tárgy: The first product/service mentioned in the invoice
 - Összeg: Number only, no currency symbols
@@ -157,6 +157,13 @@ You should categorizes the invoices as well, based on the bought service(s) and 
 
 
 For bank transfer invoices always look for "Fizetési Határidő". There are kártya/készpénz/utánvét/online invoices where the "Számla Kelte" is not defined, in this case, there is only going to be one date on the invoice in the format YYYY-MM-DD, use this date as the "Számla Kelte". 
+
+For the partner never write "Feketerigó Alapítvány" or "Feketerigó Alapítványi Óvoda", thats never going to be the partner we are looking for, if either of this is stated as partener get the name of the other company for the partner section. All the invoices are for our companies "Feketerigó Alapítvány" or "Feketerigó Alapítványi Óvoda" so the paartner from our point of view will always be a different company. 
+
+There are invoices in EUR currency in this case when look for a amount after something like: "(MNB árfolyam: X Ft), bruttó összeg: Y Ft. " It will be like this, there is always going to be a larger HUF currency number in the invoice, we need that.
+
+
+For the company formations, if you see "Korlátolt Felelősségű Társaság" write "Kft.", if you see "Nyilvánosan Működő Részvénytársaság" write "Nyrt.", if you see "Betéti Társaság" write "Bt.", if you see "Zártkörűen Működő Részvénytársaság" write "Zrt.", if you see "Egyéni Vállalkozó" write "Ev.". I need the shortened version of the company formations so if you see the shortened version use that, but it should always follow the same format: Kft., Bt., Ev., Zrt., Nyrt.. The first letter is captial and then lowercase. If you see no company formation next to the name then only write the name without any company formation. 
 
 Please respond with a JSON object containing the extracted data. Use null for missing values.
 
