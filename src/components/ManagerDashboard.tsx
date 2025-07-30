@@ -716,18 +716,27 @@ export const ManagerDashboard: React.FC = () => {
   // Generate month history for navigation
   const generateMonthHistory = () => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-12
     
-    const history = months.map((month, index) => ({
-      month: month,
-      value: `${currentYear}-${index}`
-    }));
+    // Generate months from January current year to current month (in reverse order, most recent first)
+    const history = [];
+    for (let month = currentMonth; month >= 1; month--) {
+      const monthIndex = month - 1; // 0-11 for month names
+      history.push({
+        month: `${months[monthIndex]} ${currentYear}`,
+        value: `${currentYear}.${month.toString().padStart(2, '0')}`
+      });
+    }
     
     setMonthHistory(history);
   };
 
   // Month navigation functions
   const navigateMunkaszamMonth = (direction: 'prev' | 'next') => {
+    // 'prev' = left arrow = go to past months (higher index)
+    // 'next' = right arrow = go to future months (lower index)
     if (direction === 'prev' && currentMunkaszamMonthIndex < monthHistory.length - 1) {
       const newIndex = currentMunkaszamMonthIndex + 1;
       setCurrentMunkaszamMonthIndex(newIndex);
@@ -740,6 +749,8 @@ export const ManagerDashboard: React.FC = () => {
   };
 
   const navigateRentalMonth = (direction: 'prev' | 'next') => {
+    // 'prev' = left arrow = go to past months (higher index)
+    // 'next' = right arrow = go to future months (lower index)
     if (direction === 'prev' && currentRentalMonthIndex < monthHistory.length - 1) {
       const newIndex = currentRentalMonthIndex + 1;
       setCurrentRentalMonthIndex(newIndex);
@@ -1856,9 +1867,18 @@ export const ManagerDashboard: React.FC = () => {
                       const newMode = munkaszamViewMode === 'all' ? 'monthly' : 'all';
                       setMunkaszamViewMode(newMode);
                       if (newMode === 'monthly') {
-                        setCurrentMunkaszamMonthIndex(0);
-                        if (monthHistory[0]) {
-                          setPayrollProjectFilter(monthHistory[0].value);
+                        // Find current month index (index 0 is most recent month in monthHistory)
+                        const now = new Date();
+                        const currentMonth = now.getMonth() + 1;
+                        const currentYear = now.getFullYear();
+                        const currentMonthStr = `${currentYear}.${currentMonth.toString().padStart(2, '0')}`;
+                        
+                        const currentMonthIndex = monthHistory.findIndex(month => month.value === currentMonthStr);
+                        const indexToUse = currentMonthIndex >= 0 ? currentMonthIndex : 0;
+                        
+                        setCurrentMunkaszamMonthIndex(indexToUse);
+                        if (monthHistory[indexToUse]) {
+                          setPayrollProjectFilter(monthHistory[indexToUse].value);
                         }
                       } else {
                         setPayrollProjectFilter('all');
@@ -1998,9 +2018,18 @@ export const ManagerDashboard: React.FC = () => {
                       const newMode = rentalViewMode === 'all' ? 'monthly' : 'all';
                       setRentalViewMode(newMode);
                       if (newMode === 'monthly') {
-                        setCurrentRentalMonthIndex(0);
-                        if (monthHistory[0]) {
-                          setRentalFilter(monthHistory[0].value);
+                        // Find current month index (index 0 is most recent month in monthHistory)
+                        const now = new Date();
+                        const currentMonth = now.getMonth() + 1;
+                        const currentYear = now.getFullYear();
+                        const currentMonthStr = `${currentYear}.${currentMonth.toString().padStart(2, '0')}`;
+                        
+                        const currentMonthIndex = monthHistory.findIndex(month => month.value === currentMonthStr);
+                        const indexToUse = currentMonthIndex >= 0 ? currentMonthIndex : 0;
+                        
+                        setCurrentRentalMonthIndex(indexToUse);
+                        if (monthHistory[indexToUse]) {
+                          setRentalFilter(monthHistory[indexToUse].value);
                         }
                       } else {
                         setRentalFilter('all');
