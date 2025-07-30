@@ -314,7 +314,7 @@ export const ManagerDashboard: React.FC = () => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index;
+        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner !== 'Füles Márta';
       });
 
       const monthPayroll = payrollRecords.filter(rec => {
@@ -413,7 +413,7 @@ export const ManagerDashboard: React.FC = () => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index;
+        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner !== 'Füles Márta';
       });
 
       const monthPayroll = payrollRecords.filter(rec => {
@@ -438,7 +438,7 @@ export const ManagerDashboard: React.FC = () => {
     const partnerSpending: { [key: string]: { amount: number; count: number } } = {};
     
     invoices.forEach(invoice => {
-      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0) {
+      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
         const partner = invoice.partner.trim();
         if (!partnerSpending[partner]) {
           partnerSpending[partner] = { amount: 0, count: 0 };
@@ -498,7 +498,7 @@ export const ManagerDashboard: React.FC = () => {
     
     // Process invoices
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
+      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
         // Use 'Nincs munkaszám' for invoices without a munkaszam
         const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
         
@@ -556,7 +556,7 @@ export const ManagerDashboard: React.FC = () => {
     });
     
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
+      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
         // Use 'Egyéb' for invoices without a category or with invalid category
         let category = 'Egyéb';
         
