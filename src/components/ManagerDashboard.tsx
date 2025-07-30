@@ -92,6 +92,13 @@ export const ManagerDashboard: React.FC = () => {
   const [payrollFilter, setPayrollFilter] = useState<'all' | 'rental' | 'nonRental' | 'tax'>('all');
   const [payrollProjectFilter, setPayrollProjectFilter] = useState<'all' | string>('all');
   const [rentalFilter, setRentalFilter] = useState<'all' | string>('all');
+  
+  // Month navigation states
+  const [currentMunkaszamMonthIndex, setCurrentMunkaszamMonthIndex] = useState(0);
+  const [currentRentalMonthIndex, setCurrentRentalMonthIndex] = useState(0);
+  const [monthHistory, setMonthHistory] = useState<Array<{month: string, value: string}>>([]);
+  const [showMunkaszamMonthHistory, setShowMunkaszamMonthHistory] = useState(false);
+  const [showRentalMonthHistory, setShowRentalMonthHistory] = useState(false);
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
@@ -121,8 +128,15 @@ export const ManagerDashboard: React.FC = () => {
           .select('*');
 
         if (payrollRecords) {
+          // Also get payroll summaries for the updated data
+          const { data: payrollSummaries } = await supabase
+            .from('payroll_summaries')
+            .select('*')
+            .order('year', { ascending: false })
+            .order('month', { ascending: false });
+
           const payrollByProjectData = generatePayrollByProjectData(payrollRecords);
-          const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords);
+          const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords, payrollSummaries || []);
           
           setChartData(prev => ({
             ...prev,
@@ -215,7 +229,10 @@ export const ManagerDashboard: React.FC = () => {
       
       const payrollOverTimeData = generatePayrollOverTimeData(payrollRecords || [], payrollSummaries || []);
       const payrollByProjectData = generatePayrollByProjectData(payrollRecords || []);
-      const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords || []);
+      const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords || [], payrollSummaries || []);
+      
+      // Generate month history for navigation
+      generateMonthHistory();
 
       setStats(calculatedStats);
       setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
@@ -651,9 +668,10 @@ export const ManagerDashboard: React.FC = () => {
       .sort((a, b) => b.amount - a.amount);
   };
 
-  // Generate rental vs non-rental data
-  const generateRentalVsNonRentalData = (payrollRecords: any[]) => {
+  // Generate rental vs non-rental vs tax data
+  const generateRentalVsNonRentalData = (payrollRecords: any[], payrollSummaries: any[]) => {
     let filteredRecords = payrollRecords;
+    let taxAmount = 0;
     
     if (rentalFilter !== 'all') {
       const [year, month] = rentalFilter.split('-');
@@ -662,6 +680,17 @@ export const ManagerDashboard: React.FC = () => {
         const date = new Date(rec.record_date);
         return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month);
       });
+      
+      // Get tax amount for the filtered month
+      const monthSummary = payrollSummaries.find(summary => 
+        summary.year === parseInt(year) && summary.month === parseInt(month) + 1
+      );
+      taxAmount = (monthSummary as any)?.tax_amount || 0;
+    } else {
+      // Get total tax amount from all summaries
+      taxAmount = payrollSummaries.reduce((sum, summary) => 
+        sum + ((summary as any).tax_amount || 0), 0
+      );
     }
     
     const rentalAmount = filteredRecords
@@ -674,8 +703,71 @@ export const ManagerDashboard: React.FC = () => {
     
     return [
       { name: 'Bérleti díjak', value: rentalAmount, color: '#ef4444' },
-      { name: 'Nem bérleti díjak', value: nonRentalAmount, color: '#10b981' }
+      { name: 'Nem bérleti díjak', value: nonRentalAmount, color: '#10b981' },
+      { name: 'Járulékok', value: taxAmount, color: '#f59e0b' }
     ].filter(item => item.value > 0);
+  };
+
+  // Generate month history for navigation
+  const generateMonthHistory = () => {
+    const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
+    const currentYear = new Date().getFullYear();
+    
+    const history = months.map((month, index) => ({
+      month: month,
+      value: `${currentYear}-${index}`
+    }));
+    
+    setMonthHistory(history);
+  };
+
+  // Month navigation functions
+  const navigateMunkaszamMonth = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentMunkaszamMonthIndex < monthHistory.length - 1) {
+      const newIndex = currentMunkaszamMonthIndex + 1;
+      setCurrentMunkaszamMonthIndex(newIndex);
+      setPayrollProjectFilter(monthHistory[newIndex]?.value || 'all');
+    } else if (direction === 'next' && currentMunkaszamMonthIndex > 0) {
+      const newIndex = currentMunkaszamMonthIndex - 1;
+      setCurrentMunkaszamMonthIndex(newIndex);
+      setPayrollProjectFilter(monthHistory[newIndex]?.value || 'all');
+    }
+  };
+
+  const navigateRentalMonth = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && currentRentalMonthIndex < monthHistory.length - 1) {
+      const newIndex = currentRentalMonthIndex + 1;
+      setCurrentRentalMonthIndex(newIndex);
+      setRentalFilter(monthHistory[newIndex]?.value || 'all');
+    } else if (direction === 'next' && currentRentalMonthIndex > 0) {
+      const newIndex = currentRentalMonthIndex - 1;
+      setCurrentRentalMonthIndex(newIndex);
+      setRentalFilter(monthHistory[newIndex]?.value || 'all');
+    }
+  };
+
+  const selectMunkaszamMonth = (index: number) => {
+    if (index === -1) {
+      // "All time" option
+      setCurrentMunkaszamMonthIndex(0);
+      setPayrollProjectFilter('all');
+    } else {
+      setCurrentMunkaszamMonthIndex(index);
+      setPayrollProjectFilter(monthHistory[index]?.value || 'all');
+    }
+    setShowMunkaszamMonthHistory(false);
+  };
+
+  const selectRentalMonth = (index: number) => {
+    if (index === -1) {
+      // "All time" option  
+      setCurrentRentalMonthIndex(0);
+      setRentalFilter('all');
+    } else {
+      setCurrentRentalMonthIndex(index);
+      setRentalFilter(monthHistory[index]?.value || 'all');
+    }
+    setShowRentalMonthHistory(false);
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -1747,26 +1839,68 @@ export const ManagerDashboard: React.FC = () => {
                 <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
                 Munkaszámok szerinti bérköltségek
               </h3>
-              <select
-                value={payrollProjectFilter}
-                onChange={(e) => setPayrollProjectFilter(e.target.value)}
-                className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white"
-              >
-                <option value="all">Minden idő</option>
-                {Array.from({length: 12}, (_, i) => {
-                  const date = new Date();
-                  date.setMonth(date.getMonth() - i);
-                  const year = date.getFullYear();
-                  const month = date.getMonth();
-                  const monthName = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'][month];
-                  return (
-                    <option key={`payroll-${i}-${year}-${month}`} value={`${year}-${month}`}>
-                      {year} {monthName}
-                    </option>
-                  );
-                })}
-              </select>
+              
+              {/* Month Navigation Controls */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => navigateMunkaszamMonth('prev')}
+                  disabled={currentMunkaszamMonthIndex >= monthHistory.length - 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Előző hónap"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setShowMunkaszamMonthHistory(!showMunkaszamMonthHistory)}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <History className="h-4 w-4" />
+                  <span>Hónapok</span>
+                </button>
+                <button
+                  onClick={() => navigateMunkaszamMonth('next')}
+                  disabled={currentMunkaszamMonthIndex <= 0}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Következő hónap"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Month History Dropdown */}
+            {showMunkaszamMonthHistory && (
+              <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Havi előzmények</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  <button
+                    onClick={() => selectMunkaszamMonth(-1)} // -1 for "all"
+                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                      payrollProjectFilter === 'all'
+                        ? 'bg-purple-100 border-purple-300 text-purple-800'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium truncate">Minden idő</div>
+                    <div className="text-xs text-gray-500 mt-1">Összesített</div>
+                  </button>
+                  {monthHistory.map((month, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectMunkaszamMonth(index)}
+                      className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                        index === currentMunkaszamMonthIndex
+                          ? 'bg-purple-100 border-purple-300 text-purple-800'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="font-medium truncate">{month.month}</div>
+                      <div className="text-xs text-gray-500 mt-1">2025</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="h-48 sm:h-64 lg:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
@@ -1792,33 +1926,75 @@ export const ManagerDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Rental vs Non-Rental Split */}
+          {/* Rental vs Non-Rental vs Tax Split */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
             <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
               <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
                 <Building2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-orange-600" />
-                Bérleti vs Nem bérleti megoszlás
+                Bérleti vs Nem bérleti vs Járulékok megoszlása
               </h3>
-              <select
-                value={rentalFilter}
-                onChange={(e) => setRentalFilter(e.target.value)}
-                className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white"
-              >
-                <option value="all">Minden idő</option>
-                {Array.from({length: 12}, (_, i) => {
-                  const date = new Date();
-                  date.setMonth(date.getMonth() - i);
-                  const year = date.getFullYear();
-                  const month = date.getMonth();
-                  const monthName = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'][month];
-                  return (
-                    <option key={`rental-${i}-${year}-${month}`} value={`${year}-${month}`}>
-                      {year} {monthName}
-                    </option>
-                  );
-                })}
-              </select>
+              
+              {/* Month Navigation Controls */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => navigateRentalMonth('prev')}
+                  disabled={currentRentalMonthIndex >= monthHistory.length - 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Előző hónap"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setShowRentalMonthHistory(!showRentalMonthHistory)}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <History className="h-4 w-4" />
+                  <span>Hónapok</span>
+                </button>
+                <button
+                  onClick={() => navigateRentalMonth('next')}
+                  disabled={currentRentalMonthIndex <= 0}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Következő hónap"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Month History Dropdown */}
+            {showRentalMonthHistory && (
+              <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Havi előzmények</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  <button
+                    onClick={() => selectRentalMonth(-1)} // -1 for "all"
+                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                      rentalFilter === 'all'
+                        ? 'bg-orange-100 border-orange-300 text-orange-800'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium truncate">Minden idő</div>
+                    <div className="text-xs text-gray-500 mt-1">Összesített</div>
+                  </button>
+                  {monthHistory.map((month, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectRentalMonth(index)}
+                      className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
+                        index === currentRentalMonthIndex
+                          ? 'bg-orange-100 border-orange-300 text-orange-800'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="font-medium truncate">{month.month}</div>
+                      <div className="text-xs text-gray-500 mt-1">2025</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="h-48 sm:h-64 lg:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
