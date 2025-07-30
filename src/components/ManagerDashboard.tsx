@@ -1076,7 +1076,10 @@ export const ManagerDashboard: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
+        <div 
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer"
+          title={`Összes számla: ${stats.totalInvoices} db (${stats.thisMonthCount} e hónapban)`}
+        >
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Összes számla</p>
@@ -1089,7 +1092,10 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
+        <div 
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer"
+          title={`Teljes összeg: ${formatCurrency(stats.totalAmount)}`}
+        >
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600">Teljes összeg</p>
@@ -1102,7 +1108,10 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
+        <div 
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer"
+          title={`E havi számlák: ${stats.thisMonthCount} db`}
+        >
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600">E havi számlák</p>
@@ -1115,7 +1124,10 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
+        <div 
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer"
+          title={`E havi kiadás: ${formatCurrency(stats.thisMonthAmount)}`}
+        >
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600">E havi kiadás</p>
@@ -1134,14 +1146,14 @@ export const ManagerDashboard: React.FC = () => {
         {/* First Row: Monthly Trend and Top Partners */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Monthly Trend Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
               <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
                 <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                 Havi számla trend
               </h3>
             </div>
-            <div className="h-48 sm:h-64 lg:h-80 select-text">
+            <div className="h-48 sm:h-64 lg:h-80 select-text cursor-pointer">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData.monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
