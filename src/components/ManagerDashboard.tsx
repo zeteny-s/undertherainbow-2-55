@@ -641,11 +641,11 @@ export const ManagerDashboard: React.FC = () => {
     let filteredRecords = payrollRecords;
     
     if (payrollProjectFilter !== 'all') {
-      const [year, month] = payrollProjectFilter.split('-');
+      const [year, month] = payrollProjectFilter.split('.');
       filteredRecords = payrollRecords.filter(rec => {
         if (!rec.record_date) return false;
         const date = new Date(rec.record_date);
-        return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month);
+        return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month) - 1; // month is 1-12, getMonth() returns 0-11
       });
     }
     
@@ -679,16 +679,16 @@ export const ManagerDashboard: React.FC = () => {
     let taxAmount = 0;
     
     if (rentalFilter !== 'all') {
-      const [year, month] = rentalFilter.split('-');
+      const [year, month] = rentalFilter.split('.');
       filteredRecords = payrollRecords.filter(rec => {
         if (!rec.record_date) return false;
         const date = new Date(rec.record_date);
-        return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month);
+        return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month) - 1; // month is 1-12, getMonth() returns 0-11
       });
       
       // Get tax amount for the filtered month
       const monthSummary = payrollSummaries.find(summary => 
-        summary.year === parseInt(year) && summary.month === parseInt(month) + 1
+        summary.year === parseInt(year) && summary.month === parseInt(month)
       );
       taxAmount = (monthSummary as any)?.tax_amount || 0;
     } else {
