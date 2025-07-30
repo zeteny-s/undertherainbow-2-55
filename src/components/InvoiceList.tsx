@@ -457,18 +457,26 @@ export const InvoiceList: React.FC = () => {
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
         <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Keresés</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Fájlnév vagy partner keresése..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          <div className="flex justify-between items-center">
+            <label className="block text-sm font-medium text-gray-700">Keresés</label>
+            <button
+              onClick={toggleSelectAll}
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              {selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0 
+                ? "Kijelölés törlése" 
+                : "Összes kijelölése"}
+            </button>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Fájlnév vagy partner keresése..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
           <div>
@@ -699,10 +707,10 @@ export const InvoiceList: React.FC = () => {
                       <FileText className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
                       <div className="min-w-0">
                         <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
-                          {invoice.file_name}
+                          {invoice.invoice_number || '-'}
                         </div>
                         <div className="text-sm text-gray-500 truncate max-w-[200px]">
-                          {invoice.invoice_number || '-'}
+                          {invoice.file_name}
                         </div>
                       </div>
                     </div>
