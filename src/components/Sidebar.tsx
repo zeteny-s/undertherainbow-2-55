@@ -48,13 +48,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       label: 'Csapatok',
       icon: Users,
     },
-    const managerMenuItems = [
+    managerMenuItems = [
     {
       id: 'payroll',
       label: 'Bérköltségek',
       icon: DollarSign,
     },
-];
     {
       id: 'settings',
       label: 'Beállítások',
