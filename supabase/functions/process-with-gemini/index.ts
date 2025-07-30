@@ -54,12 +54,7 @@ Could be:
 - Partner  
 - Partner neve  
 - Partner cég neve  
-- Cégnév  
-- Név  
-- Vevő neve  
-- Ügyfél neve  
-- Szállító neve  
-- Company Name + Formation (e.g., Kft., Bt., Zrt., EV., Nyrt., Ltd., LLC, Inc., GmbH, etc.)  
+- Szállító neve   
 - Example: Telekom Nyilvánosan Működő Részvénytársaság → Telekom Nyrt.
 
 ---
@@ -93,8 +88,6 @@ Could be:
 - Végösszeg  
 - Teljes összeg  
 - Fizetendő összeg  
-- Nettó összeg (if no VAT)  
-- Bruttó összeg (total including VAT)  
 - Ár  
 - Amount  
 - Total amount  
@@ -120,17 +113,15 @@ Could be:
 - Határidő  
 - Payment deadline  
 - Due date
-
+-Teljesítési Határdő
 ---
 
 ### Számlaszám (Invoice number, must use "Számla sorszáma" if present)  
 Could be:  
 - Számla sorszáma (preferred if present)  
-- Számlaszám  
-- Számla szám  
+- Számlaszáma 
 - Invoice number  
 - Sorszám  
-- Number
 
 
 Important guidelines:
@@ -163,7 +154,7 @@ For the partner never write "Feketerigó Alapítvány" or "Feketerigó Alapítv�
 There are invoices in EUR currency in this case when look for a amount after something like: "(MNB árfolyam: X Ft), bruttó összeg: Y Ft. " It will be like this, there is always going to be a larger HUF currency number in the invoice, we need that.
 
 
-For the company formations, if you see "Korlátolt Felelősségű Társaság" write "Kft.", if you see "Nyilvánosan Működő Részvénytársaság" write "Nyrt.", if you see "Betéti Társaság" write "Bt.", if you see "Zártkörűen Működő Részvénytársaság" write "Zrt.", if you see "Egyéni Vállalkozó" write "Ev.". I need the shortened version of the company formations so if you see the shortened version use that, but it should always follow the same format: Kft., Bt., Ev., Zrt., Nyrt.. The first letter is captial and then lowercase. If you see no company formation next to the name then only write the name without any company formation. 
+For the company formations, if you see "Korlátolt Felelősségű Társaság" write "Kft.", if you see "Nyilvánosan Működő Részvénytársaság" write "Nyrt.", if you see "Betéti Társaság" write "Bt.", if you see "Zártkörűen Működő Részvénytársaság" write "Zrt.", if you see "Egyéni Vállalkozó" write "Ev.". I need the shortened version of the company formations so if you see the shortened version use that, but it should always follow the same format: Kft., Bt., Ev., Zrt., Nyrt.. The first letter is captial and then lowercase. If you see no company formation next to the name then only write the name without any company formation. For example if you only see "Füles Márta" and no "Ev." or anything then write "Füles Márta".
 
 Please respond with a JSON object containing the extracted data. Use null for missing values.
 
