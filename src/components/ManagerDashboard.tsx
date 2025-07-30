@@ -174,9 +174,9 @@ export const ManagerDashboard: React.FC = () => {
       }) || [];
 
 
-      // Calculate total payroll and tax amounts from summaries only (after "Adatok mentése")
+      // Calculate total payroll amount from summaries only (after "Adatok mentése")
       const totalPayrollAndTaxAmount = payrollSummaries?.reduce((sum, summary) => 
-        sum + (summary.total_payroll || 0) + ((summary as any).tax_amount || 0), 0) || 0;
+        sum + (summary.total_payroll || 0), 0) || 0;
 
       // Find this month's amounts from payroll summaries only (after saved)
       const currentMonth = now.getMonth() + 1;
@@ -185,7 +185,6 @@ export const ManagerDashboard: React.FC = () => {
         summary.year === currentYear && summary.month === currentMonth
       ) as any;
       const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
-      const thisMonthTax = thisMonthSummary?.tax_amount || 0;
 
       const calculatedStats: Stats = {
         totalInvoices: invoices?.length || 0,
@@ -195,7 +194,7 @@ export const ManagerDashboard: React.FC = () => {
         bankTransferCount: invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
         cardCashCount: invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
         thisMonthCount: thisMonthInvoices.length,
-        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount + thisMonthTax
+        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
       };
 
       const weekHistoryData = generateWeekHistory(invoices || []);

@@ -138,22 +138,16 @@ export const Dashboard: React.FC = () => {
         return invDate >= thisMonth && invDate < nextMonth;
       }) || [];
 
-      const thisMonthPayroll = payrollRecords?.filter(rec => {
-        if (!rec.record_date) return false;
-        const recDate = new Date(rec.record_date);
-        return recDate >= thisMonth && recDate < nextMonth;
-      }) || [];
 
-      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => sum + (summary.total_payroll || 0) + ((summary as any).tax_amount || 0), 0) || 0;
-      const thisMonthPayrollAmount = thisMonthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
-
-      // Find tax amount for this month from payroll summaries
+      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0) || 0;
+      
+      // Find this month's amounts from payroll summaries only (after saved)
       const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
-      const thisMonthTaxAmount = payrollSummaries?.find(summary => 
+      const thisMonthSummary = payrollSummaries?.find(summary => 
         summary.year === currentYear && summary.month === currentMonth
       ) as any;
-      const thisMonthTax = thisMonthTaxAmount?.tax_amount || 0;
+      const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
 
       const calculatedStats: Stats = {
         totalInvoices: invoices?.length || 0,
@@ -163,7 +157,7 @@ export const Dashboard: React.FC = () => {
         bankTransferCount: invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
         cardCashCount: invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
         thisMonthCount: thisMonthInvoices.length,
-        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount + thisMonthTax
+        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
       };
 
       const weekHistoryData = generateWeekHistory(invoices || []);
