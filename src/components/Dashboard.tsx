@@ -153,19 +153,26 @@ export const Dashboard: React.FC = () => {
       // Filter out "Füles Márta" invoices from cost analytics
       const filteredInvoices = invoices?.filter(inv => inv.partner !== 'Füles Márta') || [];
       const filteredThisMonthInvoices = thisMonthInvoices.filter(inv => inv.partner !== 'Füles Márta');
+      
+      // Log counts for debugging
+      console.log('Total invoices (unfiltered):', invoices?.length || 0);
+      console.log('Total invoices (filtered):', filteredInvoices.length);
+      console.log('Total amount (filtered + payroll):', 
+        formatCurrency((filteredInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAmount));
 
       const calculatedStats: Stats = {
-        totalInvoices: invoices?.length || 0,
+        totalInvoices: filteredInvoices.length, // Use filtered count for consistency
         totalAmount: (filteredInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAmount,
-        alapitvanyCount: invoices?.filter(inv => inv.organization === 'alapitvany').length || 0,
-        ovodaCount: invoices?.filter(inv => inv.organization === 'ovoda').length || 0,
-        bankTransferCount: invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
-        cardCashCount: invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
-        thisMonthCount: thisMonthInvoices.length,
+        alapitvanyCount: filteredInvoices.filter(inv => inv.organization === 'alapitvany').length || 0,
+        ovodaCount: filteredInvoices.filter(inv => inv.organization === 'ovoda').length || 0,
+        bankTransferCount: filteredInvoices.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
+        cardCashCount: filteredInvoices.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
+        thisMonthCount: filteredThisMonthInvoices.length,
         thisMonthAmount: filteredThisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
       };
 
-      const weekHistoryData = generateWeekHistory(invoices || []);
+      // Use filtered invoices for all chart data generation
+      const weekHistoryData = generateWeekHistory(filteredInvoices);
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
 
@@ -451,7 +458,7 @@ export const Dashboard: React.FC = () => {
     // Color palette for the chart
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
     
-    // Convert to array and include all munkaszám values
+    // Convert to array and include only munkaszám values with positive amount
     const munkaszamArray = Object.entries(munkaszamSpending)
       .map(([munkaszam, data], index) => ({
         munkaszam: munkaszam.length > 15 ? munkaszam.substring(0, 15) + '...' : munkaszam,
@@ -460,7 +467,7 @@ export const Dashboard: React.FC = () => {
         amount: data.amount,
         color: colors[index % colors.length]
       }))
-      .filter(item => item.amount > 0 || allMunkaszamValues.includes(item.fullMunkaszam))
+      .filter(item => item.amount > 0) // Only include items with positive amount
       .sort((a, b) => b.amount - a.amount);
     
     return munkaszamArray;
@@ -522,15 +529,25 @@ export const Dashboard: React.FC = () => {
     };
     
     // Convert to array and sort by amount (descending)
+    // Calculate total amount and count for validation
+    let totalAmount = 0;
+    let totalCount = 0;
+    
     const categoryArray = Object.entries(categorySpending)
       .filter(([, data]) => data.amount > 0) // Only include categories with positive spending
-      .map(([category, data]) => ({
-        category,
-        count: data.count,
-        amount: data.amount,
-        color: categoryColors[category] || '#6b7280'
-      }))
+      .map(([category, data]) => {
+        totalAmount += data.amount;
+        totalCount += data.count;
+        return {
+          category,
+          count: data.count,
+          amount: data.amount,
+          color: categoryColors[category] || '#6b7280'
+        };
+      })
       .sort((a, b) => b.amount - a.amount);
+      
+    console.log('Category chart - Total amount:', formatCurrency(totalAmount), 'Total count:', totalCount);
     
     return categoryArray;
   };
