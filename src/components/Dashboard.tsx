@@ -371,7 +371,7 @@ export const Dashboard: React.FC = () => {
     const partnerSpending: { [key: string]: { amount: number; count: number } } = {};
     
     invoices.forEach(invoice => {
-      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0) {
+      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
         const partner = invoice.partner.trim();
         if (!partnerSpending[partner]) {
           partnerSpending[partner] = { amount: 0, count: 0 };
@@ -431,7 +431,7 @@ export const Dashboard: React.FC = () => {
     
     // Process invoices
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
+      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
         // Use 'Nincs munkaszám' for invoices without a munkaszam
         const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
         
@@ -489,7 +489,7 @@ export const Dashboard: React.FC = () => {
     });
     
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
+      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
         // Use 'Egyéb' for invoices without a category or with invalid category
         let category = 'Egyéb';
         
