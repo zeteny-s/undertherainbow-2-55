@@ -48,11 +48,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       label: 'Csapatok',
       icon: Users,
     },
-    {
-      id: 'settings',
-      label: 'Beállítások',
-      icon: Settings,
-    },
   ];
 
   // Additional menu items for manager profile
@@ -62,12 +57,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       label: 'Bérköltségek',
       icon: DollarSign,
     },
+    {
+      id: 'settings',
+      label: 'Beállítások',
+      icon: Settings,
+    },
   ];
 
   // Combine menu items based on user profile
   const menuItems = user?.user_metadata?.profile_type === 'vezetoi' 
     ? [...baseMenuItems, ...managerMenuItems]
-    : baseMenuItems;
+    : [...baseMenuItems, { id: 'settings', label: 'Beállítások', icon: Settings }];
 
   // Get user initials for profile picture
   const getUserInitials = (email: string, name?: string) => {
