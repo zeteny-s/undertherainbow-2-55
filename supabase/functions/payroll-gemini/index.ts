@@ -5,9 +5,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-// Mapping: employee name → project code (or org-specific map)
+// Aliases: Legal name (payroll) → Standard name (mapping)
+const NAME_ALIASES = {
+  "Ősi-Madarász Andrea": "Madarász Andrea",
+  "Ébel-Udvari Gabriella Erzsébet": "Ébel-Udvari Gabriella",
+  "DR. Tátrai Bálint Marcell": "Tátrai Bálint Marcell",
+  "Üveges Fanni Katalin": "Üveges Fanni"
+};
+
+// Mapping: standard name → project code (string or object per org)
 const EMPLOYEE_PROJECT_MAPPING = {
-  // Dual orgs
   "Édes Nóra": {
     "Alapítvány": "22",
     "Óvoda": "13"
@@ -16,7 +23,6 @@ const EMPLOYEE_PROJECT_MAPPING = {
     "Alapítvány": "25",
     "Óvoda": "12"
   },
-
   // Alapítvány 2024
   "Altinkan Ilknur": "24",
   "Basut Neval": "2",
@@ -35,7 +41,6 @@ const EMPLOYEE_PROJECT_MAPPING = {
   "Petri Barbara": "4",
   "Pollákné Hercsel Flóra": "2",
   "Tóth Zoltán Krisztián": "2",
-
   // Óvoda 2024
   "Almendros Estabillo Teresita": "1",
   "Balbon Aliza": "11",
@@ -84,20 +89,29 @@ const RENTAL_PROJECT_CODES = {
   "Tátrai Bálint Marcell": "11"
 };
 
-// Normalize names to match variants
+// Normalize name: lowercase, strip accents, remove punctuation, remove titles
 function normalizeName(name) {
   return name
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(dr|prof|mr|ms|mrs)\b/g, "")
     .replace(/[^a-z\s]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
-function findBestMatch(inputName, nameList) {
+// Fuzzy match: look for all parts of known name in the input name
+function findBestMatch(inputName, knownNames) {
   const normalizedInput = normalizeName(inputName);
-  for (const official of nameList) {
-    if (normalizeName(official) === normalizedInput) return official;
+  const inputParts = normalizedInput.split(" ");
+
+  for (const officialName of knownNames) {
+    const normalizedOfficial = normalizeName(officialName);
+    const officialParts = normalizedOfficial.split(" ");
+
+    const isLooseMatch = officialParts.every(part => inputParts.includes(part));
+    if (isLooseMatch) return officialName;
   }
   return null;
 }
@@ -116,21 +130,17 @@ serve(async (req) => {
 
 I need you to identify individual employee records and extract:
 
-1. Employee Name
-2. Amount (gross salary or payment in HUF, number only)
-3. Date (YYYY-MM-DD format, representing the actual payroll period or payment month)
-4. Rental status (very important — is this employee part of "bérleti díj" or not? Return as isRental: true or false)
+1. employeeName
+2. amount (gross salary or payment in HUF, number only)
+3. date (YYYY-MM-DD format, actual payroll period)
+4. isRental (true if part of "bérleti díj", false otherwise)
 
 Instructions:
-- Pay close attention to indicate whether someone is a **bérleti díj** employee.
-- Look for Hungarian names and extract accurately.
-- Always use the **payroll period date**, not the creation date of the document.
-- Accept formats like "2025-06", "2025. 06. hónap", or "2025 ÉV 06 HÓNAP" and convert to YYYY-MM-DD (first day of month).
-- Return a clean JSON array of objects with:
-  - employeeName
-  - amount (number only)
-  - date (YYYY-MM-DD)
-  - isRental (true/false)
+- You MUST correctly tag employees who are paid as "bérleti díj".
+- Look for names matching Hungarian conventions.
+- Use the actual payroll period date, not creation date.
+- Date formats like "2025-06", "2025. 06. hónap", or "2025 ÉV 06 HÓNAP" must be converted to YYYY-MM-DD (first day of the month).
+- Return a clean JSON array of objects.
 
 Document:
 ${extractedText}`;
@@ -165,16 +175,14 @@ ${extractedText}`;
     if (!jsonMatch) throw new Error('No JSON array found in response');
     const parsed = JSON.parse(jsonMatch[0]);
 
-    const knownNames = [
-      ...Object.keys(EMPLOYEE_PROJECT_MAPPING),
-      ...RENTAL_EMPLOYEES
-    ];
+    const knownNames = [...Object.keys(EMPLOYEE_PROJECT_MAPPING), ...RENTAL_EMPLOYEES];
 
     const processedRecords = parsed.map((record) => {
       const originalName = record.employeeName || record.name || "";
-      const matchedName = findBestMatch(originalName, knownNames) || originalName;
+      const resolvedAlias = NAME_ALIASES[originalName] || originalName;
+      const matchedName = findBestMatch(resolvedAlias, knownNames) || resolvedAlias;
 
-      // Get project code
+      // Determine project code
       let projectCode = null;
       const mapping = EMPLOYEE_PROJECT_MAPPING[matchedName];
       if (typeof mapping === "object") {
