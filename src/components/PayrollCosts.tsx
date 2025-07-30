@@ -985,6 +985,13 @@ export const PayrollCosts: React.FC = () => {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         
               {/* Summary Table for Current Month */}
               {viewingRecords.length > 0 && (() => {
