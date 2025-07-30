@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Building2, GraduationCap, Search, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
+import JSZip from 'jszip';
 
 interface Invoice {
   id: string;
@@ -39,6 +40,9 @@ export const InvoiceList: React.FC = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<Invoice | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -232,6 +236,149 @@ export const InvoiceList: React.FC = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedInvoices.size === 0) return;
+
+    setBulkDeleting(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      const invoicesToDelete = filteredInvoices.filter(invoice => selectedInvoices.has(invoice.id));
+      
+      for (const invoice of invoicesToDelete) {
+        try {
+          // Delete file from storage if exists
+          if (invoice.file_url) {
+            const filePath = extractFilePathFromUrl(invoice.file_url);
+            if (filePath) {
+              await supabase.storage.from('invoices').remove([filePath]);
+            }
+          }
+
+          // Delete from database
+          const { error: dbError } = await supabase
+            .from('invoices')
+            .delete()
+            .eq('id', invoice.id);
+
+          if (dbError) throw dbError;
+          successCount++;
+        } catch (error) {
+          console.error('Error deleting invoice:', invoice.id, error);
+          errorCount++;
+        }
+      }
+
+      // Update state
+      setInvoices(prev => prev.filter(inv => !selectedInvoices.has(inv.id)));
+      setSelectedInvoices(new Set());
+
+      if (successCount > 0) {
+        addNotification('success', `${successCount} számla sikeresen törölve!`);
+      }
+      if (errorCount > 0) {
+        addNotification('error', `${errorCount} számla törlése sikertelen volt.`);
+      }
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      addNotification('error', 'Hiba történt a tömeges törlés során');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleBulkDownload = async () => {
+    if (selectedInvoices.size === 0) return;
+
+    setBulkDownloading(true);
+    
+    try {
+      const zip = new JSZip();
+      const invoicesToDownload = filteredInvoices.filter(invoice => selectedInvoices.has(invoice.id));
+      
+      // Create metadata JSON
+      const metadata = invoicesToDownload.map(invoice => ({
+        file_name: invoice.file_name,
+        partner: invoice.partner,
+        amount: invoice.amount,
+        invoice_date: invoice.invoice_date,
+        payment_deadline: invoice.payment_deadline,
+        invoice_number: invoice.invoice_number,
+        organization: invoice.organization,
+        category: invoice.category,
+        munkaszam: invoice.munkaszam,
+        subject: invoice.subject,
+        payment_method: invoice.payment_method
+      }));
+      
+      zip.file('metadata.json', JSON.stringify(metadata, null, 2));
+
+      let downloadCount = 0;
+      
+      for (const invoice of invoicesToDownload) {
+        try {
+          if (invoice.file_url) {
+            const filePath = extractFilePathFromUrl(invoice.file_url);
+            if (filePath) {
+              const { data: fileBlob, error } = await supabase.storage
+                .from('invoices')
+                .download(filePath);
+              
+              if (!error && fileBlob) {
+                zip.file(invoice.file_name, fileBlob);
+                downloadCount++;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error downloading file for zip:', invoice.file_name, error);
+        }
+      }
+
+      if (downloadCount === 0) {
+        addNotification('error', 'Nem sikerült egyetlen fájlt sem letölteni');
+        return;
+      }
+
+      // Generate and download zip
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `szamlak_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      addNotification('success', `${downloadCount} számla sikeresen letöltve ZIP fájlban!`);
+    } catch (error) {
+      console.error('Bulk download error:', error);
+      addNotification('error', 'Hiba történt a tömeges letöltés során');
+    } finally {
+      setBulkDownloading(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedInvoices.size === filteredInvoices.length) {
+      setSelectedInvoices(new Set());
+    } else {
+      setSelectedInvoices(new Set(filteredInvoices.map(inv => inv.id)));
+    }
+  };
+
+  const toggleSelectInvoice = (invoiceId: string) => {
+    const newSelected = new Set(selectedInvoices);
+    if (newSelected.has(invoiceId)) {
+      newSelected.delete(invoiceId);
+    } else {
+      newSelected.add(invoiceId);
+    }
+    setSelectedInvoices(newSelected);
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -342,6 +489,55 @@ export const InvoiceList: React.FC = () => {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedInvoices.size > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedInvoices.size} számla kiválasztva
+              </span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleBulkDownload}
+                disabled={bulkDownloading}
+                className="inline-flex items-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-lg text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
+              >
+                {bulkDownloading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    ZIP készítése...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    ZIP letöltés
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50"
+              >
+                {bulkDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                    Törlés...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Kiválasztottak törlése
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Invoice List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Mobile Card View */}
@@ -350,6 +546,12 @@ export const InvoiceList: React.FC = () => {
             <div key={invoice.id} className="border-b border-gray-200 p-3 sm:p-4 hover:bg-gray-50 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={selectedInvoices.has(invoice.id)}
+                    onChange={() => toggleSelectInvoice(invoice.id)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
                   <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900 truncate">
@@ -454,6 +656,14 @@ export const InvoiceList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <input
+                    type="checkbox"
+                    checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Számla
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -476,6 +686,14 @@ export const InvoiceList: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredInvoices.map((invoice) => (
                 <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedInvoices.has(invoice.id)}
+                      onChange={() => toggleSelectInvoice(invoice.id)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <FileText className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />

@@ -14,6 +14,7 @@
     "@supabase/supabase-js": "^2.52.1",
     "@techstark/opencv-js": "^4.11.0-release.1",
     "jspdf": "^2.5.2",
+    "jszip": "^3.10.1",
     "konva": "^9.2.0",
     "lovable-tagger": "^1.1.8",
     "lucide-react": "^0.344.0",
