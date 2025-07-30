@@ -3,6 +3,7 @@ import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, Refr
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
+import { ChartEmptyState } from './common/ChartEmptyState';
 import { NotificationContainer } from './common/NotificationContainer';
 import { LoadingSpinner } from './common/LoadingSpinner';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -834,16 +835,24 @@ export const Dashboard: React.FC = () => {
               </h3>
             </div>
             <div className="h-48 sm:h-64 lg:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData.monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
-                  <YAxis stroke="#6b7280" fontSize={10} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {chartData.monthlyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                    <YAxis stroke="#6b7280" fontSize={10} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <ChartEmptyState 
+                  title="Nincs havi adat"
+                  description="Jelenleg nem állnak rendelkezésre havi számlák. Töltsön fel számlákat az adatok megjelenítéséhez."
+                  type="bar"
+                />
+              )}
             </div>
           </div>
 

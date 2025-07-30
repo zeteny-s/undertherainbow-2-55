@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../integrations/supabase/client';
-import { useNotifications } from '../hooks/useNotifications';
+import { ChartEmptyState } from './common/ChartEmptyState';
 import { NotificationContainer } from './common/NotificationContainer';
 import { LoadingSpinner } from './common/LoadingSpinner';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface Stats {
   totalInvoices: number;
@@ -1902,27 +1903,35 @@ export const ManagerDashboard: React.FC = () => {
               </div>
             )}
             <div className="h-48 sm:h-64 lg:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <Pie
-                    data={chartData.payrollByProjectData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="amount"
-                    label={(entry) => `${entry.munkaszam}`}
-                  >
-                    {chartData.payrollByProjectData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [formatCurrency(value), "Összeg"]}
-                    labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                  />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+              {chartData.payrollByProjectData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={chartData.payrollByProjectData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="amount"
+                      label={(entry) => `${entry.munkaszam}`}
+                    >
+                      {chartData.payrollByProjectData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), "Összeg"]}
+                      labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              ) : (
+                <ChartEmptyState 
+                  title="Nincs munkaszám adat"
+                  description="Nem találhatók munkaszám szerinti bérköltség adatok a kiválasztott időszakra. Töltsön fel fizetési listákat az adatok megjelenítéséhez."
+                  type="pie"
+                />
+              )}
             </div>
           </div>
 
@@ -1996,27 +2005,35 @@ export const ManagerDashboard: React.FC = () => {
               </div>
             )}
             <div className="h-48 sm:h-64 lg:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <Pie
-                    data={chartData.rentalVsNonRentalData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="value"
-                    label={(entry) => `${entry.name}`}
-                  >
-                    {chartData.rentalVsNonRentalData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [formatCurrency(value), "Összeg"]}
-                    labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                    contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                  />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+              {chartData.rentalVsNonRentalData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={chartData.rentalVsNonRentalData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={(entry) => `${entry.name}`}
+                    >
+                      {chartData.rentalVsNonRentalData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), "Összeg"]}
+                      labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              ) : (
+                <ChartEmptyState 
+                  title="Nincs bér megoszlási adat"
+                  description="Nem találhatók bérleti és járulék megoszlási adatok a kiválasztott időszakra. Töltsön fel fizetési listákat az adatok megjelenítéséhez."
+                  type="pie"
+                />
+              )}
             </div>
           </div>
         </div>
