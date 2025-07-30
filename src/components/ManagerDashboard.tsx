@@ -100,6 +100,10 @@ export const ManagerDashboard: React.FC = () => {
   const [monthHistory, setMonthHistory] = useState<Array<{month: string, value: string}>>([]);
   const [showMunkaszamMonthHistory, setShowMunkaszamMonthHistory] = useState(false);
   const [showRentalMonthHistory, setShowRentalMonthHistory] = useState(false);
+  
+  // View mode states (all time vs monthly)
+  const [munkaszamViewMode, setMunkaszamViewMode] = useState<'all' | 'monthly'>('all');
+  const [rentalViewMode, setRentalViewMode] = useState<'all' | 'monthly'>('all');
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
@@ -120,7 +124,7 @@ export const ManagerDashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // Update charts when filters change
+  // Update charts when filters or view modes change
   useEffect(() => {
     const updateChartData = async () => {
       try {
@@ -151,7 +155,7 @@ export const ManagerDashboard: React.FC = () => {
     };
 
     updateChartData();
-  }, [payrollFilter, payrollProjectFilter, rentalFilter]);
+  }, [payrollFilter, payrollProjectFilter, rentalFilter, munkaszamViewMode, rentalViewMode]);
 
   const fetchDashboardData = async () => {
     try {
@@ -1841,50 +1845,70 @@ export const ManagerDashboard: React.FC = () => {
                 Munkaszámok szerinti bérköltségek
               </h3>
               
-              {/* Month Navigation Controls */}
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => navigateMunkaszamMonth('prev')}
-                  disabled={currentMunkaszamMonthIndex >= monthHistory.length - 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Előző hónap"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setShowMunkaszamMonthHistory(!showMunkaszamMonthHistory)}
-                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                >
-                  <History className="h-4 w-4" />
-                  <span>Hónapok</span>
-                </button>
-                <button
-                  onClick={() => navigateMunkaszamMonth('next')}
-                  disabled={currentMunkaszamMonthIndex <= 0}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Következő hónap"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+              <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+                {/* View Mode Toggle */}
+                <div className="flex items-center space-x-2">
+                  <span className={`text-xs font-medium transition-colors ${munkaszamViewMode === 'all' ? 'text-purple-600' : 'text-gray-500'}`}>
+                    Minden idő
+                  </span>
+                  <button
+                    onClick={() => setMunkaszamViewMode(munkaszamViewMode === 'all' ? 'monthly' : 'all')}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                      munkaszamViewMode === 'monthly' ? 'bg-purple-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        munkaszamViewMode === 'monthly' ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-xs font-medium transition-colors ${munkaszamViewMode === 'monthly' ? 'text-purple-600' : 'text-gray-500'}`}>
+                    Havi
+                  </span>
+                </div>
+
+                {/* Month Navigation Controls - only show in monthly mode */}
+                {munkaszamViewMode === 'monthly' && (
+                  <div className="flex items-center space-x-2">
+                    {monthHistory[currentMunkaszamMonthIndex] && (
+                      <span className="text-xs sm:text-sm font-medium text-gray-600">
+                        {monthHistory[currentMunkaszamMonthIndex].month}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => navigateMunkaszamMonth('prev')}
+                      disabled={currentMunkaszamMonthIndex >= monthHistory.length - 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Előző hónap"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setShowMunkaszamMonthHistory(!showMunkaszamMonthHistory)}
+                      className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                    >
+                      <History className="h-4 w-4" />
+                      <span>Hónapok</span>
+                    </button>
+                    <button
+                      onClick={() => navigateMunkaszamMonth('next')}
+                      disabled={currentMunkaszamMonthIndex <= 0}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Következő hónap"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Month History Dropdown */}
-            {showMunkaszamMonthHistory && (
+            {/* Month History Dropdown - only show in monthly mode */}
+            {munkaszamViewMode === 'monthly' && showMunkaszamMonthHistory && (
               <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Havi előzmények</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                  <button
-                    onClick={() => selectMunkaszamMonth(-1)} // -1 for "all"
-                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
-                      payrollProjectFilter === 'all'
-                        ? 'bg-purple-100 border-purple-300 text-purple-800'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-medium truncate">Minden idő</div>
-                    <div className="text-xs text-gray-500 mt-1">Összesített</div>
-                  </button>
                   {monthHistory.map((month, index) => (
                     <button
                       key={index}
@@ -1903,35 +1927,42 @@ export const ManagerDashboard: React.FC = () => {
               </div>
             )}
             <div className="h-48 sm:h-64 lg:h-80">
-              {chartData.payrollByProjectData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <Pie
-                      data={chartData.payrollByProjectData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="amount"
-                      label={(entry) => `${entry.munkaszam}`}
-                    >
-                      {chartData.payrollByProjectData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), "Összeg"]}
-                      labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              ) : (
-                <ChartEmptyState 
-                  title="Nincs munkaszám adat"
-                  description="Nem találhatók munkaszám szerinti bérköltség adatok a kiválasztott időszakra. Töltsön fel fizetési listákat az adatok megjelenítéséhez."
-                  type="pie"
-                />
-              )}
+              {(() => {
+                // Get filtered data based on view mode
+                const filteredData = munkaszamViewMode === 'all' 
+                  ? chartData.payrollByProjectData 
+                  : chartData.payrollByProjectData;
+                
+                return filteredData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={filteredData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        dataKey="amount"
+                        label={(entry) => `${entry.munkaszam}`}
+                      >
+                        {filteredData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => [formatCurrency(value), "Összeg"]}
+                        labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                        contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <ChartEmptyState 
+                    title="Nincs munkaszám adat"
+                    description={`Nem találhatók munkaszám szerinti bérköltség adatok ${munkaszamViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
+                    type="pie"
+                  />
+                );
+              })()}
             </div>
           </div>
 
@@ -1943,50 +1974,70 @@ export const ManagerDashboard: React.FC = () => {
                 Bérleti vs Nem bérleti vs Járulékok megoszlása
               </h3>
               
-              {/* Month Navigation Controls */}
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => navigateRentalMonth('prev')}
-                  disabled={currentRentalMonthIndex >= monthHistory.length - 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Előző hónap"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setShowRentalMonthHistory(!showRentalMonthHistory)}
-                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                >
-                  <History className="h-4 w-4" />
-                  <span>Hónapok</span>
-                </button>
-                <button
-                  onClick={() => navigateRentalMonth('next')}
-                  disabled={currentRentalMonthIndex <= 0}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Következő hónap"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+              <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
+                {/* View Mode Toggle */}
+                <div className="flex items-center space-x-2">
+                  <span className={`text-xs font-medium transition-colors ${rentalViewMode === 'all' ? 'text-orange-600' : 'text-gray-500'}`}>
+                    Minden idő
+                  </span>
+                  <button
+                    onClick={() => setRentalViewMode(rentalViewMode === 'all' ? 'monthly' : 'all')}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                      rentalViewMode === 'monthly' ? 'bg-orange-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        rentalViewMode === 'monthly' ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-xs font-medium transition-colors ${rentalViewMode === 'monthly' ? 'text-orange-600' : 'text-gray-500'}`}>
+                    Havi
+                  </span>
+                </div>
+
+                {/* Month Navigation Controls - only show in monthly mode */}
+                {rentalViewMode === 'monthly' && (
+                  <div className="flex items-center space-x-2">
+                    {monthHistory[currentRentalMonthIndex] && (
+                      <span className="text-xs sm:text-sm font-medium text-gray-600">
+                        {monthHistory[currentRentalMonthIndex].month}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => navigateRentalMonth('prev')}
+                      disabled={currentRentalMonthIndex >= monthHistory.length - 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Előző hónap"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setShowRentalMonthHistory(!showRentalMonthHistory)}
+                      className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                    >
+                      <History className="h-4 w-4" />
+                      <span>Hónapok</span>
+                    </button>
+                    <button
+                      onClick={() => navigateRentalMonth('next')}
+                      disabled={currentRentalMonthIndex <= 0}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Következő hónap"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Month History Dropdown */}
-            {showRentalMonthHistory && (
+            {/* Month History Dropdown - only show in monthly mode */}
+            {rentalViewMode === 'monthly' && showRentalMonthHistory && (
               <div className="mb-4 sm:mb-6 bg-gray-50 rounded-lg p-3 sm:p-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Havi előzmények</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                  <button
-                    onClick={() => selectRentalMonth(-1)} // -1 for "all"
-                    className={`p-2 sm:p-3 text-xs sm:text-sm rounded-lg border transition-colors ${
-                      rentalFilter === 'all'
-                        ? 'bg-orange-100 border-orange-300 text-orange-800'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-medium truncate">Minden idő</div>
-                    <div className="text-xs text-gray-500 mt-1">Összesített</div>
-                  </button>
                   {monthHistory.map((month, index) => (
                     <button
                       key={index}
@@ -2005,35 +2056,42 @@ export const ManagerDashboard: React.FC = () => {
               </div>
             )}
             <div className="h-48 sm:h-64 lg:h-80">
-              {chartData.rentalVsNonRentalData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <Pie
-                      data={chartData.rentalVsNonRentalData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={(entry) => `${entry.name}`}
-                    >
-                      {chartData.rentalVsNonRentalData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), "Összeg"]}
-                      labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              ) : (
-                <ChartEmptyState 
-                  title="Nincs bér megoszlási adat"
-                  description="Nem találhatók bérleti és járulék megoszlási adatok a kiválasztott időszakra. Töltsön fel fizetési listákat az adatok megjelenítéséhez."
-                  type="pie"
-                />
-              )}
+              {(() => {
+                // Get filtered data based on view mode
+                const filteredData = rentalViewMode === 'all' 
+                  ? chartData.rentalVsNonRentalData 
+                  : chartData.rentalVsNonRentalData;
+                
+                return filteredData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={filteredData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        dataKey="value"
+                        label={(entry) => `${entry.name}`}
+                      >
+                        {filteredData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => [formatCurrency(value), "Összeg"]}
+                        labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                        contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <ChartEmptyState 
+                    title="Nincs bér megoszlási adat"
+                    description={`Nem találhatók bérleti és járulék megoszlási adatok ${rentalViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
+                    type="pie"
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>
