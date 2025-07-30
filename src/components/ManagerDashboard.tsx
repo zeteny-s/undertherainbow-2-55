@@ -1076,9 +1076,9 @@ export const ManagerDashboard: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
           <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Összes számla</p>
               <p className={`${stats.totalInvoices > 999 ? 'text-base sm:text-xl lg:text-2xl' : 'text-lg sm:text-2xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{stats.totalInvoices}</p>
               <p className="text-xs text-green-600 mt-1">+{stats.thisMonthCount} e hónapban</p>
@@ -1089,9 +1089,9 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
           <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600">Teljes összeg</p>
               <p className={`${stats.totalAmount > 9999999 ? 'text-xs sm:text-sm lg:text-xl' : stats.totalAmount > 999999 ? 'text-xs sm:text-base lg:text-2xl' : 'text-sm sm:text-xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{formatCurrency(stats.totalAmount)}</p>
               <p className="text-xs text-gray-500 mt-1">Összes feldolgozott</p>
@@ -1102,9 +1102,9 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
           <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600">E havi számlák</p>
               <p className={`${stats.thisMonthCount > 999 ? 'text-base sm:text-xl lg:text-2xl' : 'text-lg sm:text-2xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{stats.thisMonthCount}</p>
               <p className="text-xs text-blue-600 mt-1">Aktív hónap</p>
@@ -1115,9 +1115,9 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
           <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 select-text">
               <p className="text-xs sm:text-sm font-medium text-gray-600">E havi kiadás</p>
               <p className={`${stats.thisMonthAmount > 9999999 ? 'text-xs sm:text-sm lg:text-xl' : stats.thisMonthAmount > 999999 ? 'text-xs sm:text-base lg:text-2xl' : 'text-sm sm:text-xl lg:text-3xl'} font-bold text-gray-900 break-words`}>{formatCurrency(stats.thisMonthAmount)}</p>
               <p className="text-xs text-red-600 mt-1">Aktuális hónap</p>
@@ -1141,25 +1141,37 @@ export const ManagerDashboard: React.FC = () => {
                 Havi számla trend
               </h3>
             </div>
-            <div className="h-48 sm:h-64 lg:h-80">
-              {chartData.monthlyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData.monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
-                    <YAxis stroke="#6b7280" fontSize={10} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <ChartEmptyState 
-                  title="Nincs havi adat"
-                  description="Jelenleg nem állnak rendelkezésre havi számlák. Töltsön fel számlákat az adatok megjelenítéséhez."
-                  type="bar"
-                />
-              )}
+            <div className="h-48 sm:h-64 lg:h-80 select-text">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData.monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
+                  <YAxis stroke="#6b7280" fontSize={10} />
+                  <Tooltip 
+                    content={<CustomTooltip />}
+                    animationDuration={300}
+                    animationEasing="ease-out"
+                  />
+                  <Bar 
+                    dataKey="alapitvany" 
+                    fill="#1e40af" 
+                    name="Alapítvány" 
+                    radius={[2, 2, 0, 0]} 
+                    animationDuration={1800}
+                    animationEasing="ease-in-out"
+                    isAnimationActive={true}
+                  />
+                  <Bar 
+                    dataKey="ovoda" 
+                    fill="#ea580c" 
+                    name="Óvoda" 
+                    radius={[2, 2, 0, 0]}
+                    animationDuration={1800}
+                    animationEasing="ease-in-out"
+                    isAnimationActive={true}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -1208,11 +1220,18 @@ export const ManagerDashboard: React.FC = () => {
                       tickFormatter={(value) => `${(value / 1000).toFixed(0)}K Ft`}
                       tick={{ fill: '#374151' }}
                     />
-                    <Tooltip content={<TopPartnersTooltip />} />
-                    <Bar 
+                    <Tooltip 
+                    content={<TopPartnersTooltip />}
+                    animationDuration={300}
+                    animationEasing="ease-out"
+                  />
+                                          <Bar 
                       dataKey="amount" 
                       radius={[6, 6, 0, 0]}
                       fill="url(#partnerGradient)"
+                      animationDuration={1800}
+                      animationEasing="ease-in-out"
+                      isAnimationActive={true}
                     >
                       {chartData.topPartnersData.map((_, index) => (
                         <Cell 
@@ -1237,7 +1256,7 @@ export const ManagerDashboard: React.FC = () => {
         {/* Second Row: Munkaszám Distribution and Category Spending */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
           {/* Munkaszám Distribution Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
               <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
                 <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
@@ -1344,7 +1363,7 @@ export const ManagerDashboard: React.FC = () => {
           </div>
 
           {/* Category Spending Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
               <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
                 <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
