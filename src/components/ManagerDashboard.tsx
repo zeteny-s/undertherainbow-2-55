@@ -227,6 +227,9 @@ export const ManagerDashboard: React.FC = () => {
       };
 
       // Use filtered invoices for all chart data generation
+      console.log('Total unfiltered invoices:', invoices?.length || 0);
+      console.log('Total filtered invoices:', filteredInvoices.length);
+      
       const weekHistoryData = generateWeekHistory(filteredInvoices);
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
@@ -238,6 +241,8 @@ export const ManagerDashboard: React.FC = () => {
       const expenseData = generateExpenseData(filteredInvoices, payrollRecords || []);
       const topPartnersData = generateTopPartnersData(filteredInvoices);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
+      
+      // Make sure these functions receive the same filtered invoice list
       const munkaszamData = generateMunkaszamData(filteredInvoices);
       const categoryData = generateCategoryData(filteredInvoices);
       
@@ -277,6 +282,8 @@ export const ManagerDashboard: React.FC = () => {
   };
 
   const generateWeekHistory = (invoices: any[]): WeekData[] => {
+    // Log the invoice count for debugging
+    console.log('generateWeekHistory - invoice count:', invoices.length);
     const weeks: WeekData[] = [];
     const now = new Date();
     
@@ -471,6 +478,8 @@ export const ManagerDashboard: React.FC = () => {
   };
   
   const generateMunkaszamData = (invoices: any[]) => {
+    // Log the invoice count for debugging
+    console.log('generateMunkaszamData - invoice count:', invoices.length);
     // Define all possible munkaszám values
     const allMunkaszamValues = [
         "1",
@@ -503,9 +512,10 @@ export const ManagerDashboard: React.FC = () => {
     // Add "Nincs munkaszám" for invoices without a munkaszam
     munkaszamSpending["Nincs munkaszám"] = { amount: 0, count: 0 };
     
-    // Process invoices
+    // Process invoices - no additional filtering since invoices are already filtered
+    let processedCount = 0;
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
+      if (invoice.amount && invoice.amount > 0) {
         // Use 'Nincs munkaszám' for invoices without a munkaszam
         const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
         
@@ -519,8 +529,11 @@ export const ManagerDashboard: React.FC = () => {
             count: 1 
           };
         }
+        processedCount++;
       }
     });
+    
+    console.log('generateMunkaszamData - processed invoice count:', processedCount);
     
     // Color palette for the chart
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
@@ -541,6 +554,8 @@ export const ManagerDashboard: React.FC = () => {
   };
   
   const generateCategoryData = (invoices: any[]) => {
+    // Log the invoice count for debugging
+    console.log('generateCategoryData - invoice count:', invoices.length);
     // Group invoices by category and calculate total spending
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
@@ -562,8 +577,10 @@ export const ManagerDashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
+    // Process invoices - no additional filtering since invoices are already filtered
+    let processedCount = 0;
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
+      if (invoice.amount && invoice.amount > 0) {
         // Use 'Egyéb' for invoices without a category or with invalid category
         let category = 'Egyéb';
         
@@ -579,8 +596,11 @@ export const ManagerDashboard: React.FC = () => {
         
         categorySpending[category].amount += invoice.amount;
         categorySpending[category].count += 1;
+        processedCount++;
       }
     });
+    
+    console.log('generateCategoryData - processed invoice count:', processedCount);
     
     // Color mapping for categories
     const categoryColors: { [key: string]: string } = {
@@ -865,17 +885,28 @@ export const ManagerDashboard: React.FC = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl">
+          <p className="font-medium text-gray-900 mb-2">{label || payload[0].name}</p>
           {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {entry.value}
-              {entry.payload.amount && (
-                <span className="text-gray-500 ml-2">
-                  ({formatCurrency(entry.payload.amount)})
-                </span>
+            <div key={index} className="space-y-1">
+              <div className="flex items-center">
+                <div 
+                  className="w-3 h-3 rounded-full mr-2" 
+                  style={{ backgroundColor: entry.color || entry.fill }}
+                ></div>
+                <p className="font-medium" style={{ color: entry.color || entry.fill }}>
+                  {entry.name}
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">
+                Számlák: {entry.value} db
+              </p>
+              {entry.payload && entry.payload.amount && (
+                <p className="text-sm text-blue-600 font-medium">
+                  Összeg: {formatCurrency(entry.payload.amount)}
+                </p>
               )}
-            </p>
+            </div>
           ))}
         </div>
       );
@@ -1520,6 +1551,9 @@ export const ManagerDashboard: React.FC = () => {
                     outerRadius={60}
                     paddingAngle={5}
                     dataKey="value"
+                    animationDuration={1800}
+                    animationEasing="ease-in-out"
+                    isAnimationActive={true}
                   >
                     {chartData.organizationData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1527,6 +1561,8 @@ export const ManagerDashboard: React.FC = () => {
                   </Pie>
                   <Tooltip 
                     content={<CustomTooltip />}
+                    animationDuration={300}
+                    animationEasing="ease-out"
                   />
                 </RechartsPieChart>
               </ResponsiveContainer>
@@ -1562,6 +1598,9 @@ export const ManagerDashboard: React.FC = () => {
                     outerRadius={60}
                     paddingAngle={5}
                     dataKey="value"
+                    animationDuration={1800}
+                    animationEasing="ease-in-out"
+                    isAnimationActive={true}
                   >
                     {chartData.paymentTypeData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1569,6 +1608,8 @@ export const ManagerDashboard: React.FC = () => {
                   </Pie>
                   <Tooltip 
                     content={<CustomTooltip />}
+                    animationDuration={300}
+                    animationEasing="ease-out"
                   />
                 </RechartsPieChart>
               </ResponsiveContainer>
