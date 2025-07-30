@@ -150,30 +150,34 @@ export const Dashboard: React.FC = () => {
       ) as any;
       const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
 
+      // Filter out "Füles Márta" invoices from cost analytics
+      const filteredInvoices = invoices?.filter(inv => inv.partner !== 'Füles Márta') || [];
+      const filteredThisMonthInvoices = thisMonthInvoices.filter(inv => inv.partner !== 'Füles Márta');
+
       const calculatedStats: Stats = {
         totalInvoices: invoices?.length || 0,
-        totalAmount: (invoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAmount,
+        totalAmount: (filteredInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAmount,
         alapitvanyCount: invoices?.filter(inv => inv.organization === 'alapitvany').length || 0,
         ovodaCount: invoices?.filter(inv => inv.organization === 'ovoda').length || 0,
         bankTransferCount: invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
         cardCashCount: invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
         thisMonthCount: thisMonthInvoices.length,
-        thisMonthAmount: thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
+        thisMonthAmount: filteredThisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
       };
 
       const weekHistoryData = generateWeekHistory(invoices || []);
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
 
-      const monthlyData = generateMonthlyData(invoices || [], payrollRecords || []);
-      const organizationData = generateOrganizationData(invoices || []);
-      const paymentTypeData = generatePaymentTypeData(invoices || []);
+      const monthlyData = generateMonthlyData(filteredInvoices, payrollRecords || []);
+      const organizationData = generateOrganizationData(filteredInvoices);
+      const paymentTypeData = generatePaymentTypeData(filteredInvoices);
       const weeklyTrend = weekHistoryData[0]?.data || [];
-      const expenseData = generateExpenseData(invoices || [], payrollRecords || []);
-      const topPartnersData = generateTopPartnersData(invoices || []);
+      const expenseData = generateExpenseData(filteredInvoices, payrollRecords || []);
+      const topPartnersData = generateTopPartnersData(filteredInvoices);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
-      const munkaszamData = generateMunkaszamData(invoices || []);
-      const categoryData = generateCategoryData(invoices || []);
+      const munkaszamData = generateMunkaszamData(filteredInvoices);
+      const categoryData = generateCategoryData(filteredInvoices);
 
       setStats(calculatedStats);
       setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
@@ -243,7 +247,7 @@ export const Dashboard: React.FC = () => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index;
+        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner !== 'Füles Márta';
       });
 
       const monthPayroll = payrollRecords.filter(rec => {
@@ -322,7 +326,7 @@ export const Dashboard: React.FC = () => {
         dayStart.setHours(0, 0, 0, 0);
         const dayEnd = new Date(dayDate);
         dayEnd.setHours(23, 59, 59, 999);
-        return invDate >= dayStart && invDate <= dayEnd;
+        return invDate >= dayStart && invDate <= dayEnd && inv.partner !== 'Füles Márta';
       });
       
       return {
@@ -342,7 +346,7 @@ export const Dashboard: React.FC = () => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index;
+        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner !== 'Füles Márta';
       });
 
       const monthPayroll = payrollRecords.filter(rec => {
