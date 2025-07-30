@@ -1796,10 +1796,19 @@ export const ManagerDashboard: React.FC = () => {
           </div>
           <div className="h-48 sm:h-64 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData.payrollOverTimeData}>
+              <AreaChart 
+                data={chartData.payrollOverTimeData} 
+                animationDuration={800}
+                animationEasing="ease-in-out"
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
-                <YAxis stroke="#6b7280" fontSize={10} />
+                <YAxis 
+                  stroke="#6b7280" 
+                  fontSize={10}
+                  domain={[0, 'auto']}
+                  allowDataOverflow={false}
+                />
                 <Tooltip 
                   formatter={(value: number, name: string) => {
                     if (name === "Bérleti díjak") {
@@ -1813,6 +1822,8 @@ export const ManagerDashboard: React.FC = () => {
                   }}
                   labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                   contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  animationDuration={300}
+                  animationEasing="ease-out"
                 />
                 {(payrollFilter === 'all' || payrollFilter === 'rental') && (
                   <Area 
