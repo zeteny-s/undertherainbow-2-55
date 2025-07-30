@@ -1798,7 +1798,6 @@ export const ManagerDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart 
                 data={chartData.payrollOverTimeData}
-                isAnimationActive={true}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
