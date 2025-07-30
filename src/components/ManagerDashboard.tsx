@@ -173,24 +173,19 @@ export const ManagerDashboard: React.FC = () => {
         return invDate >= thisMonth && invDate < nextMonth;
       }) || [];
 
-      const thisMonthPayroll = payrollRecords?.filter(rec => {
-        if (!rec.record_date) return false;
-        const recDate = new Date(rec.record_date);
-        return recDate >= thisMonth && recDate < nextMonth;
-      }) || [];
 
-      // Calculate total payroll and tax amounts from summaries
+      // Calculate total payroll and tax amounts from summaries only (after "Adatok mentése")
       const totalPayrollAndTaxAmount = payrollSummaries?.reduce((sum, summary) => 
         sum + (summary.total_payroll || 0) + ((summary as any).tax_amount || 0), 0) || 0;
-      const thisMonthPayrollAmount = thisMonthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
 
-      // Find tax amount for this month from payroll summaries
+      // Find this month's amounts from payroll summaries only (after saved)
       const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
-      const thisMonthTaxAmount = payrollSummaries?.find(summary => 
+      const thisMonthSummary = payrollSummaries?.find(summary => 
         summary.year === currentYear && summary.month === currentMonth
       ) as any;
-      const thisMonthTax = thisMonthTaxAmount?.tax_amount || 0;
+      const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
+      const thisMonthTax = thisMonthSummary?.tax_amount || 0;
 
       const calculatedStats: Stats = {
         totalInvoices: invoices?.length || 0,
