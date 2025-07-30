@@ -709,9 +709,6 @@ export const InvoiceList: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
                           {invoice.invoice_number || '-'}
                         </div>
-                        <div className="text-sm text-gray-500 truncate max-w-[200px]">
-                          {invoice.file_name}
-                        </div>
                       </div>
                     </div>
                   </td>
