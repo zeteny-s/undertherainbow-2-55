@@ -1823,7 +1823,7 @@ export const ManagerDashboard: React.FC = () => {
                   fillOpacity={(payrollFilter === 'all' || payrollFilter === 'rental') ? 0.3 : 0}
                   name="Bérleti díjak"
                   isAnimationActive={true}
-                  animationDuration={2500}
+                  animationDuration={5500}
                   animationEasing="ease-in-out"
                 />
                 <Area 
@@ -1834,7 +1834,7 @@ export const ManagerDashboard: React.FC = () => {
                   fillOpacity={(payrollFilter === 'all' || payrollFilter === 'nonRental') ? 0.3 : 0}
                   name="Nem bérleti díjak"
                   isAnimationActive={true}
-                  animationDuration={2500}
+                  animationDuration={5500}
                   animationEasing="ease-in-out"
                 />
                 <Area 
@@ -1845,7 +1845,7 @@ export const ManagerDashboard: React.FC = () => {
                   fillOpacity={(payrollFilter === 'all' || payrollFilter === 'tax') ? 0.3 : 0}
                   name="Járulékok"
                   isAnimationActive={true}
-                  animationDuration={2500}
+                  animationDuration={5500}
                   animationEasing="ease-in-out"
                 />
               </AreaChart>
