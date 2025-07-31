@@ -1395,85 +1395,83 @@ export const ManagerDashboard: React.FC = () => {
   
   {chartData.categoryData.length > 0 && (
     <div className="h-64 sm:h-80 lg:h-96">
-      <ResponsiveContainer width="100%" height="100%">
-        <div className="flex flex-col h-full">
-          <div className="flex-1 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                <Pie
-                  data={chartData.categoryData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={85}
-                  paddingAngle={2}
-                  dataKey="amount"
-                  animationDuration={1000}
-                  animationBegin={200}
-                  minAngle={5}
-                >
-                  {chartData.categoryData.map((_, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={`url(#categoryGradient-${index})`}
-                      stroke="#ffffff"
-                      strokeWidth={1}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CategoryTooltip />} />
-                <defs>
-                  {chartData.categoryData.map((entry, index) => (
-                    <radialGradient 
-                      key={`gradient-${index}`} 
-                      id={`categoryGradient-${index}`} 
-                      cx="50%" 
-                      cy="50%" 
-                      r="50%" 
-                      fx="50%" 
-                      fy="50%"
-                    >
-                      <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
-                      <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
-                    </radialGradient>
-                  ))}
-                </defs>
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
-            {chartData.categoryData.map((item, index) => (
-              <div 
-                key={index} 
-                className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
-                title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
+      <div className="flex flex-col h-full">
+        <div className="flex-1 relative">
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsPieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+              <Pie
+                data={chartData.categoryData}
+                cx="50%"
+                cy="50%"
+                outerRadius={85}
+                paddingAngle={2}
+                dataKey="amount"
+                animationDuration={1000}
+                animationBegin={200}
+                minAngle={5}
               >
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
-                  <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
-                </div>
+                {chartData.categoryData.map((_, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={`url(#categoryGradient-${index})`}
+                    stroke="#ffffff"
+                    strokeWidth={1}
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CategoryTooltip />} />
+              <defs>
+                {chartData.categoryData.map((entry, index) => (
+                  <radialGradient 
+                    key={`gradient-${index}`} 
+                    id={`categoryGradient-${index}`} 
+                    cx="50%" 
+                    cy="50%" 
+                    r="50%" 
+                    fx="50%" 
+                    fy="50%"
+                  >
+                    <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
+                    <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
+                  </radialGradient>
+                ))}
+              </defs>
+            </RechartsPieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
+          {chartData.categoryData.map((item, index) => (
+            <div 
+              key={index} 
+              className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
+              title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
+            >
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
+                <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
               </div>
-            ))}
-          </div>
-          
-          <div className="mt-3 border-t border-gray-100 pt-3">
-            <div className="flex justify-between items-center">
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Összes kiadás:</div>
-                <div className="text-sm font-medium text-purple-700">
-                  {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
-                </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          <div className="flex justify-between items-center">
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Összes kiadás:</div>
+              <div className="text-sm font-medium text-purple-700">
+                {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
               </div>
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Összes számla:</div>
-                <div className="text-sm font-medium text-gray-700">
-                  {chartData.categoryData.reduce((sum, item) => sum + item.count, 0)} db
-                </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Összes számla:</div>
+              <div className="text-sm font-medium text-gray-700">
+                {chartData.categoryData.reduce((sum, item) => sum + item.count, 0)} db
               </div>
             </div>
           </div>
         </div>
-      </ResponsiveContainer>
+      </div>
     </div>
   )}
 </div>
