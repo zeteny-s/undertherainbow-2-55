@@ -22,7 +22,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   change
 }) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>

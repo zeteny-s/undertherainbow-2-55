@@ -862,9 +862,18 @@ export const Dashboard: React.FC = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
                     <YAxis stroke="#6b7280" fontSize={10} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} />
+                    <Tooltip 
+                      content={<CustomTooltip />}
+                      contentStyle={{
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      animationDuration={300}
+                    />
+                    <Bar dataKey="alapitvany" fill="#1e40af" name="Alapítvány" radius={[2, 2, 0, 0]} animationDuration={300} />
+                    <Bar dataKey="ovoda" fill="#ea580c" name="Óvoda" radius={[2, 2, 0, 0]} animationDuration={300} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
