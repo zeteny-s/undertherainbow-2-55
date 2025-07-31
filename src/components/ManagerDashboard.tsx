@@ -1037,10 +1037,7 @@ export const ManagerDashboard: React.FC = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-        <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
-          title={`Összes számla: ${stats.totalInvoices} db (${stats.thisMonthCount} e hónapban)`}
-        >
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Összes számla</p>
@@ -1053,10 +1050,7 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
-          title={`Teljes összeg: ${formatCurrency(stats.totalAmount)}`}
-        >
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600">Teljes összeg</p>
@@ -1069,10 +1063,7 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
-          title={`E havi számlák: ${stats.thisMonthCount} db`}
-        >
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600">E havi számlák</p>
@@ -1085,10 +1076,7 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow"
-          title={`E havi kiadás: ${formatCurrency(stats.thisMonthAmount)}`}
-        >
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600">E havi kiadás</p>
