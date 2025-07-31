@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, UserPlus, Settings, Calendar } from 'lucide-react';
+import { Plus, Users, UserPlus, Settings } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { Team, TeamMember, Task, Profile } from '../../types/teams';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -300,24 +300,7 @@ export const ManagerTeamsView: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 relative">
-      {/* Coming Soon Overlay - fixed to cover full content area */}
-      <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-10 flex items-center justify-center pointer-events-auto">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-xl max-w-md text-center">
-          <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Hamarosan érkezik!</h2>
-          <p className="text-muted-foreground mb-4">
-            A csapat kezelési funkciók jelenleg fejlesztés alatt állnak. Hamarosan elérhetővé tesszük a teljes funkcionalitást.
-          </p>
-          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 dark:bg-blue-600 w-4/5"></div>
-          </div>
-          <p className="text-sm text-muted-foreground mt-3">80% kész</p>
-        </div>
-      </div>
-      
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
