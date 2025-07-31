@@ -171,7 +171,7 @@ export const Dashboard: React.FC = () => {
         thisMonthAmount: filteredThisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
       };
 
-      // Use filtered invoices for all chart data generation
+      // Use filtered invoices for some charts, all invoices for munkaszam and category accuracy
       const weekHistoryData = generateWeekHistory(filteredInvoices);
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
@@ -183,8 +183,8 @@ export const Dashboard: React.FC = () => {
       const expenseData = generateExpenseData(filteredInvoices, payrollRecords || []);
       const topPartnersData = generateTopPartnersData(filteredInvoices);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
-      const munkaszamData = generateMunkaszamData(filteredInvoices);
-      const categoryData = generateCategoryData(filteredInvoices);
+      const munkaszamData = generateMunkaszamData(invoices || []); // Use all invoices for accuracy
+      const categoryData = generateCategoryData(invoices || []); // Use all invoices for accuracy
 
       setStats(calculatedStats);
       setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
@@ -404,41 +404,12 @@ export const Dashboard: React.FC = () => {
   };
   
   const generateMunkaszamData = (invoices: any[]) => {
-    // Define all possible munkaszám values
-    const allMunkaszamValues = [
-        "1",
-        "11",
-        "12",
-        "13",
-        "2",
-        "21",
-        "22",
-        "23",
-        "24",
-        "25",
-        "26",
-        "3",
-        "4",
-        "5",
-        "21,22,23",
-        "12,24,25",
-        "13,26",
-      ];
-      
-    // Group invoices by munkaszam and calculate total spending
+    // Group invoices by munkaszam and calculate total spending using all invoices
     const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
     
-    // Initialize all possible munkaszám values with zero values
-    allMunkaszamValues.forEach(munkaszam => {
-      munkaszamSpending[munkaszam] = { amount: 0, count: 0 };
-    });
-    
-    // Add "Nincs munkaszám" for invoices without a munkaszam
-    munkaszamSpending["Nincs munkaszám"] = { amount: 0, count: 0 };
-    
-    // Process invoices
+    // Process all invoices (no filtering for accurate totals)
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
+      if (invoice.amount && invoice.amount > 0) {
         // Use 'Nincs munkaszám' for invoices without a munkaszam
         const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
         
@@ -446,7 +417,6 @@ export const Dashboard: React.FC = () => {
           munkaszamSpending[munkaszam].amount += invoice.amount;
           munkaszamSpending[munkaszam].count += 1;
         } else {
-          // If the munkaszám is not in our predefined list, add it
           munkaszamSpending[munkaszam] = { 
             amount: invoice.amount, 
             count: 1 
@@ -474,7 +444,7 @@ export const Dashboard: React.FC = () => {
   };
   
   const generateCategoryData = (invoices: any[]) => {
-    // Group invoices by category and calculate total spending
+    // Group invoices by category and calculate total spending using all invoices
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
     // Define valid categories
@@ -495,8 +465,9 @@ export const Dashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
+    // Process all invoices (no filtering for accurate totals)
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
+      if (invoice.amount && invoice.amount > 0) {
         // Use 'Egyéb' for invoices without a category or with invalid category
         let category = 'Egyéb';
         
@@ -1089,26 +1060,27 @@ export const Dashboard: React.FC = () => {
               <div className="h-64 sm:h-80 lg:h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <div className="flex flex-col h-full">
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
+                        <RechartsPieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                           <Pie
                             data={chartData.categoryData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={90}
-                            paddingAngle={3}
+                            innerRadius={45}
+                            outerRadius={80}
+                            paddingAngle={2}
                             dataKey="amount"
                             animationDuration={1000}
                             animationBegin={200}
+                            minAngle={3}
                           >
                             {chartData.categoryData.map((_, index) => (
                               <Cell 
                                 key={`cell-${index}`} 
                                 fill={`url(#categoryGradient-${index})`}
                                 stroke="#ffffff"
-                                strokeWidth={2}
+                                strokeWidth={1}
                               />
                             ))}
                           </Pie>
@@ -1132,14 +1104,14 @@ export const Dashboard: React.FC = () => {
                         </RechartsPieChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
-                      {chartData.categoryData.slice(0, 6).map((item, index) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
+                      {chartData.categoryData.map((item, index) => (
                         <div 
                           key={index} 
-                          className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-gray-50 transition-colors cursor-default"
+                          className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
                           title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
                         >
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
                           <div className="flex-1 min-w-0">
                             <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
                             <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
