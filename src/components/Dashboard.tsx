@@ -413,14 +413,14 @@ export const Dashboard: React.FC = () => {
       const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
       
       if (munkaszamSpending[munkaszam]) {
-        // Include amount only if not Füles Márta
-        if (invoice.partner !== 'Füles Márta' && invoice.amount && invoice.amount > 0) {
+        // Include amount only if not Füles Márta - now includes negative amounts
+        if (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) {
           munkaszamSpending[munkaszam].amount += invoice.amount;
         }
         munkaszamSpending[munkaszam].count += 1; // Always count the invoice
       } else {
         munkaszamSpending[munkaszam] = { 
-          amount: (invoice.partner !== 'Füles Márta' && invoice.amount && invoice.amount > 0) ? invoice.amount : 0,
+          amount: (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
           count: 1 
         };
       }
@@ -429,7 +429,7 @@ export const Dashboard: React.FC = () => {
     // Color palette for the chart
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
     
-    // Convert to array and include only munkaszám values with positive amount
+    // Convert to array and include all munkaszám values (positive and negative amounts)
     const munkaszamArray = Object.entries(munkaszamSpending)
       .map(([munkaszam, data], index) => ({
         munkaszam: munkaszam.length > 15 ? munkaszam.substring(0, 15) + '...' : munkaszam,
@@ -438,8 +438,8 @@ export const Dashboard: React.FC = () => {
         amount: data.amount,
         color: colors[index % colors.length]
       }))
-      .filter(item => item.amount > 0) // Only include items with positive amount
-      .sort((a, b) => b.amount - a.amount);
+      .filter(item => item.amount !== 0) // Include items with any non-zero amount (positive or negative)
+      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)); // Sort by absolute value
     
     return munkaszamArray;
   };
@@ -481,8 +481,8 @@ export const Dashboard: React.FC = () => {
         }
       }
       
-      // Include amount only if not Füles Márta and has positive amount
-      if (invoice.partner !== 'Füles Márta' && invoice.amount && invoice.amount > 0) {
+      // Include amount only if not Füles Márta - now includes negative amounts
+      if (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) {
         categorySpending[category].amount += invoice.amount;
       }
       // Always count the invoice regardless of partner
@@ -508,7 +508,7 @@ export const Dashboard: React.FC = () => {
     let totalCount = 0;
     
     const categoryArray = Object.entries(categorySpending)
-      .filter(([, data]) => data.amount > 0) // Only include categories with positive spending
+      .filter(([, data]) => data.amount !== 0) // Include categories with any non-zero amount (positive or negative)
       .map(([category, data]) => {
         totalAmount += data.amount;
         totalCount += data.count;
@@ -519,7 +519,7 @@ export const Dashboard: React.FC = () => {
           color: categoryColors[category] || '#6b7280'
         };
       })
-      .sort((a, b) => b.amount - a.amount);
+      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)); // Sort by absolute value
       
     console.log('Category chart - Total amount:', formatCurrency(totalAmount), 'Total count:', totalCount);
     
