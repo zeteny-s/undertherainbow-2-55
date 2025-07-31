@@ -43,7 +43,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
         <div className="h-64 sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
+               <Pie
                 data={organizationData}
                 cx="50%"
                 cy="50%"
@@ -52,12 +52,22 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
+                animationDuration={300}
               >
                 {organizationData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                formatter={(value: number) => [`${value} db`, 'Számla']}
+                labelFormatter={(label) => `Szervezet: ${label}`}
+                contentStyle={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -80,7 +90,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
         <div className="h-64 sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
+               <Pie
                 data={paymentData}
                 cx="50%"
                 cy="50%"
@@ -89,12 +99,22 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
+                animationDuration={300}
               >
                 {paymentData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                formatter={(value: number) => [`${value} db`, 'Számla']}
+                labelFormatter={(label) => `Fizetési mód: ${label}`}
+                contentStyle={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -120,10 +140,19 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="week" />
               <YAxis />
-              <Tooltip />
+              <Tooltip 
+                formatter={(value: number, name: string) => [`${value} db`, name]}
+                labelFormatter={(label) => `Hét: ${label}`}
+                contentStyle={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
               <Legend />
-              <Bar dataKey="alapitvany" fill="#3B82F6" name="Alapítvány" />
-              <Bar dataKey="ovoda" fill="#F59E0B" name="Óvoda" />
+              <Bar dataKey="alapitvany" fill="#3B82F6" name="Alapítvány" animationDuration={300} />
+              <Bar dataKey="ovoda" fill="#F59E0B" name="Óvoda" animationDuration={300} />
             </BarChart>
           </ResponsiveContainer>
         </div>
