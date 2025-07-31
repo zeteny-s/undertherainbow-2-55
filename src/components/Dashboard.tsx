@@ -161,13 +161,13 @@ export const Dashboard: React.FC = () => {
         formatCurrency((filteredInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAmount));
 
       const calculatedStats: Stats = {
-        totalInvoices: filteredInvoices.length, // Use filtered count for consistency
+        totalInvoices: invoices?.length || 0, // Use ALL invoices for count
         totalAmount: (filteredInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0) + totalPayrollAmount,
-        alapitvanyCount: filteredInvoices.filter(inv => inv.organization === 'alapitvany').length || 0,
-        ovodaCount: filteredInvoices.filter(inv => inv.organization === 'ovoda').length || 0,
-        bankTransferCount: filteredInvoices.filter(inv => inv.invoice_type === 'bank_transfer').length || 0,
-        cardCashCount: filteredInvoices.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0,
-        thisMonthCount: filteredThisMonthInvoices.length,
+        alapitvanyCount: (invoices?.filter(inv => inv.organization === 'alapitvany').length || 0),
+        ovodaCount: (invoices?.filter(inv => inv.organization === 'ovoda').length || 0),
+        bankTransferCount: (invoices?.filter(inv => inv.invoice_type === 'bank_transfer').length || 0),
+        cardCashCount: (invoices?.filter(inv => inv.invoice_type === 'card_cash_afterpay').length || 0),
+        thisMonthCount: thisMonthInvoices.length, // Count all invoices for this month
         thisMonthAmount: filteredThisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) + thisMonthPayrollAmount
       };
 
@@ -407,21 +407,22 @@ export const Dashboard: React.FC = () => {
     // Group invoices by munkaszam and calculate total spending using all invoices
     const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
     
-    // Process all invoices (no filtering for accurate totals)
+    // Process all invoices - include all for count, exclude Füles Márta from amount only
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
-        // Use 'Nincs munkaszám' for invoices without a munkaszam
-        const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
-        
-        if (munkaszamSpending[munkaszam]) {
+      // Use 'Nincs munkaszám' for invoices without a munkaszam
+      const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
+      
+      if (munkaszamSpending[munkaszam]) {
+        // Include amount only if not Füles Márta
+        if (invoice.partner !== 'Füles Márta' && invoice.amount && invoice.amount > 0) {
           munkaszamSpending[munkaszam].amount += invoice.amount;
-          munkaszamSpending[munkaszam].count += 1;
-        } else {
-          munkaszamSpending[munkaszam] = { 
-            amount: invoice.amount, 
-            count: 1 
-          };
         }
+        munkaszamSpending[munkaszam].count += 1; // Always count the invoice
+      } else {
+        munkaszamSpending[munkaszam] = { 
+          amount: (invoice.partner !== 'Füles Márta' && invoice.amount && invoice.amount > 0) ? invoice.amount : 0,
+          count: 1 
+        };
       }
     });
     
@@ -465,25 +466,27 @@ export const Dashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
-    // Process all invoices (no filtering for accurate totals)
+    // Process all invoices - include all for count, exclude Füles Márta from amount only
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
-        // Use 'Egyéb' for invoices without a category or with invalid category
-        let category = 'Egyéb';
+      // Use 'Egyéb' for invoices without a category or with invalid category
+      let category = 'Egyéb';
+      
+      if (invoice.category && invoice.category.trim()) {
+        // Remove any " (AI)" suffix if present
+        const cleanCategory = invoice.category.trim().replace(/ \(AI\)$/, '');
         
-        if (invoice.category && invoice.category.trim()) {
-          // Remove any " (AI)" suffix if present
-          const cleanCategory = invoice.category.trim().replace(/ \(AI\)$/, '');
-          
-          // Check if it's a valid category
-          if (validCategories.includes(cleanCategory)) {
-            category = cleanCategory;
-          }
+        // Check if it's a valid category
+        if (validCategories.includes(cleanCategory)) {
+          category = cleanCategory;
         }
-        
-        categorySpending[category].amount += invoice.amount;
-        categorySpending[category].count += 1;
       }
+      
+      // Include amount only if not Füles Márta and has positive amount
+      if (invoice.partner !== 'Füles Márta' && invoice.amount && invoice.amount > 0) {
+        categorySpending[category].amount += invoice.amount;
+      }
+      // Always count the invoice regardless of partner
+      categorySpending[category].count += 1;
     });
     
     // Color mapping for categories
@@ -1067,13 +1070,12 @@ export const Dashboard: React.FC = () => {
                             data={chartData.categoryData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={45}
-                            outerRadius={80}
+                            outerRadius={85}
                             paddingAngle={2}
                             dataKey="amount"
                             animationDuration={1000}
                             animationBegin={200}
-                            minAngle={3}
+                            minAngle={5}
                           >
                             {chartData.categoryData.map((_, index) => (
                               <Cell 
