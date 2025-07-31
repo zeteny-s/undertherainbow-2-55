@@ -478,67 +478,32 @@ export const ManagerDashboard: React.FC = () => {
   };
   
   const generateMunkaszamData = (invoices: any[]) => {
-    // Log the invoice count for debugging
-    console.log('generateMunkaszamData - invoice count:', invoices.length);
-    // Define all possible munkaszám values
-    const allMunkaszamValues = [
-        "1",
-        "11",
-        "12",
-        "13",
-        "2",
-        "21",
-        "22",
-        "23",
-        "24",
-        "25",
-        "26",
-        "3",
-        "4",
-        "5",
-        "21,22,23",
-        "12,24,25",
-        "13,26",
-      ];
-      
-    // Group invoices by munkaszam and calculate total spending
+    // Group invoices by munkaszam and calculate total spending using all invoices
     const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
     
-    // Initialize all possible munkaszám values with zero values
-    allMunkaszamValues.forEach(munkaszam => {
-      munkaszamSpending[munkaszam] = { amount: 0, count: 0 };
-    });
-    
-    // Add "Nincs munkaszám" for invoices without a munkaszam
-    munkaszamSpending["Nincs munkaszám"] = { amount: 0, count: 0 };
-    
-    // Process invoices - no additional filtering since invoices are already filtered
-    let processedCount = 0;
+    // Process all invoices - include all for count, exclude Füles Márta from amount only
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
-        // Use 'Nincs munkaszám' for invoices without a munkaszam
-        const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
-        
-        if (munkaszamSpending[munkaszam]) {
+      // Use 'Nincs munkaszám' for invoices without a munkaszam
+      const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
+      
+      if (munkaszamSpending[munkaszam]) {
+        // Include amount only if not Füles Márta - now includes negative amounts
+        if (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) {
           munkaszamSpending[munkaszam].amount += invoice.amount;
-          munkaszamSpending[munkaszam].count += 1;
-        } else {
-          // If the munkaszám is not in our predefined list, add it
-          munkaszamSpending[munkaszam] = { 
-            amount: invoice.amount, 
-            count: 1 
-          };
         }
-        processedCount++;
+        munkaszamSpending[munkaszam].count += 1; // Always count the invoice
+      } else {
+        munkaszamSpending[munkaszam] = { 
+          amount: (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
+          count: 1 
+        };
       }
     });
-    
-    console.log('generateMunkaszamData - processed invoice count:', processedCount);
     
     // Color palette for the chart
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
     
-    // Convert to array and include only munkaszám values with positive amount
+    // Convert to array and include all munkaszám values (positive and negative amounts)
     const munkaszamArray = Object.entries(munkaszamSpending)
       .map(([munkaszam, data], index) => ({
         munkaszam: munkaszam.length > 15 ? munkaszam.substring(0, 15) + '...' : munkaszam,
@@ -547,16 +512,14 @@ export const ManagerDashboard: React.FC = () => {
         amount: data.amount,
         color: colors[index % colors.length]
       }))
-      .filter(item => item.amount > 0) // Only include items with positive amount
-      .sort((a, b) => b.amount - a.amount);
+      .filter(item => item.amount !== 0) // Include items with any non-zero amount (positive or negative)
+      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)); // Sort by absolute value
     
     return munkaszamArray;
   };
   
   const generateCategoryData = (invoices: any[]) => {
-    // Log the invoice count for debugging
-    console.log('generateCategoryData - invoice count:', invoices.length);
-    // Group invoices by category and calculate total spending
+    // Group invoices by category and calculate total spending using all invoices
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
     // Define valid categories
@@ -577,30 +540,28 @@ export const ManagerDashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
-    // Process invoices - no additional filtering since invoices are already filtered
-    let processedCount = 0;
+    // Process all invoices - include all for count, exclude Füles Márta from amount only
     invoices.forEach(invoice => {
-      if (invoice.amount && invoice.amount > 0) {
-        // Use 'Egyéb' for invoices without a category or with invalid category
-        let category = 'Egyéb';
+      // Use 'Egyéb' for invoices without a category or with invalid category
+      let category = 'Egyéb';
+      
+      if (invoice.category && invoice.category.trim()) {
+        // Remove any " (AI)" suffix if present
+        const cleanCategory = invoice.category.trim().replace(/ \(AI\)$/, '');
         
-        if (invoice.category && invoice.category.trim()) {
-          // Remove any " (AI)" suffix if present
-          const cleanCategory = invoice.category.trim().replace(/ \(AI\)$/, '');
-          
-          // Check if it's a valid category
-          if (validCategories.includes(cleanCategory)) {
-            category = cleanCategory;
-          }
+        // Check if it's a valid category
+        if (validCategories.includes(cleanCategory)) {
+          category = cleanCategory;
         }
-        
-        categorySpending[category].amount += invoice.amount;
-        categorySpending[category].count += 1;
-        processedCount++;
       }
+      
+      // Include amount only if not Füles Márta - now includes negative amounts
+      if (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) {
+        categorySpending[category].amount += invoice.amount;
+      }
+      // Always count the invoice regardless of partner
+      categorySpending[category].count += 1;
     });
-    
-    console.log('generateCategoryData - processed invoice count:', processedCount);
     
     // Color mapping for categories
     const categoryColors: { [key: string]: string } = {
@@ -621,7 +582,7 @@ export const ManagerDashboard: React.FC = () => {
     let totalCount = 0;
     
     const categoryArray = Object.entries(categorySpending)
-      .filter(([, data]) => data.amount > 0) // Only include categories with positive spending
+      .filter(([, data]) => data.amount !== 0) // Include categories with any non-zero amount (positive or negative)
       .map(([category, data]) => {
         totalAmount += data.amount;
         totalCount += data.count;
@@ -632,7 +593,7 @@ export const ManagerDashboard: React.FC = () => {
           color: categoryColors[category] || '#6b7280'
         };
       })
-      .sort((a, b) => b.amount - a.amount);
+      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)); // Sort by absolute value
       
     console.log('Category chart - Total amount:', formatCurrency(totalAmount), 'Total count:', totalCount);
     
@@ -1397,26 +1358,26 @@ export const ManagerDashboard: React.FC = () => {
               <div className="h-64 sm:h-80 lg:h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <div className="flex flex-col h-full">
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
+                        <RechartsPieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                           <Pie
                             data={chartData.categoryData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={90}
-                            paddingAngle={3}
+                            outerRadius={85}
+                            paddingAngle={2}
                             dataKey="amount"
                             animationDuration={1000}
                             animationBegin={200}
+                            minAngle={5}
                           >
                             {chartData.categoryData.map((_, index) => (
                               <Cell 
                                 key={`cell-${index}`} 
                                 fill={`url(#categoryGradient-${index})`}
                                 stroke="#ffffff"
-                                strokeWidth={2}
+                                strokeWidth={1}
                               />
                             ))}
                           </Pie>
@@ -1440,14 +1401,14 @@ export const ManagerDashboard: React.FC = () => {
                         </RechartsPieChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
-                      {chartData.categoryData.slice(0, 6).map((item, index) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
+                      {chartData.categoryData.map((item, index) => (
                         <div 
                           key={index} 
-                          className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-gray-50 transition-colors cursor-default"
+                          className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
                           title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
                         >
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
                           <div className="flex-1 min-w-0">
                             <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
                             <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
