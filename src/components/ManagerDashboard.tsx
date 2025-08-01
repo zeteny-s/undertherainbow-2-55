@@ -32,6 +32,39 @@ interface Invoice {
   invoice_type: string;
 }
 
+interface PayrollRecord {
+  id: string;
+  employee_name: string;
+  amount: number;
+  record_date: string;
+  is_rental: boolean;
+  uploaded_by: string;
+  created_at: string;
+  updated_at: string;
+  project_code?: string | null;
+  organization: string;
+  file_name?: string | null;
+  file_url?: string | null;
+  extracted_text?: string | null;
+}
+
+interface PayrollSummary {
+  id: string;
+  year: number;
+  month: number;
+  total_payroll: number;
+  rental_costs: number;
+  non_rental_costs: number;
+  tax_amount?: number;
+  record_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  organization: string;
+  payroll_file_url?: string | null;
+  tax_file_url?: string | null;
+}
+
 interface ChartData {
   monthlyData: Array<{ month: string; alapitvany: number; ovoda: number; total: number; amount: number }>;
   organizationData: Array<{ name: string; value: number; amount: number; color: string }>;
@@ -169,8 +202,8 @@ export const ManagerDashboard: React.FC = () => {
       if (error) throw error;
 
       // Fetch payroll records - handle empty results gracefully
-      let payrollRecords = [];
-      let payrollSummaries = [];
+      let payrollRecords: PayrollRecord[] = [];
+      let payrollSummaries: PayrollSummary[] = [];
       
       try {
         const { data: payrollData, error: payrollError } = await supabase
