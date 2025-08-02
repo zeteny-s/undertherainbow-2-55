@@ -167,6 +167,167 @@ export type Database = {
         }
         Relationships: []
       }
+      message_participants: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          participant_id: string
+          participant_type: string
+          read_at: string | null
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          participant_id: string
+          participant_type?: string
+          read_at?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          participant_id?: string
+          participant_type?: string
+          read_at?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_participants_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_participants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_threads: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          last_message_at: string
+          team_id: string | null
+          thread_type: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          last_message_at?: string
+          team_id?: string | null
+          thread_type?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_message_at?: string
+          team_id?: string | null
+          thread_type?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_threads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_threads_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          is_edited: boolean
+          message_type: string
+          parent_message_id: string | null
+          sender_id: string
+          thread_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean
+          message_type?: string
+          parent_message_id?: string | null
+          sender_id: string
+          thread_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean
+          message_type?: string
+          parent_message_id?: string | null
+          sender_id?: string
+          thread_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "message_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_records: {
         Row: {
           amount: number
@@ -223,8 +384,11 @@ export type Database = {
           month: number
           non_rental_costs: number
           organization: string
+          payroll_file_url: string | null
           record_count: number
           rental_costs: number
+          tax_amount: number
+          tax_file_url: string | null
           total_payroll: number
           updated_at: string
           year: number
@@ -236,8 +400,11 @@ export type Database = {
           month: number
           non_rental_costs?: number
           organization: string
+          payroll_file_url?: string | null
           record_count?: number
           rental_costs?: number
+          tax_amount?: number
+          tax_file_url?: string | null
           total_payroll?: number
           updated_at?: string
           year: number
@@ -249,8 +416,11 @@ export type Database = {
           month?: number
           non_rental_costs?: number
           organization?: string
+          payroll_file_url?: string | null
           record_count?: number
           rental_costs?: number
+          tax_amount?: number
+          tax_file_url?: string | null
           total_payroll?: number
           updated_at?: string
           year?: number
@@ -448,6 +618,48 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      thread_participants: {
+        Row: {
+          id: string
+          is_muted: boolean
+          joined_at: string
+          last_read_at: string | null
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_muted?: boolean
+          joined_at?: string
+          last_read_at?: string | null
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_muted?: boolean
+          joined_at?: string
+          last_read_at?: string | null
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_participants_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "message_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thread_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
