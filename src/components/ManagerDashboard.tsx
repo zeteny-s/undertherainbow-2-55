@@ -286,7 +286,7 @@ export const ManagerDashboard: React.FC = () => {
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
 
-      const monthlyData = generateMonthlyData(filteredInvoices, payrollRecords || []);
+      const monthlyData = generateMonthlyData(filteredInvoices);
       const organizationData = generateOrganizationData(filteredInvoices);
       const paymentTypeData = generatePaymentTypeData(filteredInvoices);
       const weeklyTrend = weekHistoryData[0]?.data || [];
@@ -372,7 +372,7 @@ export const ManagerDashboard: React.FC = () => {
     }).format(date);
   };
 
-  const generateMonthlyData = (invoices: any[], payrollRecords: any[]) => {
+  const generateMonthlyData = (invoices: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
@@ -382,25 +382,18 @@ export const ManagerDashboard: React.FC = () => {
         const date = new Date(inv.invoice_date);
         return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner !== 'Füles Márta';
       });
-
-      const monthPayroll = payrollRecords.filter(rec => {
-        if (!rec.record_date) return false;
-        const date = new Date(rec.record_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index;
-      });
       
       const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
       const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
       
       const invoiceAmount = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-      const payrollAmount = monthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
       
       return {
         month,
         alapitvany: alapitvanyInvoices.length,
         ovoda: ovodaInvoices.length,
         total: monthInvoices.length,
-        amount: invoiceAmount + payrollAmount
+        amount: invoiceAmount // Remove payroll from monthly invoice trend
       };
     });
   };
@@ -500,11 +493,15 @@ export const ManagerDashboard: React.FC = () => {
   };
 
   const generateTopPartnersData = (invoices: any[]) => {
-    // Group invoices by partner and calculate total spending
+    // Group invoices by partner and calculate total spending - EXCLUDE payroll partners
     const partnerSpending: { [key: string]: { amount: number; count: number } } = {};
     
+    // Filter out payroll-related partners completely from partner spending analysis
+    const excludedPartners = ['Füles Márta', 'NAV', 'Nyugdíjpénztár', 'Egészségpénztár'];
+    
     invoices.forEach(invoice => {
-      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0 && invoice.partner !== 'Füles Márta') {
+      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0 
+          && !excludedPartners.includes(invoice.partner)) {
         const partner = invoice.partner.trim();
         if (!partnerSpending[partner]) {
           partnerSpending[partner] = { amount: 0, count: 0 };
