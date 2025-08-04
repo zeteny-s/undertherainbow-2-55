@@ -10,7 +10,7 @@ import { Users, BarChart3, MessageSquare } from 'lucide-react';
 export const TeamsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isManager, setIsManager] = useState(false);
-  const [activeTab, setActiveTab] = useState('teams');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
     checkUserRole();
@@ -32,7 +32,10 @@ export const TeamsPage: React.FC = () => {
 
       if (error) throw error;
       
-      setIsManager(profile?.profile_type === 'vezetoi');
+      const isManagerRole = profile?.profile_type === 'vezetoi';
+      setIsManager(isManagerRole);
+      // Set default tab based on user role
+      setActiveTab(isManagerRole ? 'dashboard' : 'overview');
     } catch (error) {
       console.error('Error checking user role:', error);
     } finally {
