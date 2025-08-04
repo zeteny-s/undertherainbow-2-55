@@ -622,6 +622,7 @@ export const ManagerDashboard: React.FC = () => {
     // Define valid categories
     const validCategories = [
       'Bérleti díjak',
+      'Bérköltség',
       'Közüzemi díjak',
       'Szolgáltatások',
       'Étkeztetés költségei',
@@ -678,9 +679,21 @@ export const ManagerDashboard: React.FC = () => {
       categorySpending['Bérleti díjak'].count += payrollRecords.filter(record => record.is_rental).length;
     }
     
+    // Add non-rental payroll costs to "Bérköltség" category
+    const totalNonRentalCosts = payrollRecords
+      .filter(record => !record.is_rental)
+      .reduce((sum, record) => sum + (record.amount || 0), 0);
+    
+    if (totalNonRentalCosts > 0) {
+      categorySpending['Bérköltség'].amount += totalNonRentalCosts;
+      // Add a count entry for payroll records (could be adjusted based on how you want to count this)
+      categorySpending['Bérköltség'].count += payrollRecords.filter(record => !record.is_rental).length;
+    }
+    
     // Color mapping for categories
     const categoryColors: { [key: string]: string } = {
       'Bérleti díjak': '#3b82f6',
+      'Bérköltség': '#f97316',
       'Közüzemi díjak': '#10b981',
       'Szolgáltatások': '#f59e0b',
       'Étkeztetés költségei': '#8b5cf6',
