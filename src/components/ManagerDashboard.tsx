@@ -258,7 +258,7 @@ export const ManagerDashboard: React.FC = () => {
       const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
 
       // Filter out specific partners from cost analytics
-      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
       const filteredInvoices = (invoices || []).filter(inv => inv.partner && !excludedPartners.includes(inv.partner));
       const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !excludedPartners.includes(inv.partner));
       
@@ -376,7 +376,7 @@ export const ManagerDashboard: React.FC = () => {
   const generateMonthlyData = (invoices: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
-    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
     
     return months.map((month, index) => {
       const monthInvoices = invoices.filter(inv => {
@@ -393,7 +393,7 @@ export const ManagerDashboard: React.FC = () => {
       return {
         month,
         alapitvany: alapitvanyInvoices.length,
-        ovoda: ovodaInvoices.length,
+        ovoda: ovodaInvoices.length,x
         total: monthInvoices.length,
         amount: invoiceAmount // Remove payroll from monthly invoice trend
       };
@@ -454,7 +454,7 @@ export const ManagerDashboard: React.FC = () => {
         dayStart.setHours(0, 0, 0, 0);
         const dayEnd = new Date(dayDate);
         dayEnd.setHours(23, 59, 59, 999);
-        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
         return invDate >= dayStart && invDate <= dayEnd && inv.partner && !excludedPartners.includes(inv.partner);
       });
       
@@ -475,7 +475,7 @@ export const ManagerDashboard: React.FC = () => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
         return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner && !excludedPartners.includes(inv.partner);
       });
 
@@ -535,7 +535,7 @@ export const ManagerDashboard: React.FC = () => {
     const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
     
     // Process all invoices - include all for count, exclude specific partners from amount only
-    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
     invoices.forEach(invoice => {
       // Use 'Nincs munkaszám' for invoices without a munkaszam
       const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
@@ -595,7 +595,7 @@ export const ManagerDashboard: React.FC = () => {
     });
     
     // Define excluded partners for category distribution
-    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
     
     // Process all invoices - exclude specified partners from both amount and count
     invoices.forEach(invoice => {
