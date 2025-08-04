@@ -115,19 +115,38 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Fetch payroll summaries
-      const { data: payrollSummaries, error: payrollError } = await supabase
-        .from('payroll_summaries')
-        .select('*');
-
-      if (payrollError) throw payrollError;
+      // Fetch payroll records - handle empty results gracefully
+      let payrollRecords: any[] = [];
+      let payrollSummaries: any[] = [];
       
-      // Fetch payroll records for monthly calculations
-      const { data: payrollRecords, error: payrollRecordsError } = await supabase
-        .from('payroll_records')
-        .select('*');
+      try {
+        const { data: payrollData, error: payrollError } = await supabase
+          .from('payroll_records')
+          .select('*');
 
-      if (payrollRecordsError) throw payrollRecordsError;
+        if (payrollError) {
+          console.warn('Payroll records error:', payrollError);
+        } else {
+          payrollRecords = payrollData || [];
+        }
+      } catch (payrollError) {
+        console.warn('Error fetching payroll records:', payrollError);
+      }
+
+      // Fetch payroll summaries - handle empty results gracefully
+      try {
+        const { data: summariesData, error: summariesError } = await supabase
+          .from('payroll_summaries')
+          .select('*');
+
+        if (summariesError) {
+          console.warn('Payroll summaries error:', summariesError);
+        } else {
+          payrollSummaries = summariesData || [];
+        }
+      } catch (summariesError) {
+        console.warn('Error fetching payroll summaries:', summariesError);
+      }
 
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -140,7 +159,9 @@ export const Dashboard: React.FC = () => {
       }) || [];
 
 
-      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0) || 0;
+      // Calculate total payroll amount from summaries only (after "Adatok mentése")
+      const totalPayrollAmount = payrollSummaries?.reduce((sum, summary) => 
+        sum + (summary.total_payroll || 0), 0) || 0;
       
       // Find this month's amounts from payroll summaries only (after saved)
       const currentMonth = now.getMonth() + 1;
