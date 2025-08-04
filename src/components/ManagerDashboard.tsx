@@ -257,9 +257,10 @@ export const ManagerDashboard: React.FC = () => {
       ) as any;
       const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
 
-      // Filter out "Füles Márta" invoices from cost analytics
-      const filteredInvoices = invoices?.filter(inv => inv.partner !== 'Füles Márta') || [];
-      const filteredThisMonthInvoices = thisMonthInvoices.filter(inv => inv.partner !== 'Füles Márta');
+      // Filter out specific partners from cost analytics
+      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+      const filteredInvoices = invoices?.filter(inv => !excludedPartners.includes(inv.partner)) || [];
+      const filteredThisMonthInvoices = thisMonthInvoices.filter(inv => !excludedPartners.includes(inv.partner));
       
       // Log counts for debugging
       console.log('Total invoices (unfiltered):', invoices?.length || 0);
@@ -296,7 +297,7 @@ export const ManagerDashboard: React.FC = () => {
       
       // Make sure these functions receive the same filtered invoice list
       const munkaszamData = generateMunkaszamData(filteredInvoices);
-      const categoryData = generateCategoryData(filteredInvoices);
+      const categoryData = generateCategoryData(filteredInvoices, payrollRecords || []);
       
       // Generate payroll charts data
       
@@ -567,12 +568,13 @@ export const ManagerDashboard: React.FC = () => {
     return munkaszamArray;
   };
   
-  const generateCategoryData = (invoices: any[]) => {
+  const generateCategoryData = (invoices: any[], payrollRecords: any[] = []) => {
     // Group invoices by category and calculate total spending using all invoices
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
     // Define valid categories
     const validCategories = [
+      'Bérleti Költség',
       'Bérleti díjak',
       'Közüzemi díjak',
       'Szolgáltatások',
@@ -589,7 +591,10 @@ export const ManagerDashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
-    // Process all invoices - include all for count, exclude Füles Márta from amount only
+    // Define partners whose "Bérleti Költség" invoices should be excluded
+    const excludedBérletiPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+    
+    // Process all invoices
     invoices.forEach(invoice => {
       // Use 'Egyéb' for invoices without a category or with invalid category
       let category = 'Egyéb';
@@ -604,16 +609,31 @@ export const ManagerDashboard: React.FC = () => {
         }
       }
       
-      // Include amount only if not Füles Márta - now includes negative amounts
-      if (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) {
+      // Exclude amount if it's a "Bérleti Költség" invoice from excluded partners
+      const shouldExcludeAmount = category === 'Bérleti Költség' && 
+        excludedBérletiPartners.includes(invoice.partner);
+      
+      // Include amount only if not excluded
+      if (!shouldExcludeAmount && invoice.amount !== null && invoice.amount !== undefined) {
         categorySpending[category].amount += invoice.amount;
       }
       // Always count the invoice regardless of partner
       categorySpending[category].count += 1;
     });
     
+    // Add payroll rental costs to "Bérleti Költség" category
+    const totalRentalCosts = payrollRecords
+      .filter(record => record.is_rental)
+      .reduce((sum, record) => sum + (record.amount || 0), 0);
+    
+    if (totalRentalCosts > 0) {
+      categorySpending['Bérleti Költség'].amount += totalRentalCosts;
+      categorySpending['Bérleti Költség'].count += payrollRecords.filter(record => record.is_rental).length;
+    }
+    
     // Color mapping for categories
     const categoryColors: { [key: string]: string } = {
+      'Bérleti Költség': '#1e40af',
       'Bérleti díjak': '#3b82f6',
       'Közüzemi díjak': '#10b981',
       'Szolgáltatások': '#f59e0b',
@@ -772,7 +792,7 @@ export const ManagerDashboard: React.FC = () => {
     const currentMonth = now.getMonth() + 1; // 1-12
     
     // Generate months from January current year to current month (in reverse order, most recent first)
-    const history = [];
+    const history: Array<{ month: string; value: string }> = [];
     for (let month = currentMonth; month >= 1; month--) {
       const monthIndex = month - 1; // 0-11 for month names
       history.push({
