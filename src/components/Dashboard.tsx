@@ -152,8 +152,8 @@ export const Dashboard: React.FC = () => {
 
       // Filter out specific partners from cost analytics
       const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
-      const filteredInvoices = invoices?.filter(inv => !excludedPartners.includes(inv.partner)) || [];
-      const filteredThisMonthInvoices = thisMonthInvoices.filter(inv => !excludedPartners.includes(inv.partner));
+      const filteredInvoices = (invoices || []).filter(inv => inv.partner && !excludedPartners.includes(inv.partner));
+      const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !excludedPartners.includes(inv.partner));
       
       // Log counts for debugging
       console.log('Total invoices (unfiltered):', invoices?.length || 0);
@@ -256,7 +256,7 @@ export const Dashboard: React.FC = () => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index && !excludedPartners.includes(inv.partner);
+        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner && !excludedPartners.includes(inv.partner);
       });
       
       const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
@@ -329,7 +329,7 @@ export const Dashboard: React.FC = () => {
         const dayEnd = new Date(dayDate);
         dayEnd.setHours(23, 59, 59, 999);
         const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
-        return invDate >= dayStart && invDate <= dayEnd && !excludedPartners.includes(inv.partner);
+        return invDate >= dayStart && invDate <= dayEnd && inv.partner && !excludedPartners.includes(inv.partner);
       });
       
       return {
@@ -350,7 +350,7 @@ export const Dashboard: React.FC = () => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
         const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
-        return date.getFullYear() === currentYear && date.getMonth() === index && !excludedPartners.includes(inv.partner);
+        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner && !excludedPartners.includes(inv.partner);
       });
 
       const monthPayroll = payrollRecords.filter(rec => {
@@ -416,13 +416,13 @@ export const Dashboard: React.FC = () => {
       
       if (munkaszamSpending[munkaszam]) {
         // Include amount only if not in excluded partners - now includes negative amounts
-        if (!excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) {
+        if (invoice.partner && !excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) {
           munkaszamSpending[munkaszam].amount += invoice.amount;
         }
         munkaszamSpending[munkaszam].count += 1; // Always count the invoice
       } else {
         munkaszamSpending[munkaszam] = { 
-          amount: (!excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
+          amount: (invoice.partner && !excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
           count: 1 
         };
       }
@@ -473,8 +473,8 @@ export const Dashboard: React.FC = () => {
     
     // Process all invoices - exclude specified partners from both amount and count
     invoices.forEach(invoice => {
-      // Skip invoices from excluded partners
-      if (excludedPartners.includes(invoice.partner)) {
+      // Skip invoices from excluded partners or if partner is null
+      if (!invoice.partner || excludedPartners.includes(invoice.partner)) {
         return;
       }
       
