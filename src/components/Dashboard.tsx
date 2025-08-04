@@ -496,6 +496,7 @@ export const Dashboard: React.FC = () => {
     // Define valid categories
     const validCategories = [
       'Bérleti díjak',
+      'Bérköltség',
       'Közüzemi díjak',
       'Szolgáltatások',
       'Étkeztetés költségei',
@@ -552,9 +553,21 @@ export const Dashboard: React.FC = () => {
       categorySpending['Bérleti díjak'].count += payrollRecords.filter(record => record.is_rental).length;
     }
     
+    // Add non-rental payroll costs to "Bérköltség" category
+    const totalNonRentalCosts = payrollRecords
+      .filter(record => !record.is_rental)
+      .reduce((sum, record) => sum + (record.amount || 0), 0);
+    
+    if (totalNonRentalCosts > 0) {
+      categorySpending['Bérköltség'].amount += totalNonRentalCosts;
+      // Add a count entry for payroll records (could be adjusted based on how you want to count this)
+      categorySpending['Bérköltség'].count += payrollRecords.filter(record => !record.is_rental).length;
+    }
+    
     // Color mapping for categories
     const categoryColors: { [key: string]: string } = {
       'Bérleti díjak': '#3b82f6',
+      'Bérköltség': '#f97316',
       'Közüzemi díjak': '#10b981',
       'Szolgáltatások': '#f59e0b',
       'Étkeztetés költségei': '#8b5cf6',
@@ -749,7 +762,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Bérköltség:</span>
-              <span className="text-sm font-medium text-orange-600">{formatCurrency(data.payrollAmount)}</span>
+              <span className="text-sm font-medium text-orange-600 blur-sm select-none">***</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Bérleti díj:</span>
@@ -775,6 +788,7 @@ export const Dashboard: React.FC = () => {
   const CategoryTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      const isBlurred = data.category === 'Bérköltség';
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
           <div className="flex items-center space-x-2 mb-2">
@@ -784,7 +798,9 @@ export const Dashboard: React.FC = () => {
           <div className="space-y-2 pt-1 border-t border-gray-100">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Összeg:</span>
-              <span className="text-sm font-medium text-purple-700">{formatCurrency(data.amount)}</span>
+              <span className={`text-sm font-medium ${isBlurred ? 'blur-sm select-none' : 'text-purple-700'}`}>
+                {isBlurred ? '***' : formatCurrency(data.amount)}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Számlák száma:</span>
@@ -793,7 +809,9 @@ export const Dashboard: React.FC = () => {
             {data.count > 0 && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Átlag/számla:</span>
-                <span className="text-sm font-medium text-green-600">{formatCurrency(data.amount / data.count)}</span>
+                <span className={`text-sm font-medium ${isBlurred ? 'blur-sm select-none' : 'text-green-600'}`}>
+                  {isBlurred ? '***' : formatCurrency(data.amount / data.count)}
+                </span>
               </div>
             )}
           </div>
@@ -1184,19 +1202,24 @@ export const Dashboard: React.FC = () => {
                       </ResponsiveContainer>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
-                      {chartData.categoryData.map((item, index) => (
-                        <div 
-                          key={index} 
-                          className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
-                          title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
-                        >
-                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
-                            <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
+                      {chartData.categoryData.map((item, index) => {
+                        const isBlurred = item.category === 'Bérköltség';
+                        return (
+                          <div 
+                            key={index} 
+                            className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
+                            title={`${item.category}: ${isBlurred ? '***' : formatCurrency(item.amount)} (${item.count} számla)`}
+                          >
+                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
+                              <span className={`text-[10px] text-gray-500 truncate block ${isBlurred ? 'blur-sm select-none' : ''}`}>
+                                {isBlurred ? '***' : formatCurrency(item.amount)}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     
                     <div className="mt-6 border-t border-gray-200 pt-4">
