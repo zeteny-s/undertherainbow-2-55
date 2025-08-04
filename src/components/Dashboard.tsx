@@ -253,16 +253,22 @@ export const Dashboard: React.FC = () => {
     const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
     
     return months.map((month, index) => {
-      const monthInvoices = invoices.filter(inv => {
+      // Count all invoices for the month (for display purposes)
+      const allMonthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner && !excludedPartners.includes(inv.partner);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
-      const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
-      const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
+      // Filter for amount calculations only
+      const monthInvoicesForAmount = allMonthInvoices.filter(inv => 
+        inv.partner && !excludedPartners.includes(inv.partner)
+      );
       
-      const invoiceAmount = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+      const alapitvanyInvoices = allMonthInvoices.filter(inv => inv.organization === 'alapitvany');
+      const ovodaInvoices = allMonthInvoices.filter(inv => inv.organization === 'ovoda');
+      
+      const invoiceAmount = monthInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0);
       
       return {
         month,
@@ -321,22 +327,28 @@ export const Dashboard: React.FC = () => {
       const dayDate = new Date(weekStart);
       dayDate.setDate(weekStart.getDate() + index);
       
-      const dayInvoices = invoices.filter(inv => {
+      // Count all invoices for the day (for display purposes)
+      const allDayInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const invDate = new Date(inv.invoice_date);
         const dayStart = new Date(dayDate);
         dayStart.setHours(0, 0, 0, 0);
         const dayEnd = new Date(dayDate);
         dayEnd.setHours(23, 59, 59, 999);
-        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
-        return invDate >= dayStart && invDate <= dayEnd && inv.partner && !excludedPartners.includes(inv.partner);
+        return invDate >= dayStart && invDate <= dayEnd;
       });
+      
+      // Filter for amount calculations only
+      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
+      const dayInvoicesForAmount = allDayInvoices.filter(inv => 
+        inv.partner && !excludedPartners.includes(inv.partner)
+      );
       
       return {
         day,
         date: formatDateShort(dayDate),
-        invoices: dayInvoices.length,
-        amount: dayInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
+        invoices: allDayInvoices.length,
+        amount: dayInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0)
       };
     });
   };
@@ -346,12 +358,18 @@ export const Dashboard: React.FC = () => {
     const currentYear = new Date().getFullYear();
     
     return months.map((month, index) => {
-      const monthInvoices = invoices.filter(inv => {
+      // Count all invoices for the month (for display purposes)
+      const allMonthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
-        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner && !excludedPartners.includes(inv.partner);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
       });
+      
+      // Filter for amount calculations only
+      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
+      const monthInvoicesForAmount = allMonthInvoices.filter(inv => 
+        inv.partner && !excludedPartners.includes(inv.partner)
+      );
 
       const monthPayroll = payrollRecords.filter(rec => {
         if (!rec.record_date) return false;
@@ -359,13 +377,13 @@ export const Dashboard: React.FC = () => {
         return date.getFullYear() === currentYear && date.getMonth() === index;
       });
       
-      const invoiceExpenses = monthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+      const invoiceExpenses = monthInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0);
       const payrollExpenses = monthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
       
       return {
         month,
         expenses: invoiceExpenses + payrollExpenses,
-        count: monthInvoices.length
+        count: allMonthInvoices.length
       };
     });
   };
