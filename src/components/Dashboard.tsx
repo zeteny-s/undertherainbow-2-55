@@ -274,7 +274,7 @@ export const Dashboard: React.FC = () => {
         month,
         alapitvany: alapitvanyInvoices.length,
         ovoda: ovodaInvoices.length,
-        total: monthInvoices.length,
+        total: allMonthInvoices.length,
         amount: invoiceAmount // Remove payroll from monthly invoice trend
       };
     });
