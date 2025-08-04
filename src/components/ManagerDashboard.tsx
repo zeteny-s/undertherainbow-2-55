@@ -295,8 +295,8 @@ export const ManagerDashboard: React.FC = () => {
       const topPartnersData = generateTopPartnersData(filteredInvoices);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
       
-      // Make sure these functions receive the same filtered invoice list
-      const munkaszamData = generateMunkaszamData(filteredInvoices, payrollRecords || []);
+      // Use all invoices for munkaszam data to get accurate counts, but filtered for amounts
+      const munkaszamData = generateMunkaszamData(invoices || [], payrollRecords || []);
       const categoryData = generateCategoryData(filteredInvoices, payrollRecords || []);
       
       // Generate payroll charts data
@@ -1534,18 +1534,12 @@ export const ManagerDashboard: React.FC = () => {
                       ))}
                     </div>
                     
-                    <div className="mt-3 border-t border-gray-100 pt-3">
-                      <div className="flex justify-between items-center">
+                    <div className="mt-6 border-t border-gray-200 pt-4">
+                                            <div className="flex justify-center items-center">
                         <div className="text-center">
                           <div className="text-xs text-gray-500">Összes kiadás:</div>
                           <div className="text-sm font-medium text-purple-700">
                             {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-xs text-gray-500">Összes számla:</div>
-                          <div className="text-sm font-medium text-gray-700">
-                            {chartData.categoryData.reduce((sum, item) => sum + item.count, 0)} db
                           </div>
                         </div>
                       </div>
@@ -1922,7 +1916,6 @@ export const ManagerDashboard: React.FC = () => {
                     </div>
                     <div className="text-xs text-gray-500 space-y-1">
                       <p>Összeg: <span className="text-blue-700 font-medium">{formatCurrency(item.amount)}</span></p>
-                      <p>Számlák: <span className="text-gray-700">{item.count} db</span></p>
                     </div>
                   </div>
                 ))}
