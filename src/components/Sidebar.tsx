@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserRole } from '../hooks/useUserRole';
 import { ProfileModal } from './ProfileModal';
 
 interface SidebarProps {
@@ -12,6 +13,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onToggle }) => {
   const { user, signOut } = useAuth();
+  const { isManager } = useUserRole();
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -65,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
   ];
 
   // Combine menu items based on user profile
-  const menuItems = user?.user_metadata?.profile_type === 'vezetoi' 
+  const menuItems = isManager 
     ? [...baseMenuItems, ...managerMenuItems]
     : [...baseMenuItems, { id: 'settings', label: 'Beállítások', icon: Settings }];
 

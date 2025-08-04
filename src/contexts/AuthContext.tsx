@@ -38,10 +38,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Sync profile data on sign in
+      if (_event === 'SIGNED_IN' && session?.user) {
+        await syncUserProfile(session.user);
+      }
+      
       setLoading(false);
     });
 
@@ -69,6 +75,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const syncUserProfile = async (user: User) => {
+    try {
+      const profileType = user.user_metadata?.profile_type || 'irodai';
+      const name = user.user_metadata?.name || '';
+      
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          profile_type: profileType,
+          name: name,
+          email: user.email || '',
+          updated_at: new Date().toISOString(),
+        });
+      
+      console.log('Profile synced for user:', user.email);
+    } catch (error) {
+      console.error('Error syncing user profile:', error);
+    }
+  };
+
   const signUp = async (email: string, password: string, name?: string, profileType: 'irodai' | 'vezetoi' = 'irodai') => {
     try {
       console.log('Attempting sign up for:', email, 'with name:', name, 'profile type:', profileType);
@@ -90,6 +117,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Sign up error:', error);
       } else {
         console.log('Sign up successful:', data.user?.email);
+        
+        // Sync profile data to database after successful signup
+        if (data.user) {
+          await syncUserProfile(data.user);
+        }
+        
         // Check if user needs email confirmation
         if (data.user && !data.session) {
           console.log('User created but needs email confirmation');
