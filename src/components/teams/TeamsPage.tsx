@@ -1,21 +1,48 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ManagerTeamsView } from './ManagerTeamsView';
 import { OfficeTeamsView } from './OfficeTeamsView';
 import { EnhancedManagerDashboard } from './EnhancedManagerDashboard';
 import { EnhancedOfficeDashboard } from './EnhancedOfficeDashboard';
 import { TeamReports } from './reports/TeamReports';
-import { useUserRole } from '../../hooks/useUserRole';
 import { Users, BarChart3, MessageSquare, FileText } from 'lucide-react';
 
 export const TeamsPage: React.FC = () => {
-  const { isManager, loading } = useUserRole();
+  const [loading, setLoading] = useState(true);
+  const [isManager, setIsManager] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
-    // Set default tab based on user role
-    setActiveTab(isManager ? 'dashboard' : 'overview');
-  }, [isManager]);
+    checkUserRole();
+  }, []);
+
+  const checkUserRole = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('profile_type')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      
+      const isManagerRole = profile?.profile_type === 'vezetoi';
+      setIsManager(isManagerRole);
+      // Set default tab based on user role
+      setActiveTab(isManagerRole ? 'dashboard' : 'overview');
+    } catch (error) {
+      console.error('Error checking user role:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner />;

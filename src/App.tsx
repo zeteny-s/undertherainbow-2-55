@@ -10,13 +10,11 @@ import { InvoiceUpload } from './components/InvoiceUpload';
 import { InvoiceList } from './components/InvoiceList';
 import { Settings } from './components/Settings';
 import { PayrollCosts } from './components/PayrollCosts';
-import { useUserRole } from './hooks/useUserRole';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, loading } = useAuth();
-  const { isManager, loading: roleLoading } = useUserRole();
 
   // Handle responsive sidebar behavior
   useEffect(() => {
@@ -45,7 +43,7 @@ const AppContent: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         // Check if user has manager profile
-        if (isManager) {
+        if (user?.user_metadata?.profile_type === 'vezetoi') {
           return <ManagerDashboard />;
         }
         return <Dashboard />;
@@ -64,7 +62,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  if (loading || roleLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
