@@ -250,12 +250,13 @@ export const Dashboard: React.FC = () => {
   const generateMonthlyData = (invoices: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
+    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
     
     return months.map((month, index) => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner !== 'Füles Márta';
+        return date.getFullYear() === currentYear && date.getMonth() === index && !excludedPartners.includes(inv.partner);
       });
       
       const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
@@ -327,7 +328,8 @@ export const Dashboard: React.FC = () => {
         dayStart.setHours(0, 0, 0, 0);
         const dayEnd = new Date(dayDate);
         dayEnd.setHours(23, 59, 59, 999);
-        return invDate >= dayStart && invDate <= dayEnd && inv.partner !== 'Füles Márta';
+        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+        return invDate >= dayStart && invDate <= dayEnd && !excludedPartners.includes(inv.partner);
       });
       
       return {
@@ -347,7 +349,8 @@ export const Dashboard: React.FC = () => {
       const monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index && inv.partner !== 'Füles Márta';
+        const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+        return date.getFullYear() === currentYear && date.getMonth() === index && !excludedPartners.includes(inv.partner);
       });
 
       const monthPayroll = payrollRecords.filter(rec => {
@@ -405,20 +408,21 @@ export const Dashboard: React.FC = () => {
     // Group invoices by munkaszam and calculate total spending using all invoices
     const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
     
-    // Process all invoices - include all for count, exclude Füles Márta from amount only
+    // Process all invoices - include all for count, exclude specific partners from amount only
+    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
     invoices.forEach(invoice => {
       // Use 'Nincs munkaszám' for invoices without a munkaszam
       const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
       
       if (munkaszamSpending[munkaszam]) {
-        // Include amount only if not Füles Márta - now includes negative amounts
-        if (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) {
+        // Include amount only if not in excluded partners - now includes negative amounts
+        if (!excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) {
           munkaszamSpending[munkaszam].amount += invoice.amount;
         }
         munkaszamSpending[munkaszam].count += 1; // Always count the invoice
       } else {
         munkaszamSpending[munkaszam] = { 
-          amount: (invoice.partner !== 'Füles Márta' && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
+          amount: (!excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
           count: 1 
         };
       }
@@ -448,7 +452,6 @@ export const Dashboard: React.FC = () => {
     
     // Define valid categories
     const validCategories = [
-      'Bérleti Költség',
       'Bérleti díjak',
       'Közüzemi díjak',
       'Szolgáltatások',
@@ -465,11 +468,16 @@ export const Dashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
-    // Define partners whose "Bérleti Költség" invoices should be excluded
-    const excludedBérletiPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
+    // Define excluded partners for category distribution
+    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyes András', 'Dr. Messmann S.'];
     
-    // Process all invoices
+    // Process all invoices - exclude specified partners from both amount and count
     invoices.forEach(invoice => {
+      // Skip invoices from excluded partners
+      if (excludedPartners.includes(invoice.partner)) {
+        return;
+      }
+      
       // Use 'Egyéb' for invoices without a category or with invalid category
       let category = 'Egyéb';
       
@@ -483,31 +491,26 @@ export const Dashboard: React.FC = () => {
         }
       }
       
-      // Exclude amount if it's a "Bérleti Költség" invoice from excluded partners
-      const shouldExcludeAmount = category === 'Bérleti Költség' && 
-        excludedBérletiPartners.includes(invoice.partner);
-      
-      // Include amount only if not excluded
-      if (!shouldExcludeAmount && invoice.amount !== null && invoice.amount !== undefined) {
+      // Include amount and count for non-excluded partners
+      if (invoice.amount !== null && invoice.amount !== undefined) {
         categorySpending[category].amount += invoice.amount;
       }
-      // Always count the invoice regardless of partner
       categorySpending[category].count += 1;
     });
     
-    // Add payroll rental costs to "Bérleti Költség" category
+    // Add rental costs from payroll to "Bérleti díjak" category
     const totalRentalCosts = payrollRecords
       .filter(record => record.is_rental)
       .reduce((sum, record) => sum + (record.amount || 0), 0);
     
     if (totalRentalCosts > 0) {
-      categorySpending['Bérleti Költség'].amount += totalRentalCosts;
-      categorySpending['Bérleti Költség'].count += payrollRecords.filter(record => record.is_rental).length;
+      categorySpending['Bérleti díjak'].amount += totalRentalCosts;
+      // Add a count entry for payroll records (could be adjusted based on how you want to count this)
+      categorySpending['Bérleti díjak'].count += payrollRecords.filter(record => record.is_rental).length;
     }
     
     // Color mapping for categories
     const categoryColors: { [key: string]: string } = {
-      'Bérleti Költség': '#1e40af',
       'Bérleti díjak': '#3b82f6',
       'Közüzemi díjak': '#10b981',
       'Szolgáltatások': '#f59e0b',
