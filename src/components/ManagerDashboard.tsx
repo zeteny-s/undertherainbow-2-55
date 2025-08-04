@@ -393,7 +393,7 @@ export const ManagerDashboard: React.FC = () => {
       return {
         month,
         alapitvany: alapitvanyInvoices.length,
-        ovoda: ovodaInvoices.length,x
+        ovoda: ovodaInvoices.length,
         total: monthInvoices.length,
         amount: invoiceAmount // Remove payroll from monthly invoice trend
       };
