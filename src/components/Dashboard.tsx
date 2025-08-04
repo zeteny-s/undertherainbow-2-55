@@ -40,7 +40,7 @@ interface ChartData {
   expenseData: Array<{ month: string; expenses: number; count: number }>;
   topPartnersData: Array<{ partner: string; amount: number; invoiceCount: number; color: string }>;
   weeklyExpenseTrend: Array<{ day: string; date: string; amount: number }>;
-  munkaszamData: Array<{ munkaszam: string; count: number; amount: number; color: string }>;
+  munkaszamData: Array<{ munkaszam: string; count: number; amount: number; invoiceAmount: number; payrollAmount: number; color: string }>;
   categoryData: Array<{ category: string; count: number; amount: number; color: string }>;
 }
 
@@ -184,7 +184,7 @@ export const Dashboard: React.FC = () => {
       const expenseData = generateExpenseData(filteredInvoices, payrollRecords || []);
       const topPartnersData = generateTopPartnersData(filteredInvoices);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
-      const munkaszamData = generateMunkaszamData(invoices || []); // Use all invoices for accuracy
+      const munkaszamData = generateMunkaszamData(invoices || [], payrollRecords || []); // Use all invoices for accuracy
       const categoryData = generateCategoryData(invoices || [], payrollRecords || []); // Use all invoices for accuracy
 
       setStats(calculatedStats);
@@ -404,9 +404,9 @@ export const Dashboard: React.FC = () => {
     return partnersArray;
   };
   
-  const generateMunkaszamData = (invoices: any[]) => {
+  const generateMunkaszamData = (invoices: any[], payrollRecords: any[] = []) => {
     // Group invoices by munkaszam and calculate total spending using all invoices
-    const munkaszamSpending: { [key: string]: { amount: number; count: number } } = {};
+    const munkaszamSpending: { [key: string]: { invoiceAmount: number; payrollAmount: number; count: number } } = {};
     
     // Process all invoices - include all for count, exclude specific partners from amount only
     const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
@@ -417,13 +417,29 @@ export const Dashboard: React.FC = () => {
       if (munkaszamSpending[munkaszam]) {
         // Include amount only if not in excluded partners - now includes negative amounts
         if (invoice.partner && !excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) {
-          munkaszamSpending[munkaszam].amount += invoice.amount;
+          munkaszamSpending[munkaszam].invoiceAmount += invoice.amount;
         }
         munkaszamSpending[munkaszam].count += 1; // Always count the invoice
       } else {
         munkaszamSpending[munkaszam] = { 
-          amount: (invoice.partner && !excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
+          invoiceAmount: (invoice.partner && !excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
+          payrollAmount: 0,
           count: 1 
+        };
+      }
+    });
+    
+    // Process payroll records by project code
+    payrollRecords.forEach(record => {
+      const munkaszam = (record.project_code && record.project_code.trim()) ? record.project_code.trim() : 'Nincs munkaszám';
+      
+      if (munkaszamSpending[munkaszam]) {
+        munkaszamSpending[munkaszam].payrollAmount += record.amount || 0;
+      } else {
+        munkaszamSpending[munkaszam] = { 
+          invoiceAmount: 0,
+          payrollAmount: record.amount || 0,
+          count: 0 
         };
       }
     });
@@ -437,7 +453,9 @@ export const Dashboard: React.FC = () => {
         munkaszam: munkaszam.length > 15 ? munkaszam.substring(0, 15) + '...' : munkaszam,
         fullMunkaszam: munkaszam,
         count: data.count,
-        amount: data.amount,
+        amount: data.invoiceAmount + data.payrollAmount,
+        invoiceAmount: data.invoiceAmount,
+        payrollAmount: data.payrollAmount,
         color: colors[index % colors.length]
       }))
       .filter(item => item.amount !== 0) // Include items with any non-zero amount (positive or negative)
@@ -697,17 +715,27 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="space-y-2 pt-1 border-t border-gray-100">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Összeg:</span>
+              <span className="text-sm text-gray-600">Összesen:</span>
               <span className="text-sm font-medium text-blue-700">{formatCurrency(data.amount)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Számlák:</span>
+              <span className="text-sm font-medium text-green-600">{formatCurrency(data.invoiceAmount)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Bérköltség:</span>
+              <span className="text-sm font-medium text-orange-600">{formatCurrency(data.payrollAmount)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Számlák száma:</span>
               <span className="text-sm font-medium text-gray-900">{data.count} db</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Átlag/számla:</span>
-              <span className="text-sm font-medium text-green-600">{formatCurrency(data.amount / data.count)}</span>
-            </div>
+            {data.count > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Átlag/számla:</span>
+                <span className="text-sm font-medium text-green-600">{formatCurrency(data.invoiceAmount / data.count)}</span>
+              </div>
+            )}
           </div>
         </div>
       );
