@@ -807,7 +807,7 @@ export const ManagerDashboard: React.FC = () => {
     
     return [
       { name: 'Bérleti díjak', value: rentalAmount, color: '#ef4444' },
-      { name: 'Nem bérleti díjak', value: nonRentalAmount, color: '#10b981' },
+      { name: 'Bérköltség', value: nonRentalAmount, color: '#10b981' },
       { name: 'Járulékok', value: taxAmount, color: '#f59e0b' }
     ].filter(item => item.value > 0);
   };
@@ -1940,7 +1940,7 @@ export const ManagerDashboard: React.FC = () => {
               >
                 <option value="all">Mind</option>
                 <option value="rental">Bérleti</option>
-                <option value="nonRental">Nem bérleti</option>
+                <option value="nonRental">Bérköltség</option>
                 <option value="tax">Járulékok</option>
               </select>
             </div>
@@ -1957,7 +1957,7 @@ export const ManagerDashboard: React.FC = () => {
                   formatter={(value: number, name: string) => {
                     if (name === "Bérleti díjak") {
                       return [formatCurrency(value), "Bérleti"];
-                    } else if (name === "Nem bérleti díjak") {
+                    } else if (name === "Bérköltség") {
                       return [formatCurrency(value), "Alkalmazotti"];
                     } else if (name === "Járulékok") {
                       return [formatCurrency(value), "Járulékok"];
@@ -1983,7 +1983,7 @@ export const ManagerDashboard: React.FC = () => {
                   stroke={(payrollFilter === 'all' || payrollFilter === 'nonRental') ? "#10b981" : "transparent"} 
                   fill="#10b981" 
                   fillOpacity={(payrollFilter === 'all' || payrollFilter === 'nonRental') ? 0.3 : 0}
-                  name="Nem bérleti díjak"
+                  name="Bérköltség"
                   isAnimationActive={true}
                   animationDuration={5500}
                   animationEasing="ease-in-out"
@@ -2163,7 +2163,7 @@ export const ManagerDashboard: React.FC = () => {
             <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
               <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
                 <Building2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-orange-600" />
-                Bérleti vs Nem bérleti vs Járulékok megoszlása
+                Bérleti vs Bérköltség vs Járulékok megoszlása
               </h3>
               
               <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-3 lg:space-x-4">
