@@ -5,7 +5,8 @@ import { ManagerTeamsView } from './ManagerTeamsView';
 import { OfficeTeamsView } from './OfficeTeamsView';
 import { EnhancedManagerDashboard } from './EnhancedManagerDashboard';
 import { EnhancedOfficeDashboard } from './EnhancedOfficeDashboard';
-import { Users, BarChart3, MessageSquare } from 'lucide-react';
+import { TeamReports } from './reports/TeamReports';
+import { Users, BarChart3, MessageSquare, FileText } from 'lucide-react';
 
 export const TeamsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -87,6 +88,17 @@ export const TeamsPage: React.FC = () => {
                 Csapatok
               </button>
               <button
+                onClick={() => setActiveTab('reports')}
+                className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+                  activeTab === 'reports'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <FileText className="h-4 w-4" />
+                Jelentések
+              </button>
+              <button
                 onClick={() => setActiveTab('messages')}
                 className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
                   activeTab === 'messages'
@@ -101,6 +113,7 @@ export const TeamsPage: React.FC = () => {
 
             {activeTab === 'dashboard' && <EnhancedManagerDashboard />}
             {activeTab === 'teams' && <ManagerTeamsView />}
+            {activeTab === 'reports' && <TeamReports />}
             {activeTab === 'messages' && (
               <div className="bg-muted/20 border border-border rounded-lg p-8 text-center">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
