@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Users, MessageSquare, Plus, Settings } from 'lucide-react';
+import { Users, MessageSquare, Settings, Plus } from 'lucide-react';
+import { TeamsList } from './TeamsList';
 
 export const ManagerTeamsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'teams' | 'tasks' | 'messages'>('teams');
@@ -39,18 +40,7 @@ export const ManagerTeamsView: React.FC = () => {
 
         {/* Content */}
         <div className="space-y-6">
-          {activeTab === 'teams' && (
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground">Csapatok</h2>
-                <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
-                  <Plus className="h-4 w-4" />
-                  Új Csapat
-                </button>
-              </div>
-              <p className="text-muted-foreground">Csapatok listája és kezelése hamarosan elérhető.</p>
-            </div>
-          )}
+          {activeTab === 'teams' && <TeamsList />}
 
           {activeTab === 'tasks' && (
             <div className="bg-card border border-border rounded-lg p-6">
