@@ -848,7 +848,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Bérleti díj:</span>
-              <span className="text-sm font-medium text-purple-600">{formatCurrency(data.rentalAmount)}</span>
+              <span className="text-sm font-medium text-purple-600 blur-sm select-none">***</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Számlák száma:</span>
