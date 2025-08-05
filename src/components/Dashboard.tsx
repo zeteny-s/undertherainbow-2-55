@@ -236,7 +236,7 @@ export const Dashboard: React.FC = () => {
       const organizationData = generateOrganizationData(filteredInvoices);
       const paymentTypeData = generatePaymentTypeData(filteredInvoices);
       const weeklyTrend = weekHistoryData[0]?.data || [];
-      const expenseData = generateExpenseData(filteredInvoices, payrollRecords || []);
+      const expenseData = generateExpenseData(filteredInvoices, payrollSummaries || []);
       const topPartnersData = generateTopPartnersData(filteredInvoices);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
       // Debug logging for payroll data
@@ -244,55 +244,12 @@ export const Dashboard: React.FC = () => {
       console.log('Dashboard - Payroll records sample:', payrollRecords?.slice(0, 2));
       console.log('Dashboard - Payroll summaries count:', payrollSummaries?.length || 0);
       
-      // Test: Add some dummy payroll data to see if the charts work
-      let testPayrollRecords: PayrollRecord[] = [];
-      if (payrollRecords.length === 0) {
-        console.log('Dashboard - No payroll records found, adding test data');
-        testPayrollRecords = [
-          {
-            id: 'test1',
-            employee_name: 'Test Employee',
-            amount: 100000,
-            record_date: new Date().toISOString(),
-            is_rental: false,
-            uploaded_by: 'test',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            project_code: '11',
-            organization: 'alapitvany',
-            file_name: 'test.pdf',
-            file_url: 'test',
-            extracted_text: 'test'
-          },
-          {
-            id: 'test2',
-            employee_name: 'Test Employee 2',
-            amount: 50000,
-            record_date: new Date().toISOString(),
-            is_rental: true,
-            uploaded_by: 'test',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            project_code: '21',
-            organization: 'alapitvany',
-            file_name: 'test2.pdf',
-            file_url: 'test2',
-            extracted_text: 'test2'
-          }
-        ];
-        
-        const testMunkaszamData = generateMunkaszamData(invoices || [], testPayrollRecords);
-        const testCategoryData = generateCategoryData(invoices || [], testPayrollRecords);
-        
-        console.log('Dashboard - Test munkaszam data:', testMunkaszamData?.filter(item => item.payrollAmount > 0 || item.rentalAmount > 0));
-        console.log('Dashboard - Test category data:', testCategoryData?.filter(item => item.category === 'Bérköltség' || item.category === 'Bérleti díjak'));
-      }
+      // Debug logging for payroll data
+      console.log('Dashboard - Payroll summaries count:', payrollSummaries?.length || 0);
+      console.log('Dashboard - Payroll summaries sample:', payrollSummaries?.slice(0, 2));
       
-      // Use test payroll data if no real payroll data is available (for debugging)
-      const payrollDataToUse = payrollRecords.length === 0 ? testPayrollRecords : payrollRecords;
-      
-      const munkaszamData = generateMunkaszamData(invoices || [], payrollDataToUse); // Use all invoices for accuracy
-      const categoryData = generateCategoryData(invoices || [], payrollDataToUse); // Use all invoices for accuracy
+      const munkaszamData = generateMunkaszamData(invoices || [], payrollSummaries || []); // Use payroll summaries for accuracy
+      const categoryData = generateCategoryData(invoices || [], payrollSummaries || []); // Use payroll summaries for accuracy
       
       // Debug: Check if payroll data is being included in the results
       console.log('Dashboard - Munkaszam data with payroll:', munkaszamData?.filter(item => item.payrollAmount > 0 || item.rentalAmount > 0));
@@ -468,7 +425,7 @@ export const Dashboard: React.FC = () => {
     });
   };
 
-  const generateExpenseData = (invoices: any[], payrollRecords: PayrollRecord[]) => {
+  const generateExpenseData = (invoices: any[], payrollSummaries: PayrollSummary[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
@@ -486,14 +443,12 @@ export const Dashboard: React.FC = () => {
         inv.partner && !excludedPartners.includes(inv.partner)
       );
 
-      const monthPayroll = payrollRecords.filter(rec => {
-        if (!rec.record_date) return false;
-        const date = new Date(rec.record_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index;
-      });
+      const monthPayroll = payrollSummaries.filter(summary => 
+        summary.year === currentYear && summary.month === (index + 1)
+      );
       
       const invoiceExpenses = monthInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-      const payrollExpenses = monthPayroll.reduce((sum, rec) => sum + (rec.amount || 0), 0);
+      const payrollExpenses = monthPayroll.reduce((sum, summary) => sum + (summary.total_payroll || 0), 0);
       
       return {
         month,
@@ -537,8 +492,8 @@ export const Dashboard: React.FC = () => {
     return partnersArray;
   };
   
-  const generateMunkaszamData = (invoices: any[], payrollRecords: PayrollRecord[] = []) => {
-    console.log('generateMunkaszamData - Payroll records input:', payrollRecords?.length || 0);
+  const generateMunkaszamData = (invoices: any[], payrollSummaries: PayrollSummary[] = []) => {
+    console.log('generateMunkaszamData - Payroll summaries input:', payrollSummaries?.length || 0);
     // Group invoices by munkaszam and calculate total spending using all invoices
     const munkaszamSpending: { [key: string]: { invoiceAmount: number; payrollAmount: number; rentalAmount: number; count: number } } = {};
     
@@ -564,28 +519,34 @@ export const Dashboard: React.FC = () => {
       }
     });
     
-    // Process payroll records by project code - separate rental and non-rental
-    console.log('generateMunkaszamData - Processing payroll records...');
-    console.log('generateMunkaszamData - First record structure:', payrollRecords[0]);
-    payrollRecords.forEach(record => {
-      const munkaszam = (record.project_code && record.project_code.trim()) ? record.project_code.trim() : 'Nincs munkaszám';
-      console.log('generateMunkaszamData - Processing record:', { munkaszam, amount: record.amount, is_rental: record.is_rental });
-      
+    // Process payroll summaries - we need to distribute the amounts across project codes
+    console.log('generateMunkaszamData - Processing payroll summaries...');
+    console.log('generateMunkaszamData - First summary structure:', payrollSummaries[0]);
+    
+    // For now, we'll add the payroll amounts to a general "Bérköltség" munkaszám
+    // since summaries don't have individual project codes
+    const totalNonRentalCosts = payrollSummaries.reduce((sum, summary) => 
+      sum + (summary.non_rental_costs || 0), 0);
+    const totalRentalCosts = payrollSummaries.reduce((sum, summary) => 
+      sum + (summary.rental_costs || 0), 0);
+    
+    console.log('generateMunkaszamData - Total non-rental costs:', totalNonRentalCosts);
+    console.log('generateMunkaszamData - Total rental costs:', totalRentalCosts);
+    
+    if (totalNonRentalCosts > 0 || totalRentalCosts > 0) {
+      const munkaszam = 'Bérköltség';
       if (munkaszamSpending[munkaszam]) {
-        if (record.is_rental) {
-          munkaszamSpending[munkaszam].rentalAmount += record.amount || 0;
-        } else {
-          munkaszamSpending[munkaszam].payrollAmount += record.amount || 0;
-        }
+        munkaszamSpending[munkaszam].payrollAmount += totalNonRentalCosts;
+        munkaszamSpending[munkaszam].rentalAmount += totalRentalCosts;
       } else {
         munkaszamSpending[munkaszam] = { 
           invoiceAmount: 0,
-          payrollAmount: record.is_rental ? 0 : (record.amount || 0),
-          rentalAmount: record.is_rental ? (record.amount || 0) : 0,
+          payrollAmount: totalNonRentalCosts,
+          rentalAmount: totalRentalCosts,
           count: 0 
         };
       }
-    });
+    }
     
     // Color palette for the chart
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
@@ -609,8 +570,8 @@ export const Dashboard: React.FC = () => {
     return munkaszamArray;
   };
   
-  const generateCategoryData = (invoices: any[], payrollRecords: PayrollRecord[] = []) => {
-    console.log('generateCategoryData - Payroll records input:', payrollRecords?.length || 0);
+  const generateCategoryData = (invoices: any[], payrollSummaries: PayrollSummary[] = []) => {
+    console.log('generateCategoryData - Payroll summaries input:', payrollSummaries?.length || 0);
     // Group invoices by category and calculate total spending using all invoices
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
@@ -663,33 +624,31 @@ export const Dashboard: React.FC = () => {
       categorySpending[category].count += 1;
     });
     
-    // Add rental costs from payroll to "Bérleti díjak" category
-    console.log('generateCategoryData - Checking payroll records for rental field...');
-    console.log('generateCategoryData - Sample record is_rental field:', payrollRecords[0]?.is_rental);
+    // Add rental costs from payroll summaries to "Bérleti díjak" category
+    console.log('generateCategoryData - Checking payroll summaries for rental costs...');
+    console.log('generateCategoryData - Sample summary rental_costs field:', payrollSummaries[0]?.rental_costs);
     
-    const totalRentalCosts = payrollRecords
-      .filter(record => record.is_rental)
-      .reduce((sum, record) => sum + (record.amount || 0), 0);
+    const totalRentalCosts = payrollSummaries.reduce((sum, summary) => 
+      sum + (summary.rental_costs || 0), 0);
     
     console.log('generateCategoryData - Total rental costs:', totalRentalCosts);
     
     if (totalRentalCosts > 0) {
       categorySpending['Bérleti díjak'].amount += totalRentalCosts;
-      // Add a count entry for payroll records (could be adjusted based on how you want to count this)
-      categorySpending['Bérleti díjak'].count += payrollRecords.filter(record => record.is_rental).length;
+      // Add a count entry for payroll summaries
+      categorySpending['Bérleti díjak'].count += payrollSummaries.length;
     }
     
     // Add non-rental payroll costs to "Bérköltség" category
-    const totalNonRentalCosts = payrollRecords
-      .filter(record => !record.is_rental)
-      .reduce((sum, record) => sum + (record.amount || 0), 0);
+    const totalNonRentalCosts = payrollSummaries.reduce((sum, summary) => 
+      sum + (summary.non_rental_costs || 0), 0);
     
     console.log('generateCategoryData - Total non-rental costs:', totalNonRentalCosts);
     
     if (totalNonRentalCosts > 0) {
       categorySpending['Bérköltség'].amount += totalNonRentalCosts;
-      // Add a count entry for payroll records (could be adjusted based on how you want to count this)
-      categorySpending['Bérköltség'].count += payrollRecords.filter(record => !record.is_rental).length;
+      // Add a count entry for payroll summaries
+      categorySpending['Bérköltség'].count += payrollSummaries.length;
     }
     
     // Color mapping for categories
