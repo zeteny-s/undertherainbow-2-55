@@ -248,7 +248,7 @@ export const Dashboard: React.FC = () => {
       console.log('Dashboard - Payroll summaries count:', payrollSummaries?.length || 0);
       console.log('Dashboard - Payroll summaries sample:', payrollSummaries?.slice(0, 2));
       
-      const munkaszamData = generateMunkaszamData(invoices || [], payrollSummaries || []); // Use payroll summaries for accuracy
+      const munkaszamData = generateMunkaszamData(invoices || [], payrollRecords || []); // Use payroll records for project codes
       const categoryData = generateCategoryData(invoices || [], payrollSummaries || []); // Use payroll summaries for accuracy
       
       // Debug: Check if payroll data is being included in the results
@@ -492,8 +492,8 @@ export const Dashboard: React.FC = () => {
     return partnersArray;
   };
   
-  const generateMunkaszamData = (invoices: any[], payrollSummaries: PayrollSummary[] = []) => {
-    console.log('generateMunkaszamData - Payroll summaries input:', payrollSummaries?.length || 0);
+  const generateMunkaszamData = (invoices: any[], payrollRecords: PayrollRecord[] = []) => {
+    console.log('generateMunkaszamData - Payroll records input:', payrollRecords?.length || 0);
     // Group invoices by munkaszam and calculate total spending using all invoices
     const munkaszamSpending: { [key: string]: { invoiceAmount: number; payrollAmount: number; rentalAmount: number; count: number } } = {};
     
@@ -519,34 +519,28 @@ export const Dashboard: React.FC = () => {
       }
     });
     
-    // Process payroll summaries - we need to distribute the amounts across project codes
-    console.log('generateMunkaszamData - Processing payroll summaries...');
-    console.log('generateMunkaszamData - First summary structure:', payrollSummaries[0]);
-    
-    // For now, we'll add the payroll amounts to a general "Bérköltség" munkaszám
-    // since summaries don't have individual project codes
-    const totalNonRentalCosts = payrollSummaries.reduce((sum, summary) => 
-      sum + (summary.non_rental_costs || 0), 0);
-    const totalRentalCosts = payrollSummaries.reduce((sum, summary) => 
-      sum + (summary.rental_costs || 0), 0);
-    
-    console.log('generateMunkaszamData - Total non-rental costs:', totalNonRentalCosts);
-    console.log('generateMunkaszamData - Total rental costs:', totalRentalCosts);
-    
-    if (totalNonRentalCosts > 0 || totalRentalCosts > 0) {
-      const munkaszam = 'Bérköltség';
+    // Process payroll records by project code - separate rental and non-rental
+    console.log('generateMunkaszamData - Processing payroll records...');
+    console.log('generateMunkaszamData - First record structure:', payrollRecords[0]);
+    payrollRecords.forEach(record => {
+      const munkaszam = (record.project_code && record.project_code.trim()) ? record.project_code.trim() : 'Nincs munkaszám';
+      console.log('generateMunkaszamData - Processing record:', { munkaszam, amount: record.amount, is_rental: record.is_rental });
+      
       if (munkaszamSpending[munkaszam]) {
-        munkaszamSpending[munkaszam].payrollAmount += totalNonRentalCosts;
-        munkaszamSpending[munkaszam].rentalAmount += totalRentalCosts;
+        if (record.is_rental) {
+          munkaszamSpending[munkaszam].rentalAmount += record.amount || 0;
+        } else {
+          munkaszamSpending[munkaszam].payrollAmount += record.amount || 0;
+        }
       } else {
         munkaszamSpending[munkaszam] = { 
           invoiceAmount: 0,
-          payrollAmount: totalNonRentalCosts,
-          rentalAmount: totalRentalCosts,
+          payrollAmount: record.is_rental ? 0 : (record.amount || 0),
+          rentalAmount: record.is_rental ? (record.amount || 0) : 0,
           count: 0 
         };
       }
-    }
+    });
     
     // Color palette for the chart
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
