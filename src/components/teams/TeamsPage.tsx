@@ -12,7 +12,7 @@ export const TeamsPage: React.FC = () => {
   }
 
   // Get user profile type from user metadata or default to office
-  const profileType = user?.user_metadata?.profile_type || 'irodai';
+  const profileType = user?.user_metadata?.profile_type || 'office';
   const isManager = profileType === 'vezetoi';
 
   return (
