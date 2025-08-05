@@ -121,19 +121,19 @@ export const OfficeTeamsView: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Saját Csapatok</h1>
-        <p className="text-muted-foreground mt-1">Csapat információk és feladatok</p>
+        <h2 className="text-2xl font-bold text-foreground">Saját Feladatok</h2>
+        <p className="text-muted-foreground">Az Ön személyes feladatai és csapattagsága</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <Users className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{teams.length}</p>
@@ -141,10 +141,10 @@ export const OfficeTeamsView: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <Clock className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{tasks.filter(t => t.status === 'pending').length}</p>
@@ -152,10 +152,10 @@ export const OfficeTeamsView: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <Clock className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{tasks.filter(t => t.status === 'in_progress').length}</p>
@@ -163,10 +163,10 @@ export const OfficeTeamsView: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <CheckCircle className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{tasks.filter(t => t.status === 'completed').length}</p>
@@ -235,32 +235,32 @@ export const OfficeTeamsView: React.FC = () => {
                       Határidő: {new Date(task.due_date).toLocaleDateString('hu-HU')}
                     </p>
                   )}
-                  <div className="flex gap-2">
-                    {task.status === 'pending' && (
-                      <button
-                        onClick={() => handleUpdateTaskStatus(task.id, 'in_progress')}
-                        className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
-                      >
-                        Kezdés
-                      </button>
-                    )}
-                    {task.status === 'in_progress' && (
-                      <button
-                        onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
-                        className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors"
-                      >
-                        Befejezés
-                      </button>
-                    )}
-                    {(task.status === 'pending' || task.status === 'in_progress') && (
-                      <button
-                        onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
-                        className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition-colors"
-                      >
-                        Törlés
-                      </button>
-                    )}
-                  </div>
+                   <div className="flex gap-2">
+                     {task.status === 'pending' && (
+                       <button
+                         onClick={() => handleUpdateTaskStatus(task.id, 'in_progress')}
+                         className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                       >
+                         Kezdés
+                       </button>
+                     )}
+                     {task.status === 'in_progress' && (
+                       <button
+                         onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+                         className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                       >
+                         Befejezés
+                       </button>
+                     )}
+                     {(task.status === 'pending' || task.status === 'in_progress') && (
+                       <button
+                         onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
+                         className="px-3 py-1.5 bg-destructive text-destructive-foreground text-sm rounded-lg hover:bg-destructive/90 transition-colors shadow-sm"
+                       >
+                         Törlés
+                       </button>
+                     )}
+                   </div>
                 </div>
               ))}
             </div>

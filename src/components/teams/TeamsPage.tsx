@@ -55,8 +55,12 @@ export const TeamsPage: React.FC = () => {
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Menedzsment Panel</h1>
-                <p className="text-muted-foreground">Csapatok és teljesítmény kezelése</p>
+                <h1 className="text-3xl font-bold text-foreground">Menedzsment Központ</h1>
+                <p className="text-muted-foreground">Teljes körű csapat és teljesítmény irányítás</p>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-lg border border-primary/20">
+                <Users className="h-4 w-4" />
+                <span className="text-sm font-medium">Vezető</span>
               </div>
             </div>
           </div>
@@ -74,7 +78,7 @@ export const TeamsPage: React.FC = () => {
                 }`}
               >
                 <BarChart3 className="h-4 w-4" />
-                Dashboard
+                Főoldal
               </button>
               <button
                 onClick={() => setActiveTab('teams')}
@@ -85,7 +89,7 @@ export const TeamsPage: React.FC = () => {
                 }`}
               >
                 <Users className="h-4 w-4" />
-                Csapatok
+                Csapat Kezelés
               </button>
               <button
                 onClick={() => setActiveTab('reports')}
@@ -134,8 +138,12 @@ export const TeamsPage: React.FC = () => {
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Munkaterület</h1>
-                <p className="text-muted-foreground">Csapat és feladatok áttekintése</p>
+                <h1 className="text-3xl font-bold text-foreground">Személyes Munkaterület</h1>
+                <p className="text-muted-foreground">Saját feladatok és csapattevékenység</p>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/10 text-secondary-foreground rounded-lg border border-secondary/20">
+                <Users className="h-4 w-4" />
+                <span className="text-sm font-medium">Munkatárs</span>
               </div>
             </div>
           </div>

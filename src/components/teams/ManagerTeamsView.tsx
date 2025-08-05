@@ -300,24 +300,24 @@ export const ManagerTeamsView: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Csapat Kezelés</h1>
-          <p className="text-muted-foreground mt-1">Csapatok és feladatok kezelése</p>
+          <h2 className="text-2xl font-bold text-foreground">Csapat Kezelés</h2>
+          <p className="text-muted-foreground">Csapatok és feladatok központi kezelése</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => setShowTeamModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
           >
             <Plus className="h-4 w-4" />
             Új Csapat
           </button>
           <button
             onClick={() => setShowTaskModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors shadow-sm"
           >
             <UserPlus className="h-4 w-4" />
             Új Feladat
@@ -327,10 +327,10 @@ export const ManagerTeamsView: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <Users className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{teams.length}</p>
@@ -338,10 +338,10 @@ export const ManagerTeamsView: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <UserPlus className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <UserPlus className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{users.length}</p>
@@ -349,10 +349,10 @@ export const ManagerTeamsView: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <Settings className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <Settings className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{tasks.filter(t => t.status === 'pending').length}</p>
@@ -360,10 +360,10 @@ export const ManagerTeamsView: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-lg p-4 border">
+        <div className="bg-card rounded-lg p-4 border shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <Settings className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{tasks.filter(t => t.status === 'completed').length}</p>
