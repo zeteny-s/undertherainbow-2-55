@@ -42,7 +42,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
         }
 
         console.log('Attempting to sign up user:', { email, name });
-        const { error } = await signUp(email.trim(), password, name.trim(), profileType);
+        const { error } = await signUp(email.trim(), password, name.trim(), profileType === 'irodai' ? 'office' : profileType);
 
         if (error) {
           console.error('Sign up error:', error);
