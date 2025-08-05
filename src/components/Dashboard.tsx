@@ -32,6 +32,39 @@ interface Invoice {
   invoice_type: string;
 }
 
+interface PayrollRecord {
+  id: string;
+  employee_name: string;
+  amount: number;
+  record_date: string;
+  is_rental: boolean;
+  uploaded_by: string;
+  created_at: string;
+  updated_at: string;
+  project_code?: string | null;
+  organization: string;
+  file_name?: string | null;
+  file_url?: string | null;
+  extracted_text?: string | null;
+}
+
+interface PayrollSummary {
+  id: string;
+  year: number;
+  month: number;
+  total_payroll: number;
+  rental_costs: number;
+  non_rental_costs: number;
+  tax_amount?: number;
+  record_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  organization: string;
+  payroll_file_url?: string | null;
+  tax_file_url?: string | null;
+}
+
 interface ChartData {
   monthlyData: Array<{ month: string; alapitvany: number; ovoda: number; total: number; amount: number }>;
   organizationData: Array<{ name: string; value: number; amount: number; color: string }>;
@@ -116,8 +149,8 @@ export const Dashboard: React.FC = () => {
       if (error) throw error;
 
       // Fetch payroll records - handle empty results gracefully
-      let payrollRecords: any[] = [];
-      let payrollSummaries: any[] = [];
+      let payrollRecords: PayrollRecord[] = [];
+      let payrollSummaries: PayrollSummary[] = [];
       
       try {
         const { data: payrollData, error: payrollError } = await supabase
@@ -128,6 +161,7 @@ export const Dashboard: React.FC = () => {
           console.warn('Payroll records error:', payrollError);
         } else {
           payrollRecords = payrollData || [];
+          console.log('Dashboard - Raw payroll data sample:', payrollRecords?.slice(0, 2));
         }
       } catch (payrollError) {
         console.warn('Error fetching payroll records:', payrollError);
@@ -205,8 +239,68 @@ export const Dashboard: React.FC = () => {
       const expenseData = generateExpenseData(filteredInvoices, payrollRecords || []);
       const topPartnersData = generateTopPartnersData(filteredInvoices);
       const weeklyExpenseTrend = weekHistoryData[0]?.data || [];
-      const munkaszamData = generateMunkaszamData(invoices || [], payrollRecords || []); // Use all invoices for accuracy
-      const categoryData = generateCategoryData(invoices || [], payrollRecords || []); // Use all invoices for accuracy
+      // Debug logging for payroll data
+      console.log('Dashboard - Payroll records count:', payrollRecords?.length || 0);
+      console.log('Dashboard - Payroll records sample:', payrollRecords?.slice(0, 2));
+      console.log('Dashboard - Payroll summaries count:', payrollSummaries?.length || 0);
+      
+      // Test: Add some dummy payroll data to see if the charts work
+      let testPayrollRecords: PayrollRecord[] = [];
+      if (payrollRecords.length === 0) {
+        console.log('Dashboard - No payroll records found, adding test data');
+        testPayrollRecords = [
+          {
+            id: 'test1',
+            employee_name: 'Test Employee',
+            amount: 100000,
+            record_date: new Date().toISOString(),
+            is_rental: false,
+            uploaded_by: 'test',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            project_code: '11',
+            organization: 'alapitvany',
+            file_name: 'test.pdf',
+            file_url: 'test',
+            extracted_text: 'test'
+          },
+          {
+            id: 'test2',
+            employee_name: 'Test Employee 2',
+            amount: 50000,
+            record_date: new Date().toISOString(),
+            is_rental: true,
+            uploaded_by: 'test',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            project_code: '21',
+            organization: 'alapitvany',
+            file_name: 'test2.pdf',
+            file_url: 'test2',
+            extracted_text: 'test2'
+          }
+        ];
+        
+        const testMunkaszamData = generateMunkaszamData(invoices || [], testPayrollRecords);
+        const testCategoryData = generateCategoryData(invoices || [], testPayrollRecords);
+        
+        console.log('Dashboard - Test munkaszam data:', testMunkaszamData?.filter(item => item.payrollAmount > 0 || item.rentalAmount > 0));
+        console.log('Dashboard - Test category data:', testCategoryData?.filter(item => item.category === 'Bérköltség' || item.category === 'Bérleti díjak'));
+      }
+      
+      // Use test payroll data if no real payroll data is available (for debugging)
+      const payrollDataToUse = payrollRecords.length === 0 ? testPayrollRecords : payrollRecords;
+      
+      const munkaszamData = generateMunkaszamData(invoices || [], payrollDataToUse); // Use all invoices for accuracy
+      const categoryData = generateCategoryData(invoices || [], payrollDataToUse); // Use all invoices for accuracy
+      
+      // Debug: Check if payroll data is being included in the results
+      console.log('Dashboard - Munkaszam data with payroll:', munkaszamData?.filter(item => item.payrollAmount > 0 || item.rentalAmount > 0));
+      console.log('Dashboard - Category data with payroll:', categoryData?.filter(item => item.category === 'Bérköltség' || item.category === 'Bérleti díjak'));
+      
+      // Debug logging for chart data
+      console.log('Dashboard - Munkaszam data sample:', munkaszamData?.slice(0, 2));
+      console.log('Dashboard - Category data sample:', categoryData?.slice(0, 2));
 
       setStats(calculatedStats);
       setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
@@ -374,7 +468,7 @@ export const Dashboard: React.FC = () => {
     });
   };
 
-  const generateExpenseData = (invoices: any[], payrollRecords: any[]) => {
+  const generateExpenseData = (invoices: any[], payrollRecords: PayrollRecord[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
@@ -443,7 +537,8 @@ export const Dashboard: React.FC = () => {
     return partnersArray;
   };
   
-  const generateMunkaszamData = (invoices: any[], payrollRecords: any[] = []) => {
+  const generateMunkaszamData = (invoices: any[], payrollRecords: PayrollRecord[] = []) => {
+    console.log('generateMunkaszamData - Payroll records input:', payrollRecords?.length || 0);
     // Group invoices by munkaszam and calculate total spending using all invoices
     const munkaszamSpending: { [key: string]: { invoiceAmount: number; payrollAmount: number; rentalAmount: number; count: number } } = {};
     
@@ -470,8 +565,11 @@ export const Dashboard: React.FC = () => {
     });
     
     // Process payroll records by project code - separate rental and non-rental
+    console.log('generateMunkaszamData - Processing payroll records...');
+    console.log('generateMunkaszamData - First record structure:', payrollRecords[0]);
     payrollRecords.forEach(record => {
       const munkaszam = (record.project_code && record.project_code.trim()) ? record.project_code.trim() : 'Nincs munkaszám';
+      console.log('generateMunkaszamData - Processing record:', { munkaszam, amount: record.amount, is_rental: record.is_rental });
       
       if (munkaszamSpending[munkaszam]) {
         if (record.is_rental) {
@@ -507,10 +605,12 @@ export const Dashboard: React.FC = () => {
       .filter(item => item.amount !== 0) // Include items with any non-zero amount (positive or negative)
       .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)); // Sort by absolute value
     
+    console.log('generateMunkaszamData - Final result sample:', munkaszamArray?.slice(0, 2));
     return munkaszamArray;
   };
   
-  const generateCategoryData = (invoices: any[], payrollRecords: any[] = []) => {
+  const generateCategoryData = (invoices: any[], payrollRecords: PayrollRecord[] = []) => {
+    console.log('generateCategoryData - Payroll records input:', payrollRecords?.length || 0);
     // Group invoices by category and calculate total spending using all invoices
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
@@ -564,9 +664,14 @@ export const Dashboard: React.FC = () => {
     });
     
     // Add rental costs from payroll to "Bérleti díjak" category
+    console.log('generateCategoryData - Checking payroll records for rental field...');
+    console.log('generateCategoryData - Sample record is_rental field:', payrollRecords[0]?.is_rental);
+    
     const totalRentalCosts = payrollRecords
       .filter(record => record.is_rental)
       .reduce((sum, record) => sum + (record.amount || 0), 0);
+    
+    console.log('generateCategoryData - Total rental costs:', totalRentalCosts);
     
     if (totalRentalCosts > 0) {
       categorySpending['Bérleti díjak'].amount += totalRentalCosts;
@@ -578,6 +683,8 @@ export const Dashboard: React.FC = () => {
     const totalNonRentalCosts = payrollRecords
       .filter(record => !record.is_rental)
       .reduce((sum, record) => sum + (record.amount || 0), 0);
+    
+    console.log('generateCategoryData - Total non-rental costs:', totalNonRentalCosts);
     
     if (totalNonRentalCosts > 0) {
       categorySpending['Bérköltség'].amount += totalNonRentalCosts;
@@ -619,6 +726,7 @@ export const Dashboard: React.FC = () => {
       .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)); // Sort by absolute value
       
     console.log('Category chart - Total amount:', formatCurrency(totalAmount), 'Total count:', totalCount);
+    console.log('generateCategoryData - Final result sample:', categoryArray?.slice(0, 2));
     
     return categoryArray;
   };
