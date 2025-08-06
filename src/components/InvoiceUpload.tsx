@@ -306,6 +306,20 @@ export const InvoiceUpload: React.FC = () => {
     const file = uploadedFiles.find(f => f.id === fileId);
     if (!file) return;
 
+    // Reset file status if it was in error state
+    if (file.status === 'error') {
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === fileId ? { 
+          ...f, 
+          status: 'preview' as const,
+          error: undefined,
+          progress: 0,
+          cancelled: false
+        } : f
+      ));
+      addNotification('info', 'Újrapróbálkozás a feldolgozással...');
+    }
+
     if (currentlyProcessing) {
       // Add to queue if another file is processing
       setProcessingQueue(prev => [...prev, fileId]);
@@ -1106,7 +1120,7 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   const canRemove = (status: string) => {
-    return ['preview', 'completed', 'error', 'cancelled'].includes(status);
+    return ['preview', 'completed', 'cancelled'].includes(status);
   };
 
   const renderEditableField = (fileId: string, field: string, value: any, icon: React.ReactNode, label: string, type: 'text' | 'number' | 'date' = 'text', className: string = '') => {
@@ -1512,6 +1526,18 @@ export const InvoiceUpload: React.FC = () => {
                             ) : (
                               <X className="h-3 w-3" />
                             )}
+                          </button>
+                        )}
+
+                        {/* Retry Button for Error Status */}
+                        {uploadedFile.status === 'error' && (
+                          <button
+                            onClick={() => startExtraction(uploadedFile.id)}
+                            className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
+                            title="Újrapróbálkozás a feldolgozással"
+                          >
+                            <RotateCw className="h-3 w-3 mr-1" />
+                            <span className="hidden sm:inline">Újrapróbálkozás</span>
                           </button>
                         )}
 
