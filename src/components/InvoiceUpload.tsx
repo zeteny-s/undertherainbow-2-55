@@ -59,6 +59,8 @@ export const InvoiceUpload: React.FC = () => {
   const [processingQueue, setProcessingQueue] = useState<string[]>([]);
   const [currentlyProcessing, setCurrentlyProcessing] = useState<string | null>(null);
   const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
+  const [processedCount, setProcessedCount] = useState<number>(0);
+  const [isDelayActive, setIsDelayActive] = useState<boolean>(false);
 
   // Check if device is mobile
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -66,7 +68,7 @@ export const InvoiceUpload: React.FC = () => {
   // Process the next file in queue when current file finishes
   useEffect(() => {
     const processNextInQueue = async () => {
-      if (processingQueue.length > 0 && !currentlyProcessing) {
+      if (processingQueue.length > 0 && !currentlyProcessing && !isDelayActive) {
         const nextFileId = processingQueue[0];
         const nextFile = uploadedFiles.find(f => f.id === nextFileId);
         
@@ -79,6 +81,20 @@ export const InvoiceUpload: React.FC = () => {
           // Process the file
           await processFile(nextFile);
           
+          // Increment processed count
+          setProcessedCount(prev => prev + 1);
+          
+          // Check if we need to add a delay after every 6th processed file
+          if ((processedCount + 1) % 6 === 0) {
+            setIsDelayActive(true);
+            addNotification('info', 'Rövid szünet a feldolgozásban (6. számla után)...');
+            
+            // Wait for 3 seconds before continuing
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            setIsDelayActive(false);
+          }
+          
           // Clear current processing
           setCurrentlyProcessing(null);
         }
@@ -86,7 +102,7 @@ export const InvoiceUpload: React.FC = () => {
     };
     
     processNextInQueue();
-  }, [processingQueue, currentlyProcessing, uploadedFiles]);
+  }, [processingQueue, currentlyProcessing, uploadedFiles, processedCount, isDelayActive]);
 
   // Helper function to update munkaszam in database
   const updateMunkaszamInDatabase = async (fileId: string, fileName: string, organization: 'alapitvany' | 'ovoda' | 'auto', newMunkaszam: string) => {
@@ -269,6 +285,8 @@ export const InvoiceUpload: React.FC = () => {
     // If no file is currently being processed, add to processing queue
     if (!currentlyProcessing) {
       setProcessingQueue(prev => [...prev, ...newFileIds]);
+      // Reset processed count for new batch
+      setProcessedCount(0);
     } else {
       // Otherwise add to queue
       setProcessingQueue(prev => [...prev, ...newFileIds]);
@@ -316,6 +334,11 @@ export const InvoiceUpload: React.FC = () => {
       } : file
     ));
 
+    // Reset processed count if queue becomes empty
+    if (processingQueue.length === 1 && !currentlyProcessing) {
+      setProcessedCount(0);
+    }
+
     setTimeout(() => {
       setCancellingFiles(prev => {
         const newSet = new Set(prev);
@@ -340,6 +363,11 @@ export const InvoiceUpload: React.FC = () => {
       newSet.delete(fileId);
       return newSet;
     });
+    
+    // Reset processed count if queue becomes empty
+    if (processingQueue.length === 1 && !currentlyProcessing) {
+      setProcessedCount(0);
+    }
   };
 
   // Animate and hide file after export
@@ -1217,25 +1245,50 @@ export const InvoiceUpload: React.FC = () => {
 
   // Queue status display
   const renderQueueStatus = () => {
-    if (processingQueue.length === 0 && !currentlyProcessing) return null;
+    if (processingQueue.length === 0 && !currentlyProcessing && !isDelayActive) return null;
     
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center space-x-2 mb-2 sm:mb-0">
-            <Loader className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 animate-spin" />
-            <h4 className="text-sm sm:text-base font-semibold text-gray-900">Feldolgozási sor</h4>
+            {isDelayActive ? (
+              <div className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 animate-pulse">
+                <svg className="w-full h-full" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+            ) : (
+              <Loader className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 animate-spin" />
+            )}
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900">
+              {isDelayActive ? 'Feldolgozási szünet' : 'Feldolgozási sor'}
+            </h4>
           </div>
           <div className="text-sm text-gray-600">
-            {currentlyProcessing && (
+            {currentlyProcessing && !isDelayActive && (
               <span className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
                 <Loader className="h-3 w-3 mr-1 animate-spin" />
                 Feldolgozás alatt: 1
               </span>
             )}
-            {processingQueue.length > 0 && (
+            {isDelayActive && (
+              <span className="inline-flex items-center bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
+                <div className="h-3 w-3 mr-1 animate-pulse">
+                  <svg className="w-full h-full" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                Szünet: 3s
+              </span>
+            )}
+            {processingQueue.length > 0 && !isDelayActive && (
               <span className="inline-flex items-center bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
                 Sorban: {processingQueue.length}
+              </span>
+            )}
+            {processedCount > 0 && (
+              <span className="inline-flex items-center bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                Feldolgozva: {processedCount}
               </span>
             )}
           </div>
