@@ -337,6 +337,7 @@ export type Database = {
           file_name: string | null
           file_url: string | null
           id: string
+          is_cash: boolean
           is_rental: boolean
           organization: string
           project_code: string | null
@@ -352,6 +353,7 @@ export type Database = {
           file_name?: string | null
           file_url?: string | null
           id?: string
+          is_cash?: boolean
           is_rental?: boolean
           organization: string
           project_code?: string | null
@@ -367,6 +369,7 @@ export type Database = {
           file_name?: string | null
           file_url?: string | null
           id?: string
+          is_cash?: boolean
           is_rental?: boolean
           organization?: string
           project_code?: string | null
@@ -378,6 +381,8 @@ export type Database = {
       }
       payroll_summaries: {
         Row: {
+          bank_transfer_costs: number
+          cash_costs: number
           created_at: string
           created_by: string
           id: string
@@ -394,6 +399,8 @@ export type Database = {
           year: number
         }
         Insert: {
+          bank_transfer_costs?: number
+          cash_costs?: number
           created_at?: string
           created_by: string
           id?: string
@@ -410,6 +417,8 @@ export type Database = {
           year: number
         }
         Update: {
+          bank_transfer_costs?: number
+          cash_costs?: number
           created_at?: string
           created_by?: string
           id?: string

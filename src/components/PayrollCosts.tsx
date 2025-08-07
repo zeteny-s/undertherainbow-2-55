@@ -11,6 +11,7 @@ interface PayrollRecord {
   amount: number;
   date: string;
   isRental: boolean;
+  isCash?: boolean;
   organization: string;
 }
 
@@ -22,6 +23,8 @@ interface PayrollSummary {
   total_payroll: number;
   rental_costs: number;
   non_rental_costs: number;
+  cash_costs: number;
+  bank_transfer_costs: number;
   record_count: number;
   tax_amount: number;
   created_at: string;
@@ -43,9 +46,12 @@ export const PayrollCosts: React.FC = () => {
   const [uploadedPayrollFile, setUploadedPayrollFile] = useState<File | null>(null);
   const [payrollFileUrl, setPayrollFileUrl] = useState<string>('');
   const [showTaxModal, setShowTaxModal] = useState(false);
+  const [showCashModal, setShowCashModal] = useState(false);
+  const [cashRecords, setCashRecords] = useState<PayrollRecord[]>([]);
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [isProcessingTax, setIsProcessingTax] = useState(false);
-  const [step, setStep] = useState<'upload' | 'preview' | 'confirm'>('upload');
+  const [isProcessingCash, setIsProcessingCash] = useState(false);
+  const [step, setStep] = useState<'upload' | 'preview' | 'cash-question' | 'cash-preview' | 'confirm'>('upload');
   
   const { addNotification } = useNotifications();
 
@@ -118,6 +124,82 @@ export const PayrollCosts: React.FC = () => {
   }, [addNotification]);
 
   const handleRendbenClick = () => {
+    setStep('cash-question');
+  };
+
+  const handleCashYes = () => {
+    setShowCashModal(true);
+  };
+
+  const handleCashNo = () => {
+    setShowTaxModal(true);
+  };
+
+  const handleCashFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      addNotification('error', 'Csak JPG, PNG és PDF fájlokat lehet feltölteni.');
+      return;
+    }
+
+    setIsProcessingCash(true);
+    
+    try {
+      // Convert file to base64 and process with Document AI first
+      const base64Data = await convertFileToBase64(file);
+      
+      // Send to process-document function first
+      const { data, error } = await supabase.functions.invoke('process-document', {
+        body: {
+          document: {
+            content: base64Data,
+            mimeType: file.type,
+          },
+        },
+      });
+
+      if (error) {
+        throw new Error(`Document processing error: ${error.message}`);
+      }
+
+      if (!data?.document?.text) {
+        throw new Error('No text extracted from document');
+      }
+
+      // Now send to payroll-cash-gemini edge function
+      const { data: cashData, error: cashError } = await supabase.functions.invoke('payroll-cash-gemini', {
+        body: {
+          extractedText: data.document.text,
+          organization: 'alapitvany'
+        }
+      });
+
+      if (cashError) {
+        throw new Error(`Cash payroll processing error: ${cashError.message}`);
+      }
+
+      if (cashData?.success) {
+        setCashRecords(cashData.records || []);
+        setShowCashModal(false);
+        setStep('cash-preview');
+        addNotification('success', 'Készpénzes jövedelem adatok sikeresen kinyerve!');
+      } else {
+        throw new Error(cashData?.error || 'Ismeretlen hiba történt');
+      }
+    } catch (error) {
+      console.error('Error processing cash file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
+      addNotification('error', `Hiba történt a készpénzes adatok feldolgozása során: ${errorMessage}`);
+    } finally {
+      setIsProcessingCash(false);
+    }
+  }, [addNotification]);
+
+  const handleCashRendbenClick = () => {
     setShowTaxModal(true);
   };
 
@@ -186,7 +268,7 @@ export const PayrollCosts: React.FC = () => {
   }, [addNotification]);
 
   const saveRecords = async () => {
-    if (extractedRecords.length === 0) return;
+    if (extractedRecords.length === 0 && cashRecords.length === 0) return;
 
     try {
       // Get current user
@@ -195,31 +277,56 @@ export const PayrollCosts: React.FC = () => {
         throw new Error('Nem vagy bejelentkezve');
       }
 
-      // Save individual records
-      const { error: recordsError } = await supabase
-        .from('payroll_records')
-        .insert(extractedRecords.map(record => ({
+      // Combine all records (regular + cash)
+      const allRecords = [
+        ...extractedRecords.map(record => ({
           employee_name: record.employeeName,
           project_code: record.projectCode,
           amount: record.amount,
           record_date: record.date,
           is_rental: record.isRental,
+          is_cash: false,
           organization: record.organization,
           uploaded_by: user.id
-        })));
+        })),
+        ...cashRecords.map(record => ({
+          employee_name: record.employeeName,
+          project_code: record.projectCode,
+          amount: record.amount,
+          record_date: record.date,
+          is_rental: record.isRental || false,
+          is_cash: true,
+          organization: record.organization,
+          uploaded_by: user.id
+        }))
+      ];
 
-      if (recordsError) throw recordsError;
+      // Save individual records
+      if (allRecords.length > 0) {
+        const { error: recordsError } = await supabase
+          .from('payroll_records')
+          .insert(allRecords);
+
+        if (recordsError) throw recordsError;
+      }
 
       // Update or create monthly summary
-      const firstRecord = extractedRecords[0];
+      const firstRecord = extractedRecords[0] || cashRecords[0];
       const recordDate = new Date(firstRecord.date);
       const year = recordDate.getFullYear();
       const month = recordDate.getMonth() + 1;
 
       console.log('Creating summary for:', { year, month, organization: firstRecord.organization });
 
-      const totalPayroll = extractedRecords.reduce((sum, r) => sum + r.amount, 0);
-      const rentalCosts = extractedRecords.filter(r => r.isRental).reduce((sum, r) => sum + r.amount, 0);
+      const payrollTotal = extractedRecords.reduce((sum, r) => sum + r.amount, 0);
+      const cashTotal = cashRecords.reduce((sum, r) => sum + r.amount, 0);
+      const totalPayroll = payrollTotal + cashTotal;
+      
+      const rentalCosts = [
+        ...extractedRecords.filter(r => r.isRental),
+        ...cashRecords.filter(r => r.isRental)
+      ].reduce((sum, r) => sum + r.amount, 0);
+      
       const nonRentalCosts = totalPayroll - rentalCosts;
 
       const { error: summaryError } = await supabase
@@ -231,7 +338,9 @@ export const PayrollCosts: React.FC = () => {
           total_payroll: totalPayroll + taxAmount,
           rental_costs: rentalCosts,
           non_rental_costs: nonRentalCosts,
-          record_count: extractedRecords.length,
+          cash_costs: cashTotal,
+          bank_transfer_costs: payrollTotal,
+          record_count: extractedRecords.length + cashRecords.length,
           tax_amount: taxAmount,
           created_by: user.id
         }, {
@@ -242,6 +351,7 @@ export const PayrollCosts: React.FC = () => {
 
       addNotification('success', 'Bérköltség adatok sikeresen mentve!');
       setExtractedRecords([]);
+      setCashRecords([]);
       setStep('upload');
       setUploadedPayrollFile(null);
       setPayrollFileUrl('');
@@ -630,6 +740,49 @@ export const PayrollCosts: React.FC = () => {
         </div>
       )}
 
+      {/* Cash Modal */}
+      {showCashModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Készpénzes jövedelem dokumentum feltöltése</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Töltsd fel a készpénzes jövedelem dokumentumot a készpénzes kifizetések kinyeréséhez.
+            </p>
+            
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <FileImage className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleCashFileUpload}
+                  disabled={isProcessingCash}
+                  className="hidden"
+                  id="cash-file-upload"
+                />
+                <button
+                  onClick={() => document.getElementById('cash-file-upload')?.click()}
+                  disabled={isProcessingCash}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isProcessingCash ? 'Feldolgozás...' : 'Fájl kiválasztás'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCashModal(false)}
+                disabled={isProcessingCash}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+              >
+                Mégse
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tax Modal */}
       {showTaxModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -675,6 +828,119 @@ export const PayrollCosts: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Cash Payment Question Section */}
+      {step === 'cash-question' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
+            Készpénzes jövedelem dokumentum
+          </h3>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-blue-800 text-sm">
+              Van-e készpénzes jövedelem dokumentumod ehhez a hónaphoz?
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={handleCashYes}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Igen, van dokumentum
+            </button>
+            <button
+              onClick={handleCashNo}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+            >
+              Nincs, folytatás adókkal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cash Document Preview Section */}
+      {step === 'cash-preview' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
+            Készpénzes jövedelem adatok
+          </h3>
+          
+          {cashRecords.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Kinyert készpénzes adatok</h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded-lg">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Alkalmazott
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Munkaszám
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Összeg
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Dátum
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Típus
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {cashRecords.map((record, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {record.employeeName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {record.projectCode || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatCurrency(record.amount)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {record.date}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            Készpénz
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex justify-between items-center pt-4">
+                <button
+                  onClick={() => {
+                    setStep('cash-question');
+                    setCashRecords([]);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Vissza
+                </button>
+                <button
+                  onClick={handleCashRendbenClick}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Rendben - Folytatás adókkal
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -757,6 +1023,12 @@ export const PayrollCosts: React.FC = () => {
                     Összes bérköltség
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Banki átutalás
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Készpénz
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Bérleti költségek
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -783,6 +1055,12 @@ export const PayrollCosts: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{formatCurrency(summary.total_payroll)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{formatCurrency(summary.bank_transfer_costs || 0)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-orange-600">{formatCurrency(summary.cash_costs || 0)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{formatCurrency(summary.rental_costs)}</span>
@@ -1015,6 +1293,12 @@ export const PayrollCosts: React.FC = () => {
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Összes bérköltség
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Banki átutalás
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Készpénz
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Bérleti költségek
