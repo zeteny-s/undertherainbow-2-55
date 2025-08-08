@@ -610,13 +610,13 @@ export const ManagerDashboard: React.FC = () => {
       
       if (munkaszamSpending[munkaszam]) {
         // Include amount only if not in excluded partners - now includes negative amounts
-        if (invoice.partner && !excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) {
+        if (invoice.partner && !isExcludedPartner(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) {
           munkaszamSpending[munkaszam].invoiceAmount += invoice.amount;
         }
         munkaszamSpending[munkaszam].count += 1; // Always count the invoice
       } else {
         munkaszamSpending[munkaszam] = { 
-          invoiceAmount: (invoice.partner && !excludedPartners.includes(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
+          invoiceAmount: (invoice.partner && !isExcludedPartner(invoice.partner) && invoice.amount !== null && invoice.amount !== undefined) ? invoice.amount : 0,
           payrollAmount: 0,
           rentalAmount: 0,
           count: 1 
@@ -688,10 +688,7 @@ export const ManagerDashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
-    // Define excluded partners for category distribution
-    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
-    
-    // Process all invoices - exclude specified partners from both amount and count
+    // Process all invoices - exclude specified partners from both amount and count (normalized)
     invoices.forEach(invoice => {
       // Skip invoices from excluded partners or if partner is null
       if (!invoice.partner || isExcludedPartner(invoice.partner)) {
