@@ -56,8 +56,9 @@ export const PayrollCosts: React.FC = () => {
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [isProcessingTax, setIsProcessingTax] = useState(false);
   const [isProcessingCash, setIsProcessingCash] = useState(false);
-  const [step, setStep] = useState<'upload' | 'preview' | 'cash-question' | 'cash-preview' | 'confirm'>('upload');
+  const [step, setStep] = useState<'organization' | 'upload' | 'preview' | 'cash-question' | 'cash-preview' | 'confirm'>('organization');
   const [currentMonthYear, setCurrentMonthYear] = useState<string>('');
+  const [selectedOrganization, setSelectedOrganization] = useState<string>('');
   
   const { addNotification } = useNotifications();
 
@@ -118,7 +119,7 @@ export const PayrollCosts: React.FC = () => {
       const { data: payrollData, error: payrollError } = await supabase.functions.invoke('payroll-gemini', {
         body: {
           extractedText: data.document.text,
-          organization: 'Alapítvány' // Default, can be dynamic based on user
+          organization: selectedOrganization === 'alapitvany' ? 'Alapítvány' : 'Óvoda'
         }
       });
 
@@ -201,7 +202,7 @@ export const PayrollCosts: React.FC = () => {
       const { data: cashData, error: cashError } = await supabase.functions.invoke('payroll-cash-gemini', {
         body: {
           extractedText: data.document.text,
-          organization: 'alapitvany'
+          organization: selectedOrganization
         }
       });
 
@@ -270,7 +271,7 @@ export const PayrollCosts: React.FC = () => {
       const { data: taxData, error: taxError } = await supabase.functions.invoke('tax-gemini', {
         body: {
           extractedText: data.document.text,
-          organization: 'Alapítvány'
+          organization: selectedOrganization === 'alapitvany' ? 'Alapítvány' : 'Óvoda'
         }
       });
 
@@ -331,7 +332,7 @@ export const PayrollCosts: React.FC = () => {
           record_date: record.date,
           is_rental: record.isRental,
           is_cash: false,
-          organization: record.organization,
+          organization: selectedOrganization,
           uploaded_by: user.id
         })),
         ...cashRecords.map(record => ({
@@ -341,7 +342,7 @@ export const PayrollCosts: React.FC = () => {
           record_date: record.date,
           is_rental: record.isRental || false,
           is_cash: true,
-          organization: record.organization,
+          organization: selectedOrganization,
           uploaded_by: user.id
         }))
       ];
@@ -361,7 +362,7 @@ export const PayrollCosts: React.FC = () => {
       const year = recordDate.getFullYear();
       const month = recordDate.getMonth() + 1;
 
-      console.log('Creating summary for:', { year, month, organization: firstRecord.organization });
+      console.log('Creating summary for:', { year, month, organization: selectedOrganization });
 
       const payrollTotal = extractedRecords.reduce((sum, r) => sum + r.amount, 0);
       const cashTotal = cashRecords.reduce((sum, r) => sum + r.amount, 0);
@@ -376,10 +377,10 @@ export const PayrollCosts: React.FC = () => {
 
       const { error: summaryError } = await supabase
         .from('payroll_summaries')
-        .upsert({
+        .insert({
           year,
           month,
-          organization: firstRecord.organization,
+          organization: selectedOrganization,
           total_payroll: totalPayroll + taxAmount,
           rental_costs: rentalCosts,
           non_rental_costs: nonRentalCosts,
@@ -391,8 +392,6 @@ export const PayrollCosts: React.FC = () => {
           cash_file_url: cashFileUrl || null,
           tax_file_url: taxFileUrl || null,
           created_by: user.id
-        }, {
-          onConflict: 'year,month,organization'
         });
 
       if (summaryError) throw summaryError;
@@ -400,13 +399,14 @@ export const PayrollCosts: React.FC = () => {
       addNotification('success', 'Bérköltség adatok sikeresen mentve!');
       setExtractedRecords([]);
       setCashRecords([]);
-      setStep('upload');
+      setStep('organization');
       setUploadedPayrollFile(null);
       setUploadedCashFile(null);
       setUploadedTaxFile(null);
       setPayrollFileUrl('');
       setTaxAmount(0);
       setCurrentMonthYear('');
+      setSelectedOrganization('');
       await loadPayrollSummaries();
     } catch (error) {
       console.error('Error saving payroll records:', error);
@@ -728,6 +728,18 @@ export const PayrollCosts: React.FC = () => {
               </div>
             </div>
           </div>
+          
+          <div className="mt-6 flex justify-start">
+            <button
+              onClick={() => {
+                setStep('organization');
+                setSelectedOrganization('');
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Vissza a szervezet kiválasztáshoz
+            </button>
+          </div>
         </div>
       )}
 
@@ -817,10 +829,11 @@ export const PayrollCosts: React.FC = () => {
           <div className="mt-6 flex justify-end space-x-3">
             <button
               onClick={() => {
-                setStep('upload');
+                setStep('organization');
                 setUploadedPayrollFile(null);
                 setPayrollFileUrl('');
                 setExtractedRecords([]);
+                setSelectedOrganization('');
               }}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
             >
@@ -1058,23 +1071,29 @@ export const PayrollCosts: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Bérköltségek összesen</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Banki átutalás</h4>
               <p className="text-2xl font-bold text-blue-600">
                 {formatCurrency(extractedRecords.reduce((sum, r) => sum + r.amount, 0))}
               </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Adók és járulékok</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Készpénz</h4>
               <p className="text-2xl font-bold text-orange-600">
+                {formatCurrency(cashRecords.reduce((sum, r) => sum + r.amount, 0))}
+              </p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Adók és járulékok</h4>
+              <p className="text-2xl font-bold text-purple-600">
                 {formatCurrency(taxAmount)}
               </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">Teljes összeg</h4>
               <p className="text-2xl font-bold text-green-600">
-                {formatCurrency(extractedRecords.reduce((sum, r) => sum + r.amount, 0) + taxAmount)}
+                {formatCurrency(extractedRecords.reduce((sum, r) => sum + r.amount, 0) + cashRecords.reduce((sum, r) => sum + r.amount, 0) + taxAmount)}
               </p>
             </div>
           </div>
@@ -1117,6 +1136,9 @@ export const PayrollCosts: React.FC = () => {
                     Hónap
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Szervezet
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Összes bérköltség
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1151,10 +1173,17 @@ export const PayrollCosts: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-600">
+                        {summary.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 
+                         summary.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : 
+                         summary.organization}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{formatCurrency(summary.total_payroll)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{formatCurrency(summary.bank_transfer_costs || 0)}</span>
+                      <span className="text-sm text-blue-600">{formatCurrency(summary.bank_transfer_costs || 0)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-orange-600">{formatCurrency(summary.cash_costs || 0)}</span>
@@ -1169,7 +1198,7 @@ export const PayrollCosts: React.FC = () => {
                       <span className="text-sm text-gray-900">{summary.record_count}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{formatCurrency(summary.tax_amount)}</span>
+                      <span className="text-sm text-purple-600">{formatCurrency(summary.tax_amount)}</span>
                     </td>
                      <td className="px-6 py-4 whitespace-nowrap">
                        <div className="flex gap-2">
