@@ -383,6 +383,7 @@ export type Database = {
         Row: {
           bank_transfer_costs: number
           cash_costs: number
+          cash_file_url: string | null
           created_at: string
           created_by: string
           id: string
@@ -401,6 +402,7 @@ export type Database = {
         Insert: {
           bank_transfer_costs?: number
           cash_costs?: number
+          cash_file_url?: string | null
           created_at?: string
           created_by: string
           id?: string
@@ -419,6 +421,7 @@ export type Database = {
         Update: {
           bank_transfer_costs?: number
           cash_costs?: number
+          cash_file_url?: string | null
           created_at?: string
           created_by?: string
           id?: string

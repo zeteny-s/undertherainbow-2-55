@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle } from 'lucide-react';
+import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, Trash2, AlertTriangle, Download } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
@@ -28,6 +28,9 @@ interface PayrollSummary {
   record_count: number;
   tax_amount: number;
   created_at: string;
+  payroll_file_url?: string;
+  cash_file_url?: string;
+  tax_file_url?: string;
 }
 
 export const PayrollCosts: React.FC = () => {
@@ -44,6 +47,8 @@ export const PayrollCosts: React.FC = () => {
   
   // New states for the workflow
   const [uploadedPayrollFile, setUploadedPayrollFile] = useState<File | null>(null);
+  const [uploadedCashFile, setUploadedCashFile] = useState<File | null>(null);
+  const [uploadedTaxFile, setUploadedTaxFile] = useState<File | null>(null);
   const [payrollFileUrl, setPayrollFileUrl] = useState<string>('');
   const [showTaxModal, setShowTaxModal] = useState(false);
   const [showCashModal, setShowCashModal] = useState(false);
@@ -52,8 +57,22 @@ export const PayrollCosts: React.FC = () => {
   const [isProcessingTax, setIsProcessingTax] = useState(false);
   const [isProcessingCash, setIsProcessingCash] = useState(false);
   const [step, setStep] = useState<'upload' | 'preview' | 'cash-question' | 'cash-preview' | 'confirm'>('upload');
+  const [currentMonthYear, setCurrentMonthYear] = useState<string>('');
   
   const { addNotification } = useNotifications();
+
+  const uploadFileToStorage = async (file: File, bucketName: string, monthYear: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `${monthYear}/${fileName}`;
+    
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file);
+    
+    if (error) throw error;
+    return data.path;
+  };
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -109,6 +128,13 @@ export const PayrollCosts: React.FC = () => {
 
       if (payrollData?.success) {
         setExtractedRecords(payrollData.data);
+        // Set current month year for file organization
+        const firstRecord = payrollData.data[0];
+        if (firstRecord?.date) {
+          const recordDate = new Date(firstRecord.date);
+          const monthYear = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
+          setCurrentMonthYear(monthYear);
+        }
         setStep('preview');
         addNotification('success', 'Bérköltség adatok sikeresen kinyerve!');
       } else {
@@ -147,6 +173,7 @@ export const PayrollCosts: React.FC = () => {
     }
 
     setIsProcessingCash(true);
+    setUploadedCashFile(file);
     
     try {
       // Convert file to base64 and process with Document AI first
@@ -215,6 +242,7 @@ export const PayrollCosts: React.FC = () => {
     }
 
     setIsProcessingTax(true);
+    setUploadedTaxFile(file);
     
     try {
       // Convert file to base64 and process with Document AI first
@@ -275,6 +303,23 @@ export const PayrollCosts: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('Nem vagy bejelentkezve');
+      }
+
+      // Upload files to storage
+      let payrollFileUrl = '';
+      let cashFileUrl = '';
+      let taxFileUrl = '';
+
+      if (uploadedPayrollFile && currentMonthYear) {
+        payrollFileUrl = await uploadFileToStorage(uploadedPayrollFile, 'payroll', currentMonthYear);
+      }
+
+      if (uploadedCashFile && currentMonthYear) {
+        cashFileUrl = await uploadFileToStorage(uploadedCashFile, 'payroll', currentMonthYear);
+      }
+
+      if (uploadedTaxFile && currentMonthYear) {
+        taxFileUrl = await uploadFileToStorage(uploadedTaxFile, 'tax-documents', currentMonthYear);
       }
 
       // Combine all records (regular + cash)
@@ -342,6 +387,9 @@ export const PayrollCosts: React.FC = () => {
           bank_transfer_costs: payrollTotal,
           record_count: extractedRecords.length + cashRecords.length,
           tax_amount: taxAmount,
+          payroll_file_url: payrollFileUrl || null,
+          cash_file_url: cashFileUrl || null,
+          tax_file_url: taxFileUrl || null,
           created_by: user.id
         }, {
           onConflict: 'year,month,organization'
@@ -354,8 +402,11 @@ export const PayrollCosts: React.FC = () => {
       setCashRecords([]);
       setStep('upload');
       setUploadedPayrollFile(null);
+      setUploadedCashFile(null);
+      setUploadedTaxFile(null);
       setPayrollFileUrl('');
       setTaxAmount(0);
+      setCurrentMonthYear('');
       await loadPayrollSummaries();
     } catch (error) {
       console.error('Error saving payroll records:', error);
@@ -374,10 +425,13 @@ export const PayrollCosts: React.FC = () => {
 
       if (error) throw error;
       
-      // Ensure tax_amount exists in the data, default to 0 if missing
+      // Ensure tax_amount exists in the data, default to 0 if missing, handle null values for file URLs
       const summariesWithTax = (data || []).map(summary => ({
         ...summary,
-        tax_amount: (summary as any).tax_amount || 0
+        tax_amount: (summary as any).tax_amount || 0,
+        payroll_file_url: (summary as any).payroll_file_url || undefined,
+        cash_file_url: (summary as any).cash_file_url || undefined,
+        tax_file_url: (summary as any).tax_file_url || undefined
       }));
       
       setPayrollSummaries(summariesWithTax);
@@ -571,6 +625,49 @@ export const PayrollCosts: React.FC = () => {
 
   const formatMonth = (year: number, month: number) => {
     return `${year}.${month.toString().padStart(2, '0')}`;
+  };
+
+  const downloadMonthlyDocuments = async (summary: PayrollSummary) => {
+    try {
+      const monthYear = `${summary.year}-${String(summary.month).padStart(2, '0')}`;
+      const filesToDownload: string[] = [];
+      
+      // Collect all file URLs for this month
+      if (summary.payroll_file_url) filesToDownload.push(summary.payroll_file_url);
+      if (summary.cash_file_url) filesToDownload.push(summary.cash_file_url);
+      if (summary.tax_file_url) filesToDownload.push(summary.tax_file_url);
+      
+      if (filesToDownload.length === 0) {
+        addNotification('info', 'Ehhez a hónaphoz nincsenek feltöltött dokumentumok.');
+        return;
+      }
+
+      // Download each file
+      for (const filePath of filesToDownload) {
+        const bucketName = filePath.includes('tax-documents') ? 'tax-documents' : 'payroll';
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .download(filePath);
+        
+        if (error) {
+          console.error('Error downloading file:', error);
+          continue;
+        }
+        
+        // Create download link
+        const url = URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filePath.split('/').pop() || `document_${monthYear}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      
+      addNotification('success', `${filesToDownload.length} dokumentum letöltése elindult.`);
+    } catch (error) {
+      console.error('Error downloading documents:', error);
+      addNotification('error', 'Hiba történt a dokumentumok letöltése során');
+    }
   };
 
   return (
@@ -1083,6 +1180,14 @@ export const PayrollCosts: React.FC = () => {
                          >
                            <CheckCircle2 className="h-4 w-4" />
                            Részletek
+                         </button>
+                         <button
+                           onClick={() => downloadMonthlyDocuments(summary)}
+                           className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                           title="Havi dokumentumok letöltése"
+                         >
+                           <Download className="h-4 w-4" />
+                           Letöltés
                          </button>
                          <button
                            onClick={() => setDeleteConfirmSummary(summary)}
