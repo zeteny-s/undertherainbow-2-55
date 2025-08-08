@@ -138,6 +138,53 @@ export const ManagerDashboard: React.FC = () => {
   const [munkaszamViewMode, setMunkaszamViewMode] = useState<'all' | 'monthly'>('all');
   const [rentalViewMode, setRentalViewMode] = useState<'all' | 'monthly'>('all');
 
+  // Partner normalization utilities to merge company variants (Kft., Bt., Ev., punctuation, diacritics)
+  const normalizePartnerName = (name: string): string => {
+    if (!name) return '';
+    let normalized = name.trim().toLowerCase();
+    normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    normalized = normalized.replace(/[.,]/g, ' ');
+    normalized = normalized.replace(/\s+/g, ' ');
+    const legalTokens = [
+      'kft', 'bt', 'kkt', 'zrt', 'nyrt', 'ev', 'e v', 'e.v', 'e. v', 'egyeni vallalkozo'
+    ];
+    const tokensPattern = new RegExp(`\\b(${legalTokens.join('|')})\\b`, 'g');
+    normalized = normalized.replace(tokensPattern, ' ');
+    normalized = normalized.replace(/\s+/g, ' ').trim();
+    return normalized;
+  };
+
+  const prettyPartnerName = (name: string): string => {
+    if (!name) return '';
+    let display = name.trim();
+    display = display.replace(/[.,]+$/g, '').trim();
+    const removeTrailingToken = (input: string): string => {
+      const words = input.split(/\s+/);
+      if (words.length === 0) return input;
+      const last = words[words.length - 1].replace(/[.,]/g, '').toLowerCase();
+      const secondLast = words.length > 1 ? words[words.length - 2].replace(/[.,]/g, '').toLowerCase() : '';
+      const singleTokens = new Set(['kft', 'bt', 'kkt', 'zrt', 'nyrt', 'ev']);
+      const twoWordTokens = new Set(['egyéni vállalkozó']);
+      if (singleTokens.has(last)) {
+        return words.slice(0, -1).join(' ');
+      }
+      if (twoWordTokens.has(`${secondLast} ${last}`)) {
+        return words.slice(0, -2).join(' ');
+      }
+      return input;
+    };
+    const cleanedOnce = removeTrailingToken(display);
+    const cleaned = removeTrailingToken(cleanedOnce);
+    return cleaned.trim();
+  };
+
+  const EXCLUDED_PARTNERS = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
+  const EXCLUDED_NORMALIZED_SET = new Set(EXCLUDED_PARTNERS.map(normalizePartnerName));
+  const isExcludedPartner = (partner?: string | null): boolean => {
+    if (!partner) return false;
+    return EXCLUDED_NORMALIZED_SET.has(normalizePartnerName(partner));
+  };
+
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
     const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Felhasználó';
@@ -257,10 +304,9 @@ export const ManagerDashboard: React.FC = () => {
       ) as any;
       const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
 
-      // Filter out specific partners from cost analytics
-      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
-      const filteredInvoices = (invoices || []).filter(inv => inv.partner && !excludedPartners.includes(inv.partner));
-      const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !excludedPartners.includes(inv.partner));
+      // Filter out specific partners from cost analytics (normalized matching)
+      const filteredInvoices = (invoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+      const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       
       // Log counts for debugging
       console.log('Total invoices (unfiltered):', invoices?.length || 0);
@@ -376,7 +422,7 @@ export const ManagerDashboard: React.FC = () => {
   const generateMonthlyData = (invoices: any[]) => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
-    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
+    // Use normalized partner exclusion
     
     return months.map((month, index) => {
       // Count all invoices for the month (for display purposes)
@@ -387,9 +433,7 @@ export const ManagerDashboard: React.FC = () => {
       });
       
       // Filter for amount calculations only
-      const monthInvoicesForAmount = allMonthInvoices.filter(inv => 
-        inv.partner && !excludedPartners.includes(inv.partner)
-      );
+      const monthInvoicesForAmount = allMonthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       
       const alapitvanyInvoices = allMonthInvoices.filter(inv => inv.organization === 'alapitvany');
       const ovodaInvoices = allMonthInvoices.filter(inv => inv.organization === 'ovoda');
@@ -465,10 +509,7 @@ export const ManagerDashboard: React.FC = () => {
       });
       
       // Filter for amount calculations only
-      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
-      const dayInvoicesForAmount = allDayInvoices.filter(inv => 
-        inv.partner && !excludedPartners.includes(inv.partner)
-      );
+      const dayInvoicesForAmount = allDayInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       
       return {
         day,
@@ -492,10 +533,7 @@ export const ManagerDashboard: React.FC = () => {
       });
       
       // Filter for amount calculations only
-      const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
-      const monthInvoicesForAmount = allMonthInvoices.filter(inv => 
-        inv.partner && !excludedPartners.includes(inv.partner)
-      );
+      const monthInvoicesForAmount = allMonthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
 
       const monthPayroll = payrollRecords.filter(rec => {
         if (!rec.record_date) return false;
@@ -515,36 +553,48 @@ export const ManagerDashboard: React.FC = () => {
   };
 
   const generateTopPartnersData = (invoices: any[]) => {
-    // Group invoices by partner and calculate total spending - EXCLUDE payroll partners
-    const partnerSpending: { [key: string]: { amount: number; count: number } } = {};
-    
-    // Filter out payroll-related partners completely from partner spending analysis
-    const excludedPartners = ['Füles Márta', 'NAV', 'Nyugdíjpénztár', 'Egészségpénztár'];
-    
+    // Group invoices by normalized partner and calculate total spending
+    const partnerKeyToAggregate: {
+      [normalized: string]: { amount: number; count: number; displayName: string };
+    } = {};
+
+    // Additional excluded names for top partners (normalized)
+    const extraExcluded = ['NAV', 'Nyugdíjpénztár', 'Egészségpénztár'];
+    const extraExcludedSet = new Set(extraExcluded.map(normalizePartnerName));
+
     invoices.forEach(invoice => {
-      if (invoice.partner && invoice.partner.trim() && invoice.amount && invoice.amount > 0 
-          && !excludedPartners.includes(invoice.partner)) {
-        const partner = invoice.partner.trim();
-        if (!partnerSpending[partner]) {
-          partnerSpending[partner] = { amount: 0, count: 0 };
-        }
-        partnerSpending[partner].amount += invoice.amount;
-        partnerSpending[partner].count += 1;
+      const originalPartner: string | null = invoice.partner ?? null;
+      if (!originalPartner || !originalPartner.trim()) return;
+      if (isExcludedPartner(originalPartner)) return;
+      if (!invoice.amount || invoice.amount <= 0) return;
+
+      const normalizedKey = normalizePartnerName(originalPartner);
+      if (!normalizedKey || extraExcludedSet.has(normalizedKey)) return;
+
+      const displayName = prettyPartnerName(originalPartner);
+      if (!partnerKeyToAggregate[normalizedKey]) {
+        partnerKeyToAggregate[normalizedKey] = { amount: 0, count: 0, displayName };
       }
+      partnerKeyToAggregate[normalizedKey].amount += invoice.amount;
+      partnerKeyToAggregate[normalizedKey].count += 1;
     });
-    
-    // Convert to array and sort by amount (descending)
-    const partnersArray = Object.entries(partnerSpending)
-      .filter(([, data]) => data.amount > 0) // Only include partners with positive spending
-      .map(([partner, data], index) => ({
-        partner: partner.length > 12 ? partner.substring(0, 12) + '...' : partner,
-        amount: data.amount,
-        invoiceCount: data.count,
-        color: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'][index % 5]
-      }))
+
+    const partnersArray = Object.entries(partnerKeyToAggregate)
+      .filter(([, data]) => data.amount > 0)
+      .map(([normalizedKey, data], index) => {
+        const label = data.displayName || normalizedKey;
+        const truncated = label.length > 12 ? label.substring(0, 12) + '...' : label;
+        return {
+          partner: truncated,
+          fullPartner: label,
+          amount: data.amount,
+          invoiceCount: data.count,
+          color: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'][index % 5]
+        };
+      })
       .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5); // Top 5 partners
-    
+      .slice(0, 5);
+
     return partnersArray;
   };
   
@@ -553,7 +603,7 @@ export const ManagerDashboard: React.FC = () => {
     const munkaszamSpending: { [key: string]: { invoiceAmount: number; payrollAmount: number; rentalAmount: number; count: number } } = {};
     
     // Process all invoices - include all for count, exclude specific partners from amount only
-    const excludedPartners = ['Füles Márta', 'Dobos Katalin', 'Hegyi András', 'Dr. Messmann S.'];
+    // Use normalized partner exclusion
     invoices.forEach(invoice => {
       // Use 'Nincs munkaszám' for invoices without a munkaszam
       const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
@@ -644,7 +694,7 @@ export const ManagerDashboard: React.FC = () => {
     // Process all invoices - exclude specified partners from both amount and count
     invoices.forEach(invoice => {
       // Skip invoices from excluded partners or if partner is null
-      if (!invoice.partner || excludedPartners.includes(invoice.partner)) {
+      if (!invoice.partner || isExcludedPartner(invoice.partner)) {
         return;
       }
       
