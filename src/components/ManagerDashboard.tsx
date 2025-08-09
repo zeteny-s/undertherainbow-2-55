@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash, Wallet, Banknote, Trash2, Check, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../integrations/supabase/client';
-import { ChartEmptyState } from './common/ChartEmptyState';
 import { NotificationContainer } from './common/NotificationContainer';
 import { LoadingSpinner } from './common/LoadingSpinner';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -2518,12 +2517,10 @@ export const ManagerDashboard: React.FC = () => {
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="pointer-events-none">
-                    <ChartEmptyState 
-                      title="Nincs munkaszám adat"
-                      description={`Nem találhatók munkaszám szerinti bérköltség adatok ${munkaszamViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
-                      type="pie"
-                    />
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500 text-sm pointer-events-none select-none">
+                      Nincs munkaszám adat
+                    </div>
                   </div>
                 );
               })()}
@@ -2671,12 +2668,10 @@ export const ManagerDashboard: React.FC = () => {
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="pointer-events-none">
-                    <ChartEmptyState 
-                      title="Nincs bér megoszlási adat"
-                      description={`Nem találhatók bérleti és járulék megoszlási adatok ${rentalViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
-                      type="pie"
-                    />
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500 text-sm pointer-events-none select-none">
+                      Nincs bér megoszlási adat
+                    </div>
                   </div>
                 );
               })()}
