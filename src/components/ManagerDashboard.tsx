@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash } from 'lucide-react';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash, Wallet, Banknote, Edit2, Check, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../integrations/supabase/client';
 import { ChartEmptyState } from './common/ChartEmptyState';
@@ -38,6 +38,7 @@ interface PayrollRecord {
   amount: number;
   record_date: string;
   is_rental: boolean;
+  is_cash: boolean;
   uploaded_by: string;
   created_at: string;
   updated_at: string;
@@ -99,7 +100,12 @@ export const ManagerDashboard: React.FC = () => {
     thisMonthCount: 0,
     thisMonthAmount: 0
   });
+  const [cashBalance, setCashBalance] = useState<number>(0);
+  const [isEditingCash, setIsEditingCash] = useState(false);
+  const [tempCashValue, setTempCashValue] = useState('');
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  const [allPayrollRecords, setAllPayrollRecords] = useState<PayrollRecord[]>([]);
   const [chartData, setChartData] = useState<ChartData>({
     monthlyData: [],
     organizationData: [],
@@ -198,6 +204,56 @@ export const ManagerDashboard: React.FC = () => {
     } else {
       return `Jó éjszakát, ${userName}!`;
     }
+  };
+
+  // Load balances from localStorage on component mount
+  useEffect(() => {
+    const savedCashBalance = localStorage.getItem('manageCashBalance');
+    
+    if (savedCashBalance) {
+      setCashBalance(parseFloat(savedCashBalance));
+    }
+  }, []);
+
+  // Calculate total cash deductions from invoices and payroll
+  const calculateCashDeductions = (invoices: Invoice[], payrollRecords: PayrollRecord[]): number => {
+    // Cash deductions from invoices (card_cash_afterpay type)
+    const invoiceCashDeductions = invoices
+      .filter(inv => inv.invoice_type === 'card_cash_afterpay')
+      .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+    // Cash deductions from payroll records (is_cash = true)
+    const payrollCashDeductions = payrollRecords
+      .filter(record => record.is_cash)
+      .reduce((sum, record) => sum + (record.amount || 0), 0);
+
+    return invoiceCashDeductions + payrollCashDeductions;
+  };
+
+  // Calculate remaining cash balance
+  const calculateRemainingCash = () => {
+    const cashDeductions = calculateCashDeductions(allInvoices, allPayrollRecords);
+    return cashBalance - cashDeductions;
+  };
+
+  // Handle cash balance editing
+  const handleCashEdit = () => {
+    setTempCashValue(cashBalance.toString());
+    setIsEditingCash(true);
+  };
+
+  const handleCashSave = () => {
+    const newAmount = parseFloat(tempCashValue);
+    if (!isNaN(newAmount) && newAmount >= 0) {
+      setCashBalance(newAmount);
+      localStorage.setItem('manageCashBalance', newAmount.toString());
+      setIsEditingCash(false);
+    }
+  };
+
+  const handleCashCancel = () => {
+    setIsEditingCash(false);
+    setTempCashValue('');
   };
 
   useEffect(() => {
@@ -356,6 +412,8 @@ export const ManagerDashboard: React.FC = () => {
 
       setStats(calculatedStats);
       setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
+      setAllInvoices((invoices || []) as Invoice[]);
+      setAllPayrollRecords(payrollRecords || []);
       setChartData({
         monthlyData,
         organizationData,
@@ -1221,6 +1279,123 @@ export const ManagerDashboard: React.FC = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Frissítés
           </button>
+        </div>
+      </div>
+
+      {/* Cash and Bank Management */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        {/* Házi kassza */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="bg-green-100 p-2 rounded-lg mr-3">
+                <Wallet className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Házi kassza</h3>
+                <p className="text-sm text-gray-500">Készpénz egyenleg kezelése</p>
+              </div>
+            </div>
+            {!isEditingCash && (
+              <button
+                onClick={handleCashEdit}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Edit2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Elérhető összeg:</span>
+              {isEditingCash ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="number"
+                    value={tempCashValue}
+                    onChange={(e) => setTempCashValue(e.target.value)}
+                    className="w-32 px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                    step="1000"
+                  />
+                  <button
+                    onClick={handleCashSave}
+                    className="p-1 text-green-600 hover:text-green-700 transition-colors"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleCashCancel}
+                    className="p-1 text-red-600 hover:text-red-700 transition-colors"
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-lg font-bold text-green-600">
+                  {formatCurrency(cashBalance)}
+                </span>
+              )}
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Készpénzes kiadások:</span>
+              <span className="text-sm font-medium text-red-600">
+                -{formatCurrency(calculateCashDeductions(allInvoices, allPayrollRecords))}
+              </span>
+            </div>
+
+            <div className="border-t border-gray-200 pt-3">
+              <div className="flex justify-between items-center">
+                <span className="text-base font-semibold text-gray-900">Fennmaradó egyenleg:</span>
+                <span className={`text-lg font-bold ${
+                  calculateRemainingCash() >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {formatCurrency(calculateRemainingCash())}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bankszámla */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                <Banknote className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Bankszámla</h3>
+                <p className="text-sm text-gray-500">Banki átutalások</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Banki átutalások:</span>
+              <span className="text-lg font-bold text-blue-600">
+                -{formatCurrency(allInvoices
+                  .filter(inv => inv.invoice_type === 'bank_transfer')
+                  .reduce((sum, inv) => sum + (inv.amount || 0), 0)
+                )}
+              </span>
+            </div>
+
+            <div className="border-t border-gray-200 pt-3">
+              <div className="flex justify-between items-center">
+                <span className="text-base font-semibold text-gray-900">Összes banki kiadás:</span>
+                <span className="text-lg font-bold text-blue-600">
+                  -{formatCurrency(allInvoices
+                    .filter(inv => inv.invoice_type === 'bank_transfer')
+                    .reduce((sum, inv) => sum + (inv.amount || 0), 0)
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
