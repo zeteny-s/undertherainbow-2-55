@@ -29,6 +29,7 @@ interface Invoice {
   partner: string;
   amount: number;
   invoice_type: string;
+  payment_method?: string;
 }
 
 interface PayrollRecord {
@@ -245,9 +246,9 @@ export const ManagerDashboard: React.FC = () => {
 
   // Calculate total cash deductions from invoices and payroll
   const calculateCashDeductions = (invoices: Invoice[], payrollRecords: PayrollRecord[]): number => {
-    // Cash deductions from invoices (card_cash_afterpay type)
+    // Cash deductions from invoices: only those explicitly paid by cash ("Készpénz")
     const invoiceCashDeductions = invoices
-      .filter(inv => inv.invoice_type === 'card_cash_afterpay')
+      .filter(inv => (inv.payment_method || '').trim() === 'Készpénz')
       .reduce((sum, inv) => sum + (inv.amount || 0), 0);
 
     // Cash deductions from payroll records (is_cash = true)
