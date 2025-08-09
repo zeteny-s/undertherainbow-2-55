@@ -1368,32 +1368,20 @@ export const ManagerDashboard: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Bankszámla</h3>
-                <p className="text-sm text-gray-500">Banki átutalások</p>
+                <p className="text-sm text-gray-500">Banki egyenleg és tranzakciók</p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-600">Banki átutalások:</span>
-              <span className="text-lg font-bold text-blue-600">
-                -{formatCurrency(allInvoices
-                  .filter(inv => inv.invoice_type === 'bank_transfer')
-                  .reduce((sum, inv) => sum + (inv.amount || 0), 0)
-                )}
-              </span>
-            </div>
-
-            <div className="border-t border-gray-200 pt-3">
-              <div className="flex justify-between items-center">
-                <span className="text-base font-semibold text-gray-900">Összes banki kiadás:</span>
-                <span className="text-lg font-bold text-blue-600">
-                  -{formatCurrency(allInvoices
-                    .filter(inv => inv.invoice_type === 'bank_transfer')
-                    .reduce((sum, inv) => sum + (inv.amount || 0), 0)
-                  )}
-                </span>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="bg-blue-50 rounded-full p-4 mx-auto mb-4 w-16 h-16 flex items-center justify-center">
+                <Clock className="h-8 w-8 text-blue-500" />
               </div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">Mindjárt kész</h4>
+              <p className="text-sm text-gray-500">
+                A bank API integráció hamarosan elérhető lesz
+              </p>
             </div>
           </div>
         </div>
