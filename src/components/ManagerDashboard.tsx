@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash, Wallet, Banknote, Edit2, Check, XCircle } from 'lucide-react';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash, Wallet, Banknote, Trash2, Check, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../integrations/supabase/client';
 import { ChartEmptyState } from './common/ChartEmptyState';
@@ -1317,14 +1317,14 @@ export const ManagerDashboard: React.FC = () => {
 
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 relative z-0 isolate">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
       <NotificationContainer 
         notifications={notifications}
         onRemove={removeNotification}
       />
 
       {/* Header */}
-      <div className="mb-4 sm:mb-6 lg:mb-8 relative z-10 pointer-events-auto">
+      <div className="mb-4 sm:mb-6 lg:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{getTimeBasedGreeting()}</h2>
@@ -1342,7 +1342,7 @@ export const ManagerDashboard: React.FC = () => {
       </div>
 
       {/* Cash and Bank Management */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 relative z-10 pointer-events-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {/* Házi kassza */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -1524,7 +1524,7 @@ export const ManagerDashboard: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8 relative z-10 pointer-events-auto">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
@@ -1579,7 +1579,7 @@ export const ManagerDashboard: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8 relative z-0">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8">
         {/* First Row: Monthly Trend and Top Partners */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Monthly Trend Chart */}
@@ -2518,11 +2518,13 @@ export const ManagerDashboard: React.FC = () => {
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <ChartEmptyState 
-                    title="Nincs munkaszám adat"
-                    description={`Nem találhatók munkaszám szerinti bérköltség adatok ${munkaszamViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
-                    type="pie"
-                  />
+                  <div className="pointer-events-none">
+                    <ChartEmptyState 
+                      title="Nincs munkaszám adat"
+                      description={`Nem találhatók munkaszám szerinti bérköltség adatok ${munkaszamViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
+                      type="pie"
+                    />
+                  </div>
                 );
               })()}
             </div>
@@ -2669,11 +2671,13 @@ export const ManagerDashboard: React.FC = () => {
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <ChartEmptyState 
-                    title="Nincs bér megoszlási adat"
-                    description={`Nem találhatók bérleti és járulék megoszlási adatok ${rentalViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
-                    type="pie"
-                  />
+                  <div className="pointer-events-none">
+                    <ChartEmptyState 
+                      title="Nincs bér megoszlási adat"
+                      description={`Nem találhatók bérleti és járulék megoszlási adatok ${rentalViewMode === 'monthly' ? 'a kiválasztott hónapra' : 'a kiválasztott időszakra'}. Töltsön fel fizetési listákat az adatok megjelenítéséhez.`}
+                      type="pie"
+                    />
+                  </div>
                 );
               })()}
             </div>
