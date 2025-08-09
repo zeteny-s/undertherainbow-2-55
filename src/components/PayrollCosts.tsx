@@ -683,6 +683,48 @@ export const PayrollCosts: React.FC = () => {
         </p>
       </div>
 
+      {/* Organization Selection Section */}
+      {step === 'organization' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
+            Szervezet kiválasztása
+          </h3>
+          
+          <p className="text-gray-600 mb-6">
+            Válaszd ki, melyik szervezet bérköltségeit szeretnéd feltölteni:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => {
+                setSelectedOrganization('alapitvany');
+                setStep('upload');
+              }}
+              className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+            >
+              <h4 className="font-semibold text-gray-900 mb-2">Feketerigó Alapítvány</h4>
+              <p className="text-sm text-gray-600">
+                Alapítványi bérköltségek feltöltése
+              </p>
+            </button>
+            
+            <button
+              onClick={() => {
+                setSelectedOrganization('ovoda');
+                setStep('upload');
+              }}
+              className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+            >
+              <h4 className="font-semibold text-gray-900 mb-2">Feketerigó Alapítványi Óvoda</h4>
+              <p className="text-sm text-gray-600">
+                Óvodai bérköltségek feltöltése
+              </p>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Upload Section - Only show when no file is uploaded */}
       {step === 'upload' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
