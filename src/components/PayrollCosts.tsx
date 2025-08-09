@@ -59,6 +59,7 @@ export const PayrollCosts: React.FC = () => {
   const [step, setStep] = useState<'organization' | 'upload' | 'preview' | 'cash-question' | 'cash-preview' | 'confirm'>('organization');
   const [currentMonthYear, setCurrentMonthYear] = useState<string>('');
   const [selectedOrganization, setSelectedOrganization] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
   
   const { addNotification } = useNotifications();
 
@@ -297,9 +298,17 @@ export const PayrollCosts: React.FC = () => {
   }, [addNotification]);
 
   const saveRecords = async () => {
-    if (extractedRecords.length === 0 && cashRecords.length === 0) return;
+    if (extractedRecords.length === 0 && cashRecords.length === 0) {
+      addNotification('error', 'Nincs menthető adat.');
+      return;
+    }
+    if (!selectedOrganization) {
+      addNotification('error', 'Válaszd ki a szervezetet a mentéshez.');
+      return;
+    }
 
     try {
+      setIsSaving(true);
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -357,10 +366,24 @@ export const PayrollCosts: React.FC = () => {
       }
 
       // Update or create monthly summary
-      const firstRecord = extractedRecords[0] || cashRecords[0];
-      const recordDate = new Date(firstRecord.date);
-      const year = recordDate.getFullYear();
-      const month = recordDate.getMonth() + 1;
+      let year: number;
+      let month: number;
+      if (currentMonthYear) {
+        const [yStr, mStr] = currentMonthYear.split('-');
+        year = parseInt(yStr, 10);
+        month = parseInt(mStr, 10);
+      } else {
+        const firstRecord = extractedRecords[0] || cashRecords[0];
+        const recordDate = new Date(firstRecord.date);
+        if (isNaN(recordDate.getTime())) {
+          const now = new Date();
+          year = now.getFullYear();
+          month = now.getMonth() + 1;
+        } else {
+          year = recordDate.getFullYear();
+          month = recordDate.getMonth() + 1;
+        }
+      }
 
       console.log('Creating summary for:', { year, month, organization: selectedOrganization });
 
@@ -412,6 +435,8 @@ export const PayrollCosts: React.FC = () => {
       console.error('Error saving payroll records:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
       addNotification('error', `Hiba történt a mentés során: ${errorMessage}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1149,10 +1174,20 @@ export const PayrollCosts: React.FC = () => {
             </button>
             <button
               onClick={saveRecords}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+              disabled={isSaving}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="h-4 w-4" />
-              Adatok mentése
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Mentés...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Adatok mentése
+                </>
+              )}
             </button>
           </div>
         </div>
