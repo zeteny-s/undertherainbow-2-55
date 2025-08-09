@@ -2061,7 +2061,7 @@ export const ManagerDashboard: React.FC = () => {
                     ))}
                   </Pie>
                   <Tooltip 
-                    content={<PaymentTypeTooltip />}
+                    content={<OrganizationTooltip />}
                     animationDuration={200}
                     animationEasing="ease-out"
                   />
@@ -2108,8 +2108,8 @@ export const ManagerDashboard: React.FC = () => {
                     ))}
                   </Pie>
                   <Tooltip 
-                    content={<CustomTooltip />}
-                    animationDuration={300}
+                    content={<PaymentTypeTooltip />}
+                    animationDuration={200}
                     animationEasing="ease-out"
                   />
                 </RechartsPieChart>
