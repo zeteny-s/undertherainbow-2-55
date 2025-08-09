@@ -1135,37 +1135,7 @@ export const ManagerDashboard: React.FC = () => {
   };
 
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl">
-          <p className="font-medium text-gray-900 mb-2">{label || payload[0].name}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="space-y-1">
-              <div className="flex items-center">
-                <div 
-                  className="w-3 h-3 rounded-full mr-2" 
-                  style={{ backgroundColor: entry.color || entry.fill }}
-                ></div>
-                <p className="font-medium" style={{ color: entry.color || entry.fill }}>
-                  {entry.name}
-                </p>
-              </div>
-              <p className="text-sm text-gray-600">
-                Számlák: {entry.value} db
-              </p>
-              {entry.payload && entry.payload.amount && (
-                <p className="text-sm text-blue-600 font-medium">
-                  Összeg: {formatCurrency(entry.payload.amount)}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  // Removed unused CustomTooltip
 
   const TopPartnersTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
