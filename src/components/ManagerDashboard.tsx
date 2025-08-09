@@ -1189,6 +1189,38 @@ export const ManagerDashboard: React.FC = () => {
     return null;
   };
 
+  const OrganizationTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
+          <p className="font-semibold text-gray-900 mb-2">{data.name}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-gray-700">Számlák: <span className="font-medium text-gray-900">{data.value} db</span></p>
+            <p className="text-sm text-gray-700">Összeg: <span className="font-medium text-blue-700">{formatCurrency(data.amount)}</span></p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const PaymentTypeTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl max-w-xs">
+          <p className="font-semibold text-gray-900 mb-2">{data.name}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-gray-700">Számlák: <span className="font-medium text-gray-900">{data.value} db</span></p>
+            <p className="text-sm text-gray-700">Összeg: <span className="font-medium text-purple-700">{formatCurrency(data.amount)}</span></p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const WeeklyTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -1596,8 +1628,8 @@ export const ManagerDashboard: React.FC = () => {
                   <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
                   <YAxis stroke="#6b7280" fontSize={10} />
                   <Tooltip 
-                    content={<CustomTooltip />}
-                    animationDuration={300}
+                    content={<OrganizationTooltip />}
+                    animationDuration={200}
                     animationEasing="ease-out"
                   />
                   <Bar 
@@ -2029,8 +2061,8 @@ export const ManagerDashboard: React.FC = () => {
                     ))}
                   </Pie>
                   <Tooltip 
-                    content={<CustomTooltip />}
-                    animationDuration={300}
+                    content={<PaymentTypeTooltip />}
+                    animationDuration={200}
                     animationEasing="ease-out"
                   />
                 </RechartsPieChart>
