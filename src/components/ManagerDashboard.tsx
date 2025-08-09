@@ -1258,14 +1258,14 @@ export const ManagerDashboard: React.FC = () => {
 
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 relative z-0 isolate">
       <NotificationContainer 
         notifications={notifications}
         onRemove={removeNotification}
       />
 
       {/* Header */}
-      <div className="mb-4 sm:mb-6 lg:mb-8">
+      <div className="mb-4 sm:mb-6 lg:mb-8 relative z-10 pointer-events-auto">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{getTimeBasedGreeting()}</h2>
@@ -1283,7 +1283,7 @@ export const ManagerDashboard: React.FC = () => {
       </div>
 
       {/* Cash and Bank Management */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 relative z-10 pointer-events-auto">
         {/* Házi kassza */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
@@ -1388,7 +1388,7 @@ export const ManagerDashboard: React.FC = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8 relative z-10 pointer-events-auto">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
@@ -1443,7 +1443,7 @@ export const ManagerDashboard: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8 relative z-0">
         {/* First Row: Monthly Trend and Top Partners */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Monthly Trend Chart */}
