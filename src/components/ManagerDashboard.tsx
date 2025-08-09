@@ -556,13 +556,21 @@ export const ManagerDashboard: React.FC = () => {
       const ovodaInvoices = allMonthInvoices.filter(inv => inv.organization === 'ovoda');
       
       const invoiceAmount = monthInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+      const alapitvanyAmount = monthInvoicesForAmount
+        .filter(inv => inv.organization === 'alapitvany')
+        .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+      const ovodaAmount = monthInvoicesForAmount
+        .filter(inv => inv.organization === 'ovoda')
+        .reduce((sum, inv) => sum + (inv.amount || 0), 0);
       
       return {
         month,
         alapitvany: alapitvanyInvoices.length,
         ovoda: ovodaInvoices.length,
         total: allMonthInvoices.length,
-        amount: invoiceAmount // Remove payroll from monthly invoice trend
+        amount: invoiceAmount, // Remove payroll from monthly invoice trend
+        alapitvanyAmount,
+        ovodaAmount
       };
     });
   };
@@ -1222,6 +1230,8 @@ export const ManagerDashboard: React.FC = () => {
       // Find series values (alapitvany, ovoda) from payload entries
       const alapitvany = payload.find((p: any) => p.dataKey === 'alapitvany')?.value ?? 0;
       const ovoda = payload.find((p: any) => p.dataKey === 'ovoda')?.value ?? 0;
+      const alapitvanyAmount = datum.alapitvanyAmount ?? 0;
+      const ovodaAmount = datum.ovodaAmount ?? 0;
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl min-w-[200px]">
           <p className="font-semibold text-gray-900 mb-2">{month}</p>
@@ -1231,6 +1241,8 @@ export const ManagerDashboard: React.FC = () => {
             <div className="mt-2 grid grid-cols-2 gap-2">
               <div className="text-xs text-gray-600">Alapítvány: <span className="font-medium text-gray-900">{alapitvany}</span></div>
               <div className="text-xs text-gray-600">Óvoda: <span className="font-medium text-gray-900">{ovoda}</span></div>
+              <div className="text-xs text-blue-700 col-span-2">Alapítvány összeg: <span className="font-medium">{formatCurrency(alapitvanyAmount)}</span></div>
+              <div className="text-xs text-orange-700 col-span-2">Óvoda összeg: <span className="font-medium">{formatCurrency(ovodaAmount)}</span></div>
             </div>
           </div>
         </div>
