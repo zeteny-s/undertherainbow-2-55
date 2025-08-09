@@ -157,13 +157,13 @@ export const InvoiceList: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    if (!amount) return '-';
+  const formatCurrency = (amount?: number | null) => {
+    const value = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
     return new Intl.NumberFormat('hu-HU', {
       style: 'currency',
       currency: 'HUF',
       minimumFractionDigits: 0
-    }).format(amount);
+    }).format(value);
   };
 
   const formatDate = (dateString: string) => {
