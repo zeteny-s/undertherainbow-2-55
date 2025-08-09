@@ -1243,6 +1243,32 @@ export const ManagerDashboard: React.FC = () => {
     return null;
   };
 
+  const MonthlyTrendTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const datum = payload[0]?.payload || {};
+      const month = datum.month || '';
+      const total = datum.total ?? 0;
+      const amount = datum.amount ?? 0;
+      // Find series values (alapitvany, ovoda) from payload entries
+      const alapitvany = payload.find((p: any) => p.dataKey === 'alapitvany')?.value ?? 0;
+      const ovoda = payload.find((p: any) => p.dataKey === 'ovoda')?.value ?? 0;
+      return (
+        <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-xl min-w-[200px]">
+          <p className="font-semibold text-gray-900 mb-2">{month}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-gray-700">Összes számla: <span className="font-medium text-gray-900">{total}</span></p>
+            <p className="text-sm text-gray-700">Összeg: <span className="font-medium text-blue-700">{formatCurrency(amount)}</span></p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="text-xs text-gray-600">Alapítvány: <span className="font-medium text-gray-900">{alapitvany}</span></div>
+              <div className="text-xs text-gray-600">Óvoda: <span className="font-medium text-gray-900">{ovoda}</span></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
 
   const WeeklyExpenseTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -1629,7 +1655,7 @@ export const ManagerDashboard: React.FC = () => {
                   <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
                   <YAxis stroke="#6b7280" fontSize={10} />
                   <Tooltip 
-                    content={<OrganizationTooltip />}
+                    content={<MonthlyTrendTooltip />}
                     animationDuration={200}
                     animationEasing="ease-out"
                   />
