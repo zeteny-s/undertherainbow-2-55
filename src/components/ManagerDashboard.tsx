@@ -66,6 +66,13 @@ interface PayrollSummary {
   tax_file_url?: string | null;
 }
 
+interface CustomExpense {
+  id: string;
+  description: string;
+  amount: number;
+  date: string; // YYYY-MM-DD
+}
+
 interface ChartData {
   monthlyData: Array<{ month: string; alapitvany: number; ovoda: number; total: number; amount: number }>;
   organizationData: Array<{ name: string; value: number; amount: number; color: string }>;
@@ -132,6 +139,13 @@ export const ManagerDashboard: React.FC = () => {
   const [payrollFilter, setPayrollFilter] = useState<'all' | 'rental' | 'nonRental' | 'tax'>('all');
   const [payrollProjectFilter, setPayrollProjectFilter] = useState<'all' | string>('all');
   const [rentalFilter, setRentalFilter] = useState<'all' | string>('all');
+  const [customExpenses, setCustomExpenses] = useState<CustomExpense[]>([]);
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [newExpense, setNewExpense] = useState<{ amount: number | ''; description: string; date: string }>({
+    amount: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  });
   
   // Month navigation states
   const [currentMunkaszamMonthIndex, setCurrentMunkaszamMonthIndex] = useState(0);
@@ -213,7 +227,22 @@ export const ManagerDashboard: React.FC = () => {
     if (savedCashBalance) {
       setCashBalance(parseFloat(savedCashBalance));
     }
+    const savedExpenses = localStorage.getItem('manageCashCustomExpenses');
+    if (savedExpenses) {
+      try {
+        const parsed: CustomExpense[] = JSON.parse(savedExpenses);
+        if (Array.isArray(parsed)) {
+          setCustomExpenses(parsed);
+        }
+      } catch (e) {
+        console.warn('Failed to parse saved custom expenses');
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('manageCashCustomExpenses', JSON.stringify(customExpenses));
+  }, [customExpenses]);
 
   // Calculate total cash deductions from invoices and payroll
   const calculateCashDeductions = (invoices: Invoice[], payrollRecords: PayrollRecord[]): number => {
@@ -227,7 +256,10 @@ export const ManagerDashboard: React.FC = () => {
       .filter(record => record.is_cash)
       .reduce((sum, record) => sum + (record.amount || 0), 0);
 
-    return invoiceCashDeductions + payrollCashDeductions;
+    // Manual custom expenses stored locally
+    const manualCashDeductions = customExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+
+    return invoiceCashDeductions + payrollCashDeductions + manualCashDeductions;
   };
 
   // Calculate remaining cash balance
@@ -254,6 +286,33 @@ export const ManagerDashboard: React.FC = () => {
   const handleCashCancel = () => {
     setIsEditingCash(false);
     setTempCashValue('');
+  };
+
+  const addCustomExpense = () => {
+    const amountNumber = typeof newExpense.amount === 'string' ? parseFloat(newExpense.amount) : newExpense.amount;
+    if (!amountNumber || amountNumber <= 0) {
+      addNotification('error', 'Addj meg pozitív összeget.');
+      return;
+    }
+    if (!newExpense.description.trim()) {
+      addNotification('error', 'Adj meg leírást a kiadáshoz.');
+      return;
+    }
+    const expense: CustomExpense = {
+      id: Math.random().toString(36).slice(2),
+      description: newExpense.description.trim(),
+      amount: amountNumber,
+      date: newExpense.date || new Date().toISOString().split('T')[0]
+    };
+    setCustomExpenses(prev => [expense, ...prev]);
+    setIsAddingExpense(false);
+    setNewExpense({ amount: '', description: '', date: new Date().toISOString().split('T')[0] });
+    addNotification('success', 'Kiadás hozzáadva a házi kasszához');
+  };
+
+  const deleteCustomExpense = (id: string) => {
+    setCustomExpenses(prev => prev.filter(e => e.id !== id));
+    addNotification('success', 'Kiadás törölve');
   };
 
   useEffect(() => {
@@ -1286,7 +1345,7 @@ export const ManagerDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 relative z-10 pointer-events-auto">
         {/* Házi kassza */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <div className="bg-green-100 p-2 rounded-lg mr-3">
                 <Wallet className="h-5 w-5 text-green-600" />
@@ -1296,14 +1355,22 @@ export const ManagerDashboard: React.FC = () => {
                 <p className="text-sm text-gray-500">Készpénz egyenleg kezelése</p>
               </div>
             </div>
-            {!isEditingCash && (
-              <button
-                onClick={handleCashEdit}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <Edit2 className="h-4 w-4" />
-              </button>
-            )}
+              <div className="flex items-center gap-2">
+                {!isEditingCash && (
+                  <button
+                    onClick={handleCashEdit}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                  >
+                    Egyenleg szerkesztése
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsAddingExpense(v => !v)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                >
+                  Kiadás hozzáadása
+                </button>
+              </div>
           </div>
 
           <div className="space-y-3">
@@ -1339,12 +1406,81 @@ export const ManagerDashboard: React.FC = () => {
               )}
             </div>
 
+              {isAddingExpense && (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={newExpense.amount}
+                      onChange={(e) => setNewExpense(prev => ({ ...prev, amount: e.target.value === '' ? '' : Number(e.target.value) }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Összeg (HUF)"
+                    />
+                    <input
+                      type="text"
+                      value={newExpense.description}
+                      onChange={(e) => setNewExpense(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Leírás"
+                    />
+                    <input
+                      type="date"
+                      value={newExpense.date}
+                      onChange={(e) => setNewExpense(prev => ({ ...prev, date: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setIsAddingExpense(false)}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200"
+                    >
+                      Mégse
+                    </button>
+                    <button
+                      onClick={addCustomExpense}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      Hozzáadás
+                    </button>
+                  </div>
+                </div>
+              )}
+
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Készpénzes kiadások:</span>
               <span className="text-sm font-medium text-red-600">
                 -{formatCurrency(calculateCashDeductions(allInvoices, allPayrollRecords))}
               </span>
             </div>
+
+              {customExpenses.length > 0 && (
+                <div className="border-t border-gray-200 pt-3">
+                  <div className="text-sm font-semibold text-gray-900 mb-2">Kézi kiadások</div>
+                  <div className="max-h-40 overflow-y-auto divide-y divide-gray-100">
+                    {customExpenses.map(exp => (
+                      <div key={exp.id} className="py-2 flex items-center justify-between">
+                        <div className="min-w-0 pr-3">
+                          <div className="text-sm text-gray-900 truncate">{exp.description}</div>
+                          <div className="text-xs text-gray-500">{exp.date}</div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className="text-sm font-medium text-red-600">-{formatCurrency(exp.amount)}</span>
+                          <button
+                            onClick={() => deleteCustomExpense(exp.id)}
+                            className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                            title="Törlés"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             <div className="border-t border-gray-200 pt-3">
               <div className="flex justify-between items-center">
