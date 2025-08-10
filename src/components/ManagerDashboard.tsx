@@ -139,14 +139,6 @@ export const ManagerDashboard: React.FC = () => {
   const [payrollFilter, setPayrollFilter] = useState<'all' | 'rental' | 'nonRental' | 'tax'>('all');
   const [payrollProjectFilter, setPayrollProjectFilter] = useState<'all' | string>('all');
   const [rentalFilter, setRentalFilter] = useState<'all' | string>('all');
-  // Global period filters for charts
-  const [selectedYear, setSelectedYear] = useState<'all' | number>('all');
-  const [selectedMonth, setSelectedMonth] = useState<'all' | number>('all');
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
-  // Cache raw data to allow client-side re-filtering without refetch
-  const [rawInvoices, setRawInvoices] = useState<Invoice[]>([] as any);
-  const [rawPayrollRecords, setRawPayrollRecords] = useState<PayrollRecord[]>([]);
-  const [rawPayrollSummaries, setRawPayrollSummaries] = useState<any[]>([]);
   const [customExpenses, setCustomExpenses] = useState<CustomExpense[]>([]);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<{ amount: number | ''; description: string; date: string }>({
@@ -1648,7 +1640,7 @@ export const ManagerDashboard: React.FC = () => {
               className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Összes év</option>
-              {Array.from(new Set([new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2, ...availableYears]))
+              {Array.from(new Set([new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2]))
                 .filter((v, i, a) => a.indexOf(v) === i)
                 .sort((a,b)=> b-a)
                 .map(y => (
