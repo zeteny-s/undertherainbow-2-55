@@ -109,6 +109,9 @@ export const Dashboard: React.FC = () => {
     categoryData: []
   });
   const [loading, setLoading] = useState(true);
+  // Global period selectors for this page
+  const [selectedYear, setSelectedYear] = useState<'all' | number>('all');
+  const [selectedMonth, setSelectedMonth] = useState<'all' | number>('all');
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [currentExpenseWeekIndex, setCurrentExpenseWeekIndex] = useState(0);
   const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
@@ -193,7 +196,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [selectedYear, selectedMonth]);
 
   const fetchDashboardData = async () => {
     try {
@@ -264,7 +267,18 @@ export const Dashboard: React.FC = () => {
       const thisMonthPayrollAmount = thisMonthSummary?.total_payroll || 0;
 
       // Filter out specific partners from cost analytics (normalized matching)
-      const filteredInvoices = (invoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+      const filteredInvoicesBase = (invoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+      const periodMatch = (dateStr?: string) => {
+        if (!dateStr) return false;
+        if (selectedYear === 'all' && selectedMonth === 'all') return true;
+        const d = new Date(dateStr);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        if (selectedYear !== 'all' && y !== selectedYear) return false;
+        if (selectedMonth !== 'all' && m !== selectedMonth) return false;
+        return true;
+      };
+      const filteredInvoices = filteredInvoicesBase.filter(inv => periodMatch((inv as any).invoice_date));
       const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       
       // Log counts for debugging
@@ -289,7 +303,7 @@ export const Dashboard: React.FC = () => {
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
 
-      const monthlyData = generateMonthlyData(filteredInvoices);
+      const monthlyData = generateMonthlyData(filteredInvoicesBase);
       const organizationData = generateOrganizationData(filteredInvoices);
       const paymentTypeData = generatePaymentTypeData(filteredInvoices);
       const weeklyTrend = weekHistoryData[0]?.data || [];
@@ -986,6 +1000,28 @@ export const Dashboard: React.FC = () => {
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{getTimeBasedGreeting()}</h2>
             <p className="text-gray-600 text-sm sm:text-base">Számla feldolgozási statisztikák és üzleti elemzések</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Összes év</option>
+              {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Összes hónap</option>
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+              ))}
+            </select>
           </div>
           {/* Hide refresh button on mobile */}
           <button
