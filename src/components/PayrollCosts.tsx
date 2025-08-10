@@ -670,40 +670,36 @@ export const PayrollCosts: React.FC = () => {
   const downloadMonthlyDocuments = async (summary: PayrollSummary) => {
     try {
       const monthYear = `${summary.year}-${String(summary.month).padStart(2, '0')}`;
-      const filesToDownload: string[] = [];
+      const files: { bucket: string; path: string }[] = [];
       
-      // Collect all file URLs for this month
-      if (summary.payroll_file_url) filesToDownload.push(summary.payroll_file_url);
-      if (summary.cash_file_url) filesToDownload.push(summary.cash_file_url);
-      if (summary.tax_file_url) filesToDownload.push(summary.tax_file_url);
+      if (summary.payroll_file_url) files.push({ bucket: 'payroll', path: summary.payroll_file_url });
+      if (summary.cash_file_url) files.push({ bucket: 'payroll', path: summary.cash_file_url });
+      if (summary.tax_file_url) files.push({ bucket: 'tax-documents', path: summary.tax_file_url });
       
-      if (filesToDownload.length === 0) {
+      if (files.length === 0) {
         addNotification('info', 'Ehhez a hónaphoz nincsenek feltöltött dokumentumok.');
         return;
       }
 
-      // Download each file
-      for (const filePath of filesToDownload) {
-        const bucketName = filePath.includes('tax-documents') ? 'tax-documents' : 'payroll';
+      for (const file of files) {
         const { data, error } = await supabase.storage
-          .from(bucketName)
-          .download(filePath);
+          .from(file.bucket)
+          .download(file.path);
         
         if (error) {
           console.error('Error downloading file:', error);
           continue;
         }
         
-        // Create download link
         const url = URL.createObjectURL(data);
         const a = document.createElement('a');
         a.href = url;
-        a.download = filePath.split('/').pop() || `document_${monthYear}`;
+        a.download = file.path.split('/').pop() || `document_${monthYear}`;
         a.click();
         URL.revokeObjectURL(url);
       }
       
-      addNotification('success', `${filesToDownload.length} dokumentum letöltése elindult.`);
+      addNotification('success', `${files.length} dokumentum letöltése elindult.`);
     } catch (error) {
       console.error('Error downloading documents:', error);
       addNotification('error', 'Hiba történt a dokumentumok letöltése során');
@@ -1518,6 +1514,9 @@ export const PayrollCosts: React.FC = () => {
                               Hónap
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Szervezet
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Összes bérköltség
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1546,17 +1545,32 @@ export const PayrollCosts: React.FC = () => {
                               <span className="text-sm font-medium text-gray-900">{viewingMonth}</span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-bold text-blue-600">
+                              <span className="text-sm font-medium text-gray-600">
+                                {currentSummary?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : currentSummary?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : currentSummary?.organization}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-gray-900">
                                 {formatCurrency(currentSummary?.total_payroll || 0)}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-bold text-green-600">
-                                {formatCurrency(currentSummary?.rental_costs || 0)}
+                              <span className="text-sm font-bold text-blue-600">
+                                {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="text-sm font-bold text-orange-600">
+                                {formatCurrency(currentSummary?.cash_costs || 0)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-gray-900">
+                                {formatCurrency(currentSummary?.rental_costs || 0)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-gray-900">
                                 {formatCurrency(currentSummary?.non_rental_costs || 0)}
                               </span>
                             </td>
