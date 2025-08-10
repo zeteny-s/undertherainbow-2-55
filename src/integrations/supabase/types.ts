@@ -95,6 +95,57 @@ export type Database = {
         }
         Relationships: []
       }
+      house_cash_expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          expense_date?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      house_cash_settings: {
+        Row: {
+          created_at: string
+          id: string
+          initial_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number | null
