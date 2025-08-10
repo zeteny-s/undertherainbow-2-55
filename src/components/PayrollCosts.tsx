@@ -315,21 +315,36 @@ export const PayrollCosts: React.FC = () => {
         throw new Error('Nem vagy bejelentkezve');
       }
 
-      // Upload files to storage
+      // Upload files to storage (non-blocking per file)
       let payrollFileUrl = '';
       let cashFileUrl = '';
       let taxFileUrl = '';
 
       if (uploadedPayrollFile && currentMonthYear) {
-        payrollFileUrl = await uploadFileToStorage(uploadedPayrollFile, 'payroll', currentMonthYear);
+        try {
+          payrollFileUrl = await uploadFileToStorage(uploadedPayrollFile, 'payroll', currentMonthYear);
+        } catch (e) {
+          console.error('Payroll file upload failed:', e);
+          addNotification('info', 'A bérköltség fájl feltöltése nem sikerült, a mentés folytatódik fájllink nélkül.');
+        }
       }
 
       if (uploadedCashFile && currentMonthYear) {
-        cashFileUrl = await uploadFileToStorage(uploadedCashFile, 'payroll', currentMonthYear);
+        try {
+          cashFileUrl = await uploadFileToStorage(uploadedCashFile, 'payroll', currentMonthYear);
+        } catch (e) {
+          console.error('Cash file upload failed:', e);
+          addNotification('info', 'A készpénzes fájl feltöltése nem sikerült, a mentés folytatódik fájllink nélkül.');
+        }
       }
 
       if (uploadedTaxFile && currentMonthYear) {
-        taxFileUrl = await uploadFileToStorage(uploadedTaxFile, 'tax-documents', currentMonthYear);
+        try {
+          taxFileUrl = await uploadFileToStorage(uploadedTaxFile, 'tax-documents', currentMonthYear);
+        } catch (e) {
+          console.error('Tax file upload failed:', e);
+          addNotification('info', 'Az adó fájl feltöltése nem sikerült, a mentés folytatódik fájllink nélkül.');
+        }
       }
 
       // Combine all records (regular + cash)
@@ -400,7 +415,7 @@ export const PayrollCosts: React.FC = () => {
 
       const { error: summaryError } = await supabase
         .from('payroll_summaries')
-        .insert({
+        .upsert({
           year,
           month,
           organization: selectedOrganization,
@@ -415,7 +430,7 @@ export const PayrollCosts: React.FC = () => {
           cash_file_url: cashFileUrl || null,
           tax_file_url: taxFileUrl || null,
           created_by: user.id
-        });
+        }, { onConflict: 'year,month,organization' });
 
       if (summaryError) throw summaryError;
 
