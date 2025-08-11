@@ -140,6 +140,13 @@ export const ManagerDashboard: React.FC = () => {
   const [payrollFilter, setPayrollFilter] = useState<'all' | 'rental' | 'nonRental' | 'tax'>('all');
   const [payrollProjectFilter, setPayrollProjectFilter] = useState<'all' | string>('all');
   const [rentalFilter, setRentalFilter] = useState<'all' | string>('all');
+  // Per-card selectors
+  const [trendYear, setTrendYear] = useState<'all' | number>('all');
+  const [trendMonth, setTrendMonth] = useState<'all' | number>('all');
+  const [orgYear, setOrgYear] = useState<'all' | number>('all');
+  const [orgMonth, setOrgMonth] = useState<'all' | number>('all');
+  const [payYear, setPayYear] = useState<'all' | number>('all');
+  const [payMonth, setPayMonth] = useState<'all' | number>('all');
   const [customExpenses, setCustomExpenses] = useState<CustomExpense[]>([]);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<{ amount: number | ''; description: string; date: string }>({
@@ -324,12 +331,7 @@ export const ManagerDashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // Recompute some charts client-side when global period filters change
-  useEffect(() => {
-    // Currently, many charts already have their own month navigation. For global filters,
-    // we just trigger data reload for simplicity and correctness.
-    fetchDashboardData();
-  }, [selectedYear, selectedMonth]);
+  // Do not reload entire dashboard on per-card selector changes; each chart filters its own data
 
   // Update charts when filters or view modes change
   useEffect(() => {
@@ -586,6 +588,58 @@ export const ManagerDashboard: React.FC = () => {
       };
     });
   };
+
+  // Helpers for per-card filtering
+  const isInPeriod = (dateStr?: string, y: 'all' | number = 'all', m: 'all' | number = 'all') => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const yy = d.getFullYear();
+    const mm = d.getMonth() + 1;
+    if (y !== 'all' && yy !== y) return false;
+    if (m !== 'all' && mm !== m) return false;
+    return true;
+  };
+
+  const monthsShort = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
+
+  const trendMonthlyData = React.useMemo(() => {
+    const baseYear = trendYear === 'all' ? new Date().getFullYear() : trendYear;
+    const yearInvoices = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, baseYear, 'all'));
+    const result = monthsShort.map((label, idx) => {
+      const mi = idx + 1;
+      const monthInv = yearInvoices.filter(inv => isInPeriod(inv.invoice_date, baseYear, mi) && inv.partner && !isExcludedPartner(inv.partner));
+      const alapitvanyCount = monthInv.filter(inv => inv.organization === 'alapitvany').length;
+      const ovodaCount = monthInv.filter(inv => inv.organization === 'ovoda').length;
+      const amount = monthInv.reduce((s, inv) => s + (inv.amount || 0), 0);
+      const alapitvanyAmount = monthInv.filter(inv => inv.organization === 'alapitvany').reduce((s, inv) => s + (inv.amount || 0), 0);
+      const ovodaAmount = monthInv.filter(inv => inv.organization === 'ovoda').reduce((s, inv) => s + (inv.amount || 0), 0);
+      return { month: label, alapitvany: alapitvanyCount, ovoda: ovodaCount, total: alapitvanyCount + ovodaCount, amount, alapitvanyAmount, ovodaAmount };
+    });
+    if (trendMonth !== 'all') {
+      return result.map((row, idx) => (idx + 1) === trendMonth ? row : { ...row, alapitvany: 0, ovoda: 0, total: 0, amount: 0, alapitvanyAmount: 0, ovodaAmount: 0 });
+    }
+    return result;
+  }, [allInvoices, trendYear, trendMonth]);
+
+  const orgPieData = React.useMemo(() => {
+    const invs = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, orgYear, orgMonth) && inv.partner && !isExcludedPartner(inv.partner));
+    const alapitvany = invs.filter(inv => inv.organization === 'alapitvany');
+    const ovoda = invs.filter(inv => inv.organization === 'ovoda');
+    return [
+      { name: 'Feketerigó Alapítvány', value: alapitvany.length, amount: alapitvany.reduce((s, i) => s + (i.amount || 0), 0), color: '#1e40af' },
+      { name: 'Feketerigó Alapítványi Óvoda', value: ovoda.length, amount: ovoda.reduce((s, i) => s + (i.amount || 0), 0), color: '#ea580c' }
+    ];
+  }, [allInvoices, orgYear, orgMonth]);
+
+  const payPieData = React.useMemo(() => {
+    const invs = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, payYear, payMonth) && inv.partner && !isExcludedPartner(inv.partner));
+    const bank = invs.filter(inv => inv.invoice_type === 'bank_transfer');
+    const other = invs.filter(inv => inv.invoice_type === 'card_cash_afterpay');
+    return [
+      { name: 'Banki átutalás', value: bank.length, amount: bank.reduce((s, i) => s + (i.amount || 0), 0), color: '#059669' },
+      { name: 'Kártya/Készpénz/Utánvét', value: other.length, amount: other.reduce((s, i) => s + (i.amount || 0), 0), color: '#7c3aed' }
+    ];
+  }, [allInvoices, payYear, payMonth]);
 
   const generateOrganizationData = (invoices: any[]) => {
     const alapitvanyInvoices = invoices.filter(inv => inv.organization === 'alapitvany');
@@ -1643,8 +1697,8 @@ export const ManagerDashboard: React.FC = () => {
               </h3>
               <div className="flex items-center gap-2">
                 <select
-                  value={selectedYear as any}
-                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={trendYear as any}
+                  onChange={(e) => setTrendYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
@@ -1653,8 +1707,8 @@ export const ManagerDashboard: React.FC = () => {
                   ))}
                 </select>
                 <select
-                  value={selectedMonth as any}
-                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={trendMonth as any}
+                  onChange={(e) => setTrendMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
@@ -1666,7 +1720,7 @@ export const ManagerDashboard: React.FC = () => {
             </div>
             <div className="h-48 sm:h-64 lg:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData.monthlyData}>
+                <BarChart data={trendMonthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" stroke="#6b7280" fontSize={10} />
                   <YAxis stroke="#6b7280" fontSize={10} />
@@ -2087,8 +2141,8 @@ export const ManagerDashboard: React.FC = () => {
               </span>
               <span className="inline-flex items-center gap-2">
                 <select
-                  value={selectedYear as any}
-                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={orgYear as any}
+                  onChange={(e) => setOrgYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
@@ -2097,8 +2151,8 @@ export const ManagerDashboard: React.FC = () => {
                   ))}
                 </select>
                 <select
-                  value={selectedMonth as any}
-                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={orgMonth as any}
+                  onChange={(e) => setOrgMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
@@ -2112,7 +2166,7 @@ export const ManagerDashboard: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <Pie
-                    data={chartData.organizationData}
+                    data={orgPieData}
                     cx="50%"
                     cy="50%"
                     innerRadius={30}
@@ -2158,8 +2212,8 @@ export const ManagerDashboard: React.FC = () => {
               </span>
               <span className="inline-flex items-center gap-2">
                 <select
-                  value={selectedYear as any}
-                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={payYear as any}
+                  onChange={(e) => setPayYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
@@ -2168,8 +2222,8 @@ export const ManagerDashboard: React.FC = () => {
                   ))}
                 </select>
                 <select
-                  value={selectedMonth as any}
-                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={payMonth as any}
+                  onChange={(e) => setPayMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
@@ -2183,7 +2237,7 @@ export const ManagerDashboard: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <Pie
-                    data={chartData.paymentTypeData}
+                    data={payPieData}
                     cx="50%"
                     cy="50%"
                     innerRadius={30}
