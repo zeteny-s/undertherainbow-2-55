@@ -146,6 +146,27 @@ export type Database = {
         }
         Relationships: []
       }
+      house_cash_state: {
+        Row: {
+          balance: number
+          created_at: string
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number | null

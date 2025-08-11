@@ -224,29 +224,47 @@ export const ManagerDashboard: React.FC = () => {
     }
   };
 
-  // Load balances from localStorage on component mount
+  // Load house cash state and expenses from database on mount
   useEffect(() => {
-    const savedCashBalance = localStorage.getItem('manageCashBalance');
-    
-    if (savedCashBalance) {
-      setCashBalance(parseFloat(savedCashBalance));
-    }
-    const savedExpenses = localStorage.getItem('manageCashCustomExpenses');
-    if (savedExpenses) {
+    const loadHouseCash = async () => {
       try {
-        const parsed: CustomExpense[] = JSON.parse(savedExpenses);
-        if (Array.isArray(parsed)) {
-          setCustomExpenses(parsed);
+        const { data: state, error: stateError } = await (supabase as any)
+          .from('house_cash_state')
+          .select('balance')
+          .eq('id', 1)
+          .maybeSingle();
+
+        if (stateError) {
+          console.error('Failed to fetch house cash state:', stateError);
+        }
+        if (state && typeof state.balance === 'number') {
+          setCashBalance(state.balance);
+        }
+
+        const { data: expenses, error: expError } = await (supabase as any)
+          .from('house_cash_expenses')
+          .select('id, description, amount, expense_date')
+          .order('expense_date', { ascending: false });
+
+        if (expError) {
+          console.error('Failed to fetch house cash expenses:', expError);
+        }
+        if (expenses) {
+          const mapped: CustomExpense[] = expenses.map((e: any) => ({
+            id: e.id,
+            description: e.description,
+            amount: e.amount,
+            date: e.expense_date,
+          }));
+          setCustomExpenses(mapped);
         }
       } catch (e) {
-        console.warn('Failed to parse saved custom expenses');
+        console.error('Error loading house cash data:', e);
       }
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    localStorage.setItem('manageCashCustomExpenses', JSON.stringify(customExpenses));
-  }, [customExpenses]);
+    loadHouseCash();
+  }, []);
 
   // Calculate total cash deductions from invoices and payroll
   const calculateCashDeductions = (invoices: Invoice[], payrollRecords: PayrollRecord[]): number => {
@@ -278,12 +296,23 @@ export const ManagerDashboard: React.FC = () => {
     setIsEditingCash(true);
   };
 
-  const handleCashSave = () => {
+  const handleCashSave = async () => {
     const newAmount = parseFloat(tempCashValue);
     if (!isNaN(newAmount) && newAmount >= 0) {
+      const { error } = await (supabase as any)
+        .from('house_cash_state')
+        .update({ balance: newAmount })
+        .eq('id', 1);
+
+      if (error) {
+        addNotification('error', 'Nem sikerült menteni a kassza egyenleget.');
+        console.error('Update house_cash_state error:', error);
+        return;
+      }
+
       setCashBalance(newAmount);
-      localStorage.setItem('manageCashBalance', newAmount.toString());
       setIsEditingCash(false);
+      addNotification('success', 'Kassza egyenleg frissítve.');
     }
   };
 
@@ -292,7 +321,7 @@ export const ManagerDashboard: React.FC = () => {
     setTempCashValue('');
   };
 
-  const addCustomExpense = () => {
+  const addCustomExpense = async () => {
     const amountNumber = typeof newExpense.amount === 'string' ? parseFloat(newExpense.amount) : newExpense.amount;
     if (!amountNumber || amountNumber <= 0) {
       addNotification('error', 'Addj meg pozitív összeget.');
@@ -302,19 +331,50 @@ export const ManagerDashboard: React.FC = () => {
       addNotification('error', 'Adj meg leírást a kiadáshoz.');
       return;
     }
-    const expense: CustomExpense = {
-      id: Math.random().toString(36).slice(2),
+
+    const payload = {
       description: newExpense.description.trim(),
       amount: amountNumber,
-      date: newExpense.date || new Date().toISOString().split('T')[0]
+      expense_date: newExpense.date || new Date().toISOString().split('T')[0],
+      user_id: user?.id,
     };
-    setCustomExpenses(prev => [expense, ...prev]);
+
+    const { data, error } = await (supabase as any)
+      .from('house_cash_expenses')
+      .insert(payload)
+      .select('id, description, amount, expense_date')
+      .single();
+
+    if (error) {
+      addNotification('error', 'Hiba történt a kiadás mentésekor.');
+      console.error('Insert house_cash_expenses error:', error);
+      return;
+    }
+
+    setCustomExpenses(prev => [{
+      id: data.id,
+      description: data.description,
+      amount: data.amount,
+      date: data.expense_date,
+    }, ...prev]);
+
     setIsAddingExpense(false);
     setNewExpense({ amount: '', description: '', date: new Date().toISOString().split('T')[0] });
     addNotification('success', 'Kiadás hozzáadva a házi kasszához');
   };
 
-  const deleteCustomExpense = (id: string) => {
+  const deleteCustomExpense = async (id: string) => {
+    const { error } = await (supabase as any)
+      .from('house_cash_expenses')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      addNotification('error', 'Nincs jogosultság a törléshez vagy hiba történt.');
+      console.error('Delete house_cash_expenses error:', error);
+      return;
+    }
+
     setCustomExpenses(prev => prev.filter(e => e.id !== id));
     addNotification('success', 'Kiadás törölve');
   };
