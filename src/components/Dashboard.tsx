@@ -1100,6 +1100,28 @@ export const Dashboard: React.FC = () => {
                 <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                 Havi számla trend
               </h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="h-48 sm:h-64 lg:h-80">
               {chartData.monthlyData.length > 0 ? (
@@ -1512,9 +1534,33 @@ export const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Organization Distribution */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-              <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-              Szervezetek szerinti megoszlás
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center justify-between">
+              <span className="inline-flex items-center">
+                <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                Szervezetek szerinti megoszlás
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </span>
             </h3>
             <div className="h-40 sm:h-48 lg:h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -1557,9 +1603,33 @@ export const Dashboard: React.FC = () => {
 
           {/* Payment Method Distribution */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
-              Fizetési módok megoszlása
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center justify-between">
+              <span className="inline-flex items-center">
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+                Fizetési módok megoszlása
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </span>
             </h3>
             <div className="h-40 sm:h-48 lg:h-64">
               <ResponsiveContainer width="100%" height="100%">
