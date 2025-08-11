@@ -30,6 +30,7 @@ interface Invoice {
   amount: number;
   invoice_type: string;
   payment_method?: string;
+  invoice_date?: string;
 }
 
 interface PayrollRecord {
@@ -224,47 +225,29 @@ export const ManagerDashboard: React.FC = () => {
     }
   };
 
-  // Load house cash state and expenses from database on mount
+  // Load balances from localStorage on component mount
   useEffect(() => {
-    const loadHouseCash = async () => {
+    const savedCashBalance = localStorage.getItem('manageCashBalance');
+    
+    if (savedCashBalance) {
+      setCashBalance(parseFloat(savedCashBalance));
+    }
+    const savedExpenses = localStorage.getItem('manageCashCustomExpenses');
+    if (savedExpenses) {
       try {
-        const { data: state, error: stateError } = await (supabase as any)
-          .from('house_cash_state')
-          .select('balance')
-          .eq('id', 1)
-          .maybeSingle();
-
-        if (stateError) {
-          console.error('Failed to fetch house cash state:', stateError);
-        }
-        if (state && typeof state.balance === 'number') {
-          setCashBalance(state.balance);
-        }
-
-        const { data: expenses, error: expError } = await (supabase as any)
-          .from('house_cash_expenses')
-          .select('id, description, amount, expense_date')
-          .order('expense_date', { ascending: false });
-
-        if (expError) {
-          console.error('Failed to fetch house cash expenses:', expError);
-        }
-        if (expenses) {
-          const mapped: CustomExpense[] = expenses.map((e: any) => ({
-            id: e.id,
-            description: e.description,
-            amount: e.amount,
-            date: e.expense_date,
-          }));
-          setCustomExpenses(mapped);
+        const parsed: CustomExpense[] = JSON.parse(savedExpenses);
+        if (Array.isArray(parsed)) {
+          setCustomExpenses(parsed);
         }
       } catch (e) {
-        console.error('Error loading house cash data:', e);
+        console.warn('Failed to parse saved custom expenses');
       }
-    };
-
-    loadHouseCash();
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('manageCashCustomExpenses', JSON.stringify(customExpenses));
+  }, [customExpenses]);
 
   // Calculate total cash deductions from invoices and payroll
   const calculateCashDeductions = (invoices: Invoice[], payrollRecords: PayrollRecord[]): number => {
@@ -296,23 +279,12 @@ export const ManagerDashboard: React.FC = () => {
     setIsEditingCash(true);
   };
 
-  const handleCashSave = async () => {
+  const handleCashSave = () => {
     const newAmount = parseFloat(tempCashValue);
     if (!isNaN(newAmount) && newAmount >= 0) {
-      const { error } = await (supabase as any)
-        .from('house_cash_state')
-        .update({ balance: newAmount })
-        .eq('id', 1);
-
-      if (error) {
-        addNotification('error', 'Nem sikerült menteni a kassza egyenleget.');
-        console.error('Update house_cash_state error:', error);
-        return;
-      }
-
       setCashBalance(newAmount);
+      localStorage.setItem('manageCashBalance', newAmount.toString());
       setIsEditingCash(false);
-      addNotification('success', 'Kassza egyenleg frissítve.');
     }
   };
 
@@ -321,7 +293,7 @@ export const ManagerDashboard: React.FC = () => {
     setTempCashValue('');
   };
 
-  const addCustomExpense = async () => {
+  const addCustomExpense = () => {
     const amountNumber = typeof newExpense.amount === 'string' ? parseFloat(newExpense.amount) : newExpense.amount;
     if (!amountNumber || amountNumber <= 0) {
       addNotification('error', 'Addj meg pozitív összeget.');
@@ -331,50 +303,19 @@ export const ManagerDashboard: React.FC = () => {
       addNotification('error', 'Adj meg leírást a kiadáshoz.');
       return;
     }
-
-    const payload = {
+    const expense: CustomExpense = {
+      id: Math.random().toString(36).slice(2),
       description: newExpense.description.trim(),
       amount: amountNumber,
-      expense_date: newExpense.date || new Date().toISOString().split('T')[0],
-      user_id: user?.id,
+      date: newExpense.date || new Date().toISOString().split('T')[0]
     };
-
-    const { data, error } = await (supabase as any)
-      .from('house_cash_expenses')
-      .insert(payload)
-      .select('id, description, amount, expense_date')
-      .single();
-
-    if (error) {
-      addNotification('error', 'Hiba történt a kiadás mentésekor.');
-      console.error('Insert house_cash_expenses error:', error);
-      return;
-    }
-
-    setCustomExpenses(prev => [{
-      id: data.id,
-      description: data.description,
-      amount: data.amount,
-      date: data.expense_date,
-    }, ...prev]);
-
+    setCustomExpenses(prev => [expense, ...prev]);
     setIsAddingExpense(false);
     setNewExpense({ amount: '', description: '', date: new Date().toISOString().split('T')[0] });
     addNotification('success', 'Kiadás hozzáadva a házi kasszához');
   };
 
-  const deleteCustomExpense = async (id: string) => {
-    const { error } = await (supabase as any)
-      .from('house_cash_expenses')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      addNotification('error', 'Nincs jogosultság a törléshez vagy hiba történt.');
-      console.error('Delete house_cash_expenses error:', error);
-      return;
-    }
-
+  const deleteCustomExpense = (id: string) => {
     setCustomExpenses(prev => prev.filter(e => e.id !== id));
     addNotification('success', 'Kiadás törölve');
   };
@@ -1689,38 +1630,6 @@ export const ManagerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Global Period Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h3 className="text-sm sm:text-base font-semibold text-gray-900">Időszak szűrők</h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Összes év</option>
-              {Array.from(new Set([new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2]))
-                .filter((v, i, a) => a.indexOf(v) === i)
-                .sort((a,b)=> b-a)
-                .map(y => (
-                  <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Összes hónap</option>
-              {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
-                <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
       {/* Charts Section */}
       <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8">
         {/* First Row: Monthly Trend and Top Partners */}
@@ -1732,6 +1641,28 @@ export const ManagerDashboard: React.FC = () => {
                 <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                 Havi számla trend
               </h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedYear as any}
+                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMonth as any}
+                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="h-48 sm:h-64 lg:h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -2149,9 +2080,33 @@ export const ManagerDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Organization Distribution */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-              <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-              Szervezetek szerinti megoszlás
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center justify-between">
+              <span className="inline-flex items-center">
+                <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                Szervezetek szerinti megoszlás
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <select
+                  value={selectedYear as any}
+                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMonth as any}
+                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </span>
             </h3>
             <div className="h-40 sm:h-48 lg:h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -2196,9 +2151,33 @@ export const ManagerDashboard: React.FC = () => {
 
           {/* Payment Method Distribution */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center">
-              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
-              Fizetési módok megoszlása
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center justify-between">
+              <span className="inline-flex items-center">
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+                Fizetési módok megoszlása
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <select
+                  value={selectedYear as any}
+                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedMonth as any}
+                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </span>
             </h3>
             <div className="h-40 sm:h-48 lg:h-64">
               <ResponsiveContainer width="100%" height="100%">
