@@ -147,6 +147,12 @@ export const ManagerDashboard: React.FC = () => {
   const [orgMonth, setOrgMonth] = useState<'all' | number>('all');
   const [payYear, setPayYear] = useState<'all' | number>('all');
   const [payMonth, setPayMonth] = useState<'all' | number>('all');
+  const [topYear, setTopYear] = useState<'all' | number>('all');
+  const [topMonth, setTopMonth] = useState<'all' | number>('all');
+  const [munkYear, setMunkYear] = useState<'all' | number>('all');
+  const [munkMonth, setMunkMonth] = useState<'all' | number>('all');
+  const [catYear, setCatYear] = useState<'all' | number>('all');
+  const [catMonth, setCatMonth] = useState<'all' | number>('all');
   const [customExpenses, setCustomExpenses] = useState<CustomExpense[]>([]);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<{ amount: number | ''; description: string; date: string }>({
@@ -640,6 +646,64 @@ export const ManagerDashboard: React.FC = () => {
       { name: 'Kártya/Készpénz/Utánvét', value: other.length, amount: other.reduce((s, i) => s + (i.amount || 0), 0), color: '#7c3aed' }
     ];
   }, [allInvoices, payYear, payMonth]);
+
+  const topPartnersDataFiltered = React.useMemo(() => {
+    const invs = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, topYear, topMonth) && inv.partner && !isExcludedPartner(inv.partner) && inv.amount && inv.amount > 0);
+    // reuse logic: partner, amount sum/count
+    const agg: Record<string, { amount: number; count: number; display: string; color: string } > = {};
+    invs.forEach((inv, idx) => {
+      const key = normalizePartnerName(inv.partner);
+      if (!key) return;
+      const display = prettyPartnerName(inv.partner);
+      if (!agg[key]) agg[key] = { amount: 0, count: 0, display, color: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'][Object.keys(agg).length % 5] };
+      agg[key].amount += inv.amount || 0;
+      agg[key].count += 1;
+    });
+    return Object.values(agg).sort((a,b)=> b.amount - a.amount).slice(0,5).map((v, i) => ({ partner: v.display.length>12? v.display.substring(0,12)+'...' : v.display, fullPartner: v.display, amount: v.amount, invoiceCount: v.count, color: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'][i%5] }));
+  }, [allInvoices, topYear, topMonth]);
+
+  const munkaszamDataFiltered = React.useMemo(() => {
+    // Build based on existing generateMunkaszamData but with period filter (invoices only; payroll remains full or can be filtered by date if available)
+    const invs = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, munkYear, munkMonth));
+    const spending: { [key: string]: { invoiceAmount: number; payrollAmount: number; rentalAmount: number; count: number } } = {};
+    invs.forEach(inv => {
+      const key = (inv as any).munkaszam && (inv as any).munkaszam.trim() ? (inv as any).munkaszam.trim() : 'Nincs munkaszám';
+      if (!spending[key]) spending[key] = { invoiceAmount: 0, payrollAmount: 0, rentalAmount: 0, count: 0 };
+      if (inv.partner && !isExcludedPartner(inv.partner) && inv.amount !== null && inv.amount !== undefined) spending[key].invoiceAmount += inv.amount;
+      spending[key].count += 1;
+    });
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1', '#14b8a6'];
+    return Object.entries(spending).map(([k,v], idx)=>({
+      munkaszam: k.length>15? k.substring(0,15)+'...' : k,
+      fullMunkaszam: k,
+      count: v.count,
+      amount: v.invoiceAmount + v.payrollAmount + v.rentalAmount,
+      invoiceAmount: v.invoiceAmount,
+      payrollAmount: v.payrollAmount,
+      rentalAmount: v.rentalAmount,
+      color: colors[idx%colors.length]
+    })).filter(it=> it.amount!==0).sort((a,b)=> Math.abs(b.amount)-Math.abs(a.amount));
+  }, [allInvoices, munkYear, munkMonth]);
+
+  const categoryDataFiltered = React.useMemo(() => {
+    const invs = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, catYear, catMonth));
+    const validCategories = ['Bérleti díjak','Bérköltség','Közüzemi díjak','Szolgáltatások','Étkeztetés költségei','Személyi jellegű kifizetések','Anyagköltség','Tárgyi eszközök','Felújítás, beruházások','Egyéb'];
+    const map: Record<string,{amount:number;count:number}> = {};
+    validCategories.forEach(c=> map[c] = { amount:0, count:0 });
+    invs.forEach(inv => {
+      if (!inv.partner || isExcludedPartner(inv.partner)) return;
+      let cat = 'Egyéb';
+      const raw = (inv as any).category;
+      if (raw && typeof raw === 'string') {
+        const clean = raw.trim().replace(/ \(AI\)$/,'');
+        if (validCategories.includes(clean)) cat = clean;
+      }
+      if (inv.amount !== null && inv.amount !== undefined) map[cat].amount += inv.amount;
+      map[cat].count += 1;
+    });
+    const colors: Record<string,string> = {'Bérleti díjak':'#3b82f6','Bérköltség':'#f97316','Közüzemi díjak':'#10b981','Szolgáltatások':'#f59e0b','Étkeztetés költségei':'#8b5cf6','Személyi jellegű kifizetések':'#ef4444','Anyagköltség':'#06b6d4','Tárgyi eszközök':'#84cc16','Felújítás, beruházások':'#ec4899','Egyéb':'#6366f1'};
+    return Object.entries(map).filter(([,v])=> v.amount!==0).map(([k,v])=>({category:k, count:v.count, amount:v.amount, color: colors[k]||'#6b7280'})).sort((a,b)=> Math.abs(b.amount)-Math.abs(a.amount));
+  }, [allInvoices, catYear, catMonth]);
 
   const generateOrganizationData = (invoices: any[]) => {
     const alapitvanyInvoices = invoices.filter(inv => inv.organization === 'alapitvany');
@@ -1759,6 +1823,28 @@ export const ManagerDashboard: React.FC = () => {
                 <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
                 Legmagasabb partneri kiadások
               </h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={topYear as any}
+                  onChange={(e) => setTopYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={topMonth as any}
+                  onChange={(e) => setTopMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             {chartData.topPartnersData.length === 0 && (
@@ -1775,7 +1861,7 @@ export const ManagerDashboard: React.FC = () => {
               <div className="h-64 sm:h-80 lg:h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart 
-                    data={chartData.topPartnersData} 
+                    data={topPartnersDataFiltered} 
                     margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
@@ -1835,9 +1921,33 @@ export const ManagerDashboard: React.FC = () => {
           {/* Munkaszám Distribution Chart */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-                <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
-                Munkaszám megoszlás
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center justify-between w-full">
+                <span className="inline-flex items-center">
+                  <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                  Munkaszám megoszlás
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <select
+                    value={munkYear as any}
+                    onChange={(e) => setMunkYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">Összes év</option>
+                    {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={munkMonth as any}
+                    onChange={(e) => setMunkMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">Összes hónap</option>
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                      <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                    ))}
+                  </select>
+                </span>
               </h3>
               {chartData.munkaszamData.length > 5 && (
                 <button
@@ -1863,7 +1973,7 @@ export const ManagerDashboard: React.FC = () => {
               <div className="h-64 sm:h-80 lg:h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart 
-                    data={chartData.munkaszamData.slice(0, 5)} 
+                    data={munkaszamDataFiltered.slice(0, 5)} 
                     margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
                     layout="vertical"
                   >
@@ -1946,6 +2056,28 @@ export const ManagerDashboard: React.FC = () => {
                 <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
                 Kategória szerinti kiadások
               </h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={catYear as any}
+                  onChange={(e) => setCatYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={catMonth as any}
+                  onChange={(e) => setCatMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             {chartData.categoryData.length === 0 && (
@@ -1966,7 +2098,7 @@ export const ManagerDashboard: React.FC = () => {
                       <ResponsiveContainer width="100%" height="100%">
                         <RechartsPieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                           <Pie
-                            data={chartData.categoryData}
+                            data={categoryDataFiltered}
                             cx="50%"
                             cy="50%"
                             outerRadius={85}
@@ -1976,7 +2108,7 @@ export const ManagerDashboard: React.FC = () => {
                             animationBegin={200}
                             minAngle={5}
                           >
-                            {chartData.categoryData.map((_, index) => (
+                       {categoryDataFiltered.map((_, index) => (
                               <Cell 
                                 key={`cell-${index}`} 
                                 fill={`url(#categoryGradient-${index})`}
@@ -1987,7 +2119,7 @@ export const ManagerDashboard: React.FC = () => {
                           </Pie>
                           <Tooltip content={<CategoryTooltip />} />
                           <defs>
-                            {chartData.categoryData.map((entry, index) => (
+                             {categoryDataFiltered.map((entry, index) => (
                               <radialGradient 
                                 key={`gradient-${index}`} 
                                 id={`categoryGradient-${index}`} 
@@ -2006,7 +2138,7 @@ export const ManagerDashboard: React.FC = () => {
                       </ResponsiveContainer>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
-                      {chartData.categoryData.map((item, index) => (
+                      {categoryDataFiltered.map((item, index) => (
                         <div 
                           key={index} 
                           className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
