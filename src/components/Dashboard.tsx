@@ -196,7 +196,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [selectedYear, selectedMonth]);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -268,17 +268,8 @@ export const Dashboard: React.FC = () => {
 
       // Filter out specific partners from cost analytics (normalized matching)
       const filteredInvoicesBase = (invoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
-      const periodMatch = (dateStr?: string) => {
-        if (!dateStr) return false;
-        if (selectedYear === 'all' && selectedMonth === 'all') return true;
-        const d = new Date(dateStr);
-        const y = d.getFullYear();
-        const m = d.getMonth() + 1;
-        if (selectedYear !== 'all' && y !== selectedYear) return false;
-        if (selectedMonth !== 'all' && m !== selectedMonth) return false;
-        return true;
-      };
-      const filteredInvoices = filteredInvoicesBase.filter(inv => periodMatch((inv as any).invoice_date));
+      // Per-card selectors control their own filters; base remains unfiltered by year/month here
+      const filteredInvoices = filteredInvoicesBase;
       const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       
       // Log counts for debugging
@@ -304,8 +295,8 @@ export const Dashboard: React.FC = () => {
       setExpenseWeekHistory(weekHistoryData);
 
       const monthlyData = generateMonthlyData(filteredInvoicesBase);
-      const organizationData = generateOrganizationData(filteredInvoices);
-      const paymentTypeData = generatePaymentTypeData(filteredInvoices);
+      const organizationData = generateOrganizationData(filteredInvoicesBase);
+      const paymentTypeData = generatePaymentTypeData(filteredInvoicesBase);
       const weeklyTrend = weekHistoryData[0]?.data || [];
       const expenseData = generateExpenseData(filteredInvoices, payrollSummaries || []);
       const topPartnersData = generateTopPartnersData(filteredInvoices);
