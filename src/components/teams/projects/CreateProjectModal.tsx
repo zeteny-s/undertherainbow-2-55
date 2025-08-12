@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../integrations/supabase/client';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
-import { Plus, Calendar, Flag, Users } from 'lucide-react';
+
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotifications } from '../../../hooks/useNotifications';
 import { NotificationContainer } from '../../common/NotificationContainer';
@@ -56,7 +56,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose,
     if (!user) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from('projects').insert({
+      const { error } = await (supabase as any).from('projects').insert({
         name: name.trim(),
         description: description.trim() || null,
         team_id: teamId,

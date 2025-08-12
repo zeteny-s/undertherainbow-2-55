@@ -18,7 +18,7 @@ export const PerformanceDashboard: React.FC = () => {
     const [{ data: profs }, { data: tks }, { data: projs }] = await Promise.all([
       supabase.from('profiles').select('id, name, email'),
       supabase.from('tasks').select('id, assigned_to, status, created_at, completed_at'),
-      supabase.from('projects').select('id, name, status, created_at')
+      (supabase as any).from('projects').select('id, name, status, created_at')
     ]);
     setProfiles((profs || []) as Profile[]);
     setTasks((tks || []) as Task[]);

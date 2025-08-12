@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Users, MessageSquare, Plus, PanelsTopLeft, FolderKanban } from 'lucide-react';
+import { Users, FolderKanban, BarChart3 } from 'lucide-react';
 import { TeamsList } from './TeamsList';
-import { DealsKanban } from './crm/DealsKanban';
-import { ProjectsBoard } from './projects/ProjectsBoard';
+import AccountsDirectory from './AccountsDirectory';
+import ProjectsPortfolio from './projects/ProjectsPortfolio';
+import PerformanceDashboard from './PerformanceDashboard';
 
 export const ManagerTeamsView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'projects' | 'teams' | 'messages'>('pipeline');
+  const [activeTab, setActiveTab] = useState<'accounts' | 'projects' | 'teams' | 'performance'>('accounts');
 
   useEffect(() => {
-    document.title = activeTab === 'pipeline'
-      ? 'CRM Pipeline – Kezelés'
-      : activeTab === 'projects'
-      ? 'Projektek – Kezelés'
-      : activeTab === 'teams'
-      ? 'Csapatok – Kezelés'
-      : 'Üzenetek – Kezelés';
+    document.title =
+      activeTab === 'accounts'
+        ? 'Fiókok – Kezelés'
+        : activeTab === 'projects'
+        ? 'Projektek – Kezelés'
+        : activeTab === 'teams'
+        ? 'Csapatok – Kezelés'
+        : 'Teljesítmény – Kezelés';
   }, [activeTab]);
 
   return (
@@ -30,10 +32,10 @@ export const ManagerTeamsView: React.FC = () => {
         <div className="border-b border-border mb-6">
           <nav className="flex flex-wrap gap-2 md:space-x-6">
             {[
-              { id: 'pipeline', label: 'Pipeline', icon: PanelsTopLeft },
+              { id: 'accounts', label: 'Fiókok', icon: Users },
               { id: 'projects', label: 'Projektek', icon: FolderKanban },
               { id: 'teams', label: 'Csapatok', icon: Users },
-              { id: 'messages', label: 'Üzenetek', icon: MessageSquare }
+              { id: 'performance', label: 'Teljesítmény', icon: BarChart3 }
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -54,22 +56,10 @@ export const ManagerTeamsView: React.FC = () => {
 
         {/* Content */}
         <div className="space-y-6">
-          {activeTab === 'pipeline' && <DealsKanban />}
-          {activeTab === 'projects' && <ProjectsBoard />}
+          {activeTab === 'accounts' && <AccountsDirectory />}
+          {activeTab === 'projects' && <ProjectsPortfolio />}
           {activeTab === 'teams' && <TeamsList />}
-
-          {activeTab === 'messages' && (
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground">Üzenetek</h2>
-                <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
-                  <Plus className="h-4 w-4" />
-                  Új Üzenet
-                </button>
-              </div>
-              <p className="text-muted-foreground">Üzenetküldés hamarosan elérhető.</p>
-            </div>
-          )}
+          {activeTab === 'performance' && <PerformanceDashboard />}
         </div>
       </div>
     </div>

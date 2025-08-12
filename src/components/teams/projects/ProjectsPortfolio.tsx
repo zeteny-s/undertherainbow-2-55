@@ -36,8 +36,8 @@ export const ProjectsPortfolio: React.FC = () => {
   const fetchAll = async () => {
     setLoading(true);
     const [{ data: proj }, { data: taskData }] = await Promise.all([
-      supabase.from('projects').select('*').order('created_at', { ascending: false }),
-      supabase.from('tasks').select('id, title, status, priority, project_id')
+      (supabase as any).from('projects').select('*').order('created_at', { ascending: false }),
+      (supabase as any).from('tasks').select('id, title, status, priority, project_id')
     ]);
     setProjects((proj || []) as ProjectRow[]);
     setTasks((taskData || []) as TaskRow[]);

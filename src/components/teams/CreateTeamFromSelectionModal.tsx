@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { LoadingSpinner } from '../common/LoadingSpinner';
+
 import { useNotifications } from '../../hooks/useNotifications';
 import { NotificationContainer } from '../common/NotificationContainer';
 
@@ -45,7 +45,11 @@ export const CreateTeamFromSelectionModal: React.FC<CreateTeamFromSelectionModal
         .maybeSingle();
       if (error || !team) throw error || new Error('Team not created');
 
-      const members = selectedUserIds.map(uid => ({ user_id: uid, team_id: team.id, role: uid === leadId ? 'lead' : 'member' }));
+      const members: { user_id: string; team_id: string; role: 'member' | 'lead' }[] = selectedUserIds.map(uid => ({
+        user_id: uid,
+        team_id: team.id,
+        role: (uid === leadId ? 'lead' : 'member') as 'lead' | 'member',
+      }));
       const { error: memErr } = await supabase.from('team_members').insert(members);
       if (memErr) throw memErr;
 
