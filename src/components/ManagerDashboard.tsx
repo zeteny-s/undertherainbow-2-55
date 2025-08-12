@@ -173,8 +173,7 @@ export const ManagerDashboard: React.FC = () => {
   const [rentalViewMode, setRentalViewMode] = useState<'all' | 'monthly'>('all');
 
   // Global period selectors (Year/Month) for charts without their own filter
-  const [selectedYear, setSelectedYear] = useState<'all' | number>('all');
-  const [selectedMonth, setSelectedMonth] = useState<'all' | number>('all');
+// Removed unused global period selectors to fix TS6133
 
   // Partner normalization utilities to merge company variants (Kft., Bt., Ev., punctuation, diacritics)
   const normalizePartnerName = (name: string): string => {
@@ -651,7 +650,7 @@ export const ManagerDashboard: React.FC = () => {
     const invs = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, topYear, topMonth) && inv.partner && !isExcludedPartner(inv.partner) && inv.amount && inv.amount > 0);
     // reuse logic: partner, amount sum/count
     const agg: Record<string, { amount: number; count: number; display: string; color: string } > = {};
-    invs.forEach((inv, idx) => {
+    invs.forEach((inv) => {
       const key = normalizePartnerName(inv.partner);
       if (!key) return;
       const display = prettyPartnerName(inv.partner);
