@@ -152,10 +152,10 @@ export const InvoiceUpload: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (openDropdowns.size > 0) {
-        const clickedOnDropdown = Array.from(openDropdowns).some(dropdownId => {
+        const clickedOnDropdown = (Array.from(openDropdowns) as string[]).some((dropdownId: string) => {
           const dropdown = document.getElementById(dropdownId);
           const button = document.getElementById(`${dropdownId}-button`);
-          return dropdown && (dropdown.contains(event.target as Node) || button?.contains(event.target as Node));
+          return !!(dropdown && (dropdown.contains(event.target as Node) || button?.contains(event.target as Node)));
         });
         
         if (!clickedOnDropdown) {
@@ -236,7 +236,7 @@ export const InvoiceUpload: React.FC = () => {
     e.stopPropagation();
     setDragActive(false);
     
-    const files = Array.from(e.dataTransfer.files);
+    const files = Array.from(e.dataTransfer.files) as File[];
     handleFiles(files);
   }, []);
 
@@ -1897,10 +1897,10 @@ export const InvoiceUpload: React.FC = () => {
                             </div>
                           </div>
                           
-                          {/* Dropdown Menu */}
+                          {/* Dropdown Menu (opens upwards) */}
                           <div 
                             id={`munkaszam-dropdown-${uploadedFile.id}`} 
-                            className={`absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg ${openDropdowns.has(`munkaszam-dropdown-${uploadedFile.id}`) ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'} transition-all duration-150 ease-in-out`}
+                            className={`absolute z-50 bottom-full mb-1 w-full bg-white border border-gray-200 rounded-md shadow-lg ${openDropdowns.has(`munkaszam-dropdown-${uploadedFile.id}`) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'} transition-all duration-150 ease-in-out`}
                           >
                             <div className="py-1 pb-4 max-h-60 overflow-auto">
                               <div className="px-3 py-2 text-xs text-gray-500 font-medium border-b border-gray-100">
