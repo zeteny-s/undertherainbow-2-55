@@ -541,6 +541,56 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          priority: Database["public"]["Enums"]["task_priority"]
+          start_date: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_by: string
@@ -551,6 +601,7 @@ export type Database = {
           due_date: string | null
           id: string
           priority: Database["public"]["Enums"]["task_priority"]
+          project_id: string | null
           status: Database["public"]["Enums"]["task_status"]
           team_id: string | null
           title: string
@@ -565,6 +616,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           team_id?: string | null
           title: string
@@ -579,12 +631,20 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           team_id?: string | null
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_team_id_fkey"
             columns: ["team_id"]
@@ -758,6 +818,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      is_current_user_in_team: {
+        Args: { _team_id: string }
+        Returns: boolean
+      }
       is_current_user_manager: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -793,6 +857,12 @@ export type Database = {
         | "Tárgyi eszközök"
         | "Felújítás, beruházások"
         | "Egyéb"
+      project_status:
+        | "planned"
+        | "active"
+        | "on_hold"
+        | "completed"
+        | "cancelled"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "pending" | "in_progress" | "completed" | "cancelled"
       team_member_role: "member" | "lead"
@@ -933,6 +1003,13 @@ export const Constants = {
         "Tárgyi eszközök",
         "Felújítás, beruházások",
         "Egyéb",
+      ],
+      project_status: [
+        "planned",
+        "active",
+        "on_hold",
+        "completed",
+        "cancelled",
       ],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["pending", "in_progress", "completed", "cancelled"],

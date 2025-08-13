@@ -38,7 +38,7 @@ export const CreateTeamFromSelectionModal: React.FC<CreateTeamFromSelectionModal
     if (!user) return;
     setLoading(true);
     try {
-      const { data: team, error } = await supabase
+      const { data: team, error } = await (supabase as any)
         .from('teams')
         .insert({ name: name.trim(), description: description.trim() || null, created_by: user.id })
         .select('id')
@@ -50,7 +50,7 @@ export const CreateTeamFromSelectionModal: React.FC<CreateTeamFromSelectionModal
         team_id: team.id,
         role: (uid === leadId ? 'lead' : 'member') as 'lead' | 'member',
       }));
-      const { error: memErr } = await supabase.from('team_members').insert(members);
+      const { error: memErr } = await (supabase as any).from('team_members').insert(members as any);
       if (memErr) throw memErr;
 
       addNotification('success', 'Team created successfully');
