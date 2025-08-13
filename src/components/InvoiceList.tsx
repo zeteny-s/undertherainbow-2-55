@@ -49,7 +49,7 @@ export const InvoiceList: React.FC = () => {
   const [bulkDownloading, setBulkDownloading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
-  const [sortBy, setSortBy] = useState<'invoice_date' | 'uploaded_at' | 'amount' | 'partner'>('invoice_date');
+  const [sortBy, setSortBy] = useState<'invoice_date' | 'uploaded_at' | 'amount' | 'partner'>('uploaded_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
@@ -589,61 +589,7 @@ export const InvoiceList: React.FC = () => {
             </div>
           </div>
 
-          {/* Advanced filters (inline quick) */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Év</label>
-              <select
-                value={filterYear as any}
-                onChange={(e) => setFilterYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="all">Összes év</option>
-                {availableYears.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hónap</label>
-              <select
-                value={filterMonth as any}
-                onChange={(e) => setFilterMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="all">Összes hónap</option>
-                {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
-                  <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Kategória</label>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="all">Összes</option>
-                {availableCategories.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Munkaszám</label>
-              <select
-                value={filterMunkaszam}
-                onChange={(e) => setFilterMunkaszam(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="all">Összes</option>
-                {availableMunkaszam.map(ms => (
-                  <option key={ms} value={ms}>{ms}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          
         </div>
       </div>
 
@@ -724,7 +670,7 @@ export const InvoiceList: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button onClick={()=>{setSortBy('invoice_date');setSortDir('desc');}} className="px-3 py-1.5 text-sm rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200">Alapértelmezett</button>
+              <button onClick={()=>{setSortBy('uploaded_at');setSortDir('desc');setShowSortModal(false);}} className="px-3 py-1.5 text-sm rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200">Alapértelmezett</button>
               <button onClick={()=>setShowSortModal(false)} className="px-3 py-1.5 text-sm rounded-lg text-white bg-blue-600 hover:bg-blue-700">Alkalmaz</button>
             </div>
           </div>
