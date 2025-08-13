@@ -10,6 +10,7 @@ import { InvoiceUpload } from './components/InvoiceUpload';
 import { InvoiceList } from './components/InvoiceList';
 import { Settings } from './components/Settings';
 import { PayrollCosts } from './components/PayrollCosts';
+import { DocumentsPage } from './components/documents/DocumentsPage';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -53,6 +54,8 @@ const AppContent: React.FC = () => {
         return <InvoiceUpload />;
       case 'invoices':
         return <InvoiceList />;
+      case 'documents':
+        return <DocumentsPage />;
       case 'payroll':
         return <PayrollCosts />;
       case 'settings':

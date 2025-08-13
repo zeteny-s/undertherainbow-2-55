@@ -95,6 +95,135 @@ export type Database = {
         }
         Relationships: []
       }
+      document_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "document_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_shares: {
+        Row: {
+          created_at: string
+          document_id: string
+          email: string | null
+          id: string
+          permission: Database["public"]["Enums"]["document_permission"]
+          shared_by: string
+          shared_with: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          email?: string | null
+          id?: string
+          permission?: Database["public"]["Enums"]["document_permission"]
+          shared_by: string
+          shared_with?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          email?: string | null
+          id?: string
+          permission?: Database["public"]["Enums"]["document_permission"]
+          shared_by?: string
+          shared_with?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_shares_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          folder_id: string | null
+          id: string
+          metadata: Json | null
+          scanned_pdf: boolean
+          storage_path: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          folder_id?: string | null
+          id?: string
+          metadata?: Json | null
+          scanned_pdf?: boolean
+          storage_path: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          folder_id?: string | null
+          id?: string
+          metadata?: Json | null
+          scanned_pdf?: boolean
+          storage_path?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "document_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       house_cash_expenses: {
         Row: {
           amount: number
@@ -810,6 +939,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_document_by_id: {
+        Args: { _doc_id: string }
+        Returns: boolean
+      }
+      can_access_document_object: {
+        Args: { _name: string }
+        Returns: boolean
+      }
+      can_edit_document: {
+        Args: { _doc_id: string }
+        Returns: boolean
+      }
       create_backup_schedule_table: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -847,6 +988,7 @@ export type Database = {
       }
     }
     Enums: {
+      document_permission: "viewer" | "editor"
       invoice_category:
         | "Bérleti díjak"
         | "Közüzemi díjak"
@@ -993,6 +1135,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      document_permission: ["viewer", "editor"],
       invoice_category: [
         "Bérleti díjak",
         "Közüzemi díjak",

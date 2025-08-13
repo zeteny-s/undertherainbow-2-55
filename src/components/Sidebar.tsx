@@ -44,6 +44,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       icon: FileText,
     },
     {
+      id: 'documents',
+      label: 'Dokumentumok',
+      icon: FileText,
+    },
+    {
       id: 'teams',
       label: 'Csapatok',
       icon: Users,
