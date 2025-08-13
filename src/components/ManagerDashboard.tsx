@@ -479,7 +479,7 @@ export const ManagerDashboard: React.FC = () => {
       
       // Use all invoices for munkaszam data to get accurate counts, but filtered for amounts
       const munkaszamData = generateMunkaszamData(invoices || [], payrollRecords || []);
-      const categoryData = generateCategoryData(filteredInvoices, payrollRecords || []);
+      const categoryData = generateCategoryData(filteredInvoices, payrollRecords || [], payrollSummaries || []);
       
       // Generate payroll charts data
       
@@ -721,7 +721,7 @@ export const ManagerDashboard: React.FC = () => {
     // Add payroll into categories
     const rentalAmount = payroll.filter(r => r.is_rental).reduce((s, r) => s + (r.amount || 0), 0);
     const nonRentalAmount = payroll.filter(r => !r.is_rental).reduce((s, r) => s + (r.amount || 0), 0);
-    const taxAmount = summaries.reduce((s, sum) => s + ((sum as any).tax_amount || 0), 0);
+    const taxAmount = summaries.reduce((s, sum) => s + (Number((sum as any).tax_amount) || 0), 0);
     const rentalCount = payroll.filter(r => r.is_rental).length;
     const nonRentalCount = payroll.filter(r => !r.is_rental).length;
     map['Bérleti díjak'].amount += rentalAmount;
@@ -952,7 +952,7 @@ export const ManagerDashboard: React.FC = () => {
     return munkaszamArray;
   };
   
-  const generateCategoryData = (invoices: any[], payrollRecords: any[] = []) => {
+  const generateCategoryData = (invoices: any[], payrollRecords: any[] = [], payrollSummaries: any[] = []) => {
     // Group invoices by category and calculate total spending using all invoices
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
@@ -960,6 +960,7 @@ export const ManagerDashboard: React.FC = () => {
     const validCategories = [
       'Bérleti díjak',
       'Bérköltség',
+      'Járulékok',
       'Közüzemi díjak',
       'Szolgáltatások',
       'Étkeztetés költségei',
@@ -1024,10 +1025,18 @@ export const ManagerDashboard: React.FC = () => {
       categorySpending['Bérköltség'].count += payrollRecords.filter(record => !record.is_rental).length;
     }
     
+    // Add tax from payroll summaries to "Járulékok"
+    const totalTax = (payrollSummaries || []).reduce((sum, summary) => sum + ((summary as any).tax_amount || 0), 0);
+    if (totalTax > 0) {
+      categorySpending['Járulékok'].amount += totalTax;
+      categorySpending['Járulékok'].count += (payrollSummaries || []).length;
+    }
+    
     // Color mapping for categories
     const categoryColors: { [key: string]: string } = {
       'Bérleti díjak': '#3b82f6',
       'Bérköltség': '#f97316',
+      'Járulékok': '#f59e0b',
       'Közüzemi díjak': '#10b981',
       'Szolgáltatások': '#f59e0b',
       'Étkeztetés költségei': '#8b5cf6',
