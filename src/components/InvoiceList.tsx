@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FileText, Building2, GraduationCap, Search, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote } from 'lucide-react';
+import { FileText, Building2, GraduationCap, Search, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote, Filter as FilterIcon, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import JSZip from 'jszip';
 
@@ -47,6 +47,10 @@ export const InvoiceList: React.FC = () => {
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [sortBy, setSortBy] = useState<'invoice_date' | 'uploaded_at' | 'amount' | 'partner'>('invoice_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     fetchInvoices();
@@ -240,6 +244,18 @@ export const InvoiceList: React.FC = () => {
     const matchesMunkaszam = filterMunkaszam === 'all' || (ms && ms.split(',').map(s => s.trim()).includes(filterMunkaszam));
     
     return matchesSearch && matchesOrg && dateOk && matchesCategory && matchesMunkaszam;
+  }).sort((a, b) => {
+    const getVal = (inv: Invoice) => {
+      if (sortBy === 'invoice_date') return new Date(inv.invoice_date || inv.uploaded_at).getTime();
+      if (sortBy === 'uploaded_at') return new Date(inv.uploaded_at).getTime();
+      if (sortBy === 'amount') return Number(inv.amount) || 0;
+      if (sortBy === 'partner') return (inv.partner || '').toLowerCase().charCodeAt(0) || 0;
+      return 0;
+    };
+    const va = getVal(a);
+    const vb = getVal(b);
+    if (va === vb) return 0;
+    return sortDir === 'asc' ? (va < vb ? -1 : 1) : (va > vb ? -1 : 1);
   });
 
   const downloadFile = async (invoice: Invoice) => {
@@ -513,8 +529,25 @@ export const InvoiceList: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Controls: Filter/Sort buttons */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-medium text-gray-700">Szűrés és rendezés</div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200"
+            >
+              <FilterIcon className="h-4 w-4 mr-2" /> Szűrők
+            </button>
+            <button
+              onClick={() => setShowSortModal(true)}
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200"
+            >
+              <ArrowUpDown className="h-4 w-4 mr-2" /> Rendezés
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div className="flex justify-between items-center">
@@ -556,7 +589,7 @@ export const InvoiceList: React.FC = () => {
             </div>
           </div>
 
-          {/* Advanced filters */}
+          {/* Advanced filters (inline quick) */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Év</label>
@@ -613,6 +646,90 @@ export const InvoiceList: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-xl p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Szűrők</h3>
+              <button onClick={() => setShowFilterModal(false)} className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Év</label>
+                <select value={filterYear as any} onChange={(e)=>setFilterYear(e.target.value==='all'?'all':Number(e.target.value))} className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="all">Összes év</option>
+                  {availableYears.map(y=> <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hónap</label>
+                <select value={filterMonth as any} onChange={(e)=>setFilterMonth(e.target.value==='all'?'all':Number(e.target.value))} className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m=> <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kategória</label>
+                <select value={filterCategory} onChange={(e)=>setFilterCategory(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="all">Összes</option>
+                  {availableCategories.map(c=> <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Munkaszám</label>
+                <select value={filterMunkaszam} onChange={(e)=>setFilterMunkaszam(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="all">Összes</option>
+                  {availableMunkaszam.map(ms=> <option key={ms} value={ms}>{ms}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button onClick={()=>{setFilterYear('all');setFilterMonth('all');setFilterCategory('all');setFilterMunkaszam('all');}} className="px-3 py-1.5 text-sm rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200">Visszaállítás</button>
+              <button onClick={()=>setShowFilterModal(false)} className="px-3 py-1.5 text-sm rounded-lg text-white bg-blue-600 hover:bg-blue-700">Alkalmaz</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sort Modal */}
+      {showSortModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Rendezés</h3>
+              <button onClick={() => setShowSortModal(false)} className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Mező</label>
+                <select value={sortBy} onChange={(e)=>setSortBy(e.target.value as any)} className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="invoice_date">Számla dátuma</option>
+                  <option value="uploaded_at">Feltöltés ideje</option>
+                  <option value="amount">Összeg</option>
+                  <option value="partner">Partner</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Irány</label>
+                <select value={sortDir} onChange={(e)=>setSortDir(e.target.value as any)} className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <option value="desc">Csökkenő</option>
+                  <option value="asc">Növekvő</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button onClick={()=>{setSortBy('invoice_date');setSortDir('desc');}} className="px-3 py-1.5 text-sm rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200">Alapértelmezett</button>
+              <button onClick={()=>setShowSortModal(false)} className="px-3 py-1.5 text-sm rounded-lg text-white bg-blue-600 hover:bg-blue-700">Alkalmaz</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bulk Actions Bar */}
       {selectedInvoices.size > 0 && (
