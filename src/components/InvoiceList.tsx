@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Building2, GraduationCap, Search, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import JSZip from 'jszip';
@@ -36,6 +36,10 @@ export const InvoiceList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOrg, setFilterOrg] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<'all' | number>('all');
+  const [filterMonth, setFilterMonth] = useState<'all' | number>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterMunkaszam, setFilterMunkaszam] = useState<string>('all');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Invoice | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -175,12 +179,67 @@ export const InvoiceList: React.FC = () => {
     }).format(new Date(dateString));
   };
 
+  // Derived filter options
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    invoices.forEach(inv => {
+      const ds = inv.invoice_date || inv.uploaded_at;
+      if (ds) {
+        const y = new Date(ds).getFullYear();
+        if (!Number.isNaN(y)) years.add(y);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [invoices]);
+
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    invoices.forEach(inv => {
+      const raw = inv.category || '';
+      const clean = raw.endsWith(' (AI)') ? raw.replace(' (AI)', '') : raw;
+      if (clean && clean.trim()) set.add(clean.trim());
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'hu'));
+  }, [invoices]);
+
+  const availableMunkaszam = useMemo(() => {
+    const set = new Set<string>();
+    invoices.forEach(inv => {
+      const ms = inv.munkaszam || '';
+      if (ms && ms.trim()) {
+        ms.split(',').map(s => s.trim()).filter(Boolean).forEach(code => set.add(code));
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'hu'));
+  }, [invoices]);
+
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = invoice.file_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (invoice.partner || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesOrg = filterOrg === 'all' || invoice.organization === filterOrg;
+
+    // Period filters (year/month based on invoice_date)
+    const ds = invoice.invoice_date || '';
+    const dateOk = (() => {
+      if (!ds) return filterYear === 'all' && filterMonth === 'all';
+      const d = new Date(ds);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      if (filterYear !== 'all' && y !== filterYear) return false;
+      if (filterMonth !== 'all' && m !== filterMonth) return false;
+      return true;
+    })();
+
+    // Category filter (clean " (AI)")
+    const rawCat = invoice.category || '';
+    const cleanCat = rawCat.endsWith(' (AI)') ? rawCat.replace(' (AI)', '') : rawCat;
+    const matchesCategory = filterCategory === 'all' || (cleanCat && cleanCat === filterCategory);
+
+    // Munkaszám filter (supports comma-separated values)
+    const ms = (invoice.munkaszam || '').trim();
+    const matchesMunkaszam = filterMunkaszam === 'all' || (ms && ms.split(',').map(s => s.trim()).includes(filterMunkaszam));
     
-    return matchesSearch && matchesOrg;
+    return matchesSearch && matchesOrg && dateOk && matchesCategory && matchesMunkaszam;
   });
 
   const downloadFile = async (invoice: Invoice) => {
@@ -456,41 +515,99 @@ export const InvoiceList: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 gap-4">
-          <div className="flex justify-between items-center">
-            <label className="block text-sm font-medium text-gray-700">Keresés</label>
-            <button
-              onClick={toggleSelectAll}
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-            >
-              {selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0 
-                ? "Kijelölés törlése" 
-                : "Összes kijelölése"}
-            </button>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Fájlnév vagy partner keresése..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <label className="block text-sm font-medium text-gray-700">Keresés</label>
+              <button
+                onClick={toggleSelectAll}
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                {selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0 
+                  ? "Kijelölés törlése" 
+                  : "Összes kijelölése"}
+              </button>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Fájlnév vagy partner keresése..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+ 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Szervezet</label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <select
+                  value={filterOrg}
+                  onChange={(e) => setFilterOrg(e.target.value)}
+                  className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                >
+                  <option value="all">Minden szervezet</option>
+                  <option value="alapitvany">Alapítvány</option>
+                  <option value="ovoda">Óvoda</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Szervezet</label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          {/* Advanced filters */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Év</label>
               <select
-                value={filterOrg}
-                onChange={(e) => setFilterOrg(e.target.value)}
-                className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                value={filterYear as any}
+                onChange={(e) => setFilterYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
-                <option value="all">Minden szervezet</option>
-                <option value="alapitvany">Alapítvány</option>
-                <option value="ovoda">Óvoda</option>
+                <option value="all">Összes év</option>
+                {availableYears.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Hónap</label>
+              <select
+                value={filterMonth as any}
+                onChange={(e) => setFilterMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="all">Összes hónap</option>
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                  <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Kategória</label>
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="all">Összes</option>
+                {availableCategories.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Munkaszám</label>
+              <select
+                value={filterMunkaszam}
+                onChange={(e) => setFilterMunkaszam(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="all">Összes</option>
+                {availableMunkaszam.map(ms => (
+                  <option key={ms} value={ms}>{ms}</option>
+                ))}
               </select>
             </div>
           </div>
