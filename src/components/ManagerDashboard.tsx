@@ -114,6 +114,7 @@ export const ManagerDashboard: React.FC = () => {
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
   const [allPayrollRecords, setAllPayrollRecords] = useState<PayrollRecord[]>([]);
+  const [allPayrollSummaries, setAllPayrollSummaries] = useState<PayrollSummary[]>([]);
   const [chartData, setChartData] = useState<ChartData>({
     monthlyData: [],
     organizationData: [],
@@ -356,6 +357,7 @@ export const ManagerDashboard: React.FC = () => {
 
           const payrollByProjectData = generatePayrollByProjectData(payrollRecords);
           const rentalVsNonRentalData = generateRentalVsNonRentalData(payrollRecords, payrollSummaries || []);
+          setAllPayrollSummaries(payrollSummaries || []);
           
           setChartData(prev => ({
             ...prev,
@@ -492,6 +494,7 @@ export const ManagerDashboard: React.FC = () => {
       setRecentInvoices((invoices?.slice(0, 5) || []) as Invoice[]);
       setAllInvoices((invoices || []) as Invoice[]);
       setAllPayrollRecords(payrollRecords || []);
+      setAllPayrollSummaries(payrollSummaries || []);
       setChartData({
         monthlyData,
         organizationData,
@@ -700,7 +703,8 @@ export const ManagerDashboard: React.FC = () => {
   const categoryDataFiltered = React.useMemo(() => {
     const invs = allInvoices.filter(inv => inv.invoice_date && isInPeriod(inv.invoice_date, catYear, catMonth));
     const payroll = allPayrollRecords.filter(rec => rec.record_date && isInPeriod(rec.record_date, catYear, catMonth));
-    const validCategories = ['Bérleti díjak','Bérköltség','Közüzemi díjak','Szolgáltatások','Étkeztetés költségei','Személyi jellegű kifizetések','Anyagköltség','Tárgyi eszközök','Felújítás, beruházások','Egyéb'];
+    const summaries = allPayrollSummaries.filter(sum => sum.year && sum.month && isInPeriod(`${sum.year}-${String(sum.month).padStart(2,'0')}-01`, catYear, catMonth));
+    const validCategories = ['Bérleti díjak','Bérköltség','Járulékok','Közüzemi díjak','Szolgáltatások','Étkeztetés költségei','Személyi jellegű kifizetések','Anyagköltség','Tárgyi eszközök','Felújítás, beruházások','Egyéb'];
     const map: Record<string,{amount:number;count:number}> = {};
     validCategories.forEach(c=> map[c] = { amount:0, count:0 });
     invs.forEach(inv => {
@@ -717,16 +721,21 @@ export const ManagerDashboard: React.FC = () => {
     // Add payroll into categories
     const rentalAmount = payroll.filter(r => r.is_rental).reduce((s, r) => s + (r.amount || 0), 0);
     const nonRentalAmount = payroll.filter(r => !r.is_rental).reduce((s, r) => s + (r.amount || 0), 0);
+    const taxAmount = summaries.reduce((s, sum) => s + ((sum as any).tax_amount || 0), 0);
     const rentalCount = payroll.filter(r => r.is_rental).length;
     const nonRentalCount = payroll.filter(r => !r.is_rental).length;
     map['Bérleti díjak'].amount += rentalAmount;
     map['Bérleti díjak'].count += rentalCount;
     map['Bérköltség'].amount += nonRentalAmount;
     map['Bérköltség'].count += nonRentalCount;
+    // Add tax as its own category
+    if (!map['Járulékok']) map['Járulékok'] = { amount: 0, count: 0 } as any;
+    map['Járulékok'].amount += taxAmount;
+    map['Járulékok'].count += summaries.length;
 
-    const colors: Record<string,string> = {'Bérleti díjak':'#3b82f6','Bérköltség':'#f97316','Közüzemi díjak':'#10b981','Szolgáltatások':'#f59e0b','Étkeztetés költségei':'#8b5cf6','Személyi jellegű kifizetések':'#ef4444','Anyagköltség':'#06b6d4','Tárgyi eszközök':'#84cc16','Felújítás, beruházások':'#ec4899','Egyéb':'#6366f1'};
+    const colors: Record<string,string> = {'Bérleti díjak':'#3b82f6','Bérköltség':'#f97316','Közüzemi díjak':'#10b981','Szolgáltatások':'#f59e0b','Étkeztetés költségei':'#8b5cf6','Személyi jellegű kifizetések':'#ef4444','Anyagköltség':'#06b6d4','Tárgyi eszközök':'#84cc16','Felújítás, beruházások':'#ec4899','Járulékok':'#f59e0b','Egyéb':'#6366f1'};
     return Object.entries(map).filter(([,v])=> v.amount!==0).map(([k,v])=>({category:k, count:v.count, amount:v.amount, color: colors[k]||'#6b7280'})).sort((a,b)=> Math.abs(b.amount)-Math.abs(a.amount));
-  }, [allInvoices, allPayrollRecords, catYear, catMonth]);
+  }, [allInvoices, allPayrollRecords, allPayrollSummaries, catYear, catMonth]);
 
   const generateOrganizationData = (invoices: any[]) => {
     const alapitvanyInvoices = invoices.filter(inv => inv.organization === 'alapitvany');
@@ -2025,7 +2034,7 @@ export const ManagerDashboard: React.FC = () => {
                       barSize={24}
                       animationDuration={1000}
                     >
-                      {chartData.munkaszamData.slice(0, 5).map((_, index) => (
+                      {munkaszamDataFiltered.slice(0, 5).map((_, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={`url(#munkaszamGradient-${index})`} 
@@ -2033,7 +2042,7 @@ export const ManagerDashboard: React.FC = () => {
                       ))}
                     </Bar>
                     <defs>
-                      {chartData.munkaszamData.slice(0, 5).map((entry, index) => (
+                      {munkaszamDataFiltered.slice(0, 5).map((entry, index) => (
                         <linearGradient 
                           key={`gradient-${index}`} 
                           id={`munkaszamGradient-${index}`} 
