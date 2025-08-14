@@ -2,8 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../integrations/supabase/client';
 import { MobileScanner } from '../MobileScanner';
-import { Upload, FolderPlus, Download, Share2, Edit, Save, X } from 'lucide-react';
+import { Upload, Download, Share2, Edit, Eye, Plus, FileText, Folder } from 'lucide-react';
 import { ShareDialog } from './ShareDialog';
+import { DocumentPreviewModal } from './DocumentPreviewModal';
+import { DocumentEditModal } from './DocumentEditModal';
+import { formatDate } from '../../utils/formatters';
 
 interface DocFolder {
   id: string;
@@ -39,10 +42,9 @@ export const DocumentsPage: React.FC = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [editingDocId, setEditingDocId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
   const [shareDocId, setShareDocId] = useState<string | null>(null);
+  const [previewDocId, setPreviewDocId] = useState<string | null>(null);
+  const [editDocId, setEditDocId] = useState<string | null>(null);
 
   const activeFolderName = useMemo(() => {
     if (!currentFolderId) return 'Összes dokumentum';
@@ -139,24 +141,8 @@ export const DocumentsPage: React.FC = () => {
     await uploadFiles([file]);
   };
 
-  const startEditing = (doc: DocumentRow) => {
-    setEditingDocId(doc.id);
-    setEditTitle(doc.title);
-    setEditDescription(doc.description || '');
-  };
-
-  const saveEdit = async () => {
-    if (!editingDocId) return;
-    const { data } = await (supabase as any)
-      .from('documents')
-      .update({ title: editTitle.trim() || 'Dokumentum', description: editDescription })
-      .eq('id', editingDocId)
-      .select('*')
-      .single();
-    if (data) {
-      setDocs((prev) => prev.map((d) => (d.id === data.id ? data : d)));
-    }
-    setEditingDocId(null);
+  const handleDocumentUpdated = (updatedDoc: DocumentRow) => {
+    setDocs((prev) => prev.map((d) => (d.id === updatedDoc.id ? updatedDoc : d)));
   };
 
   const downloadDoc = async (doc: DocumentRow) => {
@@ -169,13 +155,17 @@ export const DocumentsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Dokumentumok</h1>
-        <div className="flex items-center gap-2">
-          <label className="inline-flex items-center px-3 py-2 rounded-lg border cursor-pointer hover:bg-gray-50">
-            <Upload className="w-4 h-4 mr-2" />
-            Feltöltés
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dokumentumok</h1>
+          <p className="text-gray-600 mt-1">Dokumentumok kezelése és szervezése</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            <Upload className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Feltöltés</span>
             <input
               type="file"
               multiple
@@ -188,123 +178,185 @@ export const DocumentsPage: React.FC = () => {
             />
           </label>
           <button
-            className="inline-flex items-center px-3 py-2 rounded-lg border hover:bg-gray-50"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             onClick={() => setShowScanner(true)}
           >
-            <Share2 className="w-4 h-4 mr-2 rotate-90" />
-            Szkennelés
+            <FileText className="w-4 h-4" />
+            <span className="text-sm font-medium">Szkennelés</span>
           </button>
         </div>
-      </header>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sidebar */}
         <aside className="lg:col-span-3">
-          <div className="p-4 rounded-xl border bg-white">
-            <div className="flex items-center gap-2 mb-3">
-              <FolderPlus className="w-4 h-4" />
-              <span className="font-medium">Mappák</span>
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Folder className="w-5 h-5 text-gray-600" />
+              <h3 className="font-semibold text-gray-900">Mappák</h3>
             </div>
-            <div className="flex items-center gap-2 mb-3">
-              <input
-                className="flex-1 border rounded-lg px-3 py-2"
-                placeholder="Új mappa neve"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-              />
-              <button
-                className="px-3 py-2 rounded-lg border hover:bg-gray-50"
-                onClick={createFolder}
-                disabled={creatingFolder || !newFolderName.trim()}
-              >
-                Létrehozás
-              </button>
-            </div>
-            <ul className="space-y-1">
-              <li>
+            
+            <div className="space-y-4 mb-4">
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Új mappa neve"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newFolderName.trim()) {
+                      createFolder();
+                    }
+                  }}
+                />
                 <button
-                  className={`w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 ${!currentFolderId ? 'bg-gray-100' : ''}`}
-                  onClick={() => setCurrentFolderId(null)}
+                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={createFolder}
+                  disabled={creatingFolder || !newFolderName.trim()}
                 >
-                  Összes dokumentum
+                  <Plus className="w-4 h-4" />
                 </button>
-              </li>
-              {folders.map((f) => (
-                <li key={f.id}>
-                  <button
-                    className={`w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 ${currentFolderId === f.id ? 'bg-gray-100' : ''}`}
-                    onClick={() => setCurrentFolderId(f.id)}
-                  >
-                    {f.name}
-                  </button>
-                </li>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <button
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  !currentFolderId 
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => setCurrentFolderId(null)}
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Összes dokumentum
+                </div>
+              </button>
+              {folders.map((folder) => (
+                <button
+                  key={folder.id}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    currentFolderId === folder.id
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setCurrentFolderId(folder.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Folder className="w-4 h-4" />
+                    {folder.name}
+                  </div>
+                </button>
               ))}
-            </ul>
+            </div>
           </div>
         </aside>
 
+        {/* Main Content */}
         <section className="lg:col-span-9">
-          <div className="rounded-xl border bg-white">
-            <div className="p-4 border-b flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold">{activeFolderName}</h2>
-                <p className="text-sm text-gray-500">{docs.length} dokumentum</p>
+          <div className="bg-white rounded-xl border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">{activeFolderName}</h2>
+                  <p className="text-sm text-gray-500 mt-1">{docs.length} dokumentum</p>
+                </div>
+                {loading && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    Betöltés...
+                  </div>
+                )}
               </div>
-              {loading && <div className="text-sm text-gray-500">Betöltés...</div>}
             </div>
 
-            <div className="divide-y">
+            <div className="divide-y divide-gray-200">
               {docs.map((doc) => (
-                <div key={doc.id} className="p-4 flex items-center justify-between">
-                  {editingDocId === doc.id ? (
-                    <div className="flex-1 mr-4">
-                      <input
-                        className="w-full border rounded-lg px-3 py-2 mb-2"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                      />
-                      <textarea
-                        className="w-full border rounded-lg px-3 py-2"
-                        placeholder="Leírás"
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                      />
+                <div key={doc.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">{doc.title}</h3>
+                        <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                          <span>{doc.file_name}</span>
+                          <span>•</span>
+                          <span>{Math.round((doc.file_size || 0) / 1024)} KB</span>
+                          <span>•</span>
+                          <span>{formatDate(doc.created_at)}</span>
+                        </div>
+                        {doc.description && (
+                          <p className="text-sm text-gray-600 mt-1 truncate">{doc.description}</p>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <div>
-                      <div className="font-medium">{doc.title}</div>
-                      <div className="text-sm text-gray-500">{doc.file_name} • {(doc.file_size || 0) / 1024 | 0} KB</div>
-                    </div>
-                  )}
 
-                  <div className="flex items-center gap-2">
-                    {editingDocId === doc.id ? (
-                      <>
-                        <button className="p-2 rounded-lg border hover:bg-gray-50" onClick={saveEdit}>
-                          <Save className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 rounded-lg border hover:bg-gray-50" onClick={() => setEditingDocId(null)}>
-                          <X className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button className="p-2 rounded-lg border hover:bg-gray-50" onClick={() => startEditing(doc)}>
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 rounded-lg border hover:bg-gray-50" onClick={() => setShareDocId(doc.id)}>
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                    <button className="p-2 rounded-lg border hover:bg-gray-50" onClick={() => downloadDoc(doc)}>
-                      <Download className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => setPreviewDocId(doc.id)}
+                        title="Előnézet"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => setEditDocId(doc.id)}
+                        title="Szerkesztés"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => setShareDocId(doc.id)}
+                        title="Megosztás"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => downloadDoc(doc)}
+                        title="Letöltés"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
 
-              {docs.length === 0 && (
-                <div className="p-8 text-center text-gray-500">Nincs dokumentum ebben a mappában</div>
+              {docs.length === 0 && !loading && (
+                <div className="px-6 py-12 text-center">
+                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nincs dokumentum</h3>
+                  <p className="text-gray-500 mb-6">Ebben a mappában még nincsenek dokumentumok.</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span className="text-sm font-medium">Fájl feltöltése</span>
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = Array.from(e.target.files || []);
+                          uploadFiles(f);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                    <button
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowScanner(true)}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span className="text-sm font-medium">Szkennelés</span>
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -330,6 +382,21 @@ export const DocumentsPage: React.FC = () => {
             setShareDocId(null);
             refreshDocs();
           }}
+        />
+      )}
+
+      {previewDocId && (
+        <DocumentPreviewModal
+          documentId={previewDocId}
+          onClose={() => setPreviewDocId(null)}
+        />
+      )}
+
+      {editDocId && (
+        <DocumentEditModal
+          documentId={editDocId}
+          onClose={() => setEditDocId(null)}
+          onDocumentUpdated={handleDocumentUpdated}
         />
       )}
     </div>
