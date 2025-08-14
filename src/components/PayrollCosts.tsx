@@ -1252,9 +1252,12 @@ export const PayrollCosts: React.FC = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {payrollSummaries.map((summary) => (
-                  <tr key={summary.id} className="hover:bg-gray-50">
+               <tbody className="bg-white divide-y divide-gray-200">
+                 {payrollSummaries.map((summary) => (
+                   <tr key={summary.id} className={`hover:bg-gray-50 ${
+                     summary.organization === 'alapitvany' ? 'border-l-4 border-l-blue-500' : 
+                     summary.organization === 'ovoda' ? 'border-l-4 border-l-orange-500' : ''
+                   }`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900">
                         {formatMonth(summary.year, summary.month)}
@@ -1268,26 +1271,33 @@ export const PayrollCosts: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{formatCurrency(summary.total_payroll)}</span>
+                       <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.total_payroll)}</span>
+                       <div className="text-xs text-gray-500">Bruttó + járulékok</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-blue-600">{formatCurrency(summary.bank_transfer_costs || 0)}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-orange-600">{formatCurrency(summary.cash_costs || 0)}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{formatCurrency(summary.rental_costs)}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{formatCurrency(summary.non_rental_costs)}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{summary.record_count}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-purple-600">{formatCurrency(summary.tax_amount)}</span>
-                    </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <span className="text-sm font-medium text-blue-600">{formatCurrency(summary.bank_transfer_costs || 0)}</span>
+                       <div className="text-xs text-gray-500">Banki utalások</div>
+                     </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <span className="text-sm font-medium text-orange-600">{formatCurrency(summary.cash_costs || 0)}</span>
+                       <div className="text-xs text-gray-500">Készpénzes</div>
+                     </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.rental_costs)}</span>
+                       <div className="text-xs text-gray-500">Bérleti díjak</div>
+                     </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.non_rental_costs)}</span>
+                       <div className="text-xs text-gray-500">Nem bérleti</div>
+                     </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <span className="text-sm font-medium text-gray-900">{summary.record_count}</span>
+                       <div className="text-xs text-gray-500">db</div>
+                     </td>
+                     <td className="px-6 py-4 whitespace-nowrap">
+                       <span className="text-sm font-medium text-purple-600">{formatCurrency(summary.tax_amount)}</span>
+                       <div className="text-xs text-gray-500">Társadalmi járulékok</div>
+                     </td>
                      <td className="px-6 py-4 whitespace-nowrap">
                        <div className="flex gap-2">
                          <button
@@ -1328,11 +1338,18 @@ export const PayrollCosts: React.FC = () => {
       {viewingRecords.length > 0 && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Bérköltség részletek - {viewingMonth}
-                </h3>
+             <div className="p-6 border-b border-gray-200">
+               <div className="flex justify-between items-center">
+                 <div>
+                   <h3 className="text-lg font-semibold text-gray-900">
+                     Bérköltség részletek - {viewingMonth}
+                   </h3>
+                   <p className="text-sm text-gray-600 mt-1">
+                     {viewingRecords[0]?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 
+                      viewingRecords[0]?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : 
+                      viewingRecords[0]?.organization || 'Ismeretlen szervezet'} - {viewingRecords.length} rekord
+                   </p>
+                 </div>
                 <button
                   onClick={() => {
                     setViewingRecords([]);
@@ -1375,10 +1392,11 @@ export const PayrollCosts: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {viewingRecords.map((record) => {
-                    // Find the summary for this month to get tax_amount
+                    // Find the summary for this month AND organization to get tax_amount
                     const currentSummary = payrollSummaries.find(s => 
                       s.year === parseInt(viewingMonth.split('.')[0]) && 
-                      s.month === parseInt(viewingMonth.split('.')[1])
+                      s.month === parseInt(viewingMonth.split('.')[1]) &&
+                      s.organization === viewingRecords[0]?.organization
                     );
                     const monthlyTaxAmount = currentSummary?.tax_amount || 0;
                     const totalPayrollForMonth = viewingRecords.reduce((sum, r) => sum + r.amount, 0);
@@ -1500,12 +1518,15 @@ export const PayrollCosts: React.FC = () => {
               {viewingRecords.length > 0 && (() => {
                 const currentSummary = payrollSummaries.find(s => 
                   s.year === parseInt(viewingMonth.split('.')[0]) && 
-                  s.month === parseInt(viewingMonth.split('.')[1])
+                  s.month === parseInt(viewingMonth.split('.')[1]) &&
+                  s.organization === viewingRecords[0]?.organization
                 );
                 
                 return (
                   <div className="mt-6 bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Havi összesítő</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                      Havi összesítő - {currentSummary?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : currentSummary?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : currentSummary?.organization || 'Ismeretlen szervezet'}
+                    </h4>
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow-sm">
                         <thead className="bg-gray-100">
@@ -1549,21 +1570,30 @@ export const PayrollCosts: React.FC = () => {
                                 {currentSummary?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : currentSummary?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : currentSummary?.organization}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-bold text-gray-900">
-                                {formatCurrency(currentSummary?.total_payroll || 0)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-bold text-blue-600">
-                                {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-bold text-orange-600">
-                                {formatCurrency(currentSummary?.cash_costs || 0)}
-                              </span>
-                            </td>
+                             <td className="px-6 py-4 whitespace-nowrap">
+                               <span className="text-sm font-bold text-gray-900">
+                                 {formatCurrency((currentSummary?.total_payroll || 0))}
+                               </span>
+                               <div className="text-xs text-gray-500 mt-1">
+                                 Bruttó bér + járulékok
+                               </div>
+                             </td>
+                             <td className="px-6 py-4 whitespace-nowrap">
+                               <span className="text-sm font-bold text-blue-600">
+                                 {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
+                               </span>
+                               <div className="text-xs text-gray-500 mt-1">
+                                 Banki utalások összege
+                               </div>
+                             </td>
+                             <td className="px-6 py-4 whitespace-nowrap">
+                               <span className="text-sm font-bold text-orange-600">
+                                 {formatCurrency(currentSummary?.cash_costs || 0)}
+                               </span>
+                               <div className="text-xs text-gray-500 mt-1">
+                                 Készpénzes kifizetések
+                               </div>
+                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="text-sm font-bold text-gray-900">
                                 {formatCurrency(currentSummary?.rental_costs || 0)}
@@ -1579,16 +1609,86 @@ export const PayrollCosts: React.FC = () => {
                                 {currentSummary?.record_count || 0}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-bold text-purple-600">
-                                {formatCurrency(currentSummary?.tax_amount || 0)}
-                              </span>
-                            </td>
+                             <td className="px-6 py-4 whitespace-nowrap">
+                               <span className="text-sm font-bold text-purple-600">
+                                 {formatCurrency(currentSummary?.tax_amount || 0)}
+                               </span>
+                               <div className="text-xs text-gray-500 mt-1">
+                                 Társadalmi járulékok
+                               </div>
+                             </td>
                           </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                         </tbody>
+                       </table>
+                     </div>
+                     
+                     {/* Additional calculation breakdown */}
+                     <div className="mt-4 bg-blue-50 rounded-lg p-4">
+                       <h5 className="text-sm font-semibold text-gray-900 mb-3">Számítási részletezés</h5>
+                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                         <div className="space-y-2">
+                           <div className="flex justify-between">
+                             <span>Bruttó bérek:</span>
+                             <span className="font-medium">
+                               {formatCurrency(((currentSummary?.bank_transfer_costs || 0) + (currentSummary?.cash_costs || 0)))}
+                             </span>
+                           </div>
+                           <div className="flex justify-between">
+                             <span>+ Társadalmi járulékok:</span>
+                             <span className="font-medium text-purple-600">
+                               {formatCurrency(currentSummary?.tax_amount || 0)}
+                             </span>
+                           </div>
+                           <div className="flex justify-between border-t pt-2">
+                             <span className="font-semibold">= Teljes költség:</span>
+                             <span className="font-bold">
+                               {formatCurrency(currentSummary?.total_payroll || 0)}
+                             </span>
+                           </div>
+                         </div>
+                         <div className="space-y-2">
+                           <div className="flex justify-between">
+                             <span>Bérleti költségek:</span>
+                             <span className="font-medium">
+                               {formatCurrency(currentSummary?.rental_costs || 0)}
+                             </span>
+                           </div>
+                           <div className="flex justify-between">
+                             <span>Nem bérleti:</span>
+                             <span className="font-medium">
+                               {formatCurrency(currentSummary?.non_rental_costs || 0)}
+                             </span>
+                           </div>
+                           <div className="flex justify-between border-t pt-2">
+                             <span className="font-semibold">Összesen:</span>
+                             <span className="font-bold">
+                               {formatCurrency(((currentSummary?.rental_costs || 0) + (currentSummary?.non_rental_costs || 0)))}
+                             </span>
+                           </div>
+                         </div>
+                         <div className="space-y-2">
+                           <div className="flex justify-between">
+                             <span>Banki átutalások:</span>
+                             <span className="font-medium text-blue-600">
+                               {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
+                             </span>
+                           </div>
+                           <div className="flex justify-between">
+                             <span>Készpénzes:</span>
+                             <span className="font-medium text-orange-600">
+                               {formatCurrency(currentSummary?.cash_costs || 0)}
+                             </span>
+                           </div>
+                           <div className="flex justify-between border-t pt-2">
+                             <span className="font-semibold">Összesen:</span>
+                             <span className="font-bold">
+                               {formatCurrency(((currentSummary?.bank_transfer_costs || 0) + (currentSummary?.cash_costs || 0)))}
+                             </span>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
                 );
               })()}
             </div>
