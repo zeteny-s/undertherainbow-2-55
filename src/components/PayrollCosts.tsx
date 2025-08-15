@@ -149,7 +149,7 @@ export const PayrollCosts: React.FC = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [addNotification]);
+  }, [addNotification, selectedOrganization]);
 
   const handleRendbenClick = () => {
     setStep('cash-question');
@@ -226,7 +226,7 @@ export const PayrollCosts: React.FC = () => {
     } finally {
       setIsProcessingCash(false);
     }
-  }, [addNotification]);
+  }, [addNotification, selectedOrganization]);
 
   const handleCashRendbenClick = () => {
     setShowTaxModal(true);
@@ -295,7 +295,7 @@ export const PayrollCosts: React.FC = () => {
     } finally {
       setIsProcessingTax(false);
     }
-  }, [addNotification]);
+  }, [addNotification, selectedOrganization]);
 
   const saveRecords = async () => {
     if (extractedRecords.length === 0 && cashRecords.length === 0) {
@@ -1151,43 +1151,44 @@ export const PayrollCosts: React.FC = () => {
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <div className="h-[600px] overflow-y-auto">
                     <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded-lg">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Alkalmazott
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Összeg
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Dátum
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Munkaszám
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {cashRecords.map((record, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-sm font-medium text-gray-900">
-                            {record.employeeName}
-                          </td>
-                          <td className="px-3 py-2 text-sm text-gray-900">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              {formatCurrency(record.amount)}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-sm text-gray-500">
-                            {record.date}
-                          </td>
-                          <td className="px-3 py-2 text-sm text-gray-900">
-                            {record.projectCode || '—'}
-                          </td>
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Alkalmazott
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Összeg
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Dátum
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Munkaszám
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {cashRecords.map((record, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900">
+                              {record.employeeName}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-900">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                {formatCurrency(record.amount)}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500">
+                              {record.date}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-900">
+                              {record.projectCode || '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -1339,17 +1340,12 @@ export const PayrollCosts: React.FC = () => {
                   </th>
                 </tr>
               </thead>
-               <tbody className="bg-white divide-y divide-gray-200">
-                 {payrollSummaries.map((summary) => (
-                   <tr key={summary.id} className={`hover:bg-gray-50 ${
-                     summary.organization === 'alapitvany' ? 'border-l-4 border-l-blue-500' : 
-                     summary.organization === 'ovoda' ? 'border-l-4 border-l-orange-500' : ''
-                   }`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900">
-                        {formatMonth(summary.year, summary.month)}
-                      </span>
-                    </td>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {payrollSummaries.map((summary) => (
+                  <tr key={summary.id} className={`hover:bg-gray-50 ${
+                    summary.organization === 'alapitvany' ? 'border-l-4 border-l-blue-500' : 
+                    summary.organization === 'ovoda' ? 'border-l-4 border-l-orange-500' : ''
+                  }`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-600">
                         {summary.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 
@@ -1358,61 +1354,61 @@ export const PayrollCosts: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.total_payroll)}</span>
-                       <div className="text-xs text-gray-500">Bruttó + járulékok</div>
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.total_payroll)}</span>
+                      <div className="text-xs text-gray-500">Bruttó + járulékok</div>
                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm font-medium text-blue-600">{formatCurrency(summary.bank_transfer_costs || 0)}</span>
-                       <div className="text-xs text-gray-500">Banki utalások</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm font-medium text-orange-600">{formatCurrency(summary.cash_costs || 0)}</span>
-                       <div className="text-xs text-gray-500">Készpénzes</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.rental_costs)}</span>
-                       <div className="text-xs text-gray-500">Bérleti díjak</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.non_rental_costs)}</span>
-                       <div className="text-xs text-gray-500">Nem bérleti</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm font-medium text-gray-900">{summary.record_count}</span>
-                       <div className="text-xs text-gray-500">db</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm font-medium text-purple-600">{formatCurrency(summary.tax_amount)}</span>
-                       <div className="text-xs text-gray-500">Társadalmi járulékok</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <div className="flex gap-2">
-                         <button
-                           onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
-                           className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                           title="Részletek megtekintése"
-                         >
-                           <CheckCircle2 className="h-4 w-4" />
-                           Részletek
-                         </button>
-                         <button
-                           onClick={() => downloadMonthlyDocuments(summary)}
-                           className="text-green-600 hover:text-green-800 flex items-center gap-1"
-                           title="Havi dokumentumok letöltése"
-                         >
-                           <Download className="h-4 w-4" />
-                           Letöltés
-                         </button>
-                         <button
-                           onClick={() => setDeleteConfirmSummary(summary)}
-                           className="text-red-600 hover:text-red-800 flex items-center gap-1"
-                           title="Teljes havi összesítő törlése"
-                         >
-                           <Trash2 className="h-4 w-4" />
-                           Törlés
-                         </button>
-                       </div>
-                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-blue-600">{formatCurrency(summary.bank_transfer_costs || 0)}</span>
+                      <div className="text-xs text-gray-500">Banki utalások</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-orange-600">{formatCurrency(summary.cash_costs || 0)}</span>
+                      <div className="text-xs text-gray-500">Készpénzes</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.rental_costs)}</span>
+                      <div className="text-xs text-gray-500">Bérleti díjak</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(summary.non_rental_costs)}</span>
+                      <div className="text-xs text-gray-500">Nem bérleti</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{summary.record_count}</span>
+                      <div className="text-xs text-gray-500">db</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-purple-600">{formatCurrency(summary.tax_amount)}</span>
+                      <div className="text-xs text-gray-500">Társadalmi járulékok</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => viewMonthlyRecords(summary.year, summary.month, summary.organization)}
+                          className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                          title="Részletek megtekintése"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          Részletek
+                        </button>
+                        <button
+                          onClick={() => downloadMonthlyDocuments(summary)}
+                          className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                          title="Havi dokumentumok letöltése"
+                        >
+                          <Download className="h-4 w-4" />
+                          Letöltés
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmSummary(summary)}
+                          className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                          title="Teljes havi összesítő törlése"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Törlés
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1425,18 +1421,18 @@ export const PayrollCosts: React.FC = () => {
       {viewingRecords.length > 0 && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-             <div className="p-6 border-b border-gray-200">
-               <div className="flex justify-between items-center">
-                 <div>
-                   <h3 className="text-lg font-semibold text-gray-900">
-                     Bérköltség részletek - {viewingMonth}
-                   </h3>
-                   <p className="text-sm text-gray-600 mt-1">
-                     {viewingRecords[0]?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 
-                      viewingRecords[0]?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : 
-                      viewingRecords[0]?.organization || 'Ismeretlen szervezet'} - {viewingRecords.length} rekord
-                   </p>
-                 </div>
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Bérköltség részletek - {viewingMonth}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {viewingRecords[0]?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 
+                     viewingRecords[0]?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : 
+                     viewingRecords[0]?.organization || 'Ismeretlen szervezet'} - {viewingRecords.length} rekord
+                  </p>
+                </div>
                 <button
                   onClick={() => {
                     setViewingRecords([]);
@@ -1450,153 +1446,152 @@ export const PayrollCosts: React.FC = () => {
             </div>
             
             <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Alkalmazott neve
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Munkaszám
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Összeg (HUF)
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ebből Járulékok (HUF)
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dátum
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Bérleti költség?
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Műveletek
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {viewingRecords.map((record) => {
-                    // Find the summary for this month AND organization to get tax_amount
-                    const currentSummary = payrollSummaries.find(s => 
-                      s.year === parseInt(viewingMonth.split('.')[0]) && 
-                      s.month === parseInt(viewingMonth.split('.')[1]) &&
-                      s.organization === viewingRecords[0]?.organization
-                    );
-                    const monthlyTaxAmount = currentSummary?.tax_amount || 0;
-                    const totalPayrollForMonth = viewingRecords.reduce((sum, r) => sum + r.amount, 0);
-                    const employeeTaxShare = totalPayrollForMonth > 0 ? (record.amount * monthlyTaxAmount) / totalPayrollForMonth : 0;
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Alkalmazott neve
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Munkaszám
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Összeg (HUF)
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ebből Járulékok (HUF)
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Dátum
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Bérleti költség?
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Műveletek
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {viewingRecords.map((record) => {
+                      // Find the summary for this month AND organization to get tax_amount
+                      const currentSummary = payrollSummaries.find(s => 
+                        s.year === parseInt(viewingMonth.split('.')[0]) && 
+                        s.month === parseInt(viewingMonth.split('.')[1]) &&
+                        s.organization === viewingRecords[0]?.organization
+                      );
+                      const monthlyTaxAmount = currentSummary?.tax_amount || 0;
+                      const totalPayrollForMonth = viewingRecords.reduce((sum, r) => sum + r.amount, 0);
+                      const employeeTaxShare = totalPayrollForMonth > 0 ? (record.amount * monthlyTaxAmount) / totalPayrollForMonth : 0;
 
-                    return (
-                      <tr key={record.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {editingRecordId === record.id ? (
-                            <input
-                              type="text"
-                              value={editingRecord?.employeeName || ''}
-                              onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {editingRecordId === record.id ? (
-                            <input
-                              type="text"
-                              value={editingRecord?.projectCode || ''}
-                              onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {editingRecordId === record.id ? (
-                            <input
-                              type="number"
-                              value={editingRecord?.amount || 0}
-                              onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
-                              className="w-full p-1 border rounded"
-                            />
-                          ) : (
-                            <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{formatCurrency(employeeTaxShare)}</span>
-                        </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="date"
-                               value={editingRecord?.date || ''}
-                               onChange={(e) => updateEditingRecord('date', e.target.value)}
-                               className="w-full p-1 border rounded"
-                             />
-                           ) : (
-                             <span className="text-sm text-gray-900">{record.date}</span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <input
-                               type="checkbox"
-                               checked={editingRecord?.isRental || false}
-                               onChange={(e) => updateEditingRecord('isRental', e.target.checked)}
-                               className="w-4 h-4"
-                             />
-                           ) : (
-                             <span className="text-sm">
-                               {record.isRental ? '✅' : '❌'}
-                             </span>
-                           )}
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap">
-                           {editingRecordId === record.id ? (
-                             <div className="flex gap-2">
-                               <button
-                                 onClick={saveEditedRecord}
-                                 className="text-green-600 hover:text-green-800"
-                                 title="Mentés"
-                               >
-                                 <Save className="h-4 w-4" />
-                               </button>
-                               <button
-                                 onClick={cancelEditingRecord}
-                                 className="text-gray-600 hover:text-gray-800"
-                                 title="Mégse"
-                               >
-                                 <X className="h-4 w-4" />
-                               </button>
-                             </div>
-                           ) : (
-                             <div className="flex gap-2">
-                               <button
-                                 onClick={() => startEditingRecord(record)}
-                                 className="text-blue-600 hover:text-blue-800"
-                                 title="Szerkesztés"
-                               >
-                                 <Edit3 className="h-4 w-4" />
-                               </button>
-                               <button
-                                 onClick={() => setDeleteConfirmRecord(record)}
-                                 className="text-red-600 hover:text-red-800"
-                                 title="Törlés"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </button>
-                             </div>
-                           )}
-                         </td>
+                      return (
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {editingRecordId === record.id ? (
+                              <input
+                                type="text"
+                                value={editingRecord?.employeeName || ''}
+                                onChange={(e) => updateEditingRecord('employeeName', e.target.value)}
+                                className="w-full p-1 border rounded"
+                              />
+                            ) : (
+                              <span className="text-sm font-medium text-gray-900">{record.employeeName}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {editingRecordId === record.id ? (
+                              <input
+                                type="text"
+                                value={editingRecord?.projectCode || ''}
+                                onChange={(e) => updateEditingRecord('projectCode', e.target.value)}
+                                className="w-full p-1 border rounded"
+                              />
+                            ) : (
+                              <span className="text-sm text-gray-900">{record.projectCode || '—'}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {editingRecordId === record.id ? (
+                              <input
+                                type="number"
+                                value={editingRecord?.amount || 0}
+                                onChange={(e) => updateEditingRecord('amount', Number(e.target.value))}
+                                className="w-full p-1 border rounded"
+                              />
+                            ) : (
+                              <span className="text-sm text-gray-900">{formatCurrency(record.amount)}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900">{formatCurrency(employeeTaxShare)}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {editingRecordId === record.id ? (
+                              <input
+                                type="date"
+                                value={editingRecord?.date || ''}
+                                onChange={(e) => updateEditingRecord('date', e.target.value)}
+                                className="w-full p-1 border rounded"
+                              />
+                            ) : (
+                              <span className="text-sm text-gray-900">{record.date}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {editingRecordId === record.id ? (
+                              <input
+                                type="checkbox"
+                                checked={editingRecord?.isRental || false}
+                                onChange={(e) => updateEditingRecord('isRental', e.target.checked)}
+                                className="w-4 h-4"
+                              />
+                            ) : (
+                              <span className="text-sm">
+                                {record.isRental ? '✅' : '❌'}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {editingRecordId === record.id ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={saveEditedRecord}
+                                  className="text-green-600 hover:text-green-800"
+                                  title="Mentés"
+                                >
+                                  <Save className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={cancelEditingRecord}
+                                  className="text-gray-600 hover:text-gray-800"
+                                  title="Mégse"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => startEditingRecord(record)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Szerkesztés"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirmRecord(record)}
+                                  className="text-red-600 hover:text-red-800"
+                                  title="Törlés"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
-                   
                   </tbody>
                 </table>
               </div>
@@ -1657,30 +1652,30 @@ export const PayrollCosts: React.FC = () => {
                                 {currentSummary?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : currentSummary?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : currentSummary?.organization}
                               </span>
                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap">
-                               <span className="text-sm font-bold text-gray-900">
-                                 {formatCurrency((currentSummary?.total_payroll || 0))}
-                               </span>
-                               <div className="text-xs text-gray-500 mt-1">
-                                 Bruttó bér + járulékok
-                               </div>
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap">
-                               <span className="text-sm font-bold text-blue-600">
-                                 {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
-                               </span>
-                               <div className="text-xs text-gray-500 mt-1">
-                                 Banki utalások összege
-                               </div>
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap">
-                               <span className="text-sm font-bold text-orange-600">
-                                 {formatCurrency(currentSummary?.cash_costs || 0)}
-                               </span>
-                               <div className="text-xs text-gray-500 mt-1">
-                                 Készpénzes kifizetések
-                               </div>
-                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-gray-900">
+                                {formatCurrency((currentSummary?.total_payroll || 0))}
+                              </span>
+                              <div className="text-xs text-gray-500 mt-1">
+                                Bruttó bér + járulékok
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-blue-600">
+                                {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
+                              </span>
+                              <div className="text-xs text-gray-500 mt-1">
+                                Banki utalások összege
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-orange-600">
+                                {formatCurrency(currentSummary?.cash_costs || 0)}
+                              </span>
+                              <div className="text-xs text-gray-500 mt-1">
+                                Készpénzes kifizetések
+                              </div>
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="text-sm font-bold text-gray-900">
                                 {formatCurrency(currentSummary?.rental_costs || 0)}
@@ -1696,207 +1691,212 @@ export const PayrollCosts: React.FC = () => {
                                 {currentSummary?.record_count || 0}
                               </span>
                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap">
-                               <span className="text-sm font-bold text-purple-600">
-                                 {formatCurrency(currentSummary?.tax_amount || 0)}
-                               </span>
-                               <div className="text-xs text-gray-500 mt-1">
-                                 Társadalmi járulékok
-                               </div>
-                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-bold text-purple-600">
+                                {formatCurrency(currentSummary?.tax_amount || 0)}
+                              </span>
+                              <div className="text-xs text-gray-500 mt-1">
+                                Társadalmi járulékok
+                              </div>
+                            </td>
                           </tr>
-                         </tbody>
-                       </table>
-                     </div>
-                     
-                     {/* Additional calculation breakdown */}
-                     <div className="mt-4 bg-blue-50 rounded-lg p-4">
-                       <h5 className="text-sm font-semibold text-gray-900 mb-3">Számítási részletezés</h5>
-                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                         <div className="space-y-2">
-                           <div className="flex justify-between">
-                             <span>Bruttó bérek:</span>
-                             <span className="font-medium">
-                               {formatCurrency(((currentSummary?.bank_transfer_costs || 0) + (currentSummary?.cash_costs || 0)))}
-                             </span>
-                           </div>
-                           <div className="flex justify-between">
-                             <span>+ Társadalmi járulékok:</span>
-                             <span className="font-medium text-purple-600">
-                               {formatCurrency(currentSummary?.tax_amount || 0)}
-                             </span>
-                           </div>
-                           <div className="flex justify-between border-t pt-2">
-                             <span className="font-semibold">= Teljes költség:</span>
-                             <span className="font-bold">
-                               {formatCurrency(currentSummary?.total_payroll || 0)}
-                             </span>
-                           </div>
-                         </div>
-                         <div className="space-y-2">
-                           <div className="flex justify-between">
-                             <span>Bérleti költségek:</span>
-                             <span className="font-medium">
-                               {formatCurrency(currentSummary?.rental_costs || 0)}
-                             </span>
-                           </div>
-                           <div className="flex justify-between">
-                             <span>Nem bérleti:</span>
-                             <span className="font-medium">
-                               {formatCurrency(currentSummary?.non_rental_costs || 0)}
-                             </span>
-                           </div>
-                           <div className="flex justify-between border-t pt-2">
-                             <span className="font-semibold">Összesen:</span>
-                             <span className="font-bold">
-                               {formatCurrency(((currentSummary?.rental_costs || 0) + (currentSummary?.non_rental_costs || 0)))}
-                             </span>
-                           </div>
-                         </div>
-                         <div className="space-y-2">
-                           <div className="flex justify-between">
-                             <span>Banki átutalások:</span>
-                             <span className="font-medium text-blue-600">
-                               {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
-                             </span>
-                           </div>
-                           <div className="flex justify-between">
-                             <span>Készpénzes:</span>
-                             <span className="font-medium text-orange-600">
-                               {formatCurrency(currentSummary?.cash_costs || 0)}
-                             </span>
-                           </div>
-                           <div className="flex justify-between border-t pt-2">
-                             <span className="font-semibold">Összesen:</span>
-                             <span className="font-bold">
-                               {formatCurrency(((currentSummary?.bank_transfer_costs || 0) + (currentSummary?.cash_costs || 0)))}
-                             </span>
-                           </div>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    {/* Additional calculation breakdown */}
+                    <div className="mt-4 bg-blue-50 rounded-lg p-4">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3">Számítási részletezés</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Bruttó bérek:</span>
+                            <span className="font-medium">
+                              {formatCurrency(((currentSummary?.bank_transfer_costs || 0) + (currentSummary?.cash_costs || 0)))}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>+ Társadalmi járulékok:</span>
+                            <span className="font-medium text-purple-600">
+                              {formatCurrency(currentSummary?.tax_amount || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="font-semibold">= Teljes költség:</span>
+                            <span className="font-bold">
+                              {formatCurrency(currentSummary?.total_payroll || 0)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Bérleti költségek:</span>
+                            <span className="font-medium">
+                              {formatCurrency(currentSummary?.rental_costs || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Nem bérleti:</span>
+                            <span className="font-medium">
+                              {formatCurrency(currentSummary?.non_rental_costs || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="font-semibold">Összesen:</span>
+                            <span className="font-bold">
+                              {formatCurrency(((currentSummary?.rental_costs || 0) + (currentSummary?.non_rental_costs || 0)))}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Banki átutalások:</span>
+                            <span className="font-medium text-blue-600">
+                              {formatCurrency(currentSummary?.bank_transfer_costs || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Készpénzes:</span>
+                            <span className="font-medium text-orange-600">
+                              {formatCurrency(currentSummary?.cash_costs || 0)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="font-semibold">Összesen:</span>
+                            <span className="font-bold">
+                              {formatCurrency(((currentSummary?.bank_transfer_costs || 0) + (currentSummary?.cash_costs || 0)))}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 );
               })()}
             </div>
           </div>
-          </div>
-        )}
+        </div>
+      )}
 
-        {/* Delete Record Confirmation Modal */}
-        {deleteConfirmRecord && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
-              <div className="flex items-center mb-4">
-                <div className="flex-shrink-0">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-lg font-medium text-gray-900">Bérköltség rekord törlése</h3>
-                </div>
+      {/* Delete Record Confirmation Modal */}
+      {deleteConfirmRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
-              
-              <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-4">
-                  Biztosan törölni szeretné ezt a bérköltség rekordot? Ez a művelet nem vonható vissza.
-                </p>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm font-medium text-gray-900">{deleteConfirmRecord.employeeName}</p>
-                  <p className="text-xs text-gray-500">
-                    {deleteConfirmRecord.projectCode && `Munkaszám: ${deleteConfirmRecord.projectCode}`}
-                    {` • Összeg: ${formatCurrency(deleteConfirmRecord.amount)}`}
-                    {` • Dátum: ${deleteConfirmRecord.date}`}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-                <button
-                  onClick={() => setDeleteConfirmRecord(null)}
-                  disabled={deleting}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                >
-                  Mégse
-                </button>
-                <button
-                  onClick={() => handleDeleteRecord(deleteConfirmRecord)}
-                  disabled={deleting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-                >
-                  {deleting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Törlés...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4" />
-                      <span>Törlés</span>
-                    </>
-                  )}
-                </button>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Bérköltség rekord törlése</h3>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Delete Monthly Summary Confirmation Modal */}
-        {deleteConfirmSummary && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
-              <div className="flex items-center mb-4">
-                <div className="flex-shrink-0">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-lg font-medium text-gray-900">Havi bérköltség összesítő törlése</h3>
-                </div>
-              </div>
-              
-              <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-4">
-                  Biztosan törölni szeretné a teljes havi bérköltség összesítőt? Ez törölni fogja az összes kapcsolódó bérköltség rekordot és a havi összesítőt is. Ez a művelet nem vonható vissza.
+            
+            <div className="mb-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Biztosan törölni szeretné ezt a bérköltség rekordot? Ez a művelet nem vonható vissza.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-900">{deleteConfirmRecord.employeeName}</p>
+                <p className="text-xs text-gray-500">
+                  {deleteConfirmRecord.projectCode && `Munkaszám: ${deleteConfirmRecord.projectCode}`}
+                  {` • Összeg: ${formatCurrency(deleteConfirmRecord.amount)}`}
+                  {` • Dátum: ${deleteConfirmRecord.date}`}
                 </p>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatMonth(deleteConfirmSummary.year, deleteConfirmSummary.month)} - {deleteConfirmSummary.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {`Rekordok száma: ${deleteConfirmSummary.record_count} db`}
-                    {` • Összeg: ${formatCurrency(deleteConfirmSummary.total_payroll)}`}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-                <button
-                  onClick={() => setDeleteConfirmSummary(null)}
-                  disabled={deleting}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                >
-                  Mégse
-                </button>
-                <button
-                  onClick={() => handleDeleteMonthlyPayroll(deleteConfirmSummary)}
-                  disabled={deleting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-                >
-                  {deleting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Törlés...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4" />
-                      <span>Törlés</span>
-                    </>
-                  )}
-                </button>
               </div>
             </div>
+            
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+              <button
+                onClick={() => setDeleteConfirmRecord(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Mégse
+              </button>
+              <button
+                onClick={() => handleDeleteRecord(deleteConfirmRecord)}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Törlés...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>Törlés</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
-    );
-  };
+        </div>
+      )}
+
+      {/* Delete Monthly Summary Confirmation Modal */}
+      {deleteConfirmSummary && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Havi bérköltség összesítő törlése</h3>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Biztosan törölni szeretné a teljes havi bérköltség összesítőt? Ez törölni fogja az összes kapcsolódó bérköltség rekordot és a havi összesítőt is. Ez a művelet nem vonható vissza.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-900">
+                  {formatMonth(deleteConfirmSummary.year, deleteConfirmSummary.month)} - {deleteConfirmSummary.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : 'Feketerigó Alapítványi Óvoda'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {`Rekordok száma: ${deleteConfirmSummary.record_count} db`}
+                  {` • Összeg: ${formatCurrency(deleteConfirmSummary.total_payroll)}`}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+              <button
+                onClick={() => setDeleteConfirmSummary(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Mégse
+              </button>
+              <button
+                onClick={() => handleDeleteMonthlyPayroll(deleteConfirmSummary)}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Törlés...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>Törlés</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};text-sm font-medium text-gray-900">
+                        {formatMonth(summary.year, summary.month)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="
