@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ManagerTeamsView } from './ManagerTeamsView';
 import { OfficeTeamsView } from './OfficeTeamsView';
 import { LoadingSpinner } from '../common/LoadingSpinner';
+import { TeamsDashboard } from './TeamsDashboard';
 
 export const TeamsPage: React.FC = () => {
   const { user, loading } = useAuth();
@@ -17,7 +18,7 @@ export const TeamsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {isManager ? <ManagerTeamsView /> : <OfficeTeamsView />}
+      {isManager ? <TeamsDashboard /> : <OfficeTeamsView />}
     </div>
   );
 };
