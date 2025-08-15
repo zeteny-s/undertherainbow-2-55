@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../integrations/supabase/client';
 import { MobileScanner } from '../MobileScanner';
-import { Upload, Download, Share2, Edit, Eye, Plus, FileText, Folder } from 'lucide-react';
+import { Upload, Download, Share2, Edit, Eye, Plus, FileText, Folder, Trash2, AlertTriangle } from 'lucide-react';
 import { ShareDialog } from './ShareDialog';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentEditModal } from './DocumentEditModal';
@@ -45,6 +45,9 @@ export const DocumentsPage: React.FC = () => {
   const [shareDocId, setShareDocId] = useState<string | null>(null);
   const [previewDocId, setPreviewDocId] = useState<string | null>(null);
   const [editDocId, setEditDocId] = useState<string | null>(null);
+  const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
+  const [deleteFolderId, setDeleteFolderId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const activeFolderName = useMemo(() => {
     if (!currentFolderId) return 'Összes dokumentum';
@@ -97,6 +100,76 @@ export const DocumentsPage: React.FC = () => {
       }
     } finally {
       setCreatingFolder(false);
+    }
+  };
+
+  const deleteFolder = async (folderId: string) => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      // First check if folder has documents
+      const { data: docsInFolder } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('folder_id', folderId);
+      
+      if (docsInFolder && docsInFolder.length > 0) {
+        alert('A mappa nem törölhető, mert tartalmaz dokumentumokat. Először törölje a dokumentumokat.');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('document_folders')
+        .delete()
+        .eq('id', folderId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Reset current folder if it was deleted
+      if (currentFolderId === folderId) {
+        setCurrentFolderId(null);
+      }
+      
+      setFolders(prev => prev.filter(f => f.id !== folderId));
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      alert('Hiba történt a mappa törlésekor');
+    } finally {
+      setDeleting(false);
+      setDeleteFolderId(null);
+    }
+  };
+
+  const deleteDocument = async (doc: DocumentRow) => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      // Delete from storage first
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([doc.storage_path]);
+
+      if (storageError) {
+        console.warn('Storage deletion failed:', storageError);
+      }
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', doc.id)
+        .eq('user_id', user.id);
+
+      if (dbError) throw dbError;
+
+      refreshDocs();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert('Hiba történt a dokumentum törlésekor');
+    } finally {
+      setDeleting(false);
+      setDeleteDocId(null);
     }
   };
 
@@ -234,18 +307,30 @@ export const DocumentsPage: React.FC = () => {
                 </div>
               </button>
               {folders.map((folder) => (
-                <button
+                 <button
                   key={folder.id}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
                     currentFolderId === folder.id
                       ? 'bg-blue-50 text-blue-700 border border-blue-200'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                   onClick={() => setCurrentFolderId(folder.id)}
                 >
-                  <div className="flex items-center gap-2">
-                    <Folder className="w-4 h-4" />
-                    {folder.name}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Folder className="w-4 h-4" />
+                      {folder.name}
+                    </div>
+                    <button
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded text-red-600 transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteFolderId(folder.id);
+                      }}
+                      title="Mappa törlése"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                 </button>
               ))}
@@ -294,7 +379,7 @@ export const DocumentsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2">
                       <button
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         onClick={() => setPreviewDocId(doc.id)}
@@ -322,6 +407,13 @@ export const DocumentsPage: React.FC = () => {
                         title="Letöltés"
                       >
                         <Download className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        onClick={() => setDeleteDocId(doc.id)}
+                        title="Törlés"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -398,6 +490,120 @@ export const DocumentsPage: React.FC = () => {
           onClose={() => setEditDocId(null)}
           onDocumentUpdated={handleDocumentUpdated}
         />
+      )}
+
+      {/* Delete Document Confirmation Modal */}
+      {deleteDocId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Dokumentum törlése</h3>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Biztosan törölni szeretné ezt a dokumentumot? Ez a művelet nem vonható vissza.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-900">
+                  {docs.find(d => d.id === deleteDocId)?.title}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {docs.find(d => d.id === deleteDocId)?.file_name}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+              <button
+                onClick={() => setDeleteDocId(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Mégse
+              </button>
+              <button
+                onClick={() => {
+                  const doc = docs.find(d => d.id === deleteDocId);
+                  if (doc) deleteDocument(doc);
+                }}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Törlés...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>Törlés</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Folder Confirmation Modal */}
+      {deleteFolderId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Mappa törlése</h3>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Biztosan törölni szeretné ezt a mappát? A mappa csak akkor törölhető, ha üres. Ez a művelet nem vonható vissza.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-900">
+                  {folders.find(f => f.id === deleteFolderId)?.name}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+              <button
+                onClick={() => setDeleteFolderId(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Mégse
+              </button>
+              <button
+                onClick={() => deleteFolder(deleteFolderId)}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Törlés...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>Törlés</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

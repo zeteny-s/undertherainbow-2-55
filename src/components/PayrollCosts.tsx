@@ -1107,83 +1107,107 @@ export const PayrollCosts: React.FC = () => {
       )}
 
       {/* Cash Document Preview Section */}
-      {step === 'cash-preview' && (
+      {step === 'cash-preview' && uploadedCashFile && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
-            Készpénzes jövedelem adatok
+            Készpénzes dokumentum előnézet és kinyert adatok
           </h3>
           
-          {cashRecords.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Document Preview */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Kinyert készpénzes adatok</h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded-lg">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Alkalmazott
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Munkaszám
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Összeg
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dátum
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Típus
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {cashRecords.map((record, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {record.employeeName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {record.projectCode || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatCurrency(record.amount)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {record.date}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            Készpénz
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex justify-between items-center pt-4">
-                <button
-                  onClick={() => {
-                    setStep('cash-question');
-                    setCashRecords([]);
-                  }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                >
-                  Vissza
-                </button>
-                <button
-                  onClick={handleCashRendbenClick}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Rendben - Folytatás adókkal
-                </button>
+              <h4 className="font-medium text-gray-900">Dokumentum előnézet</h4>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                {uploadedCashFile.type === 'application/pdf' ? (
+                  <div className="min-h-96 bg-gray-100 flex flex-col items-center justify-center p-4">
+                    <div className="text-center mb-4">
+                      <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-600 font-medium">PDF dokumentum</p>
+                      <p className="text-sm text-gray-500">{uploadedCashFile.name}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={URL.createObjectURL(uploadedCashFile)}
+                    alt="Készpénzes dokumentum előnézet"
+                    className="w-full h-auto max-h-96 object-contain"
+                  />
+                )}
               </div>
             </div>
-          )}
+
+            {/* Extracted Data */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Kinyert készpénzes adatok</h4>
+              {cashRecords.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded-lg">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Alkalmazott
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Összeg
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Dátum
+                        </th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Munkaszám
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {cashRecords.map((record, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-sm font-medium text-gray-900">
+                            {record.employeeName}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              {formatCurrency(record.amount)}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-500">
+                            {record.date}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            {record.projectCode || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nem sikerült készpénzes adatokat kinyerni a dokumentumból.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              onClick={() => {
+                setStep('cash-question');
+                setCashRecords([]);
+                setUploadedCashFile(null);
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Vissza
+            </button>
+            <button
+              onClick={handleCashRendbenClick}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Rendben - Folytatás adókkal
+            </button>
+          </div>
         </div>
       )}
 
