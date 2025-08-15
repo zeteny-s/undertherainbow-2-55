@@ -879,8 +879,7 @@ export const PayrollCosts: React.FC = () => {
       {/* Preview Section */}
       {step === 'preview' && uploadedPayrollFile && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Bérköltség dokumentum előnézet és kinyert adatok
           </h3>
           
@@ -923,7 +922,7 @@ export const PayrollCosts: React.FC = () => {
             <div className="space-y-4">
               <h4 className="font-medium text-gray-900">Kinyert bérköltség adatok</h4>
               <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="max-h-96 overflow-y-auto">
+                <div className="h-[600px] overflow-y-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
@@ -1109,8 +1108,7 @@ export const PayrollCosts: React.FC = () => {
       {/* Cash Document Preview Section */}
       {step === 'cash-preview' && uploadedCashFile && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Készpénzes dokumentum előnézet és kinyert adatok
           </h3>
           
@@ -1126,12 +1124,21 @@ export const PayrollCosts: React.FC = () => {
                       <p className="text-gray-600 font-medium">PDF dokumentum</p>
                       <p className="text-sm text-gray-500">{uploadedCashFile.name}</p>
                     </div>
+                    {/* PDF Viewer */}
+                    <div className="w-full">
+                      <iframe
+                        src={URL.createObjectURL(uploadedCashFile)}
+                        title="PDF előnézet"
+                        className="w-full h-[600px] border-0 rounded"
+                        style={{ minHeight: '600px' }}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <img
                     src={URL.createObjectURL(uploadedCashFile)}
                     alt="Készpénzes dokumentum előnézet"
-                    className="w-full h-auto max-h-96 object-contain"
+                    className="w-full h-[600px] object-contain"
                   />
                 )}
               </div>
@@ -1141,8 +1148,9 @@ export const PayrollCosts: React.FC = () => {
             <div className="space-y-4">
               <h4 className="font-medium text-gray-900">Kinyert készpénzes adatok</h4>
               {cashRecords.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded-lg">
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="h-[600px] overflow-y-auto">
+                    <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded-lg">
                     <thead className="bg-gray-100">
                       <tr>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1187,6 +1195,7 @@ export const PayrollCosts: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
           </div>
 
           <div className="mt-6 flex justify-end space-x-3">
