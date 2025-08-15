@@ -95,32 +95,33 @@ serve(async (req) => {
     Document text:
     ${extractedText}
 
-    Please extract the following information for each employee payment and return it as a JSON array:
-    - Employee name (full name as it appears)
-    - Amount paid in cash (as a number, without currency symbols)
-    - Date of payment (in YYYY-MM-DD format)
-    - Payment type should be marked as cash/készpénz
+    CRITICAL INSTRUCTIONS:
+    - ONLY extract data that clearly represents employee payments
+    - Employee names MUST be real Hungarian names (format: "Surname Firstname" like "Nagy Tamás", "Kovács András")
+    - Amounts MUST be realistic salary amounts (typically 50,000 - 500,000 HUF range)
+    - Ignore any non-employee entries like totals, headers, company names, addresses, or administrative text
+    - Look specifically for cash payments, készpénzes kifizetések, or similar terms
+    - Skip any entries that don't have both a clear employee name AND a clear monetary amount
 
-    Important notes:
-    - Look for cash payments, készpénzes kifizetések, or similar terms
-    - Extract the exact employee names as they appear
-    - Convert dates to YYYY-MM-DD format
-    - Extract amounts as numbers without currency symbols
-    - If multiple payments to same person, create separate entries
-    - Mark all payments as cash payments (isCash: true)
+    VALIDATION RULES:
+    - Employee name must contain at least 2 words (surname + firstname)
+    - Amount must be a positive number greater than 10,000 HUF
+    - Date must be extractable and valid
+    - Ignore entries like "Összesen", "Total", company names, addresses, or any administrative text
 
-    Return only a JSON array in this exact format:
+    Return only a JSON array with VALID employee payment data in this exact format:
     [
       {
-        "employeeName": "Full Name",
-        "amount": 50000,
+        "employeeName": "Nagy Tamás",
+        "amount": 150000,
         "date": "2024-01-15",
         "isCash": true,
         "paymentType": "cash"
       }
     ]
 
-    Return only the JSON array, no other text.
+    If no valid employee payment data is found, return an empty array: []
+    Return ONLY the JSON array, no other text or explanations.
     `;
 
     console.log('Sending request to Gemini API for cash payroll processing...');

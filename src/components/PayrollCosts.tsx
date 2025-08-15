@@ -521,6 +521,10 @@ export const PayrollCosts: React.FC = () => {
     try {
       setDeleting(true);
       
+      // First get the record details before deletion to update summary
+      const recordMonth = new Date(record.date).getMonth() + 1;
+      const recordYear = new Date(record.date).getFullYear();
+      
       const { error } = await supabase
         .from('payroll_records')
         .delete()
@@ -528,7 +532,58 @@ export const PayrollCosts: React.FC = () => {
 
       if (error) throw error;
 
-      addNotification('success', 'Rekord sikeresen törölve');
+      // Update the corresponding payroll summary by recalculating totals
+      const { data: remainingRecords, error: fetchError } = await supabase
+        .from('payroll_records')
+        .select('*')
+        .eq('organization', record.organization)
+        .gte('record_date', `${recordYear}-${recordMonth.toString().padStart(2, '0')}-01`)
+        .lt('record_date', `${recordYear}-${(recordMonth + 1).toString().padStart(2, '0')}-01`);
+
+      if (fetchError) {
+        console.error('Error fetching remaining records:', fetchError);
+      } else {
+        // Recalculate summary totals
+        const bankTransferCosts = remainingRecords?.filter(r => !r.is_cash).reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0) || 0;
+        const cashCosts = remainingRecords?.filter(r => r.is_cash).reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0) || 0;
+        const rentalCosts = remainingRecords?.filter(r => r.is_rental).reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0) || 0;
+        const nonRentalCosts = remainingRecords?.filter(r => !r.is_rental).reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0) || 0;
+        const recordCount = remainingRecords?.length || 0;
+
+        // Get existing summary to preserve tax_amount
+        const { data: existingSummary } = await supabase
+          .from('payroll_summaries')
+          .select('tax_amount')
+          .eq('organization', record.organization)
+          .eq('year', recordYear)
+          .eq('month', recordMonth)
+          .single();
+
+        const taxAmount = parseFloat(existingSummary?.tax_amount?.toString() || '0');
+        const totalPayroll = bankTransferCosts + cashCosts + taxAmount;
+
+        // Update the summary
+        const { error: updateError } = await supabase
+          .from('payroll_summaries')
+          .update({
+            bank_transfer_costs: bankTransferCosts,
+            cash_costs: cashCosts,
+            rental_costs: rentalCosts,
+            non_rental_costs: nonRentalCosts,
+            total_payroll: totalPayroll,
+            record_count: recordCount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('organization', record.organization)
+          .eq('year', recordYear)
+          .eq('month', recordMonth);
+
+        if (updateError) {
+          console.error('Error updating summary:', updateError);
+        }
+      }
+
+      addNotification('success', 'Rekord sikeresen törölve és összesítő frissítve');
       
       // Refresh the data
       loadPayrollSummaries();
