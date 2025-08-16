@@ -880,33 +880,30 @@ export const PayrollCosts: React.FC = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Document Preview */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Dokumentum előnézet</h4>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div>
+              <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px]">
                 {uploadedPayrollFile.type === 'application/pdf' ? (
-                  <div className="min-h-96 bg-gray-100 flex flex-col items-center justify-center p-4">
+                  <div className="h-full bg-gray-100 flex flex-col items-center justify-center p-4">
                     <div className="text-center mb-4">
                       <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-600 font-medium">PDF dokumentum</p>
                       <p className="text-sm text-gray-500">{uploadedPayrollFile.name}</p>
                     </div>
                     {/* PDF Viewer */}
-                    <div className="w-full">
+                    <div className="w-full flex-1">
                       <iframe
                         src={payrollFileUrl}
                         title="PDF előnézet"
-                        className="w-full h-[600px] border-0 rounded"
-                        style={{ minHeight: '600px' }}
+                        className="w-full h-full border-0 rounded"
                       />
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 p-4">
+                  <div className="bg-gray-50 p-4 h-full flex items-center justify-center">
                     <img 
                       src={payrollFileUrl} 
                       alt="Bérköltség dokumentum" 
-                      className="w-full max-w-none h-auto object-contain mx-auto"
-                      style={{ maxHeight: 'none' }}
+                      className="w-full max-w-none h-full object-contain mx-auto"
                     />
                   </div>
                 )}
@@ -914,10 +911,9 @@ export const PayrollCosts: React.FC = () => {
             </div>
 
             {/* Extracted Data */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Kinyert bérköltség adatok</h4>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="max-h-96 overflow-y-auto">
+            <div>
+              <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px]">
+                <div className="h-full overflow-y-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
@@ -1105,14 +1101,22 @@ export const PayrollCosts: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Document Preview */}
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div>
+              <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px]">
                 {uploadedCashFile.type === 'application/pdf' ? (
-                  <div className="h-[600px] bg-gray-100 flex flex-col items-center justify-center p-4">
-                    <div className="text-center">
+                  <div className="h-full bg-gray-100 flex flex-col items-center justify-center p-4">
+                    <div className="text-center mb-4">
                       <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-600 font-medium">PDF dokumentum</p>
                       <p className="text-sm text-gray-500">{uploadedCashFile.name}</p>
+                    </div>
+                    {/* PDF Viewer */}
+                    <div className="w-full flex-1">
+                      <iframe
+                        src={URL.createObjectURL(uploadedCashFile)}
+                        title="PDF előnézet"
+                        className="w-full h-full border-0 rounded"
+                      />
                     </div>
                   </div>
                 ) : (
@@ -1128,7 +1132,7 @@ export const PayrollCosts: React.FC = () => {
             </div>
 
             {/* Extracted Data */}
-            <div className="space-y-4">
+            <div>
               {cashRecords.length > 0 ? (
                 <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px]">
                   <div className="h-full overflow-y-auto">
