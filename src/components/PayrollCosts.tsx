@@ -3,6 +3,7 @@ import { DollarSign, Upload, FileImage, CheckCircle2, Edit3, Save, X, Calendar, 
 import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
+import { formatCurrency } from '../utils/formatters';
 
 interface PayrollRecord {
   id?: string;
@@ -710,13 +711,6 @@ export const PayrollCosts: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('hu-HU', {
-      style: 'currency',
-      currency: 'HUF',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const formatMonth = (year: number, month: number) => {
     return `${year}.${month.toString().padStart(2, '0')}`;
@@ -1109,80 +1103,77 @@ export const PayrollCosts: React.FC = () => {
       {/* Cash Document Preview Section */}
       {step === 'cash-preview' && uploadedCashFile && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
-            Készpénzes dokumentum előnézet és kinyert adatok
-          </h3>
-          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Document Preview */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Dokumentum előnézet</h4>
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 {uploadedCashFile.type === 'application/pdf' ? (
-                  <div className="min-h-96 bg-gray-100 flex flex-col items-center justify-center p-4">
-                    <div className="text-center mb-4">
+                  <div className="h-[600px] bg-gray-100 flex flex-col items-center justify-center p-4">
+                    <div className="text-center">
                       <FileImage className="h-16 w-16 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-600 font-medium">PDF dokumentum</p>
                       <p className="text-sm text-gray-500">{uploadedCashFile.name}</p>
                     </div>
                   </div>
                 ) : (
-                  <img
-                    src={URL.createObjectURL(uploadedCashFile)}
-                    alt="Készpénzes dokumentum előnézet"
-                    className="w-full h-auto max-h-96 object-contain"
-                  />
+                  <div className="bg-gray-50 p-4 h-[600px] flex items-center justify-center">
+                    <img
+                      src={URL.createObjectURL(uploadedCashFile)}
+                      alt="Készpénzes dokumentum előnézet"
+                      className="w-full max-w-none h-full object-contain mx-auto"
+                    />
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Extracted Data */}
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Kinyert készpénzes adatok</h4>
               {cashRecords.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded-lg">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Alkalmazott
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Összeg
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Dátum
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Munkaszám
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {cashRecords.map((record, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-sm font-medium text-gray-900">
-                            {record.employeeName}
-                          </td>
-                          <td className="px-3 py-2 text-sm text-gray-900">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              {formatCurrency(record.amount)}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-sm text-gray-500">
-                            {record.date}
-                          </td>
-                          <td className="px-3 py-2 text-sm text-gray-900">
-                            {record.projectCode || '—'}
-                          </td>
+                <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px]">
+                  <div className="h-full overflow-y-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Alkalmazott
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Összeg
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Dátum
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Munkaszám
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {cashRecords.map((record, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900">
+                              {record.employeeName}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-900">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                {formatCurrency(record.amount)}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500">
+                              {record.date}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-900">
+                              {record.projectCode || '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-8">
+                <div className="border border-gray-200 rounded-lg h-[600px] flex items-center justify-center">
                   <p className="text-gray-500">Nem sikerült készpénzes adatokat kinyerni a dokumentumból.</p>
                 </div>
               )}
