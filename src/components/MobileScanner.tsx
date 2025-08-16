@@ -248,29 +248,29 @@ const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints,
   };
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Header */}
-      <div className="p-4 bg-white border-b border-gray-200">
+      <div className="p-4 bg-black border-b border-gray-700">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Manuális vágás</h3>
+          <h3 className="text-lg font-semibold text-white">Manuális vágás</h3>
           <button
             onClick={resetPoints}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
             title="Visszaállítás"
           >
-            <RotateCcw className="h-5 w-5 text-gray-600" />
+            <RotateCcw className="h-5 w-5 text-white" />
           </button>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-gray-300 mt-1">
           Húzza a sarkok pontjait a pontos vágáshoz
         </p>
       </div>
 
       {/* Canvas Container */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden bg-gray-50">
+      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
         <canvas
           ref={canvasRef}
-          className="max-w-full max-h-full border border-gray-300 rounded-lg cursor-crosshair bg-white shadow-lg"
+          className="max-w-full max-h-full border border-gray-600 rounded-lg cursor-crosshair"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -283,18 +283,18 @@ const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints,
       </div>
 
       {/* Controls */}
-      <div className="p-4 bg-white border-t border-gray-200">
+      <div className="p-4 bg-black border-t border-gray-700">
         <div className="flex items-center justify-between space-x-4">
           <button
             onClick={onCancel}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-gray-600 text-sm font-medium rounded-lg text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors"
           >
             <X className="h-4 w-4 mr-2" />
             Mégse
           </button>
           <button
             onClick={handleApply}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
           >
             <Check className="h-4 w-4 mr-2" />
             Alkalmazás
@@ -374,7 +374,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     loadOpenCV();
   }, []);
 
-  // Initialize camera with high resolution and better settings
+  // Initialize camera with high resolution
   const initializeCamera = useCallback(async () => {
     try {
       setError(null);
@@ -382,9 +382,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       const constraints = {
         video: {
           facingMode: 'environment',
-          width: { ideal: 2560, min: 1920 },
-          height: { ideal: 1440, min: 1080 },
-          frameRate: { ideal: 60, min: 30 }
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          frameRate: { ideal: 30 }
         }
       };
 
@@ -394,7 +394,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          console.log('Camera ready with enhanced settings, starting detection');
+          console.log('Camera ready, starting document detection');
           setCameraReady(true);
           if (openCVReady) {
             startDocumentDetection();
@@ -403,10 +403,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     } catch (err) {
       console.error('Camera initialization error:', err);
-      const errorMsg = err instanceof Error && err.name === 'NotAllowedError' 
-        ? 'Kamera hozzáférés megtagadva. Engedélyezze a kamera használatát a böngésző beállításaiban.'
-        : 'Kamera inicializálási hiba. Próbálja újra.';
-      setError(errorMsg);
+      setError('Kamera hozzáférés megtagadva. Engedélyezze a kamera használatát.');
     }
   }, [openCVReady]);
 
@@ -426,7 +423,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     ];
   };
 
-  // Enhanced document edge detection with multiple algorithms
+  // Enhanced document edge detection with fallback
   const detectDocumentEdges = (canvas: HTMLCanvasElement): Point[] | null => {
     if (!window.cv) return null;
 
@@ -436,89 +433,47 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       const gray = new cv.Mat();
       const blurred = new cv.Mat();
       const edged = new cv.Mat();
-      const morphed = new cv.Mat();
       const contours = new cv.MatVector();
       const hierarchy = new cv.Mat();
 
       // Convert to grayscale
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      // Multiple blur passes for better noise reduction
-      cv.GaussianBlur(gray, blurred, new cv.Size(9, 9), 2);
-      cv.bilateralFilter(blurred, gray, 9, 80, 80);
+      // Apply Gaussian blur with enhanced kernel
+      cv.GaussianBlur(gray, blurred, new cv.Size(7, 7), 0);
 
-      // Enhanced edge detection with multiple methods
-      const edges1 = new cv.Mat();
-      const edges2 = new cv.Mat();
-      
-      // Primary Canny detection with adaptive thresholds
-      const mean = cv.mean(gray);
-      const meanVal = mean[0];
-      const lowerThresh = Math.max(50, meanVal * 0.5);
-      const upperThresh = Math.min(200, meanVal * 1.5);
-      
-      cv.Canny(gray, edges1, lowerThresh, upperThresh);
-      
-      // Secondary Canny with different thresholds for different lighting
-      cv.Canny(gray, edges2, 50, 150);
-      
-      // Combine edge results
-      cv.bitwise_or(edges1, edges2, edged);
-      
-      // Morphological operations to connect broken edges
-      const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
-      cv.morphologyEx(edged, morphed, cv.MORPH_CLOSE, kernel);
-      cv.dilate(morphed, edged, kernel, new cv.Point(-1, -1), 1);
+      // Apply Canny edge detection with proven thresholds
+      cv.Canny(blurred, edged, 75, 200);
 
-      // Find contours with better hierarchy
-      cv.findContours(edged, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+      // Find contours
+      cv.findContours(edged, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
 
-      let bestContour = null;
+      let biggest = null;
       let maxArea = 0;
-      const minArea = canvas.width * canvas.height * 0.1;
-      const maxAreaThreshold = canvas.width * canvas.height * 0.95;
+      const minArea = canvas.width * canvas.height * 0.1; // At least 10% of image
 
-      // Multi-pass contour analysis
+      // First pass: Look for perfect quadrilaterals
       for (let i = 0; i < contours.size(); i++) {
         const cnt = contours.get(i);
-        const area = cv.contourArea(cnt);
-        
-        if (area > minArea && area < maxAreaThreshold) {
-          const peri = cv.arcLength(cnt, true);
-          const approx = new cv.Mat();
-          
-          // Try multiple approximation levels
-          const epsilons = [0.01, 0.02, 0.03, 0.04];
-          
-          for (const eps of epsilons) {
-            cv.approxPolyDP(cnt, approx, eps * peri, true);
-            
-            if (approx.rows === 4) {
-              const convexHull = new cv.Mat();
-              cv.convexHull(approx, convexHull);
-              
-              if (convexHull.rows === 4) {
-                const aspectRatio = calculateAspectRatio(approx);
-                
-                // Prefer rectangles with reasonable aspect ratios
-                if (aspectRatio > 0.2 && aspectRatio < 5.0 && area > maxArea) {
-                  maxArea = area;
-                  if (bestContour) bestContour.delete();
-                  bestContour = approx.clone();
-                }
-              }
-              convexHull.delete();
-              break;
-            }
+        const peri = cv.arcLength(cnt, true);
+        const approx = new cv.Mat();
+        cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+
+        if (approx.rows === 4) {
+          const area = cv.contourArea(approx);
+          if (area > maxArea && area > minArea) {
+            maxArea = area;
+            if (biggest) biggest.delete();
+            biggest = approx.clone();
           }
-          approx.delete();
         }
+        approx.delete();
         cnt.delete();
       }
 
-      // Fallback: Use largest reasonable rectangle if no perfect match
-      if (!bestContour || maxArea < minArea * 1.5) {
-        console.log('Using fallback rectangle detection');
+      // Second pass: If no perfect quadrilateral found, use largest contour with minAreaRect
+      if (!biggest || maxArea < minArea * 2) {
+        console.log('No perfect quadrilateral found, using fallback method');
         
         let largestContour = null;
         let largestArea = 0;
@@ -526,7 +481,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         for (let i = 0; i < contours.size(); i++) {
           const cnt = contours.get(i);
           const area = cv.contourArea(cnt);
-          
           if (area > largestArea && area > minArea) {
             largestArea = area;
             if (largestContour) largestContour.delete();
@@ -536,6 +490,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         }
 
         if (largestContour) {
+          // Use minAreaRect to get a rotated bounding rectangle
           const rect = cv.minAreaRect(largestContour);
           const vertices = cv.RotatedRect.points(rect);
           
@@ -551,10 +506,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           gray.delete();
           blurred.delete();
           edged.delete();
-          morphed.delete();
-          edges1.delete();
-          edges2.delete();
-          kernel.delete();
           contours.delete();
           hierarchy.delete();
 
@@ -563,15 +514,16 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
 
       let points: Point[] | null = null;
-      if (bestContour && bestContour.rows === 4) {
+      if (biggest) {
         points = [];
-        for (let i = 0; i < bestContour.rows; i++) {
-          const pt = bestContour.intPtr(i);
+        for (let i = 0; i < biggest.rows; i++) {
+          const pt = biggest.intPtr(i);
           points.push({ x: pt[0], y: pt[1] });
         }
         
+        // Order the points correctly
         points = orderPoints(points);
-        bestContour.delete();
+        biggest.delete();
       }
 
       // Cleanup
@@ -579,47 +531,13 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       gray.delete();
       blurred.delete();
       edged.delete();
-      morphed.delete();
-      edges1.delete();
-      edges2.delete();
-      kernel.delete();
       contours.delete();
       hierarchy.delete();
 
       return points;
     } catch (error) {
-      console.error('Enhanced edge detection error:', error);
+      console.error('Edge detection error:', error);
       return null;
-    }
-  };
-
-  // Calculate aspect ratio for contour validation
-  const calculateAspectRatio = (contour: any): number => {
-    if (!window.cv || !contour || contour.rows !== 4) return 0;
-    
-    try {
-      const points: Point[] = [];
-      for (let i = 0; i < contour.rows; i++) {
-        const pt = contour.intPtr(i);
-        points.push({ x: pt[0], y: pt[1] });
-      }
-      
-      const ordered = orderPoints(points);
-      const [tl, tr, br, bl] = ordered;
-      
-      const width = Math.max(
-        Math.hypot(tr.x - tl.x, tr.y - tl.y),
-        Math.hypot(br.x - bl.x, br.y - bl.y)
-      );
-      
-      const height = Math.max(
-        Math.hypot(bl.x - tl.x, bl.y - tl.y),
-        Math.hypot(br.x - tr.x, br.y - tr.y)
-      );
-      
-      return Math.min(width, height) / Math.max(width, height);
-    } catch (error) {
-      return 0;
     }
   };
 
@@ -682,8 +600,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     };
 
-    // Run detection every 100ms for ultra-smooth performance
-    detectionIntervalRef.current = window.setInterval(detectDocument, 100);
+    // Run detection every 150ms for smoother performance
+    detectionIntervalRef.current = window.setInterval(detectDocument, 150);
   }, [openCVReady, cameraReady]);
 
   // Draw detection overlay
@@ -1066,21 +984,21 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   };
 
-  // Render camera view with clean white interface
+  // Render camera view
   const renderCameraView = () => (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      {/* Clean header with exit button */}
-      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/50 to-transparent p-4">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      {/* Exit button */}
+      <div className="absolute top-4 left-4 z-10">
         <button
           onClick={onClose}
-          className="p-3 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-all shadow-md"
+          className="p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 transition-colors"
         >
-          <X className="h-6 w-6 text-gray-700" />
+          <X className="h-6 w-6 text-white" />
         </button>
       </div>
 
       {/* Camera preview */}
-      <div className="flex-1 relative overflow-hidden bg-black">
+      <div className="flex-1 relative overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
@@ -1097,68 +1015,34 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
 
         {/* Processing overlay */}
         {processing && (
-          <div className="absolute inset-0 bg-black/75 flex items-center justify-center z-20">
-            <div className="text-white text-center bg-black/50 backdrop-blur-sm rounded-2xl p-6">
-              <Loader className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-400" />
+          <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-20">
+            <div className="text-white text-center">
+              <Loader className="h-12 w-12 animate-spin mx-auto mb-4" />
               <p className="text-lg font-medium">Dokumentum feldolgozása...</p>
               <p className="text-sm opacity-75">Kivágás és minőség javítás</p>
             </div>
           </div>
         )}
-        
-        {/* Status indicator */}
-        <div className="absolute top-20 left-4 right-4 z-10">
-          <div className="text-center">
-            {cameraReady && openCVReady && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-md inline-flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-700">Dokumentum keresése...</span>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Clean white capture button area */}
-      <div className="bg-white p-6 border-t border-gray-200 relative">
+      {/* Camera controls - positioned higher */}
+      <div className="p-4 pb-12 bg-black">
         <div className="flex items-center justify-center">
-          <div className="relative">
-            {/* Main capture button */}
-            <button
-              onClick={capturePhoto}
-              disabled={!cameraReady || !openCVReady || processing}
-              className="w-20 h-20 rounded-full bg-white border-4 border-gray-300 hover:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 shadow-lg flex items-center justify-center group"
-            >
-              <Camera className="h-10 w-10 text-gray-700 group-hover:text-blue-600 transition-colors" />
-            </button>
-            
-            {/* Pulse animation when ready */}
-            {cameraReady && openCVReady && !processing && (
-              <div className="absolute -inset-1 rounded-full border-2 border-blue-400 opacity-60 animate-ping"></div>
-            )}
-          </div>
-        </div>
-        
-        {/* Instructions */}
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            Pozícionálja a dokumentumot a keretbe és érintse meg a gombot
-          </p>
-          {lastDetectionRef.current && (
-            <div className="mt-2">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                Dokumentum észlelve
-              </span>
-            </div>
-          )}
+          {/* Manual capture button - always visible */}
+          <button
+            onClick={capturePhoto}
+            disabled={!cameraReady || !openCVReady || processing}
+            className="p-4 rounded-full bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
+          >
+            <Camera className="h-8 w-8 text-black" />
+          </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mt-3 p-3 bg-red-900 border border-red-700 rounded-lg">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
-              <p className="text-sm text-red-700">{error}</p>
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <p className="text-sm text-red-200">{error}</p>
             </div>
           </div>
         )}
