@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash, Wallet, Banknote, Trash2, Check, XCircle } from 'lucide-react';
+import { TrendingUp, FileText, Building2, GraduationCap, CreditCard, Clock, RefreshCw, Calendar, DollarSign, BarChart3, PieChart, Activity, ChevronLeft, ChevronRight, History, X, Hash, Wallet, Trash2, Check, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell, Area, AreaChart, Pie } from 'recharts';
 import { supabase } from '../integrations/supabase/client';
 import { NotificationContainer } from './common/NotificationContainer';
@@ -1552,8 +1552,8 @@ export const ManagerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Cash and Bank Management */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      {/* Cash Management */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {/* Házi kassza */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
@@ -1706,32 +1706,6 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Bankszámla */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                <Banknote className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Bankszámla</h3>
-                <p className="text-sm text-gray-500">Banki egyenleg és tranzakciók</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <div className="bg-blue-50 rounded-full p-4 mx-auto mb-4 w-16 h-16 flex items-center justify-center">
-                <Clock className="h-8 w-8 text-blue-500" />
-              </div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">Mindjárt kész</h4>
-              <p className="text-sm text-gray-500">
-                A bank API integráció hamarosan elérhető lesz
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Key Metrics */}
