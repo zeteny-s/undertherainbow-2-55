@@ -86,11 +86,11 @@ const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints,
       ctx.drawImage(img, 0, 0, imageSize.width, imageSize.height);
     }
 
-    // Draw crop area
-    ctx.strokeStyle = '#00ff00';
+    // Draw crop area with professional blue styling
+    ctx.strokeStyle = '#3B82F6';
     ctx.lineWidth = 3;
-    ctx.shadowColor = '#000000';
-    ctx.shadowBlur = 4;
+    ctx.shadowColor = 'rgba(59, 130, 246, 0.3)';
+    ctx.shadowBlur = 6;
     
     ctx.beginPath();
     ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
@@ -102,23 +102,25 @@ const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints,
 
     ctx.shadowBlur = 0;
 
-    // Draw corner handles
+    // Draw corner handles with blue accents
     currentPoints.forEach((point, index) => {
-      ctx.fillStyle = '#00ff00';
+      // Outer blue ring
+      ctx.fillStyle = '#3B82F6';
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 15, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, 18, 0, 2 * Math.PI);
       ctx.fill();
       
+      // Inner white circle
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Add corner labels
-      ctx.fillStyle = '#000000';
-      ctx.font = '12px Arial';
+      // Corner number with blue text
+      ctx.fillStyle = '#3B82F6';
+      ctx.font = 'bold 14px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText((index + 1).toString(), point.x, point.y + 4);
+      ctx.fillText((index + 1).toString(), point.x, point.y + 5);
     });
   };
 
@@ -248,29 +250,29 @@ const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints,
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <div className="p-4 bg-black border-b border-gray-700">
+      <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Manuális vágás</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Manuális vágás</h3>
           <button
             onClick={resetPoints}
-            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
             title="Visszaállítás"
           >
-            <RotateCcw className="h-5 w-5 text-white" />
+            <RotateCcw className="h-5 w-5 text-gray-600" />
           </button>
         </div>
-        <p className="text-sm text-gray-300 mt-1">
+        <p className="text-sm text-gray-600 mt-1">
           Húzza a sarkok pontjait a pontos vágáshoz
         </p>
       </div>
 
       {/* Canvas Container */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50 overflow-hidden">
         <canvas
           ref={canvasRef}
-          className="max-w-full max-h-full border border-gray-600 rounded-lg cursor-crosshair"
+          className="max-w-full max-h-full border-2 border-gray-300 rounded-xl shadow-lg cursor-crosshair bg-white"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -283,18 +285,18 @@ const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints,
       </div>
 
       {/* Controls */}
-      <div className="p-4 bg-black border-t border-gray-700">
+      <div className="p-4 bg-white border-t border-gray-200 shadow-lg">
         <div className="flex items-center justify-between space-x-4">
           <button
             onClick={onCancel}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-gray-600 text-sm font-medium rounded-lg text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors"
+            className="flex-1 inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
           >
             <X className="h-4 w-4 mr-2" />
             Mégse
           </button>
           <button
             onClick={handleApply}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
+            className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
           >
             <Check className="h-4 w-4 mr-2" />
             Alkalmazás
@@ -423,7 +425,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     ];
   };
 
-  // Enhanced document edge detection with fallback
+  // Enhanced multi-pass document edge detection with adaptive thresholding
   const detectDocumentEdges = (canvas: HTMLCanvasElement): Point[] | null => {
     if (!window.cv) return null;
 
@@ -433,17 +435,44 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       const gray = new cv.Mat();
       const blurred = new cv.Mat();
       const edged = new cv.Mat();
+      const edgedFinal = new cv.Mat();
       const contours = new cv.MatVector();
       const hierarchy = new cv.Mat();
 
       // Convert to grayscale
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      // Apply Gaussian blur with enhanced kernel
-      cv.GaussianBlur(gray, blurred, new cv.Size(7, 7), 0);
+      // Apply advanced Gaussian blur for noise reduction
+      cv.GaussianBlur(gray, blurred, new cv.Size(9, 9), 0);
 
-      // Apply Canny edge detection with proven thresholds
-      cv.Canny(blurred, edged, 75, 200);
+      // Multi-pass Canny edge detection for better edge capture
+      const edged1 = new cv.Mat();
+      const edged2 = new cv.Mat();
+      const edged3 = new cv.Mat();
+      
+      // Pass 1: Conservative thresholds for strong edges
+      cv.Canny(blurred, edged1, 50, 150);
+      
+      // Pass 2: Moderate thresholds for medium edges  
+      cv.Canny(blurred, edged2, 75, 200);
+      
+      // Pass 3: Aggressive thresholds for weak edges
+      cv.Canny(blurred, edged3, 100, 250);
+      
+      // Combine all edge maps using bitwise OR
+      cv.bitwise_or(edged1, edged2, edgedFinal);
+      cv.bitwise_or(edgedFinal, edged3, edgedFinal);
+      
+      // Apply morphological operations for better contour continuity
+      const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+      cv.morphologyEx(edgedFinal, edged, cv.MORPH_CLOSE, kernel);
+      
+      // Cleanup intermediate matrices
+      edged1.delete();
+      edged2.delete();
+      edged3.delete();
+      edgedFinal.delete();
+      kernel.delete();
 
       // Find contours
       cv.findContours(edged, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
@@ -600,17 +629,17 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     };
 
-    // Run detection every 150ms for smoother performance
-    detectionIntervalRef.current = window.setInterval(detectDocument, 150);
+    // Run detection every 50ms for ultra-smooth real-time feedback
+    detectionIntervalRef.current = window.setInterval(detectDocument, 50);
   }, [openCVReady, cameraReady]);
 
-  // Draw detection overlay
+  // Draw professional detection overlay with subtle styling
   const drawDetectionOverlay = (ctx: CanvasRenderingContext2D, contour: Point[]) => {
-    // Draw document outline
-    ctx.strokeStyle = '#00ff00';
-    ctx.lineWidth = 4;
-    ctx.shadowColor = '#000000';
-    ctx.shadowBlur = 4;
+    // Draw document outline with professional blue styling
+    ctx.strokeStyle = '#3B82F6';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = 'rgba(59, 130, 246, 0.4)';
+    ctx.shadowBlur = 8;
     ctx.beginPath();
     
     for (let i = 0; i < contour.length; i++) {
@@ -627,24 +656,28 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     // Reset shadow
     ctx.shadowBlur = 0;
 
-    // Draw corner indicators
+    // Draw subtle corner indicators
     contour.forEach((point, index) => {
-      ctx.fillStyle = '#00ff00';
+      // Outer blue ring with subtle glow
+      ctx.fillStyle = '#3B82F6';
+      ctx.shadowColor = 'rgba(59, 130, 246, 0.6)';
+      ctx.shadowBlur = 6;
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, 14, 0, 2 * Math.PI);
       ctx.fill();
+      ctx.shadowBlur = 0;
       
-      // Inner white dot
+      // Inner white core
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Corner number
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 10px Arial';
+      // Corner number with professional styling
+      ctx.fillStyle = '#1E40AF';
+      ctx.font = 'bold 12px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText((index + 1).toString(), point.x, point.y + 3);
+      ctx.fillText((index + 1).toString(), point.x, point.y + 4);
     });
   };
 
@@ -984,16 +1017,16 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   };
 
-  // Render camera view
+  // Render clean white camera view
   const renderCameraView = () => (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      {/* Exit button */}
-      <div className="absolute top-4 left-4 z-10">
+      {/* Exit button with white styling */}
+      <div className="absolute top-6 left-6 z-10">
         <button
           onClick={onClose}
-          className="p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 transition-colors"
+          className="p-3 rounded-full bg-white bg-opacity-90 hover:bg-opacity-100 shadow-lg backdrop-blur-sm transition-all"
         >
-          <X className="h-6 w-6 text-white" />
+          <X className="h-6 w-6 text-gray-800" />
         </button>
       </div>
 
@@ -1013,36 +1046,36 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
 
-        {/* Processing overlay */}
+        {/* Processing overlay with white theme */}
         {processing && (
-          <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-20">
-            <div className="text-white text-center">
-              <Loader className="h-12 w-12 animate-spin mx-auto mb-4" />
-              <p className="text-lg font-medium">Dokumentum feldolgozása...</p>
-              <p className="text-sm opacity-75">Kivágás és minőség javítás</p>
+          <div className="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-20">
+            <div className="text-gray-800 text-center">
+              <Loader className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-lg font-semibold">Dokumentum feldolgozása...</p>
+              <p className="text-sm text-gray-600 mt-1">Kivágás és minőség javítás</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Camera controls - positioned higher */}
-      <div className="p-4 pb-12 bg-black">
+      {/* Clean white camera controls */}
+      <div className="px-6 py-8 bg-white bg-opacity-95 backdrop-blur-md border-t border-white border-opacity-20">
         <div className="flex items-center justify-center">
-          {/* Manual capture button - always visible */}
+          {/* Single elegant camera button */}
           <button
             onClick={capturePhoto}
             disabled={!cameraReady || !openCVReady || processing}
-            className="p-4 rounded-full bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
+            className="w-20 h-20 rounded-full bg-white shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 border-4 border-blue-500 hover:border-blue-600 flex items-center justify-center"
           >
-            <Camera className="h-8 w-8 text-black" />
+            <Camera className="h-10 w-10 text-blue-600" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-3 p-3 bg-red-900 border border-red-700 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-red-400" />
-              <p className="text-sm text-red-200">{error}</p>
+          <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           </div>
         )}
