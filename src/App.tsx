@@ -5,8 +5,7 @@ import { AuthPage } from './components/Auth/AuthPage';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { ManagerDashboard } from './components/ManagerDashboard';
-import { CRMPage } from './components/crm/CRMPage';
-import { ProjectManagementPage } from './components/project-management/ProjectManagementPage';
+import { TeamsPage } from './components/teams/TeamsPage';
 import { InvoiceUpload } from './components/InvoiceUpload';
 import { InvoiceList } from './components/InvoiceList';
 import { Settings } from './components/Settings';
@@ -49,10 +48,8 @@ const AppContent: React.FC = () => {
           return <ManagerDashboard />;
         }
         return <Dashboard />;
-      case 'crm':
-        return <CRMPage />;
-      case 'projects':
-        return <ProjectManagementPage />;
+      case 'teams':
+        return <TeamsPage />;
       case 'upload':
         return <InvoiceUpload />;
       case 'invoices':

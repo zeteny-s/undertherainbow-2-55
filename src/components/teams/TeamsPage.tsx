@@ -1,10 +1,10 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { ManagerCRMView } from './ManagerCRMView';
-import { OfficeCRMView } from './OfficeCRMView';
+import { ManagerTeamsView } from './ManagerTeamsView';
+import { OfficeTeamsView } from './OfficeTeamsView';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 
-export const CRMPage: React.FC = () => {
+export const TeamsPage: React.FC = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -17,7 +17,7 @@ export const CRMPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {isManager ? <ManagerCRMView /> : <OfficeCRMView />}
+      {isManager ? <ManagerTeamsView /> : <OfficeTeamsView />}
     </div>
   );
 };
