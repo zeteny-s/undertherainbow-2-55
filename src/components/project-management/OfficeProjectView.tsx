@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { CheckSquare, MessageSquare, FolderKanban } from 'lucide-react';
-import { MyTasks } from './tasks/MyTasks';
-import { MyProjects } from './projects/MyProjects';
+import React, { useState, useEffect } from 'react';
+import { CheckSquare, FolderKanban, MessageSquare } from 'lucide-react';
+import { MyProjectTasksTab } from './tabs/MyProjectTasksTab';
+import { MyProjectsTab } from './tabs/MyProjectsTab';
+import { MessagesTab } from './tabs/MessagesTab';
 
-export const OfficeTeamsView: React.FC = () => {
+export const OfficeProjectView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'tasks' | 'projects' | 'messages'>('tasks');
 
   useEffect(() => {
     document.title = activeTab === 'tasks'
-      ? 'Feladataim – Munkatér'
+      ? 'Feladataim – Projekt Munkatér'
       : activeTab === 'projects'
-      ? 'Projekt Feladataim – Munkatér'
-      : 'Üzeneteim – Munkatér';
+      ? 'Projektjeim – Projekt Munkatér'
+      : 'Üzeneteim – Projekt Munkatér';
   }, [activeTab]);
 
   return (
@@ -19,8 +20,8 @@ export const OfficeTeamsView: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Munkatér</h1>
-          <p className="text-muted-foreground">Feladatok, projektek és üzenetek</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Projekt Munkatér</h1>
+          <p className="text-muted-foreground">Feladatok, projektek és együttműködés</p>
         </div>
 
         {/* Navigation Tabs */}
@@ -29,7 +30,7 @@ export const OfficeTeamsView: React.FC = () => {
             {[
               { id: 'tasks', label: 'Feladataim', icon: CheckSquare },
               { id: 'projects', label: 'Projektjeim', icon: FolderKanban },
-              { id: 'messages', label: 'Üzeneteim', icon: MessageSquare }
+              { id: 'messages', label: 'Üzenetek', icon: MessageSquare }
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -50,22 +51,9 @@ export const OfficeTeamsView: React.FC = () => {
 
         {/* Content */}
         <div className="space-y-6">
-          {activeTab === 'tasks' && <MyTasks />}
-
-          {activeTab === 'projects' && <MyProjects />}
-
-          {activeTab === 'messages' && (
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground">Üzeneteim</h2>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MessageSquare className="h-4 w-4" />
-                  Beszélgetések
-                </div>
-              </div>
-              <p className="text-muted-foreground">Üzenetek hamarosan elérhetők.</p>
-            </div>
-          )}
+          {activeTab === 'tasks' && <MyProjectTasksTab />}
+          {activeTab === 'projects' && <MyProjectsTab />}
+          {activeTab === 'messages' && <MessagesTab />}
         </div>
       </div>
     </div>
