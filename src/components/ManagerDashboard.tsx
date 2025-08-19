@@ -2124,12 +2124,11 @@ export const ManagerDashboard: React.FC = () => {
                   minAngle={5}
                 >
                   {categoryDataFiltered.map((entry, index) => {
-                    const isJarulekok = entry.category === "Járulékok";
-                    const fillColor = isJarulekok ? "#d1d5db" : `url(#categoryGradient-${index})`;
+                    const fillColor = entry.category === "Járulékok" ? "#d1d5db" : entry.color;
                     return (
                       <Cell 
                         key={`cell-${index}`} 
-                        fill={fillColor}
+                        fill={`url(#categoryGradient-${index})`}
                         stroke="#ffffff"
                         strokeWidth={1}
                       />
@@ -2139,7 +2138,7 @@ export const ManagerDashboard: React.FC = () => {
                 <Tooltip content={<CategoryTooltip />} />
                 <defs>
                   {categoryDataFiltered.map((entry, index) => {
-                    if (entry.category === "Járulékok") return null; // skip grey gradient
+                    const gradientColor = entry.category === "Járulékok" ? "#d1d5db" : entry.color;
                     return (
                       <radialGradient 
                         key={`gradient-${index}`} 
@@ -2150,8 +2149,8 @@ export const ManagerDashboard: React.FC = () => {
                         fx="50%" 
                         fy="50%"
                       >
-                        <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
-                        <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
+                        <stop offset="0%" stopColor={gradientColor} stopOpacity={0.9} />
+                        <stop offset="100%" stopColor={gradientColor} stopOpacity={1} />
                       </radialGradient>
                     );
                   })}
@@ -2191,9 +2190,8 @@ export const ManagerDashboard: React.FC = () => {
         </div>
       </ResponsiveContainer>
     </div>
+  )}
 </div>
-
-
 
         {/* Weekly Expense Trend - MOVED TO 5TH POSITION */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
