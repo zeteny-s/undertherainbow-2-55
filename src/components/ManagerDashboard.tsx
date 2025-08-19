@@ -2195,6 +2195,7 @@ export const ManagerDashboard: React.FC = () => {
 </div>
 
 
+
         {/* Weekly Expense Trend - MOVED TO 5TH POSITION */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
           <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
