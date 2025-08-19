@@ -2065,133 +2065,125 @@ export const ManagerDashboard: React.FC = () => {
           </div>
 
           {/* Category Spending Chart */}
-<div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
-  <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
-    <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-      <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
-      Kategória szerinti kiadások
-    </h3>
-    <div className="flex items-center gap-2">
-      <select
-        value={catYear as any}
-        onChange={(e) => setCatYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="all">Összes év</option>
-        {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
-          <option key={y} value={y}>{y}</option>
-        ))}
-      </select>
-      <select
-        value={catMonth as any}
-        onChange={(e) => setCatMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="all">Összes hónap</option>
-        {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
-          <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
-        ))}
-      </select>
-    </div>
-  </div>
-  
-  {chartData.categoryData.length === 0 && (
-    <div className="text-center py-12">
-      <PieChart className="mx-auto h-12 w-12 text-gray-400" />
-      <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek kategória adatok</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        A számlák feldolgozása után itt jelennek meg a kategóriák szerinti kiadások.
-      </p>
-    </div>
-  )}
-  
-  {chartData.categoryData.length > 0 && (
-    <div className="h-64 sm:h-80 lg:h-96">
-      <ResponsiveContainer width="100%" height="100%">
-        <div className="flex flex-col h-full">
-          <div className="flex-1 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                <Pie
-                  data={categoryDataFiltered}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={85}
-                  paddingAngle={2}
-                  dataKey="amount"
-                  animationDuration={1000}
-                  animationBegin={200}
-                  minAngle={5}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
+                <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
+                Kategória szerinti kiadások
+              </h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={catYear as any}
+                  onChange={(e) => setCatYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {categoryDataFiltered.map((entry, index) => {
-                    const fillColor = entry.category === "Járulékok" ? "#d1d5db" : entry.color;
-                    return (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={`url(#categoryGradient-${index})`}
-                        stroke="#ffffff"
-                        strokeWidth={1}
-                      />
-                    );
-                  })}
-                </Pie>
-                <Tooltip content={<CategoryTooltip />} />
-                <defs>
-                  {categoryDataFiltered.map((entry, index) => {
-                    const gradientColor = entry.category === "Járulékok" ? "#d1d5db" : entry.color;
-                    return (
-                      <radialGradient 
-                        key={`gradient-${index}`} 
-                        id={`categoryGradient-${index}`} 
-                        cx="50%" 
-                        cy="50%" 
-                        r="50%" 
-                        fx="50%" 
-                        fy="50%"
-                      >
-                        <stop offset="0%" stopColor={gradientColor} stopOpacity={0.9} />
-                        <stop offset="100%" stopColor={gradientColor} stopOpacity={1} />
-                      </radialGradient>
-                    );
-                  })}
-                </defs>
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
-            {categoryDataFiltered.map((item, index) => {
-              const dotColor = item.category === "Járulékok" ? "#d1d5db" : item.color;
-              return (
-                <div 
-                  key={index} 
-                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
-                  title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={catMonth as any}
+                  onChange={(e) => setCatMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }}></div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
-                    <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="mt-6 border-t border-gray-200 pt-4">
-            <div className="flex justify-center items-center">
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Összes kiadás:</div>
-                <div className="text-sm font-medium text-purple-700">
-                  {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
-                </div>
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
               </div>
             </div>
+            
+            {chartData.categoryData.length === 0 && (
+              <div className="text-center py-12">
+                <PieChart className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Még nincsenek kategória adatok</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  A számlák feldolgozása után itt jelennek meg a kategóriák szerinti kiadások.
+                </p>
+              </div>
+            )}
+            
+            {chartData.categoryData.length > 0 && (
+              <div className="h-64 sm:h-80 lg:h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1 relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                          <Pie
+                            data={categoryDataFiltered}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={85}
+                            paddingAngle={2}
+                            dataKey="amount"
+                            animationDuration={1000}
+                            animationBegin={200}
+                            minAngle={5}
+                          >
+                       {categoryDataFiltered.map((_, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={`url(#categoryGradient-${index})`}
+                                stroke="#ffffff"
+                                strokeWidth={1}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<CategoryTooltip />} />
+                          <defs>
+                             {categoryDataFiltered.map((entry, index) => (
+                              <radialGradient 
+                                key={`gradient-${index}`} 
+                                id={`categoryGradient-${index}`} 
+                                cx="50%" 
+                                cy="50%" 
+                                r="50%" 
+                                fx="50%" 
+                                fy="50%"
+                              >
+                                <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
+                                <stop offset="100%" stopColor={entry.color} stopOpacity={1} />
+                              </radialGradient>
+                            ))}
+                          </defs>
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3 max-h-32 overflow-y-auto">
+                      {categoryDataFiltered.map((item, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-default"
+                          title={`${item.category}: ${formatCurrency(item.amount)} (${item.count} számla)`}
+                        >
+                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-gray-700 truncate block">{item.category}</span>
+                            <span className="text-[10px] text-gray-500 truncate block">{formatCurrency(item.amount)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="mt-6 border-t border-gray-200 pt-4">
+                                            <div className="flex justify-center items-center">
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500">Összes kiadás:</div>
+                          <div className="text-sm font-medium text-purple-700">
+                            {formatCurrency(chartData.categoryData.reduce((sum, item) => sum + item.amount, 0))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         </div>
-      </ResponsiveContainer>
-    </div>
-  )}
-</div>
 
         {/* Weekly Expense Trend - MOVED TO 5TH POSITION */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
