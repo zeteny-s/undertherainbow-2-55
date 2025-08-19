@@ -2191,7 +2191,6 @@ export const ManagerDashboard: React.FC = () => {
         </div>
       </ResponsiveContainer>
     </div>
-  )}
 </div>
 
 
