@@ -883,6 +883,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payroll_records: {
         Row: {
           amount: number
@@ -1158,55 +1197,73 @@ export type Database = {
       }
       pm_tasks: {
         Row: {
+          actual_hours: number | null
           assigned_by: string
           assigned_to: string | null
+          attachments_count: number | null
           board_id: string | null
           completed_at: string | null
           created_at: string
           description: string | null
           due_date: string | null
+          estimated_hours: number | null
           id: string
           labels: string[] | null
           position: number
           priority: string
           project_id: string | null
           status: string
+          story_points: number | null
+          task_type: string | null
           title: string
           updated_at: string
+          watchers: string[] | null
         }
         Insert: {
+          actual_hours?: number | null
           assigned_by: string
           assigned_to?: string | null
+          attachments_count?: number | null
           board_id?: string | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          estimated_hours?: number | null
           id?: string
           labels?: string[] | null
           position?: number
           priority?: string
           project_id?: string | null
           status?: string
+          story_points?: number | null
+          task_type?: string | null
           title: string
           updated_at?: string
+          watchers?: string[] | null
         }
         Update: {
+          actual_hours?: number | null
           assigned_by?: string
           assigned_to?: string | null
+          attachments_count?: number | null
           board_id?: string | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          estimated_hours?: number | null
           id?: string
           labels?: string[] | null
           position?: number
           priority?: string
           project_id?: string | null
           status?: string
+          story_points?: number | null
+          task_type?: string | null
           title?: string
           updated_at?: string
+          watchers?: string[] | null
         }
         Relationships: [
           {
@@ -1252,6 +1309,45 @@ export type Database = {
           profile_type?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      project_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          default_boards: Json | null
+          default_tasks: Json | null
+          description: string | null
+          estimated_duration_days: number | null
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          default_boards?: Json | null
+          default_tasks?: Json | null
+          description?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          default_boards?: Json | null
+          default_tasks?: Json | null
+          description?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1301,6 +1397,86 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          task_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          task_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          task_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "pm_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_dependencies: {
+        Row: {
+          created_at: string
+          dependency_type: string | null
+          depends_on_task_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          dependency_type?: string | null
+          depends_on_task_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          dependency_type?: string | null
+          depends_on_task_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_depends_on_task_id_fkey"
+            columns: ["depends_on_task_id"]
+            isOneToOne: false
+            referencedRelation: "pm_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "pm_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -1399,6 +1575,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_performance: {
+        Row: {
+          created_at: string
+          date: string
+          deals_closed: number | null
+          hours_logged: number | null
+          id: string
+          leads_converted: number | null
+          projects_active: number | null
+          tasks_assigned: number | null
+          tasks_completed: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          deals_closed?: number | null
+          hours_logged?: number | null
+          id?: string
+          leads_converted?: number | null
+          projects_active?: number | null
+          tasks_assigned?: number | null
+          tasks_completed?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          deals_closed?: number | null
+          hours_logged?: number | null
+          id?: string
+          leads_converted?: number | null
+          projects_active?: number | null
+          tasks_assigned?: number | null
+          tasks_completed?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       team_tasks: {
         Row: {
