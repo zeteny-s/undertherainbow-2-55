@@ -95,48 +95,211 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_activities: {
+        Row: {
+          activity_type: string
+          completed_date: string | null
+          created_at: string
+          customer_id: string | null
+          deal_id: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          lead_id: string | null
+          outcome: string | null
+          priority: string | null
+          scheduled_date: string | null
+          status: string | null
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          completed_date?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deal_id?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lead_id?: string | null
+          outcome?: string | null
+          priority?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          completed_date?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deal_id?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lead_id?: string | null
+          outcome?: string | null
+          priority?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "crm_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_communications: {
+        Row: {
+          communication_date: string
+          communication_type: string
+          content: string | null
+          created_at: string
+          customer_id: string | null
+          direction: string
+          id: string
+          lead_id: string | null
+          metadata: Json | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          communication_date?: string
+          communication_type: string
+          content?: string | null
+          created_at?: string
+          customer_id?: string | null
+          direction: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          communication_date?: string
+          communication_type?: string
+          content?: string | null
+          created_at?: string
+          customer_id?: string | null
+          direction?: string
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_communications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_communications_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_customers: {
         Row: {
           address: string | null
+          annual_revenue: number | null
+          avatar_url: string | null
           company: string | null
           created_at: string
           email: string | null
           id: string
+          industry: string | null
+          last_contact_date: string | null
+          lead_score: number | null
+          lifecycle_stage: string | null
+          linkedin_url: string | null
           name: string
           notes: string | null
           phone: string | null
           source: string | null
           status: string
+          tags: string[] | null
           updated_at: string
           user_id: string
+          website: string | null
         }
         Insert: {
           address?: string | null
+          annual_revenue?: number | null
+          avatar_url?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          industry?: string | null
+          last_contact_date?: string | null
+          lead_score?: number | null
+          lifecycle_stage?: string | null
+          linkedin_url?: string | null
           name: string
           notes?: string | null
           phone?: string | null
           source?: string | null
           status?: string
+          tags?: string[] | null
           updated_at?: string
           user_id: string
+          website?: string | null
         }
         Update: {
           address?: string | null
+          annual_revenue?: number | null
+          avatar_url?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          industry?: string | null
+          last_contact_date?: string | null
+          lead_score?: number | null
+          lifecycle_stage?: string | null
+          linkedin_url?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
           source?: string | null
           status?: string
+          tags?: string[] | null
           updated_at?: string
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -146,11 +309,16 @@ export type Database = {
           close_date: string | null
           created_at: string
           customer_id: string | null
+          deal_owner_id: string | null
           description: string | null
+          expected_close_date: string | null
           id: string
+          last_activity_date: string | null
           lead_id: string | null
           probability: number | null
+          stage: string | null
           status: string
+          tags: string[] | null
           title: string
           updated_at: string
           user_id: string
@@ -160,11 +328,16 @@ export type Database = {
           close_date?: string | null
           created_at?: string
           customer_id?: string | null
+          deal_owner_id?: string | null
           description?: string | null
+          expected_close_date?: string | null
           id?: string
+          last_activity_date?: string | null
           lead_id?: string | null
           probability?: number | null
+          stage?: string | null
           status?: string
+          tags?: string[] | null
           title: string
           updated_at?: string
           user_id: string
@@ -174,11 +347,16 @@ export type Database = {
           close_date?: string | null
           created_at?: string
           customer_id?: string | null
+          deal_owner_id?: string | null
           description?: string | null
+          expected_close_date?: string | null
           id?: string
+          last_activity_date?: string | null
           lead_id?: string | null
           probability?: number | null
+          stage?: string | null
           status?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -203,14 +381,19 @@ export type Database = {
       crm_leads: {
         Row: {
           assigned_to: string | null
+          contact_attempts: number | null
           created_at: string
           customer_id: string | null
           description: string | null
           expected_close_date: string | null
           id: string
+          last_contact_method: string | null
+          lead_score: number | null
+          next_follow_up_date: string | null
           probability: number | null
           source: string | null
           status: string
+          tags: string[] | null
           title: string
           updated_at: string
           user_id: string
@@ -218,14 +401,19 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          contact_attempts?: number | null
           created_at?: string
           customer_id?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
+          last_contact_method?: string | null
+          lead_score?: number | null
+          next_follow_up_date?: string | null
           probability?: number | null
           source?: string | null
           status?: string
+          tags?: string[] | null
           title: string
           updated_at?: string
           user_id: string
@@ -233,14 +421,19 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          contact_attempts?: number | null
           created_at?: string
           customer_id?: string | null
           description?: string | null
           expected_close_date?: string | null
           id?: string
+          last_contact_method?: string | null
+          lead_score?: number | null
+          next_follow_up_date?: string | null
           probability?: number | null
           source?: string | null
           status?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -876,51 +1069,92 @@ export type Database = {
       }
       pm_projects: {
         Row: {
+          actual_hours: number | null
+          attachments: Json | null
           budget: number | null
+          client_id: string | null
           created_at: string
           created_by: string
           description: string | null
           end_date: string | null
+          estimated_hours: number | null
+          hourly_rate: number | null
           id: string
           name: string
           priority: string
+          progress_percentage: number | null
+          project_manager_id: string | null
+          project_type: string | null
+          spent_budget: number | null
           start_date: string | null
           status: string
+          tags: string[] | null
           team_members: string[] | null
+          total_budget: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          actual_hours?: number | null
+          attachments?: Json | null
           budget?: number | null
+          client_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           end_date?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
           id?: string
           name: string
           priority?: string
+          progress_percentage?: number | null
+          project_manager_id?: string | null
+          project_type?: string | null
+          spent_budget?: number | null
           start_date?: string | null
           status?: string
+          tags?: string[] | null
           team_members?: string[] | null
+          total_budget?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          actual_hours?: number | null
+          attachments?: Json | null
           budget?: number | null
+          client_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           end_date?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
           id?: string
           name?: string
           priority?: string
+          progress_percentage?: number | null
+          project_manager_id?: string | null
+          project_type?: string | null
+          spent_budget?: number | null
           start_date?: string | null
           status?: string
+          tags?: string[] | null
           team_members?: string[] | null
+          total_budget?: number | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pm_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pm_tasks: {
         Row: {
@@ -1281,6 +1515,69 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_tracking: {
+        Row: {
+          billable: boolean | null
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          end_time: string | null
+          hourly_rate: number | null
+          id: string
+          is_running: boolean | null
+          project_id: string | null
+          start_time: string
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billable?: boolean | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          end_time?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_running?: boolean | null
+          project_id?: string | null
+          start_time: string
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billable?: boolean | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          end_time?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_running?: boolean | null
+          project_id?: string | null
+          start_time?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_tracking_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "pm_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_tracking_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "pm_tasks"
             referencedColumns: ["id"]
           },
         ]
