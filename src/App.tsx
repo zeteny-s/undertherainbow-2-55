@@ -10,6 +10,8 @@ import { InvoiceList } from './components/InvoiceList';
 import { Settings } from './components/Settings';
 import { PayrollCosts } from './components/PayrollCosts';
 import { DocumentsPage } from './components/documents/DocumentsPage';
+import { CalendarPage } from './components/calendar/CalendarPage';
+import { ChatPage } from './components/chat/ChatPage';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -47,6 +49,10 @@ const AppContent: React.FC = () => {
           return <ManagerDashboard />;
         }
         return <Dashboard />;
+      case 'calendar':
+        return <CalendarPage />;
+      case 'chat':
+        return <ChatPage />;
       case 'upload':
         return <InvoiceUpload />;
       case 'invoices':

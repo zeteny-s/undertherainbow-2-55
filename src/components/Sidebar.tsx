@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 
@@ -32,6 +32,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       id: 'dashboard',
       label: 'Áttekintés',
       icon: BarChart3,
+    },
+    {
+      id: 'calendar',
+      label: 'Naptár',
+      icon: Calendar,
+    },
+    {
+      id: 'chat',
+      label: 'Chat',
+      icon: MessageCircle,
     },
     {
       id: 'upload',
