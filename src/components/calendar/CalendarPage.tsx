@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { EventModal } from './EventModal';
@@ -15,17 +16,15 @@ interface CalendarEvent {
   color: string | null;
 }
 
-type ViewType = 'month' | 'week' | 'day';
-
 export const CalendarPage: React.FC = () => {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<ViewType>('month');
+  const [view, setView] = useState<'month' | 'week' | 'day'>('week');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>(undefined);
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'delete'>('create');
 
   useEffect(() => {
     if (user) {
@@ -34,168 +33,90 @@ export const CalendarPage: React.FC = () => {
   }, [user, currentDate]);
 
   const fetchEvents = async () => {
+    if (!user?.id) return;
+
     try {
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      
       const { data, error } = await supabase
         .from('calendar_events')
         .select('*')
-        .gte('start_time', startOfMonth.toISOString())
-        .lte('end_time', endOfMonth.toISOString())
+        .eq('user_id', user.id)
         .order('start_time');
 
       if (error) throw error;
       setEvents(data || []);
     } catch (error) {
       console.error('Error fetching events:', error);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    if (view === 'month') {
-      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
-    } else if (view === 'week') {
-      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
-    } else {
-      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
-    }
-    setCurrentDate(newDate);
-  };
-
-  const formatDateHeader = () => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-    };
-    
-    if (view === 'week') {
-      const weekStart = getWeekStart(currentDate);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      return `${weekStart.toLocaleDateString('hu-HU', { month: 'long', day: 'numeric' })} - ${weekEnd.toLocaleDateString('hu-HU', { month: 'long', day: 'numeric' })} ${currentDate.getFullYear()}`;
-    } else if (view === 'day') {
-      return currentDate.toLocaleDateString('hu-HU', { ...options, day: 'numeric', weekday: 'long' });
-    }
-    
-    return currentDate.toLocaleDateString('hu-HU', options);
-  };
-
-  const getWeekStart = (date: Date) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(d.setDate(diff));
-  };
-
-  const getDaysInMonth = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const startDate = new Date(firstDay);
-    
-    // Adjust to start from Monday
-    const dayOfWeek = firstDay.getDay();
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    startDate.setDate(firstDay.getDate() - mondayOffset);
-    
-    const days = [];
-    for (let i = 0; i < 42; i++) {
-      const day = new Date(startDate);
-      day.setDate(startDate.getDate() + i);
-      days.push(day);
-    }
-    
-    return days;
   };
 
   const getEventsForDate = (date: Date) => {
     return events.filter(event => {
-      const eventStart = new Date(event.start_time);
-      const eventDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-      const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      return eventDate.getTime() === checkDate.getTime();
+      const eventDate = new Date(event.start_time);
+      return eventDate.toDateString() === date.toDateString();
     });
   };
 
-  const renderMonthView = () => {
-    const days = getDaysInMonth();
-    const today = new Date();
-    const currentMonth = currentDate.getMonth();
+  const openModal = (mode: 'create' | 'edit' | 'delete' = 'create', event?: CalendarEvent, date?: Date) => {
+    setModalMode(mode);
+    setSelectedEvent(event);
+    setSelectedDate(date || null);
+    setIsModalOpen(true);
+  };
 
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {/* Days header */}
-        <div className="grid grid-cols-7 border-b border-gray-200">
-          {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map((day) => (
-            <div key={day} className="p-3 text-center text-sm font-medium text-gray-500 bg-gray-50">
-              {day}
-            </div>
-          ))}
-        </div>
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(undefined);
+    setSelectedDate(null);
+    setModalMode('create');
+  };
 
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7">
-          {days.map((day, index) => {
-            const isCurrentMonth = day.getMonth() === currentMonth;
-            const isToday = day.toDateString() === today.toDateString();
-            const dayEvents = getEventsForDate(day);
+  const onDragEnd = async (result: any) => {
+    if (!result.destination) return;
 
-            return (
-              <div
-                key={index}
-                className={`min-h-32 border-r border-b border-gray-100 p-2 ${
-                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
-                } hover:bg-gray-50 cursor-pointer transition-colors`}
-                onClick={() => {
-                  setCurrentDate(new Date(day));
-                  setView('day');
-                }}
-                onDoubleClick={() => {
-                  setSelectedDate(new Date(day));
-                  setSelectedEvent(undefined);
-                  setShowEventModal(true);
-                }}
-              >
-                <div className={`text-sm font-medium mb-1 ${
-                  isToday ? 'bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center' : ''
-                }`}>
-                  {day.getDate()}
-                </div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 3).map((event) => (
-                    <div
-                      key={event.id}
-                      className="text-xs p-1 rounded truncate"
-                      style={{ backgroundColor: (event.color || '#3b82f6') + '20', color: event.color || '#3b82f6' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedEvent(event);
-                        setShowEventModal(true);
-                      }}
-                    >
-                      {event.title}
-                    </div>
-                  ))}
-                  {dayEvents.length > 3 && (
-                    <div className="text-xs text-gray-500 font-medium">
-                      +{dayEvents.length - 3} több
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
+    const { draggableId, destination } = result;
+    const event = events.find(e => e.id === draggableId);
+    if (!event) return;
+
+    // Parse the destination day from droppableId (format: "day-YYYY-MM-DD")
+    const newDateStr = destination.droppableId.replace('day-', '');
+    const newDate = new Date(newDateStr);
+    
+    // Calculate time difference
+    const originalStart = new Date(event.start_time);
+    const originalEnd = new Date(event.end_time);
+    const timeDiff = originalEnd.getTime() - originalStart.getTime();
+    
+    // Set new times
+    const newStart = new Date(newDate);
+    newStart.setHours(originalStart.getHours(), originalStart.getMinutes());
+    const newEnd = new Date(newStart.getTime() + timeDiff);
+
+    try {
+      const { error } = await supabase
+        .from('calendar_events')
+        .update({
+          start_time: newStart.toISOString(),
+          end_time: newEnd.toISOString()
+        })
+        .eq('id', event.id);
+
+      if (error) throw error;
+      fetchEvents();
+    } catch (error) {
+      console.error('Error moving event:', error);
+    }
+  };
+
+  const createEventAtHour = (date: Date, hour: number) => {
+    const startTime = new Date(date);
+    startTime.setHours(hour, 0, 0, 0);
+    openModal('create', undefined, startTime);
   };
 
   const renderWeekView = () => {
-    const weekStart = getWeekStart(currentDate);
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+
     const days = Array.from({ length: 7 }, (_, i) => {
       const day = new Date(weekStart);
       day.setDate(weekStart.getDate() + i);
@@ -203,15 +124,15 @@ export const CalendarPage: React.FC = () => {
     });
 
     return (
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="grid grid-cols-8 border-b border-gray-200">
-          <div className="p-4 border-r border-gray-200"></div>
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+        <div className="grid grid-cols-8 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="p-4 border-r border-gray-200 font-semibold text-gray-700">Időpont</div>
           {days.map((day) => (
             <div key={day.getTime()} className="p-4 text-center border-r border-gray-200">
-              <div className="text-sm font-medium text-gray-900">
+              <div className="text-sm font-medium text-gray-600">
                 {day.toLocaleDateString('hu-HU', { weekday: 'short' })}
               </div>
-              <div className={`text-lg font-semibold ${
+              <div className={`text-lg font-bold mt-1 ${
                 day.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'
               }`}>
                 {day.getDate()}
@@ -222,52 +143,155 @@ export const CalendarPage: React.FC = () => {
 
         <div className="grid grid-cols-8" style={{ minHeight: '600px' }}>
           {/* Time column */}
-          <div className="border-r border-gray-200">
+          <div className="border-r border-gray-200 bg-gray-50">
             {Array.from({ length: 24 }, (_, hour) => (
-              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-xs text-gray-500">
+              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
                 {hour.toString().padStart(2, '0')}:00
               </div>
             ))}
           </div>
 
           {/* Day columns */}
-          {days.map((day) => {
+          <DragDropContext onDragEnd={onDragEnd}>
+            {days.map((day) => {
+              const dayEvents = getEventsForDate(day);
+              const dayId = day.toISOString().split('T')[0];
+              
+              return (
+                <Droppable key={day.getTime()} droppableId={`day-${dayId}`}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`border-r border-gray-200 relative transition-colors ${
+                        snapshot.isDraggingOver ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      {Array.from({ length: 24 }, (_, hour) => (
+                        <div
+                          key={hour}
+                          onClick={() => createEventAtHour(day, hour)}
+                          className="h-16 border-b border-gray-100 hover:bg-blue-25 cursor-pointer transition-colors relative group"
+                        >
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
+                            <Plus className="w-4 h-4 text-blue-600" />
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Events */}
+                      {dayEvents.map((event, index) => {
+                        const startTime = new Date(event.start_time);
+                        const endTime = new Date(event.end_time);
+                        const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+                        const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+                        
+                        return (
+                          <Draggable key={event.id} draggableId={event.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                onClick={() => openModal('edit', event)}
+                                className={`absolute left-1 right-1 p-3 rounded-lg text-xs text-white cursor-pointer transition-all duration-200 hover:shadow-xl ${
+                                  snapshot.isDragging ? 'shadow-2xl z-50 rotate-3' : 'hover:scale-105 hover:-translate-y-1'
+                                }`}
+                                style={{
+                                  backgroundColor: event.color || '#3b82f6',
+                                  top: `${startHour * 64}px`,
+                                  height: `${Math.max(duration * 64, 40)}px`,
+                                  zIndex: snapshot.isDragging ? 50 : 10,
+                                  ...provided.draggableProps.style
+                                }}
+                              >
+                                <div className="font-semibold truncate mb-1">{event.title}</div>
+                                {event.location && (
+                                  <div className="truncate opacity-90 text-xs">{event.location}</div>
+                                )}
+                                <div className="text-xs opacity-75 mt-1">
+                                  {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                                  {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              );
+            })}
+          </DragDropContext>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMonthView = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
+
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      days.push(date);
+    }
+
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+        <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map(day => (
+            <div key={day} className="p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7">
+          {days.map((day, index) => {
             const dayEvents = getEventsForDate(day);
+            const isCurrentMonth = day.getMonth() === month;
+            const isToday = day.toDateString() === new Date().toDateString();
+            
             return (
-              <div key={day.getTime()} className="border-r border-gray-200 relative">
-                {Array.from({ length: 24 }, (_, hour) => (
-                  <div key={hour} className="h-16 border-b border-gray-100"></div>
-                ))}
-                
-                {/* Events */}
-                {dayEvents.map((event) => {
-                  const startTime = new Date(event.start_time);
-                  const endTime = new Date(event.end_time);
-                  const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-                  const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-                  
-                  return (
+              <div 
+                key={index} 
+                className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-25 transition-colors ${
+                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                } ${isToday ? 'bg-blue-50' : ''}`}
+                onClick={() => openModal('create', undefined, day)}
+              >
+                <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600' : ''}`}>
+                  {day.getDate()}
+                </div>
+                <div className="space-y-1">
+                  {dayEvents.slice(0, 3).map((event) => (
                     <div
                       key={event.id}
-                      className="absolute left-1 right-1 rounded text-xs p-1 cursor-pointer"
-                      style={{
-                        top: `${startHour * 4}rem`,
-                        height: `${Math.max(duration * 4, 1)}rem`,
-                        backgroundColor: (event.color || '#3b82f6') + '20',
-                        borderLeft: `3px solid ${event.color || '#3b82f6'}`,
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openModal('edit', event);
                       }}
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setShowEventModal(true);
-                      }}
+                      className="text-xs p-1 rounded truncate text-white hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: event.color || '#3b82f6' }}
                     >
-                      <div className="font-medium truncate">{event.title}</div>
-                      <div className="text-gray-600">
-                        {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                      {event.title}
                     </div>
-                  );
-                })}
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <div className="text-xs text-gray-500 font-medium">
+                      +{dayEvents.length - 3} további
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -278,11 +302,11 @@ export const CalendarPage: React.FC = () => {
 
   const renderDayView = () => {
     const dayEvents = getEventsForDate(currentDate);
-
+    
     return (
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <h3 className="text-xl font-bold text-gray-900">
             {currentDate.toLocaleDateString('hu-HU', { 
               weekday: 'long', 
               year: 'numeric', 
@@ -291,55 +315,58 @@ export const CalendarPage: React.FC = () => {
             })}
           </h3>
         </div>
-
+        
         <div className="flex">
           {/* Time column */}
-          <div className="w-20 border-r border-gray-200">
+          <div className="w-20 border-r border-gray-200 bg-gray-50">
             {Array.from({ length: 24 }, (_, hour) => (
-              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-xs text-gray-500">
+              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
                 {hour.toString().padStart(2, '0')}:00
               </div>
             ))}
           </div>
-
-          {/* Events column */}
+          
+          {/* Day content */}
           <div className="flex-1 relative">
             {Array.from({ length: 24 }, (_, hour) => (
-              <div key={hour} className="h-16 border-b border-gray-100"></div>
+              <div
+                key={hour}
+                onClick={() => createEventAtHour(currentDate, hour)}
+                className="h-16 border-b border-gray-100 hover:bg-blue-25 cursor-pointer transition-colors relative group"
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
+                  <Plus className="w-4 h-4 text-blue-600" />
+                </div>
+              </div>
             ))}
-
+            
+            {/* Events */}
             {dayEvents.map((event) => {
               const startTime = new Date(event.start_time);
               const endTime = new Date(event.end_time);
               const startHour = startTime.getHours() + startTime.getMinutes() / 60;
               const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-
+              
               return (
                 <div
                   key={event.id}
-                  className="absolute left-2 right-2 rounded p-2 cursor-pointer"
+                  onClick={() => openModal('edit', event)}
+                  className="absolute left-2 right-2 p-3 rounded-lg text-sm text-white cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
                   style={{
-                    top: `${startHour * 4}rem`,
-                    height: `${Math.max(duration * 4, 2)}rem`,
-                    backgroundColor: (event.color || '#3b82f6') + '20',
-                    borderLeft: `4px solid ${event.color || '#3b82f6'}`,
-                  }}
-                  onClick={() => {
-                    setSelectedEvent(event);
-                    setShowEventModal(true);
+                    backgroundColor: event.color || '#3b82f6',
+                    top: `${startHour * 64}px`,
+                    height: `${Math.max(duration * 64, 40)}px`,
+                    zIndex: 10
                   }}
                 >
-                  <div className="font-medium text-sm">{event.title}</div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })} - 
-                    {endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+                  <div className="font-semibold mb-1">{event.title}</div>
                   {event.location && (
-                    <div className="text-xs text-gray-600 mt-1 flex items-center">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {event.location}
-                    </div>
+                    <div className="text-xs opacity-90 mb-1">{event.location}</div>
                   )}
+                  <div className="text-xs opacity-75">
+                    {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                    {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
+                  </div>
                 </div>
               );
             })}
@@ -349,108 +376,121 @@ export const CalendarPage: React.FC = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    
+    if (view === 'month') {
+      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    } else if (view === 'week') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    } else if (view === 'day') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
+    }
+    
+    setCurrentDate(newDate);
+  };
+
+  const getDateRangeText = () => {
+    if (view === 'month') {
+      return currentDate.toLocaleDateString('hu-HU', { year: 'numeric', month: 'long' });
+    } else if (view === 'week') {
+      const weekStart = new Date(currentDate);
+      weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      
+      return `${weekStart.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })}`;
+    } else {
+      return currentDate.toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900">Naptár</h1>
-            
-            <div className="flex items-center space-x-2">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Naptár</h1>
+              <p className="text-gray-600">Események és találkozók kezelése</p>
+            </div>
+            <button
+              onClick={() => openModal('create')}
+              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Új esemény</span>
+            </button>
+          </div>
+
+          {/* Navigation and View Controls */}
+          <div className="flex items-center justify-between bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigateDate('prev')}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
               </button>
               
-              <h2 className="text-lg font-semibold text-gray-900 min-w-64 text-center">
-                {formatDateHeader()}
+              <h2 className="text-xl font-semibold text-gray-900 min-w-64 text-center">
+                {getDateRangeText()}
               </h2>
               
               <button
                 onClick={() => navigateDate('next')}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-5 h-5 text-gray-600" />
+              </button>
+              
+              <button
+                onClick={() => setCurrentDate(new Date())}
+                className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+              >
+                Ma
               </button>
             </div>
-          </div>
 
-          <div className="flex items-center space-x-3">
-            {/* View switcher */}
-            <div className="flex rounded-lg border border-gray-200 p-1">
-              {(['month', 'week', 'day'] as ViewType[]).map((viewType) => (
+            {/* View selector */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              {(['month', 'week', 'day'] as const).map((viewType) => (
                 <button
                   key={viewType}
                   onClick={() => setView(viewType)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                     view === viewType
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   {viewType === 'month' ? 'Hónap' : viewType === 'week' ? 'Hét' : 'Nap'}
                 </button>
               ))}
             </div>
-
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Ma
-            </button>
-
-            <button
-            onClick={() => {
-              setSelectedEvent(undefined);
-              setSelectedDate(new Date());
-              setShowEventModal(true);
-            }}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Új esemény</span>
-            </button>
           </div>
         </div>
 
-        {/* Calendar View */}
+        {/* Calendar Content */}
         {view === 'month' && renderMonthView()}
         {view === 'week' && renderWeekView()}
         {view === 'day' && renderDayView()}
 
         {/* Event Modal */}
         <EventModal
-          isOpen={showEventModal}
-          onClose={() => {
-            setShowEventModal(false);
-            setSelectedEvent(undefined);
-            setSelectedDate(undefined);
-          }}
+          isOpen={isModalOpen}
+          onClose={closeModal}
           event={selectedEvent}
-          selectedDate={selectedDate}
+          selectedDate={selectedDate || undefined}
+          mode={modalMode}
           onEventSaved={() => {
             fetchEvents();
-            setShowEventModal(false);
-            setSelectedEvent(undefined);
-            setSelectedDate(undefined);
+            closeModal();
           }}
           onEventDeleted={() => {
             fetchEvents();
-            setShowEventModal(false);
-            setSelectedEvent(undefined);
-            setSelectedDate(undefined);
+            closeModal();
           }}
         />
       </div>

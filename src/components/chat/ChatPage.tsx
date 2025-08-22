@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Plus, MessageCircle, FolderOpen, MoreVertical, Search, History } from 'lucide-react';
+import { Send, MessageCircle, History } from 'lucide-react';
+import { ChatHistoryModal } from './ChatHistoryModal';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -35,7 +36,6 @@ export const ChatPage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -160,7 +160,7 @@ export const ChatPage: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
-      const response = await fetch('/functions/v1/chat-ai', {
+      const response = await fetch('https://xtovmknldanpipgddsrd.supabase.co/functions/v1/chat-ai', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -215,31 +215,10 @@ export const ChatPage: React.FC = () => {
     fetchMessages(conversationId);
   };
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const groupedConversations = folders.reduce((acc, folder) => {
-    acc[folder.id] = filteredConversations.filter(conv => conv.folder_id === folder.id);
-    return acc;
-  }, {} as Record<string, ChatConversation[]>);
-
-  const ungroupedConversations = filteredConversations.filter(conv => !conv.folder_id);
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) {
-      return 'Ma';
-    } else if (diffDays === 2) {
-      return 'Tegnap';
-    } else if (diffDays <= 7) {
-      return `${diffDays} napja`;
-    } else {
-      return date.toLocaleDateString('hu-HU');
+  const createNewConversation = async () => {
+    const newConvId = await createConversation('Új beszélgetés');
+    if (newConvId) {
+      setShowHistory(false);
     }
   };
 
@@ -252,160 +231,62 @@ export const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${
-        showHistory ? 'w-80' : 'w-16'
-      }`}>
-        
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <History className="w-5 h-5 text-gray-600" />
-            </button>
-            
-            {showHistory && (
-              <button
-                onClick={() => createConversation('Új beszélgetés')}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Plus className="w-5 h-5 text-gray-600" />
-              </button>
-            )}
-          </div>
-
-          {showHistory && (
-            <div className="mt-4 relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Keresés a beszélgetésekben..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-4 shadow-sm">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <MessageCircle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">AI Asszisztens</h1>
+                <p className="text-sm text-gray-500">Intelligens chatbot segítő</p>
+              </div>
             </div>
-          )}
-        </div>
-
-        {/* Conversation List */}
-        {showHistory && (
-          <div className="flex-1 overflow-y-auto">
-            {/* Folders */}
-            {folders.map((folder) => {
-              const folderConversations = groupedConversations[folder.id] || [];
-              if (folderConversations.length === 0) return null;
-
-              return (
-                <div key={folder.id} className="p-2">
-                  <div className="flex items-center space-x-2 p-2 text-sm font-medium text-gray-600">
-                    <FolderOpen className="w-4 h-4" style={{ color: folder.color || '#6b7280' }} />
-                    <span>{folder.name}</span>
-                  </div>
-                  
-                  {folderConversations.map((conv) => (
-                    <button
-                      key={conv.id}
-                      onClick={() => selectConversation(conv.id)}
-                      className={`w-full text-left p-3 rounded-lg mb-1 transition-colors ${
-                        activeConversation === conv.id
-                          ? 'bg-blue-50 border-l-4 border-blue-600'
-                          : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {conv.title}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatTime(conv.last_message_at)}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              );
-            })}
-
-            {/* Ungrouped conversations */}
-            {ungroupedConversations.length > 0 && (
-              <div className="p-2">
-                {ungroupedConversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => selectConversation(conv.id)}
-                    className={`w-full text-left p-3 rounded-lg mb-1 transition-colors ${
-                      activeConversation === conv.id
-                        ? 'bg-blue-50 border-l-4 border-blue-600'
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {conv.title}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatTime(conv.last_message_at)}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {filteredConversations.length === 0 && (
-              <div className="p-4 text-center text-gray-500 text-sm">
-                Még nincsenek beszélgetések
-              </div>
-            )}
           </div>
-        )}
+          <button
+            onClick={() => setShowHistory(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium"
+          >
+            <History className="w-4 h-4" />
+            <span>Előzmények</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Chat History Modal */}
+      <ChatHistoryModal
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        conversations={conversations}
+        folders={folders}
+        activeConversation={activeConversation}
+        onSelectConversation={selectConversation}
+        onCreateConversation={createNewConversation}
+        onRefreshData={fetchData}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
         {activeConversation ? (
           <>
-            {/* Chat Header */}
-            <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {conversations.find(c => c.id === activeConversation)?.title || 'Beszélgetés'}
-                  </h2>
-                  <p className="text-sm text-gray-500">AI Asszisztens</p>
-                </div>
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <MoreVertical className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-            </div>
-
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-custom">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((message, index) => (
                 <div
                   key={message.id}
                   className={`flex ${(message.role === 'user') ? 'justify-end' : 'justify-start'} animate-fade-in`}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className={`max-w-3xl rounded-2xl p-4 shadow-sm hover-lift message-bubble ${
-                    (message.role === 'user') ? 'user' : ''
-                  } ${
+                  <div className={`max-w-3xl rounded-2xl p-6 shadow-lg hover-lift transition-all duration-300 ${
                     (message.role === 'user')
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-200'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200'
+                      : 'bg-white border border-gray-100 shadow-gray-100'
                   }`}>
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    <p className={`text-xs mt-2 opacity-70 ${
+                    <p className={`text-xs mt-3 opacity-70 ${
                       (message.role === 'user') ? 'text-blue-100' : 'text-gray-500'
                     }`}>
                       {new Date(message.created_at).toLocaleTimeString('hu-HU', { 
@@ -420,7 +301,7 @@ export const ChatPage: React.FC = () => {
               {/* Typing indicator */}
               {isTyping && (
                 <div className="flex justify-start animate-fade-in">
-                  <div className="max-w-3xl rounded-2xl p-4 bg-white border border-gray-200 shadow-sm">
+                  <div className="max-w-3xl rounded-2xl p-6 bg-white border border-gray-100 shadow-lg">
                     <div className="typing-indicator">
                       <div className="typing-dot"></div>
                       <div className="typing-dot"></div>
@@ -434,8 +315,8 @@ export const ChatPage: React.FC = () => {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t border-gray-200 p-4">
-              <div className="flex items-end space-x-3">
+            <div className="bg-white border-t border-gray-200 p-6 shadow-lg">
+              <div className="flex items-end space-x-4">
                 <div className="flex-1 relative">
                   <textarea
                     value={inputMessage}
@@ -446,43 +327,44 @@ export const ChatPage: React.FC = () => {
                         sendMessage();
                       }
                     }}
-                    placeholder="Írj egy üzenetet..."
+                    placeholder="Írj egy üzenetet az AI-nak..."
                     rows={1}
-                    className="w-full resize-none border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full resize-none border border-gray-200 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-gray-50 focus:bg-white transition-colors"
                     style={{ maxHeight: '120px' }}
                   />
                 </div>
                 <button
                   onClick={sendMessage}
                   disabled={!inputMessage.trim()}
-                  className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover-lift"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                 </button>
               </div>
             </div>
           </>
         ) : (
           /* Welcome Screen */
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <div className="flex-1 flex flex-col items-center justify-center p-12">
             <div className="text-center max-w-2xl animate-fade-in">
-              <div className="animate-bounce-in">
-                <MessageCircle className="w-20 h-20 text-blue-500 mx-auto mb-6 animate-pulse-glow" />
+              <div className="animate-bounce-in mb-8">
+                <div className="w-24 h-24 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-blue-200 animate-pulse-glow">
+                  <MessageCircle className="w-12 h-12 text-white" />
+                </div>
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 AI Chat Asszisztens
               </h1>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              <p className="text-xl text-gray-600 mb-12 leading-relaxed">
                 Tedd fel kérdéseid, és kezdj beszélgetni az intelligens asszisztenssel. 
                 Egyszerűen kezdj el gépelni alul!
               </p>
               
               {/* Quick start input */}
-              <div className="max-w-lg mx-auto mb-6">
-                <div className="flex items-center space-x-3 bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover-glow">
+              <div className="max-w-2xl mx-auto mb-8">
+                <div className="flex items-center space-x-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 hover-glow transition-all duration-300">
                   <div className="flex-1">
-                    <input
-                      type="text"
+                    <textarea
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={(e) => {
@@ -492,21 +374,23 @@ export const ChatPage: React.FC = () => {
                         }
                       }}
                       placeholder="Írj egy üzenetet az AI-nak..."
-                      className="w-full text-base focus:outline-none placeholder-gray-500"
+                      rows={1}
+                      className="w-full text-lg focus:outline-none placeholder-gray-500 resize-none bg-gray-50 rounded-xl px-4 py-3 border-0"
+                      style={{ maxHeight: '120px' }}
                     />
                   </div>
                   <button
                     onClick={sendMessage}
                     disabled={!inputMessage.trim()}
-                    className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover-lift"
+                    className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover-lift"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-6 h-6" />
                   </button>
                 </div>
               </div>
               
-              <div className="text-sm text-gray-500">
-                Vagy válassz egy korábbi beszélgetést a bal oldali menüből
+              <div className="text-base text-gray-500">
+                Vagy nyisd meg a korábbi beszélgetéseket az <strong>Előzmények</strong> gombbal
               </div>
             </div>
           </div>

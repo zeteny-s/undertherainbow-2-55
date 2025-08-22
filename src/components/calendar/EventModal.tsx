@@ -19,6 +19,7 @@ interface EventModalProps {
   onClose: () => void;
   event?: CalendarEvent;
   selectedDate?: Date;
+  mode?: 'create' | 'edit' | 'delete';
   onEventSaved: () => void;
   onEventDeleted?: () => void;
 }
@@ -39,6 +40,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   onClose,
   event,
   selectedDate,
+  mode = 'create',
   onEventSaved,
   onEventDeleted
 }) => {
@@ -57,20 +59,25 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (event) {
-        // Edit mode
+      if (event && (mode === 'edit' || mode === 'delete')) {
+        // Editing or deleting existing event
         setFormData({
           ...event,
-          description: event.description || '',
-          location: event.location || '',
-          color: event.color || '#3b82f6'
+          start_time: new Date(event.start_time).toISOString().slice(0, 16),
+          end_time: new Date(event.end_time).toISOString().slice(0, 16)
         });
       } else {
-        // Create mode
-        const now = new Date();
-        const defaultDate = selectedDate || now;
-        const startTime = new Date(defaultDate);
-        startTime.setHours(now.getHours() + 1, 0, 0, 0);
+        // Creating new event
+        const now = selectedDate || new Date();
+        const startTime = new Date(now);
+        
+        // If selectedDate has specific time (from hour click), use it
+        if (selectedDate && selectedDate.getHours() !== 0) {
+          startTime.setTime(selectedDate.getTime());
+        } else {
+          startTime.setMinutes(0, 0, 0);
+        }
+        
         const endTime = new Date(startTime);
         endTime.setHours(startTime.getHours() + 1);
 
@@ -85,7 +92,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         });
       }
     }
-  }, [isOpen, event, selectedDate]);
+  }, [isOpen, event, selectedDate, mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,11 +103,13 @@ export const EventModal: React.FC<EventModalProps> = ({
       const eventData = {
         ...formData,
         user_id: user.id,
+        start_time: new Date(formData.start_time).toISOString(),
+        end_time: new Date(formData.end_time).toISOString(),
         description: formData.description || null,
         location: formData.location || null
       };
 
-      if (event?.id) {
+      if (mode === 'edit' && event?.id) {
         // Update existing event
         const { error } = await supabase
           .from('calendar_events')
@@ -108,7 +117,7 @@ export const EventModal: React.FC<EventModalProps> = ({
           .eq('id', event.id);
 
         if (error) throw error;
-      } else {
+      } else if (mode === 'create') {
         // Create new event
         const { error } = await supabase
           .from('calendar_events')
