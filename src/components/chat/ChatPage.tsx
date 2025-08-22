@@ -116,6 +116,8 @@ export const ChatPage: React.FC = () => {
     return data.id;
   };
 
+  const [isTyping, setIsTyping] = useState(false);
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || !user?.id) return;
 
@@ -123,7 +125,8 @@ export const ChatPage: React.FC = () => {
     
     // Create conversation if none exists
     if (!conversationId) {
-      conversationId = await createConversation(inputMessage.substring(0, 50) + '...');
+      const title = inputMessage.length > 50 ? inputMessage.substring(0, 50) + '...' : inputMessage;
+      conversationId = await createConversation(title);
       if (!conversationId) return;
     }
 
@@ -134,6 +137,9 @@ export const ChatPage: React.FC = () => {
       content: inputMessage.trim()
     };
 
+    const currentMessage = inputMessage.trim();
+    setInputMessage('');
+    
     try {
       // Add user message
       const { error: userError } = await supabase
@@ -141,38 +147,66 @@ export const ChatPage: React.FC = () => {
         .insert(userMessage);
 
       if (userError) throw userError;
-
-      // Simulate AI response (replace with actual AI integration)
-      const aiResponse = {
-        conversation_id: conversationId,
-        user_id: user.id,
-        role: 'assistant',
-        content: `Ez egy minta válasz a következő üzenetre: "${inputMessage}". A valódi AI integrációt később implementáljuk.`
-      };
-
-      setTimeout(async () => {
-        const { error: aiError } = await supabase
-          .from('chat_messages')
-          .insert(aiResponse);
-
-        if (!aiError && conversationId) {
-          // Update conversation timestamp
-          await supabase
-            .from('chat_conversations')
-            .update({ last_message_at: new Date().toISOString() })
-            .eq('id', conversationId);
-
-          fetchMessages(conversationId);
-          fetchConversations();
-        }
-      }, 1000);
-
-      setInputMessage('');
+      
+      // Refresh messages to show user message immediately
       if (conversationId) {
         fetchMessages(conversationId);
       }
+
+      // Show typing indicator
+      setIsTyping(true);
+
+      // Call AI edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const response = await fetch('/functions/v1/chat-ai', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: currentMessage,
+          conversationId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI API error: ${response.status}`);
+      }
+
+      await response.json();
+      
+      // Hide typing indicator
+      setIsTyping(false);
+      
+      // Refresh messages and conversations
+      if (conversationId) {
+        fetchMessages(conversationId);
+        fetchConversations();
+      }
+
     } catch (error) {
       console.error('Error sending message:', error);
+      setIsTyping(false);
+      
+      // Fallback response on error
+      const fallbackResponse = {
+        conversation_id: conversationId,
+        user_id: user.id,
+        role: 'assistant',
+        content: 'Sajnos most nem tudok válaszolni. Kérlek próbáld újra később.'
+      };
+
+      await supabase
+        .from('chat_messages')
+        .insert(fallbackResponse);
+        
+      if (conversationId) {
+        fetchMessages(conversationId);
+        fetchConversations();
+      }
     }
   };
 
@@ -356,19 +390,22 @@ export const ChatPage: React.FC = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-custom">
+              {messages.map((message, index) => (
                 <div
                   key={message.id}
-                  className={`flex ${(message.role === 'user') ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${(message.role === 'user') ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className={`max-w-3xl rounded-lg p-4 ${
+                  <div className={`max-w-3xl rounded-2xl p-4 shadow-sm hover-lift message-bubble ${
+                    (message.role === 'user') ? 'user' : ''
+                  } ${
                     (message.role === 'user')
                       ? 'bg-blue-600 text-white'
                       : 'bg-white border border-gray-200'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className={`text-xs mt-2 ${
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                    <p className={`text-xs mt-2 opacity-70 ${
                       (message.role === 'user') ? 'text-blue-100' : 'text-gray-500'
                     }`}>
                       {new Date(message.created_at).toLocaleTimeString('hu-HU', { 
@@ -379,6 +416,20 @@ export const ChatPage: React.FC = () => {
                   </div>
                 </div>
               ))}
+              
+              {/* Typing indicator */}
+              {isTyping && (
+                <div className="flex justify-start animate-fade-in">
+                  <div className="max-w-3xl rounded-2xl p-4 bg-white border border-gray-200 shadow-sm">
+                    <div className="typing-indicator">
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div ref={messagesEndRef} />
             </div>
 
@@ -413,22 +464,50 @@ export const ChatPage: React.FC = () => {
           </>
         ) : (
           /* Welcome Screen */
-          <div className="flex-1 flex flex-col items-center justify-center p-8">
-            <div className="text-center max-w-md">
-              <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                Üdvözöl az AI Chat
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Válassz egy korábbi beszélgetést, vagy kezdj egy újat az AI asszisztenssel.
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+            <div className="text-center max-w-2xl animate-fade-in">
+              <div className="animate-bounce-in">
+                <MessageCircle className="w-20 h-20 text-blue-500 mx-auto mb-6 animate-pulse-glow" />
+              </div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                AI Chat Asszisztens
+              </h1>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                Tedd fel kérdéseid, és kezdj beszélgetni az intelligens asszisztenssel. 
+                Egyszerűen kezdj el gépelni alul!
               </p>
-              <button
-                onClick={() => createConversation('Új beszélgetés')}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 mx-auto"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Új beszélgetés kezdése</span>
-              </button>
+              
+              {/* Quick start input */}
+              <div className="max-w-lg mx-auto mb-6">
+                <div className="flex items-center space-x-3 bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover-glow">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                      placeholder="Írj egy üzenetet az AI-nak..."
+                      className="w-full text-base focus:outline-none placeholder-gray-500"
+                    />
+                  </div>
+                  <button
+                    onClick={sendMessage}
+                    disabled={!inputMessage.trim()}
+                    className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all hover-lift"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-500">
+                Vagy válassz egy korábbi beszélgetést a bal oldali menüből
+              </div>
             </div>
           </div>
         )}

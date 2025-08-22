@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, MapPin } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
+import { EventModal } from './EventModal';
 
 interface CalendarEvent {
   id: string;
@@ -22,6 +23,9 @@ export const CalendarPage: React.FC = () => {
   const [view, setView] = useState<ViewType>('month');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   useEffect(() => {
     if (user) {
@@ -150,6 +154,11 @@ export const CalendarPage: React.FC = () => {
                   setCurrentDate(new Date(day));
                   setView('day');
                 }}
+                onDoubleClick={() => {
+                  setSelectedDate(new Date(day));
+                  setSelectedEvent(undefined);
+                  setShowEventModal(true);
+                }}
               >
                 <div className={`text-sm font-medium mb-1 ${
                   isToday ? 'bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center' : ''
@@ -164,7 +173,8 @@ export const CalendarPage: React.FC = () => {
                       style={{ backgroundColor: (event.color || '#3b82f6') + '20', color: event.color || '#3b82f6' }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Add event modal logic here
+                        setSelectedEvent(event);
+                        setShowEventModal(true);
                       }}
                     >
                       {event.title}
@@ -247,7 +257,8 @@ export const CalendarPage: React.FC = () => {
                         borderLeft: `3px solid ${event.color || '#3b82f6'}`,
                       }}
                       onClick={() => {
-                        // Add event modal logic here
+                        setSelectedEvent(event);
+                        setShowEventModal(true);
                       }}
                     >
                       <div className="font-medium truncate">{event.title}</div>
@@ -314,7 +325,8 @@ export const CalendarPage: React.FC = () => {
                     borderLeft: `4px solid ${event.color || '#3b82f6'}`,
                   }}
                   onClick={() => {
-                    // Add event modal logic here
+                    setSelectedEvent(event);
+                    setShowEventModal(true);
                   }}
                 >
                   <div className="font-medium text-sm">{event.title}</div>
@@ -401,8 +413,9 @@ export const CalendarPage: React.FC = () => {
 
             <button
             onClick={() => {
-              setCurrentDate(new Date());
-              // Create new event
+              setSelectedEvent(undefined);
+              setSelectedDate(new Date());
+              setShowEventModal(true);
             }}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
             >
@@ -416,6 +429,30 @@ export const CalendarPage: React.FC = () => {
         {view === 'month' && renderMonthView()}
         {view === 'week' && renderWeekView()}
         {view === 'day' && renderDayView()}
+
+        {/* Event Modal */}
+        <EventModal
+          isOpen={showEventModal}
+          onClose={() => {
+            setShowEventModal(false);
+            setSelectedEvent(undefined);
+            setSelectedDate(undefined);
+          }}
+          event={selectedEvent}
+          selectedDate={selectedDate}
+          onEventSaved={() => {
+            fetchEvents();
+            setShowEventModal(false);
+            setSelectedEvent(undefined);
+            setSelectedDate(undefined);
+          }}
+          onEventDeleted={() => {
+            fetchEvents();
+            setShowEventModal(false);
+            setSelectedEvent(undefined);
+            setSelectedDate(undefined);
+          }}
+        />
       </div>
     </div>
   );
