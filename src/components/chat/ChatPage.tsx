@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, History } from 'lucide-react';
+import { Send, History } from 'lucide-react';
 import { ChatHistoryModal } from './ChatHistoryModal';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -232,29 +232,13 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4 shadow-sm">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <MessageCircle className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AI Asszisztens</h1>
-                <p className="text-sm text-gray-500">Intelligens chatbot segítő</p>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowHistory(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium"
-          >
-            <History className="w-4 h-4" />
-            <span>Előzmények</span>
-          </button>
-        </div>
-      </div>
+      {/* Floating History Button */}
+      <button
+        onClick={() => setShowHistory(true)}
+        className="fixed top-6 right-6 z-50 p-3 bg-white hover:bg-gray-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+      >
+        <History className="w-5 h-5 text-gray-700" />
+      </button>
 
       {/* Chat History Modal */}
       <ChatHistoryModal
@@ -347,11 +331,6 @@ export const ChatPage: React.FC = () => {
           /* Welcome Screen */
           <div className="flex-1 flex flex-col items-center justify-center p-12">
             <div className="text-center max-w-2xl animate-fade-in">
-              <div className="animate-bounce-in mb-8">
-                <div className="w-24 h-24 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-blue-200 animate-pulse-glow">
-                  <MessageCircle className="w-12 h-12 text-white" />
-                </div>
-              </div>
               <h1 className="text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 AI Chat Asszisztens
               </h1>
