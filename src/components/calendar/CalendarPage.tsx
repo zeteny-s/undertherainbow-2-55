@@ -266,7 +266,10 @@ export const CalendarPage: React.FC = () => {
                 className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-25 transition-colors ${
                   !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
                 } ${isToday ? 'bg-blue-50' : ''}`}
-                onClick={() => openModal('create', undefined, day)}
+                onClick={() => {
+                  setCurrentDate(day);
+                  setView('day');
+                }}
               >
                 <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600' : ''}`}>
                   {day.getDate()}
