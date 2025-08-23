@@ -61,7 +61,7 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Te egy barátságos magyar nyelvű AI asszisztens vagy. Válaszolj röviden és hasznossan a következő kérdésre vagy megjegyzésre: ${message}`
+            text: `Te egy barátságos magyar nyelvű AI asszisztens vagy. Válaszolj röviden és hasznosan a következő kérdésre vagy megjegyzésre: ${message}`
           }]
         }],
         generationConfig: {

@@ -254,50 +254,72 @@ export const CalendarPage: React.FC = () => {
           ))}
         </div>
         
-        <div className="grid grid-cols-7">
-          {days.map((day, index) => {
-            const dayEvents = getEventsForDate(day);
-            const isCurrentMonth = day.getMonth() === month;
-            const isToday = day.toDateString() === new Date().toDateString();
-            
-            return (
-              <div 
-                key={index} 
-                className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-25 transition-colors ${
-                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
-                } ${isToday ? 'bg-blue-50' : ''}`}
-                onClick={() => {
-                  setCurrentDate(day);
-                  setView('day');
-                }}
-              >
-                <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600' : ''}`}>
-                  {day.getDate()}
-                </div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 3).map((event) => (
-                    <div
-                      key={event.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openModal('edit', event);
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="grid grid-cols-7">
+            {days.map((day, index) => {
+              const dayEvents = getEventsForDate(day);
+              const isCurrentMonth = day.getMonth() === month;
+              const isToday = day.toDateString() === new Date().toDateString();
+              const dayId = day.toISOString().split('T')[0];
+              
+              return (
+                <Droppable key={index} droppableId={`day-${dayId}`}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-25 transition-colors ${
+                        !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                      } ${isToday ? 'bg-blue-50' : ''} ${
+                        snapshot.isDraggingOver ? 'bg-blue-100' : ''
+                      }`}
+                      onClick={() => {
+                        setCurrentDate(day);
+                        setView('day');
                       }}
-                      className="text-xs p-1 rounded truncate text-white hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: event.color || '#3b82f6' }}
                     >
-                      {event.title}
-                    </div>
-                  ))}
-                  {dayEvents.length > 3 && (
-                    <div className="text-xs text-gray-500 font-medium">
-                      +{dayEvents.length - 3} további
+                      <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600' : ''}`}>
+                        {day.getDate()}
+                      </div>
+                      <div className="space-y-1">
+                        {dayEvents.slice(0, 3).map((event, eventIndex) => (
+                          <Draggable key={event.id} draggableId={event.id} index={eventIndex}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openModal('edit', event);
+                                }}
+                                className={`text-xs p-1 rounded truncate text-white hover:opacity-80 transition-opacity cursor-pointer ${
+                                  snapshot.isDragging ? 'shadow-xl z-50' : ''
+                                }`}
+                                style={{ 
+                                  backgroundColor: event.color || '#3b82f6',
+                                  ...provided.draggableProps.style
+                                }}
+                              >
+                                {event.title}
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <div className="text-xs text-gray-500 font-medium">
+                            +{dayEvents.length - 3} további
+                          </div>
+                        )}
+                      </div>
+                      {provided.placeholder}
                     </div>
                   )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </Droppable>
+              );
+            })}
+          </div>
+        </DragDropContext>
       </div>
     );
   };

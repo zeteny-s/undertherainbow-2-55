@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, History } from 'lucide-react';
 import { ChatHistoryModal } from './ChatHistoryModal';
-import { TypewriterText } from './TypewriterText';
+import { StreamingText } from './StreamingText';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -118,7 +118,7 @@ export const ChatPage: React.FC = () => {
   };
 
   const [isTyping, setIsTyping] = useState(false);
-  const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState<string>('');
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || !user?.id) return;
@@ -185,22 +185,7 @@ export const ChatPage: React.FC = () => {
       
       // Refresh messages and conversations
       if (conversationId) {
-        await fetchMessages(conversationId);
-        const updatedMessages = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('conversation_id', conversationId)
-          .order('created_at');
-          
-        if (updatedMessages.data) {
-          const latestAiMessage = updatedMessages.data
-            .filter(m => m.role === 'assistant')
-            .pop();
-          if (latestAiMessage) {
-            setTypingMessageId(latestAiMessage.id);
-          }
-        }
-        
+        fetchMessages(conversationId);
         fetchConversations();
       }
 
@@ -229,7 +214,6 @@ export const ChatPage: React.FC = () => {
 
   const selectConversation = (conversationId: string) => {
     setActiveConversation(conversationId);
-    setTypingMessageId(null);
     fetchMessages(conversationId);
   };
 
@@ -276,37 +260,44 @@ export const ChatPage: React.FC = () => {
           <>
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {messages.map((message, index) => (
-                <div
-                  key={message.id}
-                  className={`flex ${(message.role === 'user') ? 'justify-end' : 'justify-start'} animate-fade-in`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                   <div className={`max-w-3xl rounded-2xl p-6 shadow-lg hover-lift transition-all duration-300 ${
-                     (message.role === 'user')
-                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200'
-                       : 'bg-white border border-gray-100 shadow-gray-100'
-                   }`}>
-                     {message.role === 'assistant' && message.id === typingMessageId ? (
-                       <TypewriterText 
-                         text={message.content} 
-                         speed={20}
-                         className="text-sm whitespace-pre-wrap leading-relaxed"
-                       />
-                     ) : (
-                       <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                     )}
-                    <p className={`text-xs mt-3 opacity-70 ${
-                      (message.role === 'user') ? 'text-blue-100' : 'text-gray-500'
-                    }`}>
-                      {new Date(message.created_at).toLocaleTimeString('hu-HU', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {messages.map((message, index) => {
+                if (message.role === 'user') {
+                  return (
+                    <div
+                      key={message.id}
+                      className="flex justify-end animate-fade-in"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="max-w-3xl rounded-2xl p-6 shadow-lg hover-lift transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200">
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                        <p className="text-xs mt-3 opacity-70 text-blue-100">
+                          {new Date(message.created_at).toLocaleTimeString('hu-HU', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div key={message.id} className="flex justify-start animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                      <div className="max-w-4xl w-full">
+                        <StreamingText 
+                          text={message.content} 
+                          className="text-sm text-gray-800 leading-relaxed"
+                        />
+                        <p className="text-xs mt-2 text-gray-500">
+                          {new Date(message.created_at).toLocaleTimeString('hu-HU', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+              })}
               
               {/* Typing indicator */}
               {isTyping && (
