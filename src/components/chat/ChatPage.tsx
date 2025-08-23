@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, History } from 'lucide-react';
 import { ChatHistoryModal } from './ChatHistoryModal';
+import { TypewriterText } from './TypewriterText';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -117,6 +118,7 @@ export const ChatPage: React.FC = () => {
   };
 
   const [isTyping, setIsTyping] = useState(false);
+  const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || !user?.id) return;
@@ -183,7 +185,22 @@ export const ChatPage: React.FC = () => {
       
       // Refresh messages and conversations
       if (conversationId) {
-        fetchMessages(conversationId);
+        await fetchMessages(conversationId);
+        const updatedMessages = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at');
+          
+        if (updatedMessages.data) {
+          const latestAiMessage = updatedMessages.data
+            .filter(m => m.role === 'assistant')
+            .pop();
+          if (latestAiMessage) {
+            setTypingMessageId(latestAiMessage.id);
+          }
+        }
+        
         fetchConversations();
       }
 
@@ -212,6 +229,7 @@ export const ChatPage: React.FC = () => {
 
   const selectConversation = (conversationId: string) => {
     setActiveConversation(conversationId);
+    setTypingMessageId(null);
     fetchMessages(conversationId);
   };
 
@@ -232,28 +250,28 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
-      {/* Floating History Button */}
-      <button
-        onClick={() => setShowHistory(true)}
-        className="fixed top-6 right-6 z-50 p-3 bg-white hover:bg-gray-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
-      >
-        <History className="w-5 h-5 text-gray-700" />
-      </button>
-
-      {/* Chat History Modal */}
-      <ChatHistoryModal
-        isOpen={showHistory}
-        onClose={() => setShowHistory(false)}
-        conversations={conversations}
-        folders={folders}
-        activeConversation={activeConversation}
-        onSelectConversation={selectConversation}
-        onCreateConversation={createNewConversation}
-        onRefreshData={fetchData}
-      />
-
       {/* Main Content */}
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full relative">
+        {/* Floating History Button */}
+        <button
+          onClick={() => setShowHistory(true)}
+          className="absolute top-6 right-6 z-50 p-3 bg-white hover:bg-gray-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+        >
+          <History className="w-5 h-5 text-gray-700" />
+        </button>
+
+        {/* Chat History Modal */}
+        <ChatHistoryModal
+          isOpen={showHistory}
+          onClose={() => setShowHistory(false)}
+          conversations={conversations}
+          folders={folders}
+          activeConversation={activeConversation}
+          onSelectConversation={selectConversation}
+          onCreateConversation={createNewConversation}
+          onRefreshData={fetchData}
+        />
+
         {activeConversation ? (
           <>
             {/* Messages */}
@@ -264,12 +282,20 @@ export const ChatPage: React.FC = () => {
                   className={`flex ${(message.role === 'user') ? 'justify-end' : 'justify-start'} animate-fade-in`}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className={`max-w-3xl rounded-2xl p-6 shadow-lg hover-lift transition-all duration-300 ${
-                    (message.role === 'user')
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200'
-                      : 'bg-white border border-gray-100 shadow-gray-100'
-                  }`}>
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                   <div className={`max-w-3xl rounded-2xl p-6 shadow-lg hover-lift transition-all duration-300 ${
+                     (message.role === 'user')
+                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200'
+                       : 'bg-white border border-gray-100 shadow-gray-100'
+                   }`}>
+                     {message.role === 'assistant' && message.id === typingMessageId ? (
+                       <TypewriterText 
+                         text={message.content} 
+                         speed={20}
+                         className="text-sm whitespace-pre-wrap leading-relaxed"
+                       />
+                     ) : (
+                       <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                     )}
                     <p className={`text-xs mt-3 opacity-70 ${
                       (message.role === 'user') ? 'text-blue-100' : 'text-gray-500'
                     }`}>
