@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { EventModal } from './EventModal';
@@ -25,6 +24,7 @@ export const CalendarPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>(undefined);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'delete'>('create');
+  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -70,24 +70,29 @@ export const CalendarPage: React.FC = () => {
     setModalMode('create');
   };
 
-  const onDragEnd = async (result: any) => {
-    if (!result.destination) return;
+  const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    setDraggedEvent(event);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  };
 
-    const { draggableId, destination } = result;
-    const event = events.find(e => e.id === draggableId);
-    if (!event) return;
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
 
-    // Parse the destination day from droppableId (format: "day-YYYY-MM-DD")
-    const newDateStr = destination.droppableId.replace('day-', '');
-    const newDate = new Date(newDateStr);
+  const handleDrop = async (e: React.DragEvent, targetDate: Date) => {
+    e.preventDefault();
     
+    if (!draggedEvent) return;
+
     // Calculate time difference
-    const originalStart = new Date(event.start_time);
-    const originalEnd = new Date(event.end_time);
+    const originalStart = new Date(draggedEvent.start_time);
+    const originalEnd = new Date(draggedEvent.end_time);
     const timeDiff = originalEnd.getTime() - originalStart.getTime();
     
     // Set new times
-    const newStart = new Date(newDate);
+    const newStart = new Date(targetDate);
     newStart.setHours(originalStart.getHours(), originalStart.getMinutes());
     const newEnd = new Date(newStart.getTime() + timeDiff);
 
@@ -98,13 +103,15 @@ export const CalendarPage: React.FC = () => {
           start_time: newStart.toISOString(),
           end_time: newEnd.toISOString()
         })
-        .eq('id', event.id);
+        .eq('id', draggedEvent.id);
 
       if (error) throw error;
       fetchEvents();
     } catch (error) {
       console.error('Error moving event:', error);
     }
+
+    setDraggedEvent(null);
   };
 
   const createEventAtHour = (date: Date, hour: number) => {
@@ -124,115 +131,97 @@ export const CalendarPage: React.FC = () => {
     });
 
     return (
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
-          <div className="grid grid-cols-8 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            <div className="p-4 border-r border-gray-200 font-semibold text-gray-700">Időpont</div>
-            {days.map((day) => (
-              <div key={day.getTime()} className="p-4 text-center border-r border-gray-200">
-                <div className="text-sm font-medium text-gray-600">
-                  {day.toLocaleDateString('hu-HU', { weekday: 'short' })}
-                </div>
-                <div className={`text-lg font-bold mt-1 ${
-                  day.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'
-                }`}>
-                  {day.getDate()}
-                </div>
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+        <div className="grid grid-cols-8 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="p-4 border-r border-gray-200 font-semibold text-gray-700">Időpont</div>
+          {days.map((day) => (
+            <div key={day.getTime()} className="p-4 text-center border-r border-gray-200">
+              <div className="text-sm font-medium text-gray-600">
+                {day.toLocaleDateString('hu-HU', { weekday: 'short' })}
+              </div>
+              <div className={`text-lg font-bold mt-1 ${
+                day.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'
+              }`}>
+                {day.getDate()}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-8" style={{ minHeight: '600px' }}>
+          {/* Time column */}
+          <div className="border-r border-gray-200 bg-gray-50">
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
+                {hour.toString().padStart(2, '0')}:00
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-8" style={{ minHeight: '600px' }}>
-            {/* Time column */}
-            <div className="border-r border-gray-200 bg-gray-50">
-              {Array.from({ length: 24 }, (_, hour) => (
-                <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
-                  {hour.toString().padStart(2, '0')}:00
-                </div>
-              ))}
-            </div>
-
-            {/* Day columns */}
-            {days.map((day) => {
-              const dayEvents = getEventsForDate(day);
-              const dayId = day.toISOString().split('T')[0];
-              
-              return (
-                <Droppable key={day.getTime()} droppableId={`day-${dayId}`}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`border-r border-gray-200 relative transition-colors ${
-                        snapshot.isDraggingOver ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      {Array.from({ length: 24 }, (_, hour) => (
-                        <div
-                          key={hour}
-                          onClick={() => createEventAtHour(day, hour)}
-                          className="h-16 border-b border-gray-100 hover:bg-blue-25 cursor-pointer transition-colors relative group"
-                        >
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
-                            <Plus className="w-4 h-4 text-blue-600" />
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Events */}
-                      {dayEvents.map((event, index) => {
-                        const startTime = new Date(event.start_time);
-                        const endTime = new Date(event.end_time);
-                        const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-                        const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-                        
-                        return (
-                          <Draggable key={event.id} draggableId={event.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  if (!snapshot.isDragging) {
-                                    openModal('edit', event);
-                                  }
-                                }}
-                                className={`absolute left-1 right-1 p-3 rounded-lg text-xs text-white cursor-move transition-all duration-200 hover:shadow-xl ${
-                                  snapshot.isDragging ? 'shadow-2xl z-50 rotate-3 opacity-90' : 'hover:scale-105 hover:-translate-y-1'
-                                }`}
-                                style={{
-                                  backgroundColor: event.color || '#3b82f6',
-                                  top: `${startHour * 64}px`,
-                                  height: `${Math.max(duration * 64, 40)}px`,
-                                  zIndex: snapshot.isDragging ? 1000 : 10,
-                                  transform: snapshot.isDragging ? 'rotate(3deg)' : undefined,
-                                }}
-                              >
-                                <div className="font-semibold truncate mb-1">{event.title}</div>
-                                {event.location && (
-                                  <div className="truncate opacity-90 text-xs">{event.location}</div>
-                                )}
-                                <div className="text-xs opacity-75 mt-1">
-                                  {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                                  {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
-                                </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        );
-                      })}
-                      {provided.placeholder}
+          {/* Day columns */}
+          {days.map((day) => {
+            const dayEvents = getEventsForDate(day);
+            
+            return (
+              <div
+                key={day.getTime()}
+                className="border-r border-gray-200 relative"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, day)}
+              >
+                {Array.from({ length: 24 }, (_, hour) => (
+                  <div
+                    key={hour}
+                    onClick={() => createEventAtHour(day, hour)}
+                    className="h-16 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
+                  >
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
+                      <Plus className="w-4 h-4 text-blue-600" />
                     </div>
-                  )}
-                </Droppable>
-              );
-            })}
-          </div>
+                  </div>
+                ))}
+                
+                {/* Events */}
+                {dayEvents.map((event) => {
+                  const startTime = new Date(event.start_time);
+                  const endTime = new Date(event.end_time);
+                  const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+                  const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+                  
+                  return (
+                    <div
+                      key={event.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, event)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openModal('edit', event);
+                      }}
+                      className="absolute left-1 right-1 p-3 rounded-lg text-xs text-white cursor-move transition-all duration-200 hover:shadow-xl hover:scale-105"
+                      style={{
+                        backgroundColor: event.color || '#3b82f6',
+                        top: `${startHour * 64}px`,
+                        height: `${Math.max(duration * 64, 40)}px`,
+                        zIndex: 10,
+                      }}
+                    >
+                      <div className="font-semibold truncate mb-1">{event.title}</div>
+                      {event.location && (
+                        <div className="truncate opacity-90 text-xs">{event.location}</div>
+                      )}
+                      <div className="text-xs opacity-75 mt-1">
+                        {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                        {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
-      </DragDropContext>
+      </div>
     );
   };
 
@@ -251,190 +240,151 @@ export const CalendarPage: React.FC = () => {
     }
 
     return (
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
-          <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map(day => (
-              <div key={day} className="p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
-                {day}
-              </div>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-7">
-            {days.map((day, index) => {
-              const dayEvents = getEventsForDate(day);
-              const isCurrentMonth = day.getMonth() === month;
-              const isToday = day.toDateString() === new Date().toDateString();
-              const dayId = day.toISOString().split('T')[0];
-              
-              return (
-                <Droppable key={index} droppableId={`day-${dayId}`}>
-                  {(provided, snapshot) => (
-                    <div 
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-25 transition-colors ${
-                        !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
-                      } ${isToday ? 'bg-blue-50' : ''} ${
-                        snapshot.isDraggingOver ? 'bg-blue-100 ring-2 ring-blue-300' : ''
-                      }`}
-                      onClick={() => {
-                        setCurrentDate(day);
-                        setView('day');
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+        <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map(day => (
+            <div key={day} className="p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7">
+          {days.map((day, index) => {
+            const dayEvents = getEventsForDate(day);
+            const isCurrentMonth = day.getMonth() === month;
+            const isToday = day.toDateString() === new Date().toDateString();
+            
+            return (
+              <div
+                key={index}
+                className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-50 transition-colors ${
+                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                } ${isToday ? 'bg-blue-50' : ''}`}
+                onClick={() => {
+                  setCurrentDate(day);
+                  setView('day');
+                }}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, day)}
+              >
+                <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600' : ''}`}>
+                  {day.getDate()}
+                </div>
+                <div className="space-y-1">
+                  {dayEvents.slice(0, 3).map((event) => (
+                    <div
+                      key={event.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, event)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openModal('edit', event);
                       }}
+                      className="text-xs p-1 rounded truncate text-white cursor-move transition-all hover:opacity-80"
+                      style={{ backgroundColor: event.color || '#3b82f6' }}
                     >
-                      <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600' : ''}`}>
-                        {day.getDate()}
-                      </div>
-                      <div className="space-y-1">
-                        {dayEvents.slice(0, 3).map((event, eventIndex) => (
-                          <Draggable key={event.id} draggableId={event.id} index={eventIndex}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  if (!snapshot.isDragging) {
-                                    openModal('edit', event);
-                                  }
-                                }}
-                                className={`text-xs p-1 rounded truncate text-white transition-all cursor-move ${
-                                  snapshot.isDragging ? 'shadow-xl z-50 opacity-90 scale-105' : 'hover:opacity-80'
-                                }`}
-                                style={{ 
-                                  backgroundColor: event.color || '#3b82f6',
-                                  zIndex: snapshot.isDragging ? 1000 : 1,
-                                }}
-                              >
-                                {event.title}
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {dayEvents.length > 3 && (
-                          <div className="text-xs text-gray-500 font-medium">
-                            +{dayEvents.length - 3} további
-                          </div>
-                        )}
-                      </div>
-                      {provided.placeholder}
+                      {event.title}
+                    </div>
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <div className="text-xs text-gray-500 font-medium">
+                      +{dayEvents.length - 3} további
                     </div>
                   )}
-                </Droppable>
-              );
-            })}
-          </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </DragDropContext>
+      </div>
     );
   };
 
   const renderDayView = () => {
     const dayEvents = getEventsForDate(currentDate);
-    const dayId = currentDate.toISOString().split('T')[0];
     
     return (
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            <h3 className="text-xl font-bold text-gray-900">
-              {currentDate.toLocaleDateString('hu-HU', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </h3>
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <h3 className="text-xl font-bold text-gray-900">
+            {currentDate.toLocaleDateString('hu-HU', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </h3>
+        </div>
+        
+        <div className="flex">
+          {/* Time column */}
+          <div className="w-20 border-r border-gray-200 bg-gray-50">
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
+                {hour.toString().padStart(2, '0')}:00
+              </div>
+            ))}
           </div>
           
-          <div className="flex">
-            {/* Time column */}
-            <div className="w-20 border-r border-gray-200 bg-gray-50">
-              {Array.from({ length: 24 }, (_, hour) => (
-                <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
-                  {hour.toString().padStart(2, '0')}:00
+          {/* Day content */}
+          <div
+            className="flex-1 relative"
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, currentDate)}
+          >
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div
+                key={hour}
+                onClick={() => createEventAtHour(currentDate, hour)}
+                className="h-16 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
+                  <Plus className="w-4 h-4 text-blue-600" />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
             
-            {/* Day content */}
-            <Droppable droppableId={`day-${dayId}`}>
-              {(provided, snapshot) => (
+            {/* Events */}
+            {dayEvents.map((event) => {
+              const startTime = new Date(event.start_time);
+              const endTime = new Date(event.end_time);
+              const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+              const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+              
+              return (
                 <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`flex-1 relative transition-colors ${
-                    snapshot.isDraggingOver ? 'bg-blue-50' : ''
-                  }`}
+                  key={event.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, event)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openModal('edit', event);
+                  }}
+                  className="absolute left-2 right-2 p-3 rounded-lg text-sm text-white cursor-move transition-all duration-200 hover:shadow-lg hover:scale-105"
+                  style={{
+                    backgroundColor: event.color || '#3b82f6',
+                    top: `${startHour * 64}px`,
+                    height: `${Math.max(duration * 64, 40)}px`,
+                    zIndex: 10,
+                  }}
                 >
-                  {Array.from({ length: 24 }, (_, hour) => (
-                    <div
-                      key={hour}
-                      onClick={() => createEventAtHour(currentDate, hour)}
-                      className="h-16 border-b border-gray-100 hover:bg-blue-25 cursor-pointer transition-colors relative group"
-                    >
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
-                        <Plus className="w-4 h-4 text-blue-600" />
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {/* Events */}
-                  {dayEvents.map((event, index) => {
-                    const startTime = new Date(event.start_time);
-                    const endTime = new Date(event.end_time);
-                    const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-                    const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-                    
-                    return (
-                      <Draggable key={event.id} draggableId={event.id} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              if (!snapshot.isDragging) {
-                                openModal('edit', event);
-                              }
-                            }}
-                            className={`absolute left-2 right-2 p-3 rounded-lg text-sm text-white cursor-move transition-all duration-200 ${
-                              snapshot.isDragging ? 'shadow-2xl z-50 rotate-2 opacity-90' : 'hover:shadow-lg hover:scale-105'
-                            }`}
-                            style={{
-                              backgroundColor: event.color || '#3b82f6',
-                              top: `${startHour * 64}px`,
-                              height: `${Math.max(duration * 64, 40)}px`,
-                              zIndex: snapshot.isDragging ? 1000 : 10,
-                              transform: snapshot.isDragging ? 'rotate(2deg)' : undefined,
-                            }}
-                          >
-                            <div className="font-semibold mb-1">{event.title}</div>
-                            {event.location && (
-                              <div className="text-xs opacity-90 mb-1">{event.location}</div>
-                            )}
-                            <div className="text-xs opacity-75">
-                              {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                              {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
-                            </div>
-                          </div>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
+                  <div className="font-semibold mb-1">{event.title}</div>
+                  {event.location && (
+                    <div className="text-xs opacity-90 mb-1">{event.location}</div>
+                  )}
+                  <div className="text-xs opacity-75">
+                    {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                    {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
+                  </div>
                 </div>
-              )}
-            </Droppable>
+              );
+            })}
           </div>
         </div>
-      </DragDropContext>
+      </div>
     );
   };
 
