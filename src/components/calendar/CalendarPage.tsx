@@ -124,35 +124,35 @@ export const CalendarPage: React.FC = () => {
     });
 
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
-        <div className="grid grid-cols-8 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="p-4 border-r border-gray-200 font-semibold text-gray-700">Időpont</div>
-          {days.map((day) => (
-            <div key={day.getTime()} className="p-4 text-center border-r border-gray-200">
-              <div className="text-sm font-medium text-gray-600">
-                {day.toLocaleDateString('hu-HU', { weekday: 'short' })}
-              </div>
-              <div className={`text-lg font-bold mt-1 ${
-                day.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'
-              }`}>
-                {day.getDate()}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-8" style={{ minHeight: '600px' }}>
-          {/* Time column */}
-          <div className="border-r border-gray-200 bg-gray-50">
-            {Array.from({ length: 24 }, (_, hour) => (
-              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
-                {hour.toString().padStart(2, '0')}:00
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+          <div className="grid grid-cols-8 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+            <div className="p-4 border-r border-gray-200 font-semibold text-gray-700">Időpont</div>
+            {days.map((day) => (
+              <div key={day.getTime()} className="p-4 text-center border-r border-gray-200">
+                <div className="text-sm font-medium text-gray-600">
+                  {day.toLocaleDateString('hu-HU', { weekday: 'short' })}
+                </div>
+                <div className={`text-lg font-bold mt-1 ${
+                  day.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'
+                }`}>
+                  {day.getDate()}
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Day columns */}
-          <DragDropContext onDragEnd={onDragEnd}>
+          <div className="grid grid-cols-8" style={{ minHeight: '600px' }}>
+            {/* Time column */}
+            <div className="border-r border-gray-200 bg-gray-50">
+              {Array.from({ length: 24 }, (_, hour) => (
+                <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
+                  {hour.toString().padStart(2, '0')}:00
+                </div>
+              ))}
+            </div>
+
+            {/* Day columns */}
             {days.map((day) => {
               const dayEvents = getEventsForDate(day);
               const dayId = day.toISOString().split('T')[0];
@@ -193,16 +193,22 @@ export const CalendarPage: React.FC = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                onClick={() => openModal('edit', event)}
-                                className={`absolute left-1 right-1 p-3 rounded-lg text-xs text-white cursor-pointer transition-all duration-200 hover:shadow-xl ${
-                                  snapshot.isDragging ? 'shadow-2xl z-50 rotate-3' : 'hover:scale-105 hover:-translate-y-1'
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!snapshot.isDragging) {
+                                    openModal('edit', event);
+                                  }
+                                }}
+                                className={`absolute left-1 right-1 p-3 rounded-lg text-xs text-white cursor-move transition-all duration-200 hover:shadow-xl ${
+                                  snapshot.isDragging ? 'shadow-2xl z-50 rotate-3 opacity-90' : 'hover:scale-105 hover:-translate-y-1'
                                 }`}
                                 style={{
                                   backgroundColor: event.color || '#3b82f6',
                                   top: `${startHour * 64}px`,
                                   height: `${Math.max(duration * 64, 40)}px`,
-                                  zIndex: snapshot.isDragging ? 50 : 10,
-                                  ...provided.draggableProps.style
+                                  zIndex: snapshot.isDragging ? 1000 : 10,
+                                  transform: snapshot.isDragging ? 'rotate(3deg)' : undefined,
                                 }}
                               >
                                 <div className="font-semibold truncate mb-1">{event.title}</div>
@@ -224,9 +230,9 @@ export const CalendarPage: React.FC = () => {
                 </Droppable>
               );
             })}
-          </DragDropContext>
+          </div>
         </div>
-      </div>
+      </DragDropContext>
     );
   };
 
@@ -245,16 +251,16 @@ export const CalendarPage: React.FC = () => {
     }
 
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
-        <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map(day => (
-            <div key={day} className="p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
-              {day}
-            </div>
-          ))}
-        </div>
-        
-        <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+          <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+            {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map(day => (
+              <div key={day} className="p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
+                {day}
+              </div>
+            ))}
+          </div>
+          
           <div className="grid grid-cols-7">
             {days.map((day, index) => {
               const dayEvents = getEventsForDate(day);
@@ -271,7 +277,7 @@ export const CalendarPage: React.FC = () => {
                       className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-25 transition-colors ${
                         !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
                       } ${isToday ? 'bg-blue-50' : ''} ${
-                        snapshot.isDraggingOver ? 'bg-blue-100' : ''
+                        snapshot.isDraggingOver ? 'bg-blue-100 ring-2 ring-blue-300' : ''
                       }`}
                       onClick={() => {
                         setCurrentDate(day);
@@ -290,15 +296,18 @@ export const CalendarPage: React.FC = () => {
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                                 onClick={(e) => {
+                                  e.preventDefault();
                                   e.stopPropagation();
-                                  openModal('edit', event);
+                                  if (!snapshot.isDragging) {
+                                    openModal('edit', event);
+                                  }
                                 }}
-                                className={`text-xs p-1 rounded truncate text-white hover:opacity-80 transition-opacity cursor-pointer ${
-                                  snapshot.isDragging ? 'shadow-xl z-50' : ''
+                                className={`text-xs p-1 rounded truncate text-white transition-all cursor-move ${
+                                  snapshot.isDragging ? 'shadow-xl z-50 opacity-90 scale-105' : 'hover:opacity-80'
                                 }`}
                                 style={{ 
                                   backgroundColor: event.color || '#3b82f6',
-                                  ...provided.draggableProps.style
+                                  zIndex: snapshot.isDragging ? 1000 : 1,
                                 }}
                               >
                                 {event.title}
@@ -319,8 +328,8 @@ export const CalendarPage: React.FC = () => {
               );
             })}
           </div>
-        </DragDropContext>
-      </div>
+        </div>
+      </DragDropContext>
     );
   };
 

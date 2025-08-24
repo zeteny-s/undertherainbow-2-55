@@ -118,7 +118,6 @@ export const ChatPage: React.FC = () => {
   };
 
   const [isTyping, setIsTyping] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState<string>('');
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || !user?.id) return;
