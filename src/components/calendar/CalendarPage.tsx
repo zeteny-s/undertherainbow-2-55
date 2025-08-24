@@ -335,77 +335,106 @@ export const CalendarPage: React.FC = () => {
 
   const renderDayView = () => {
     const dayEvents = getEventsForDate(currentDate);
+    const dayId = currentDate.toISOString().split('T')[0];
     
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          <h3 className="text-xl font-bold text-gray-900">
-            {currentDate.toLocaleDateString('hu-HU', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </h3>
-        </div>
-        
-        <div className="flex">
-          {/* Time column */}
-          <div className="w-20 border-r border-gray-200 bg-gray-50">
-            {Array.from({ length: 24 }, (_, hour) => (
-              <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
-                {hour.toString().padStart(2, '0')}:00
-              </div>
-            ))}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+            <h3 className="text-xl font-bold text-gray-900">
+              {currentDate.toLocaleDateString('hu-HU', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </h3>
           </div>
           
-          {/* Day content */}
-          <div className="flex-1 relative">
-            {Array.from({ length: 24 }, (_, hour) => (
-              <div
-                key={hour}
-                onClick={() => createEventAtHour(currentDate, hour)}
-                className="h-16 border-b border-gray-100 hover:bg-blue-25 cursor-pointer transition-colors relative group"
-              >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
-                  <Plus className="w-4 h-4 text-blue-600" />
+          <div className="flex">
+            {/* Time column */}
+            <div className="w-20 border-r border-gray-200 bg-gray-50">
+              {Array.from({ length: 24 }, (_, hour) => (
+                <div key={hour} className="h-16 border-b border-gray-100 p-2 text-sm text-gray-500 font-medium">
+                  {hour.toString().padStart(2, '0')}:00
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
             
-            {/* Events */}
-            {dayEvents.map((event) => {
-              const startTime = new Date(event.start_time);
-              const endTime = new Date(event.end_time);
-              const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-              const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-              
-              return (
+            {/* Day content */}
+            <Droppable droppableId={`day-${dayId}`}>
+              {(provided, snapshot) => (
                 <div
-                  key={event.id}
-                  onClick={() => openModal('edit', event)}
-                  className="absolute left-2 right-2 p-3 rounded-lg text-sm text-white cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-                  style={{
-                    backgroundColor: event.color || '#3b82f6',
-                    top: `${startHour * 64}px`,
-                    height: `${Math.max(duration * 64, 40)}px`,
-                    zIndex: 10
-                  }}
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={`flex-1 relative transition-colors ${
+                    snapshot.isDraggingOver ? 'bg-blue-50' : ''
+                  }`}
                 >
-                  <div className="font-semibold mb-1">{event.title}</div>
-                  {event.location && (
-                    <div className="text-xs opacity-90 mb-1">{event.location}</div>
-                  )}
-                  <div className="text-xs opacity-75">
-                    {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                    {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
-                  </div>
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    <div
+                      key={hour}
+                      onClick={() => createEventAtHour(currentDate, hour)}
+                      className="h-16 border-b border-gray-100 hover:bg-blue-25 cursor-pointer transition-colors relative group"
+                    >
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
+                        <Plus className="w-4 h-4 text-blue-600" />
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Events */}
+                  {dayEvents.map((event, index) => {
+                    const startTime = new Date(event.start_time);
+                    const endTime = new Date(event.end_time);
+                    const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+                    const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+                    
+                    return (
+                      <Draggable key={event.id} draggableId={event.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!snapshot.isDragging) {
+                                openModal('edit', event);
+                              }
+                            }}
+                            className={`absolute left-2 right-2 p-3 rounded-lg text-sm text-white cursor-move transition-all duration-200 ${
+                              snapshot.isDragging ? 'shadow-2xl z-50 rotate-2 opacity-90' : 'hover:shadow-lg hover:scale-105'
+                            }`}
+                            style={{
+                              backgroundColor: event.color || '#3b82f6',
+                              top: `${startHour * 64}px`,
+                              height: `${Math.max(duration * 64, 40)}px`,
+                              zIndex: snapshot.isDragging ? 1000 : 10,
+                              transform: snapshot.isDragging ? 'rotate(2deg)' : undefined,
+                            }}
+                          >
+                            <div className="font-semibold mb-1">{event.title}</div>
+                            {event.location && (
+                              <div className="text-xs opacity-90 mb-1">{event.location}</div>
+                            )}
+                            <div className="text-xs opacity-75">
+                              {startTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                              {duration >= 1 && ` - ${endTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`}
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
                 </div>
-              );
-            })}
+              )}
+            </Droppable>
           </div>
         </div>
-      </div>
+      </DragDropContext>
     );
   };
 
@@ -512,6 +541,7 @@ export const CalendarPage: React.FC = () => {
 
         {/* Event Modal */}
         <EventModal
+          key={`${modalMode}-${selectedEvent?.id || 'new'}`}
           isOpen={isModalOpen}
           onClose={closeModal}
           event={selectedEvent}
