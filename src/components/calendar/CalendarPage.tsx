@@ -78,13 +78,37 @@ export const CalendarPage: React.FC = () => {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = async (e: React.DragEvent, targetDate: Date, targetHour?: number) => {
+  const handleDrop = async (e: React.DragEvent, targetDate: Date) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!draggedEvent) return;
+
+    // Calculate target hour from mouse position for week/day views
+    let targetHour = new Date(draggedEvent.start_time).getHours();
+    
+    if (view === 'week' || view === 'day') {
+      // Find the day container
+      const dayContainer = e.currentTarget as HTMLElement;
+      const rect = dayContainer.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      
+      // Find the time column offset (first column in week view)
+      let timeColumnOffset = 0;
+      if (view === 'week') {
+        const timeColumn = dayContainer.parentElement?.querySelector('.border-r') as HTMLElement;
+        if (timeColumn) {
+          timeColumnOffset = timeColumn.offsetHeight > 0 ? 0 : 0; // Time column is separate
+        }
+      }
+      
+      targetHour = Math.floor((y - timeColumnOffset) / 64); // 64px per hour
+      targetHour = Math.max(0, Math.min(23, targetHour));
+    }
 
     // Calculate time difference
     const originalStart = new Date(draggedEvent.start_time);
@@ -93,14 +117,7 @@ export const CalendarPage: React.FC = () => {
     
     // Set new times
     const newStart = new Date(targetDate);
-    
-    // If targetHour is provided, use it; otherwise keep original time
-    if (targetHour !== undefined) {
-      newStart.setHours(targetHour, 0, 0, 0);
-    } else {
-      newStart.setHours(originalStart.getHours(), originalStart.getMinutes());
-    }
-    
+    newStart.setHours(targetHour, 0, 0, 0);
     const newEnd = new Date(newStart.getTime() + timeDiff);
 
     try {
@@ -180,8 +197,6 @@ export const CalendarPage: React.FC = () => {
                   <div
                     key={hour}
                     onClick={() => createEventAtHour(day, hour)}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, day, hour)}
                     className="h-16 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
                   >
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
@@ -347,8 +362,6 @@ export const CalendarPage: React.FC = () => {
               <div
                 key={hour}
                 onClick={() => createEventAtHour(currentDate, hour)}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, currentDate, hour)}
                 className="h-16 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
               >
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
