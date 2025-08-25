@@ -81,7 +81,7 @@ export const CalendarPage: React.FC = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = async (e: React.DragEvent, targetDate: Date) => {
+  const handleDrop = async (e: React.DragEvent, targetDate: Date, targetHour?: number) => {
     e.preventDefault();
     
     if (!draggedEvent) return;
@@ -93,7 +93,14 @@ export const CalendarPage: React.FC = () => {
     
     // Set new times
     const newStart = new Date(targetDate);
-    newStart.setHours(originalStart.getHours(), originalStart.getMinutes());
+    
+    // If targetHour is provided, use it; otherwise keep original time
+    if (targetHour !== undefined) {
+      newStart.setHours(targetHour, 0, 0, 0);
+    } else {
+      newStart.setHours(originalStart.getHours(), originalStart.getMinutes());
+    }
+    
     const newEnd = new Date(newStart.getTime() + timeDiff);
 
     try {
@@ -173,6 +180,8 @@ export const CalendarPage: React.FC = () => {
                   <div
                     key={hour}
                     onClick={() => createEventAtHour(day, hour)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, day, hour)}
                     className="h-16 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
                   >
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
@@ -198,7 +207,7 @@ export const CalendarPage: React.FC = () => {
                         e.stopPropagation();
                         openModal('edit', event);
                       }}
-                      className="absolute left-1 right-1 p-3 rounded-lg text-xs text-white cursor-move transition-all duration-200 hover:shadow-xl hover:scale-105"
+                      className="absolute left-1 right-1 p-3 rounded-lg text-xs text-white cursor-move transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
                       style={{
                         backgroundColor: event.color || '#3b82f6',
                         top: `${startHour * 64}px`,
@@ -338,6 +347,8 @@ export const CalendarPage: React.FC = () => {
               <div
                 key={hour}
                 onClick={() => createEventAtHour(currentDate, hour)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, currentDate, hour)}
                 className="h-16 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
               >
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
@@ -363,7 +374,7 @@ export const CalendarPage: React.FC = () => {
                     e.stopPropagation();
                     openModal('edit', event);
                   }}
-                  className="absolute left-2 right-2 p-3 rounded-lg text-sm text-white cursor-move transition-all duration-200 hover:shadow-lg hover:scale-105"
+                  className="absolute left-2 right-2 p-3 rounded-lg text-sm text-white cursor-move transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
                   style={{
                     backgroundColor: event.color || '#3b82f6',
                     top: `${startHour * 64}px`,
