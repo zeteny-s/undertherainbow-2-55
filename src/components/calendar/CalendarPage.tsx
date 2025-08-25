@@ -130,7 +130,18 @@ export const CalendarPage: React.FC = () => {
         .eq('id', draggedEvent.id);
 
       if (error) throw error;
-      fetchEvents();
+      
+      // Update the local events state immediately for better UX
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === draggedEvent.id 
+            ? { ...event, start_time: newStart.toISOString(), end_time: newEnd.toISOString() }
+            : event
+        )
+      );
+      
+      // Also refresh from database to ensure consistency
+      await fetchEvents();
     } catch (error) {
       console.error('Error moving event:', error);
     }
