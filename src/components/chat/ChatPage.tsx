@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, History } from 'lucide-react';
+import { Send, History, Menu, Plus, Settings } from 'lucide-react';
 import { ChatHistoryModal } from './ChatHistoryModal';
 import { StreamingText } from './StreamingText';
 import { supabase } from '../../integrations/supabase/client';
@@ -37,7 +37,9 @@ export const ChatPage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -48,6 +50,17 @@ export const ChatPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -235,13 +248,49 @@ export const ChatPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
       {/* Main Content */}
       <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full relative">
-        {/* Floating History Button */}
-        <button
-          onClick={() => setShowHistory(true)}
-          className="absolute top-6 right-6 z-50 p-3 bg-white hover:bg-gray-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
-        >
-          <History className="w-5 h-5 text-gray-700" />
-        </button>
+        {/* Floating Menu Button */}
+        <div ref={dropdownRef} className="absolute top-6 right-6 z-50">
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="p-3 bg-white hover:bg-gray-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+          >
+            <Menu className="w-5 h-5 text-gray-700" />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showDropdown && (
+            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 min-w-48 z-[100] animate-fade-in">
+              <button
+                onClick={() => {
+                  setShowHistory(true);
+                  setShowDropdown(false);
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+              >
+                <History className="w-4 h-4 text-gray-600" />
+                <span className="text-sm text-gray-700">Előzmények</span>
+              </button>
+              <button
+                onClick={() => {
+                  createNewConversation();
+                  setShowDropdown(false);
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+              >
+                <Plus className="w-4 h-4 text-gray-600" />
+                <span className="text-sm text-gray-700">Új beszélgetés</span>
+              </button>
+              <div className="border-t border-gray-100 my-1"></div>
+              <button
+                onClick={() => setShowDropdown(false)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+              >
+                <Settings className="w-4 h-4 text-gray-600" />
+                <span className="text-sm text-gray-700">Beállítások</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Chat History Modal */}
         <ChatHistoryModal

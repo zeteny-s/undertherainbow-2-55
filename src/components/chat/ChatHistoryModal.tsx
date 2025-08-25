@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Search, Plus, FolderOpen, MoreVertical, Trash2, Folder } from 'lucide-react';
+import { X, Search, Plus, FolderOpen, MoreVertical, Trash2, Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -45,6 +45,8 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
   const [showFolderForm, setShowFolderForm] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#6b7280');
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const [draggedConversation, setDraggedConversation] = useState<string | null>(null);
 
   const colorOptions = [
     '#6b7280', '#ef4444', '#f59e0b', '#10b981', 
@@ -152,6 +154,32 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
     }
   };
 
+  const toggleFolder = (folderId: string) => {
+    const newCollapsed = new Set(collapsedFolders);
+    if (newCollapsed.has(folderId)) {
+      newCollapsed.delete(folderId);
+    } else {
+      newCollapsed.add(folderId);
+    }
+    setCollapsedFolders(newCollapsed);
+  };
+
+  const handleDragStart = (conversationId: string) => {
+    setDraggedConversation(conversationId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, folderId: string | null) => {
+    e.preventDefault();
+    if (draggedConversation) {
+      moveToFolder(draggedConversation, folderId);
+      setDraggedConversation(null);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden animate-scale-in">
@@ -242,37 +270,54 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
 
             return (
               <div key={folder.id} className="mb-6">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2">
+                <div 
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, folder.id)}
+                  onClick={() => toggleFolder(folder.id)}
+                >
                   <div className="flex items-center space-x-3">
+                    {collapsedFolders.has(folder.id) ? (
+                      <ChevronRight className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
                     <FolderOpen className="w-5 h-5" style={{ color: folder.color || '#6b7280' }} />
                     <span className="font-medium text-gray-900">{folder.name}</span>
                     <span className="text-xs text-gray-500">({folderConversations.length})</span>
                   </div>
                   <button
-                    onClick={() => deleteFolder(folder.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteFolder(folder.id);
+                    }}
                     className="p-1 hover:bg-gray-200 rounded transition-colors"
                   >
                     <Trash2 className="w-4 h-4 text-gray-500" />
                   </button>
                 </div>
                 
-                <div className="space-y-1 pl-4">
-                  {folderConversations.map((conv) => (
-                    <ConversationItem
-                      key={conv.id}
-                      conversation={conv}
-                      isActive={activeConversation === conv.id}
-                      onSelect={() => {
-                        onSelectConversation(conv.id);
-                        onClose();
-                      }}
-                      onDelete={() => deleteConversation(conv.id)}
-                      onMoveToFolder={(folderId) => moveToFolder(conv.id, folderId)}
-                      folders={folders}
-                      formatTime={formatTime}
-                    />
-                  ))}
-                </div>
+                {!collapsedFolders.has(folder.id) && (
+                  <div className="space-y-1 pl-4">
+                    {folderConversations.map((conv) => (
+                      <ConversationItem
+                        key={conv.id}
+                        conversation={conv}
+                        isActive={activeConversation === conv.id}
+                        onSelect={() => {
+                          onSelectConversation(conv.id);
+                          onClose();
+                        }}
+                        onDelete={() => deleteConversation(conv.id)}
+                        onMoveToFolder={(folderId) => moveToFolder(conv.id, folderId)}
+                        folders={folders}
+                        formatTime={formatTime}
+                        onDragStart={() => handleDragStart(conv.id)}
+                        isDragging={draggedConversation === conv.id}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -280,7 +325,11 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
           {/* Ungrouped conversations */}
           {ungroupedConversations.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-2">
+              <div 
+                className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-2"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, null)}
+              >
                 <span className="font-medium text-gray-900">Nem csoportosított</span>
                 <span className="text-xs text-gray-500">({ungroupedConversations.length})</span>
               </div>
@@ -299,6 +348,8 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                     onMoveToFolder={(folderId) => moveToFolder(conv.id, folderId)}
                     folders={folders}
                     formatTime={formatTime}
+                    onDragStart={() => handleDragStart(conv.id)}
+                    isDragging={draggedConversation === conv.id}
                   />
                 ))}
               </div>
@@ -325,6 +376,8 @@ interface ConversationItemProps {
   onMoveToFolder: (folderId: string | null) => void;
   folders: ChatFolder[];
   formatTime: (dateString: string) => string;
+  onDragStart: () => void;
+  isDragging: boolean;
 }
 
 const ConversationItem: React.FC<ConversationItemProps> = ({
@@ -334,7 +387,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
   onDelete,
   onMoveToFolder,
   folders,
-  formatTime
+  formatTime,
+  onDragStart,
+  isDragging
 }) => {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -342,7 +397,11 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
     <div className="relative">
       <button
         onClick={onSelect}
-        className={`w-full text-left p-4 rounded-xl mb-1 transition-all duration-200 hover-lift ${
+        draggable
+        onDragStart={onDragStart}
+        className={`w-full text-left p-4 rounded-xl mb-1 transition-all duration-200 ${
+          isDragging ? 'opacity-50' : ''
+        } ${
           isActive
             ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600 shadow-sm'
             : 'hover:bg-gray-50'
@@ -371,7 +430,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
 
       {/* Context Menu */}
       {showMenu && (
-        <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-48 animate-scale-in">
+        <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[110] min-w-48 animate-scale-in">
           <div className="px-3 py-1 text-xs text-gray-500 border-b border-gray-100">Áthelyezés mappába</div>
           {folders.map((folder) => (
             <button
