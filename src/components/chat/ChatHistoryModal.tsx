@@ -187,7 +187,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Beszélgetési előzmények</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Conversations</h2>
               <p className="text-gray-600 mt-1">Válassz egy korábbi beszélgetést vagy hozz létre újat</p>
             </div>
             <button
@@ -263,15 +263,14 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-96">
-          {/* Folders */}
+          {/* Folders - Always show them for drag & drop */}
           {folders.map((folder) => {
             const folderConversations = groupedConversations[folder.id] || [];
-            if (folderConversations.length === 0 && !searchQuery) return null;
-
+            
             return (
               <div key={folder.id} className="mb-6">
                 <div 
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2 cursor-pointer hover:bg-gray-100 transition-colors border-2 border-dashed border-transparent hover:border-gray-300"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, folder.id)}
                   onClick={() => toggleFolder(folder.id)}
@@ -297,7 +296,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                   </button>
                 </div>
                 
-                {!collapsedFolders.has(folder.id) && (
+                {!collapsedFolders.has(folder.id) && folderConversations.length > 0 && (
                   <div className="space-y-1 pl-4">
                     {folderConversations.map((conv) => (
                       <ConversationItem
@@ -316,6 +315,12 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                         isDragging={draggedConversation === conv.id}
                       />
                     ))}
+                  </div>
+                )}
+                
+                {!collapsedFolders.has(folder.id) && folderConversations.length === 0 && (
+                  <div className="text-center py-4 text-gray-400 text-sm italic ml-4">
+                    Húzd ide a beszélgetéseket
                   </div>
                 )}
               </div>

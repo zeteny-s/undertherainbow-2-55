@@ -252,9 +252,9 @@ export const ChatPage: React.FC = () => {
         <div ref={dropdownRef} className="absolute top-6 right-6 z-50">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="p-3 bg-white hover:bg-gray-50 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+            className="p-2 hover:bg-gray-100 transition-colors duration-200"
           >
-            <Menu className="w-5 h-5 text-gray-700" />
+            <Menu className="w-6 h-6 text-gray-700" />
           </button>
 
           {/* Dropdown Menu */}
@@ -268,7 +268,7 @@ export const ChatPage: React.FC = () => {
                 className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
               >
                 <History className="w-4 h-4 text-gray-600" />
-                <span className="text-sm text-gray-700">Előzmények</span>
+                <span className="text-sm text-gray-700">Conversations</span>
               </button>
               <button
                 onClick={() => {
