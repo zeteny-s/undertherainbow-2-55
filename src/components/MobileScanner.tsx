@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, Check, X, Plus, FileText, Loader, AlertCircle, Edit, RotateCcw } from 'lucide-react';
+import { Check, X, Plus, FileText, Loader, AlertCircle, Edit, RotateCcw } from 'lucide-react';
 import jsPDF from 'jspdf';
+import Cookies from 'js-cookie';
 
 interface ScannedPage {
   id: string;
@@ -329,7 +330,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<number | null>(null);
   const lastDetectionRef = useRef<Point[] | null>(null);
@@ -376,22 +376,61 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     loadOpenCV();
   }, []);
 
+  // Check camera permission status with cookies
+  const checkCameraPermission = useCallback(async () => {
+    // Check if we already have permission cached
+    const hasPermission = Cookies.get('camera_permission_granted');
+    if (hasPermission === 'true') {
+      return true;
+    }
+
+    try {
+      // Check actual permission status
+      const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      if (permissionStatus.state === 'granted') {
+        // Cache the permission
+        Cookies.set('camera_permission_granted', 'true', { expires: 365 });
+        return true;
+      }
+    } catch (err) {
+      // Fallback for browsers that don't support permissions API
+      console.log('Permissions API not supported, will request directly');
+    }
+
+    return false;
+  }, []);
+
   // Initialize camera with high resolution
   const initializeCamera = useCallback(async () => {
     try {
       setError(null);
+      
+      // Check if we already have permission
+      const hasPermission = await checkCameraPermission();
+      if (!hasPermission) {
+        // Only show permission dialog if not already granted
+        const shouldAsk = !Cookies.get('camera_permission_asked');
+        if (!shouldAsk) {
+          setError('Kamera hozzáférés megtagadva. Engedélyezze a kamera használatát a böngésző beállításaiban.');
+          return;
+        }
+        Cookies.set('camera_permission_asked', 'true', { expires: 1 }); // Expires in 1 day
+      }
       
       const constraints = {
         video: {
           facingMode: 'environment',
           width: { ideal: 1920, min: 1280 },
           height: { ideal: 1080, min: 720 },
-          frameRate: { ideal: 30 }
+          frameRate: { ideal: 60 } // Increased for smoother detection
         }
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+
+      // Cache successful permission
+      Cookies.set('camera_permission_granted', 'true', { expires: 365 });
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -407,7 +446,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       console.error('Camera initialization error:', err);
       setError('Kamera hozzáférés megtagadva. Engedélyezze a kamera használatát.');
     }
-  }, [openCVReady]);
+  }, [openCVReady, checkCameraPermission]);
 
   // Order points helper function
   const orderPoints = (pts: Point[]): Point[] => {
@@ -570,9 +609,15 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   };
 
+  // Enhanced detection state management
+  const [lastValidDetection, setLastValidDetection] = useState<{
+    contour: Point[];
+    timestamp: number;
+  } | null>(null);
+
   // Start continuous document detection
   const startDocumentDetection = useCallback(() => {
-    if (!openCVReady || !videoRef.current || !overlayCanvasRef.current || !cameraReady) {
+    if (!openCVReady || !videoRef.current || !cameraReady) {
       console.log('Cannot start detection - missing requirements');
       return;
     }
@@ -580,24 +625,10 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     console.log('Starting enhanced document detection');
 
     const detectDocument = () => {
-      if (!videoRef.current || !overlayCanvasRef.current || !cameraReady) return;
+      if (!videoRef.current || !cameraReady) return;
 
       try {
         const video = videoRef.current;
-        const overlayCanvas = overlayCanvasRef.current;
-        const overlayCtx = overlayCanvas.getContext('2d');
-
-        if (!overlayCtx) return;
-
-        // Set overlay canvas size to match video display size
-        const rect = video.getBoundingClientRect();
-        overlayCanvas.width = video.videoWidth;
-        overlayCanvas.height = video.videoHeight;
-        overlayCanvas.style.width = rect.width + 'px';
-        overlayCanvas.style.height = rect.height + 'px';
-
-        // Clear overlay
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
         // Create temporary canvas for processing
         const tempCanvas = document.createElement('canvas');
@@ -615,13 +646,22 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
 
         if (contour && contour.length === 4) {
           setDocumentDetected(true);
+          setLastValidDetection({ 
+            contour, 
+            timestamp: Date.now() 
+          });
           lastDetectionRef.current = contour;
-          
-          // Draw detection overlay
-          drawDetectionOverlay(overlayCtx, contour);
         } else {
-          setDocumentDetected(false);
-          lastDetectionRef.current = null;
+          // Keep last detection for up to 2 seconds for stability
+          const now = Date.now();
+          if (lastValidDetection && now - lastValidDetection.timestamp < 2000) {
+            setDocumentDetected(true);
+            lastDetectionRef.current = lastValidDetection.contour;
+          } else {
+            setDocumentDetected(false);
+            lastDetectionRef.current = null;
+            setLastValidDetection(null);
+          }
         }
 
       } catch (error) {
@@ -629,57 +669,11 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     };
 
-    // Run detection every 50ms for ultra-smooth real-time feedback
-    detectionIntervalRef.current = window.setInterval(detectDocument, 50);
-  }, [openCVReady, cameraReady]);
+    // Run detection every 30ms for faster, smoother real-time feedback
+    detectionIntervalRef.current = window.setInterval(detectDocument, 30);
+  }, [openCVReady, cameraReady, lastValidDetection]);
 
-  // Draw professional detection overlay with subtle styling
-  const drawDetectionOverlay = (ctx: CanvasRenderingContext2D, contour: Point[]) => {
-    // Draw document outline with professional blue styling
-    ctx.strokeStyle = '#3B82F6';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = 'rgba(59, 130, 246, 0.4)';
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    
-    for (let i = 0; i < contour.length; i++) {
-      const point = contour[i];
-      if (i === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    // Reset shadow
-    ctx.shadowBlur = 0;
-
-    // Draw subtle corner indicators
-    contour.forEach((point, index) => {
-      // Outer blue ring with subtle glow
-      ctx.fillStyle = '#3B82F6';
-      ctx.shadowColor = 'rgba(59, 130, 246, 0.6)';
-      ctx.shadowBlur = 6;
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 14, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      
-      // Inner white core
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
-      ctx.fill();
-
-      // Corner number with professional styling
-      ctx.fillStyle = '#1E40AF';
-      ctx.font = 'bold 12px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText((index + 1).toString(), point.x, point.y + 4);
-    });
-  };
+  // Remove all visual overlays - clean camera view only
 
   // Cleanup camera and detection
   const cleanupCamera = useCallback(() => {
@@ -1017,21 +1011,21 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   };
 
-  // Render clean white camera view
+  // Render clean fullscreen camera view
   const renderCameraView = () => (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      {/* Exit button with white styling */}
-      <div className="absolute top-6 left-6 z-10">
+    <div className="fixed inset-0 bg-black z-50">
+      {/* Exit button - minimal and discrete */}
+      <div className="absolute top-4 left-4 z-20">
         <button
           onClick={onClose}
-          className="p-3 rounded-full bg-white bg-opacity-90 hover:bg-opacity-100 shadow-lg backdrop-blur-sm transition-all"
+          className="w-10 h-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center transition-all"
         >
-          <X className="h-6 w-6 text-gray-800" />
+          <X className="h-5 w-5 text-white" />
         </button>
       </div>
 
-      {/* Camera preview */}
-      <div className="flex-1 relative overflow-hidden">
+      {/* Fullscreen camera preview */}
+      <div className="absolute inset-0">
         <video
           ref={videoRef}
           autoPlay
@@ -1040,49 +1034,42 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           className="w-full h-full object-cover"
         />
         
-        {/* Detection overlay */}
-        <canvas
-          ref={overlayCanvasRef}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        />
-
-        {/* Processing overlay with white theme */}
+        {/* Processing overlay */}
         {processing && (
-          <div className="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-20">
-            <div className="text-gray-800 text-center">
-              <Loader className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+          <div className="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center z-20">
+            <div className="text-white text-center">
+              <Loader className="h-12 w-12 animate-spin mx-auto mb-4" />
               <p className="text-lg font-semibold">Dokumentum feldolgozása...</p>
-              <p className="text-sm text-gray-600 mt-1">Kivágás és minőség javítás</p>
+              <p className="text-sm opacity-80 mt-1">Kivágás és minőség javítás</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Clean white camera controls */}
-      <div className="px-6 py-8 bg-white bg-opacity-95 backdrop-blur-md border-t border-white border-opacity-20">
-        <div className="flex items-center justify-center">
-          {/* Single elegant camera button */}
-          <button
-            onClick={capturePhoto}
-            disabled={!cameraReady || !openCVReady || processing}
-            className="w-20 h-20 rounded-full bg-white shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 border-4 border-blue-500 hover:border-blue-600 flex items-center justify-center"
-          >
-            <Camera className="h-10 w-10 text-blue-600" />
-          </button>
+      {/* Simple white capture button - center bottom */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+        <button
+          onClick={capturePhoto}
+          disabled={!cameraReady || !openCVReady || processing}
+          className="w-16 h-16 rounded-full bg-white shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 hover:scale-105"
+        />
+      </div>
+
+      {/* Error message - top of screen */}
+      {error && (
+        <div className="absolute top-16 left-4 right-4 z-20">
+          <div className="bg-red-500 bg-opacity-90 rounded-lg p-3">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-4 w-4 text-white flex-shrink-0" />
+              <p className="text-sm text-white">{error}</p>
+            </div>
+          </div>
         </div>
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Hidden canvas for image processing */}
       <canvas ref={canvasRef} className="hidden" />
+      {/* Remove overlay canvas entirely - no more edge detection visuals */}
     </div>
   );
 
