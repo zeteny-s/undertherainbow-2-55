@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, name?: string, profileType?: 'irodai' | 'vezetoi') => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name?: string, profileType?: 'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi') => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (data: { name?: string }) => Promise<{ error: any }>;
 }
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, name?: string, profileType: 'irodai' | 'vezetoi' = 'irodai') => {
+  const signUp = async (email: string, password: string, name?: string, profileType: 'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi' = 'adminisztracio') => {
     try {
       console.log('Attempting sign up for:', email, 'with name:', name, 'profile type:', profileType);
       
