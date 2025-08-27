@@ -12,6 +12,8 @@ import { PayrollCosts } from './components/PayrollCosts';
 import { DocumentsPage } from './components/documents/DocumentsPage';
 import { CalendarPage } from './components/calendar/CalendarPage';
 import { ChatPage } from './components/chat/ChatPage';
+import { JelenletiPage } from './components/JelenletiPage';
+import { PedagogusBlankDashboard } from './components/PedagogusBlankDashboard';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -42,11 +44,15 @@ const AppContent: React.FC = () => {
   }, []);
 
   const renderActiveComponent = () => {
+    const profileType = user?.user_metadata?.profile_type;
+    
     switch (activeTab) {
       case 'dashboard':
-        // Check if user has manager profile
-        if (user?.user_metadata?.profile_type === 'vezetoi') {
+        // Show different dashboards based on profile type
+        if (profileType === 'vezetoi') {
           return <ManagerDashboard />;
+        } else if (profileType === 'pedagogus') {
+          return <PedagogusBlankDashboard />;
         }
         return <Dashboard />;
       case 'calendar':
@@ -61,6 +67,8 @@ const AppContent: React.FC = () => {
         return <DocumentsPage />;
       case 'payroll':
         return <PayrollCosts />;
+      case 'jelenleti':
+        return <JelenletiPage />;
       case 'settings':
         return <Settings />;
       default:

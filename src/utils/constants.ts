@@ -28,6 +28,8 @@ export const ORGANIZATIONS = {
 } as const;
 
 export const PROFILE_TYPES = {
-  IRODAI: 'irodai',
+  ADMINISZTRACIO: 'adminisztracio',
+  PEDAGOGUS: 'pedagogus',
+  HAZ_VEZETO: 'haz_vezeto',
   VEZETOI: 'vezetoi'
 } as const;

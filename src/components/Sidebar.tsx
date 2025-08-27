@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 
@@ -26,58 +26,112 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
     }
   };
 
-  // Base menu items for all users
-  const baseMenuItems = [
-    {
-      id: 'dashboard',
-      label: 'Áttekintés',
-      icon: BarChart3,
-    },
-    {
-      id: 'calendar',
-      label: 'Naptár',
-      icon: Calendar,
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      icon: MessageCircle,
-    },
-    {
-      id: 'upload',
-      label: 'Iktató',
-      icon: Upload,
-    },
-    {
-      id: 'invoices',
-      label: 'Számlák',
-      icon: FileText,
-    },
-    {
-      id: 'documents',
-      label: 'Dokumentumok',
-      icon: FileText,
-    },
-  ];
+  const profileType = user?.user_metadata?.profile_type;
 
-  // Additional menu items for manager profile
-  const managerMenuItems = [
-    {
-      id: 'payroll',
-      label: 'Bérköltségek',
-      icon: DollarSign,
-    },
+  // Menu items based on profile type
+  const getMenuItems = () => {
+    const commonItems = [
+      {
+        id: 'dashboard',
+        label: 'Áttekintés',
+        icon: BarChart3,
+      },
+      {
+        id: 'calendar',
+        label: 'Naptár',
+        icon: Calendar,
+      },
+      {
+        id: 'chat',
+        label: 'Chat',
+        icon: MessageCircle,
+      },
+      {
+        id: 'documents',
+        label: 'Dokumentumok',
+        icon: FileText,
+      },
+    ];
+
+    switch (profileType) {
+      case 'adminisztracio':
+        return [
+          ...commonItems,
+          {
+            id: 'upload',
+            label: 'Iktató',
+            icon: Upload,
+          },
+          {
+            id: 'invoices',
+            label: 'Számlák',
+            icon: FileText,
+          },
+          {
+            id: 'jelenleti',
+            label: 'Jelenléti',
+            icon: Users,
+          },
+        ];
+      
+      case 'pedagogus':
+        return [
+          ...commonItems,
+          {
+            id: 'jelenleti',
+            label: 'Jelenléti',
+            icon: Users,
+          },
+        ];
+      
+      case 'haz_vezeto':
+        return [
+          ...commonItems,
+          {
+            id: 'upload',
+            label: 'Iktató',
+            icon: Upload,
+          },
+          {
+            id: 'invoices',
+            label: 'Számlák',
+            icon: FileText,
+          },
+        ];
+      
+      case 'vezetoi':
+        return [
+          ...commonItems,
+          {
+            id: 'upload',
+            label: 'Iktató',
+            icon: Upload,
+          },
+          {
+            id: 'invoices',
+            label: 'Számlák',
+            icon: FileText,
+          },
+          {
+            id: 'payroll',
+            label: 'Bérköltségek',
+            icon: DollarSign,
+          },
+        ];
+      
+      default:
+        return commonItems;
+    }
+  };
+
+  const menuItems = [
+    ...getMenuItems(),
     {
       id: 'settings',
       label: 'Beállítások',
       icon: Settings,
     },
   ];
-
-  // Combine menu items based on user profile
-  const menuItems = user?.user_metadata?.profile_type === 'vezetoi' 
-    ? [...baseMenuItems, ...managerMenuItems]
-    : [...baseMenuItems, { id: 'settings', label: 'Beállítások', icon: Settings }];
 
   // Get user initials for profile picture
   const getUserInitials = (email: string, name?: string) => {

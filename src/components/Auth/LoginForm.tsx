@@ -14,7 +14,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [profileType, setProfileType] = useState<'irodai' | 'vezetoi'>('irodai');
+  const [profileType, setProfileType] = useState<'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi'>('adminisztracio');
   const [managerPassword, setManagerPassword] = useState('');
   const [showManagerPassword, setShowManagerPassword] = useState(false);
 
@@ -37,8 +37,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
         if (!name.trim()) {
           throw new Error('Név megadása kötelező');
         }
-        if (profileType === 'vezetoi' && managerPassword !== 'Finance123.') {
-          throw new Error('Hibás vezetői jelszó');
+        if ((profileType === 'vezetoi' || profileType === 'haz_vezeto') && managerPassword !== 'Finance123.') {
+          throw new Error(profileType === 'vezetoi' ? 'Hibás vezetői jelszó' : 'Hibás házvezetői jelszó');
         }
 
         console.log('Attempting to sign up user:', { email, name });
@@ -165,20 +165,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                   <select
                     id="profileType"
                     value={profileType}
-                    onChange={(e) => setProfileType(e.target.value as 'irodai' | 'vezetoi')}
+                    onChange={(e) => setProfileType(e.target.value as 'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi')}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors appearance-none bg-white"
                   >
-                    <option value="irodai">Irodai Profil</option>
-                    <option value="vezetoi">Vezetői Profil</option>
+                    <option value="adminisztracio">Adminisztráció</option>
+                    <option value="pedagogus">Pedagógus</option>
+                    <option value="haz_vezeto">Ház vezető</option>
+                    <option value="vezetoi">Vezetői</option>
                   </select>
                 </div>
               </div>
             )}
 
-            {isSignUp && profileType === 'vezetoi' && (
+            {isSignUp && (profileType === 'vezetoi' || profileType === 'haz_vezeto') && (
               <div>
                 <label htmlFor="managerPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  Vezetői jelszó *
+                  {profileType === 'vezetoi' ? 'Vezetői jelszó *' : 'Házvezetői jelszó *'}
                 </label>
                 <div className="relative">
                   <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -189,7 +191,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                     onChange={(e) => setManagerPassword(e.target.value)}
                     required
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    placeholder="Vezetői hozzáférési jelszó"
+                    placeholder={profileType === 'vezetoi' ? 'Vezetői hozzáférési jelszó' : 'Házvezetői hozzáférési jelszó'}
                   />
                   <button
                     type="button"
@@ -200,7 +202,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                   </button>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Vezetői profil létrehozásához szükséges speciális jelszó
+                  {profileType === 'vezetoi' ? 'Vezetői profil létrehozásához szükséges speciális jelszó' : 'Házvezetői profil létrehozásához szükséges speciális jelszó'}
                 </p>
               </div>
             )}
