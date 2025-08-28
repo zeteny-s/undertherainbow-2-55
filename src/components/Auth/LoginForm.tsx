@@ -37,8 +37,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
         if (!name.trim()) {
           throw new Error('Név megadása kötelező');
         }
-        if ((profileType === 'vezetoi' || profileType === 'haz_vezeto') && managerPassword !== 'Finance123.') {
-          throw new Error(profileType === 'vezetoi' ? 'Hibás vezetői jelszó' : 'Hibás házvezetői jelszó');
+        if (profileType === 'vezetoi' && managerPassword !== 'Finance123.') {
+          throw new Error('Hibás vezetői jelszó');
+        }
+        if (profileType === 'haz_vezeto' && managerPassword !== 'Hazvezeto123.') {
+          throw new Error('Hibás házvezetői jelszó');
         }
 
         console.log('Attempting to sign up user:', { email, name });
