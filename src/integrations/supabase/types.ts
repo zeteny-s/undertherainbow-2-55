@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          attendance_date: string
+          class_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          pedagogus_id: string
+          present: boolean
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          attendance_date: string
+          class_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pedagogus_id: string
+          present?: boolean
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          attendance_date?: string
+          class_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pedagogus_id?: string
+          present?: boolean
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_history: {
         Row: {
           backup_date: string
@@ -236,6 +287,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      classes: {
+        Row: {
+          created_at: string
+          house: string
+          id: string
+          name: string
+          pedagogus_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          house: string
+          id?: string
+          name: string
+          pedagogus_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          house?: string
+          id?: string
+          name?: string
+          pedagogus_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       crm_activities: {
         Row: {
@@ -1539,6 +1617,38 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
             referencedColumns: ["id"]
           },
         ]
