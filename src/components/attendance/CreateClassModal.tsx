@@ -78,7 +78,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
 
     const validStudents = students.filter(s => s.trim());
     if (validStudents.length === 0) {
-      addNotification('error', 'Legalább egy diákot meg kell adni');
+      addNotification('error', 'Legalább egy gyereket meg kell adni');
       return;
     }
 
@@ -198,7 +198,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
           <div>
             <div className="flex items-center justify-between mb-4">
               <label className="block text-sm font-medium text-gray-700">
-                Diákok *
+                Gyerekek *
               </label>
               <button
                 type="button"
@@ -206,7 +206,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                 className="flex items-center text-sm text-blue-600 hover:text-blue-700"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Diák hozzáadása
+                Gyerek hozzáadása
               </button>
             </div>
 
@@ -218,7 +218,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                     value={student}
                     onChange={(e) => handleStudentChange(index, e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder={`${index + 1}. diák neve`}
+                    placeholder={`${index + 1}. gyerek neve`}
                   />
                   {students.length > 1 && (
                     <button

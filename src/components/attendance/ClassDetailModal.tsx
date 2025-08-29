@@ -70,7 +70,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
       setStudents(data || []);
     } catch (error) {
       console.error('Error fetching students:', error);
-      addNotification('error', 'Hiba a diákok betöltésekor');
+      addNotification('error', 'Hiba a gyerekek betöltésekor');
     }
   };
 
@@ -132,15 +132,15 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
 
       setNewStudentName('');
       fetchStudents();
-      addNotification('success', 'Diák sikeresen hozzáadva');
+      addNotification('success', 'Gyerek sikeresen hozzáadva');
     } catch (error) {
       console.error('Error adding student:', error);
-      addNotification('error', 'Hiba a diák hozzáadásakor');
+      addNotification('error', 'Hiba a gyerek hozzáadásakor');
     }
   };
 
   const handleDeleteStudent = async (studentId: string) => {
-    if (!confirm('Biztosan törölni szeretné ezt a diákot? Ez törli az összes korábbi jelenlét rekordját is.')) {
+    if (!confirm('Biztosan törölni szeretné ezt a gyereket? Ez törli az összes korábbi jelenlét rekordját is.')) {
       return;
     }
 
@@ -153,10 +153,32 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
       if (error) throw error;
 
       fetchStudents();
-      addNotification('success', 'Diák sikeresen törölve');
+      addNotification('success', 'Gyerek sikeresen törölve');
     } catch (error) {
       console.error('Error deleting student:', error);
-      addNotification('error', 'Hiba a diák törlésekor');
+      addNotification('error', 'Hiba a gyerek törlésekor');
+    }
+  };
+
+  const handleDeleteClass = async () => {
+    if (!confirm(`Biztosan törölni szeretné a "${classData.name}" osztályt? Ez törli az összes gyereket és jelenlét rekordot is.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('classes')
+        .delete()
+        .eq('id', classData.id);
+
+      if (error) throw error;
+
+      addNotification('success', 'Osztály sikeresen törölve');
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      addNotification('error', 'Hiba az osztály törlésekor');
     }
   };
 
@@ -205,6 +227,12 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
               <Edit className="h-5 w-5" />
             </button>
             <button
+              onClick={handleDeleteClass}
+              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+            <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
@@ -231,17 +259,21 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ház neve
-                  </label>
-                  <input
-                    type="text"
-                    value={editingClass.house}
-                    onChange={(e) => setEditingClass(prev => ({ ...prev, house: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                     Ház neve
+                   </label>
+                   <select
+                     value={editingClass.house}
+                     onChange={(e) => setEditingClass(prev => ({ ...prev, house: e.target.value }))}
+                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                   >
+                     <option value="">Válasszon házat</option>
+                     <option value="Torockó">Torockó</option>
+                     <option value="Feketerigó">Feketerigó</option>
+                     <option value="Levél">Levél</option>
+                   </select>
+                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Pedagógus
@@ -299,7 +331,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <Users className="h-5 w-5 mr-2" />
-                Diákok ({students.length})
+                Gyerekek ({students.length})
               </h3>
             </div>
 
@@ -309,7 +341,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                 type="text"
                 value={newStudentName}
                 onChange={(e) => setNewStudentName(e.target.value)}
-                placeholder="Új diák neve"
+                placeholder="Új gyerek neve"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 onKeyPress={(e) => e.key === 'Enter' && handleAddStudent()}
               />
@@ -356,7 +388,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
             {students.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <Users className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                <div>Még nincsenek diákok ebben az osztályban</div>
+                <div>Még nincsenek gyerekek ebben az osztályban</div>
               </div>
             )}
           </div>

@@ -159,7 +159,7 @@ export const AdminAttendanceView: React.FC = () => {
                         </div>
                         <div className="flex items-center">
                           <BookOpen className="h-4 w-4 mr-2" />
-                          {cls.student_count} diák
+                          {cls.student_count} gyerek
                         </div>
                       </div>
                     </div>
@@ -206,7 +206,7 @@ export const AdminAttendanceView: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Összes diák:</span>
+                  <span className="text-gray-600">Összes gyerek:</span>
                   <span className="font-semibold">
                     {classes.reduce((sum, cls) => sum + (cls.student_count || 0), 0)}
                   </span>

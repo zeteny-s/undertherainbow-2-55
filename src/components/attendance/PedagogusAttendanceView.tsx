@@ -192,7 +192,7 @@ export const PedagogusAttendanceView: React.FC = () => {
                       }`}
                     >
                       <h3 className="font-semibold text-gray-900">{cls.name}</h3>
-                      <p className="text-sm text-gray-600">{cls.house} • {cls.students?.length || 0} diák</p>
+                      <p className="text-sm text-gray-600">{cls.house} • {cls.students?.length || 0} gyerek</p>
                     </button>
                   ))}
                 </div>
@@ -242,7 +242,7 @@ export const PedagogusAttendanceView: React.FC = () => {
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-3 text-gray-500" />
                     <div>
-                      <div className="font-medium text-gray-900">{selectedClass.students?.length || 0} diák</div>
+                      <div className="font-medium text-gray-900">{selectedClass.students?.length || 0} gyerek</div>
                     </div>
                   </div>
                 </div>
