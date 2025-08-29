@@ -38,23 +38,34 @@ export const AdminAttendanceView: React.FC = () => {
           name,
           house,
           pedagogus_id,
-          created_at,
-          profiles:pedagogus_id (name, email)
+          created_at
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Get student counts separately
+      // Get student counts and profile data separately
       const classesWithCounts = await Promise.all((data || []).map(async (cls) => {
         const { count } = await supabase
           .from('students')
           .select('*', { count: 'exact', head: true })
           .eq('class_id', cls.id);
 
+        // Get profile data for pedagogus
+        let profiles = undefined;
+        if (cls.pedagogus_id) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('name, email')
+            .eq('user_id', cls.pedagogus_id)
+            .single();
+          profiles = profileData || undefined;
+        }
+
         return {
           ...cls,
-          student_count: count || 0
+          student_count: count || 0,
+          profiles
         };
       }));
 
