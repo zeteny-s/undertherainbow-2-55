@@ -170,7 +170,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                   type="text"
                   value={notes[student.id] || ''}
                   onChange={(e) => handleNotesChange(student.id, e.target.value)}
-                  placeholder="pl. beteg, családi ok..."
+                  placeholder=""
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
