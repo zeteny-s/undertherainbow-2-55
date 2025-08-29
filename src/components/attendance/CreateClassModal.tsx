@@ -157,16 +157,19 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
               <label htmlFor="house" className="block text-sm font-medium text-gray-700 mb-2">
                 Ház neve *
               </label>
-              <input
-                type="text"
+              <select
                 id="house"
                 name="house"
                 value={formData.house}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder=""
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 required
-              />
+              >
+                <option value="">Válasszon házat</option>
+                <option value="Torockó">Torockó</option>
+                <option value="Feketerigó">Feketerigó</option>
+                <option value="Levél">Levél</option>
+              </select>
             </div>
           </div>
 
