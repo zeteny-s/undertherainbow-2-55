@@ -5,7 +5,6 @@ import { CreateClassModal } from './CreateClassModal';
 import { ClassDetailModal } from './ClassDetailModal';
 import { AttendanceReportsModal } from './AttendanceReportsModal';
 import { useNotifications } from '../../hooks/useNotifications';
-
 interface Class {
   id: string;
   name: string;
@@ -18,59 +17,57 @@ interface Class {
   };
   student_count?: number;
 }
-
 export const AdminAttendanceView: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  const { addNotification } = useNotifications();
-
+  const {
+    addNotification
+  } = useNotifications();
   useEffect(() => {
     fetchClasses();
   }, []);
-
   const fetchClasses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('classes')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('classes').select(`
           id,
           name,
           house,
           pedagogus_id,
           created_at
-        `)
-        .order('created_at', { ascending: false });
-
+        `).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
 
       // Get student counts and profile data separately
-      const classesWithCounts = await Promise.all((data || []).map(async (cls) => {
-        const { count } = await supabase
-          .from('students')
-          .select('*', { count: 'exact', head: true })
-          .eq('class_id', cls.id);
+      const classesWithCounts = await Promise.all((data || []).map(async cls => {
+        const {
+          count
+        } = await supabase.from('students').select('*', {
+          count: 'exact',
+          head: true
+        }).eq('class_id', cls.id);
 
         // Get profile data for pedagogus
         let profiles = undefined;
         if (cls.pedagogus_id) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('name, email')
-            .eq('user_id', cls.pedagogus_id)
-            .single();
+          const {
+            data: profileData
+          } = await supabase.from('profiles').select('name, email').eq('user_id', cls.pedagogus_id).single();
           profiles = profileData || undefined;
         }
-
         return {
           ...cls,
           student_count: count || 0,
           profiles
         };
       }));
-
       setClasses(classesWithCounts);
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -79,30 +76,23 @@ export const AdminAttendanceView: React.FC = () => {
       setLoading(false);
     }
   };
-
   const handleClassCreated = () => {
     setShowCreateModal(false);
     fetchClasses();
     addNotification('success', 'Osztály sikeresen létrehozva!');
   };
-
   const handleClassSelect = (cls: Class) => {
     setSelectedClass(cls);
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Betöltés...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 lg:p-8">
+  return <div className="min-h-screen bg-gray-50 p-4 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Jelenléti rendszer</h1>
@@ -112,17 +102,11 @@ export const AdminAttendanceView: React.FC = () => {
         {/* Header Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-sm"
-            >
+            <button onClick={() => setShowCreateModal(true)} className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-sm">
               <Plus className="h-5 w-5 mr-2" />
               Új osztály létrehozása
             </button>
-            <button 
-              onClick={() => setShowReportsModal(true)}
-              className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 shadow-sm"
-            >
+            <button onClick={() => setShowReportsModal(true)} className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 shadow-sm">
               <Calendar className="h-5 w-5 mr-2" />
               Jelenlét riportok
             </button>
@@ -138,7 +122,7 @@ export const AdminAttendanceView: React.FC = () => {
               <div className="text-2xl font-bold text-green-600">
                 {classes.filter(cls => cls.pedagogus_id).length}
               </div>
-              <div className="text-sm text-gray-600">Pedagógus</div>
+              <div className="text-sm text-gray-600">Pedagógusok</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
@@ -159,8 +143,7 @@ export const AdminAttendanceView: React.FC = () => {
           </div>
           
           <div className="p-6">
-            {classes.length === 0 ? (
-              <div className="text-center py-16">
+            {classes.length === 0 ? <div className="text-center py-16">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Users className="h-12 w-12 text-gray-400" />
                 </div>
@@ -168,22 +151,12 @@ export const AdminAttendanceView: React.FC = () => {
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
                   Kezdje el az első osztály létrehozásával és adjon hozzá gyerekeket és pedagógusokat.
                 </p>
-                <button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-sm"
-                >
+                <button onClick={() => setShowCreateModal(true)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-sm">
                   <Plus className="h-5 w-5 mr-2 inline" />
                   Első osztály létrehozása
                 </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {classes.map((cls) => (
-                  <div
-                    key={cls.id}
-                    onClick={() => handleClassSelect(cls)}
-                    className="group p-6 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] bg-gradient-to-br from-white to-gray-50"
-                  >
+              </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {classes.map(cls => <div key={cls.id} onClick={() => handleClassSelect(cls)} className="group p-6 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] bg-gradient-to-br from-white to-gray-50">
                     <div className="flex items-start justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                         {cls.name}
@@ -213,35 +186,17 @@ export const AdminAttendanceView: React.FC = () => {
                         Kattintson a részletekért
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  </div>)}
+              </div>}
           </div>
         </div>
 
         {/* Modals */}
-        {showCreateModal && (
-          <CreateClassModal
-            onClose={() => setShowCreateModal(false)}
-            onSuccess={handleClassCreated}
-          />
-        )}
+        {showCreateModal && <CreateClassModal onClose={() => setShowCreateModal(false)} onSuccess={handleClassCreated} />}
 
-        {selectedClass && (
-          <ClassDetailModal
-            classData={selectedClass}
-            onClose={() => setSelectedClass(null)}
-            onUpdate={fetchClasses}
-          />
-        )}
+        {selectedClass && <ClassDetailModal classData={selectedClass} onClose={() => setSelectedClass(null)} onUpdate={fetchClasses} />}
 
-        {showReportsModal && (
-          <AttendanceReportsModal
-            onClose={() => setShowReportsModal(false)}
-          />
-        )}
+        {showReportsModal && <AttendanceReportsModal onClose={() => setShowReportsModal(false)} />}
       </div>
-    </div>
-  );
+    </div>;
 };
