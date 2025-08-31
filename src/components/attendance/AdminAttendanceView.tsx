@@ -3,6 +3,7 @@ import { Users, Plus, Settings, BookOpen, Calendar, UserPlus } from 'lucide-reac
 import { supabase } from '../../integrations/supabase/client';
 import { CreateClassModal } from './CreateClassModal';
 import { ClassDetailModal } from './ClassDetailModal';
+import { AttendanceReportsModal } from './AttendanceReportsModal';
 import { useNotifications } from '../../hooks/useNotifications';
 
 interface Class {
@@ -22,6 +23,7 @@ export const AdminAttendanceView: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const { addNotification } = useNotifications();
 
@@ -181,7 +183,10 @@ export const AdminAttendanceView: React.FC = () => {
                   <Plus className="h-4 w-4 mr-3" />
                   Új osztály létrehozása
                 </button>
-                <button className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <button 
+                  onClick={() => setShowReportsModal(true)}
+                  className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                >
                   <Calendar className="h-4 w-4 mr-3" />
                   Jelenlét riportok
                 </button>
@@ -229,6 +234,12 @@ export const AdminAttendanceView: React.FC = () => {
             classData={selectedClass}
             onClose={() => setSelectedClass(null)}
             onUpdate={fetchClasses}
+          />
+        )}
+
+        {showReportsModal && (
+          <AttendanceReportsModal
+            onClose={() => setShowReportsModal(false)}
           />
         )}
       </div>
