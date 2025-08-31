@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle, XCircle, Users, BookOpen } from 'lucide-react';
+import { Calendar, Users, BookOpen } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { AttendanceForm } from './AttendanceForm';
@@ -173,34 +173,95 @@ export const PedagogusAttendanceView: React.FC = () => {
           })}</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Class Selection */}
-            {classes.length > 1 && (
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Osztály kiválasztása</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {classes.map((cls) => (
-                    <button
-                      key={cls.id}
-                      onClick={() => setSelectedClass(cls)}
-                      className={`p-4 text-left border rounded-lg transition-all ${
-                        selectedClass?.id === cls.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <h3 className="font-semibold text-gray-900">{cls.name}</h3>
-                      <p className="text-sm text-gray-600">{cls.house} • {cls.students?.length || 0} gyerek</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Attendance Form */}
+        {/* Header Actions */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+          <div className="flex items-center gap-6">
             {selectedClass && (
+              <button 
+                onClick={() => setShowHistory(true)}
+                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-sm"
+              >
+                <Calendar className="h-5 w-5 mr-2" />
+                Korábbi jelenlétek
+              </button>
+            )}
+          </div>
+          
+          {/* Statistics Cards */}
+          {selectedClass && todayAttendance.length > 0 && (
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{selectedClass.students?.length || 0}</div>
+                <div className="text-sm text-gray-600">Gyerek</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {todayAttendance.filter(a => a.present).length}
+                </div>
+                <div className="text-sm text-gray-600">Jelen</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">
+                  {todayAttendance.filter(a => !a.present).length}
+                </div>
+                <div className="text-sm text-gray-600">Hiányzik</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Class Selection */}
+        {classes.length > 1 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <BookOpen className="h-6 w-6 mr-3 text-blue-600" />
+                Osztály kiválasztása
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {classes.map((cls) => (
+                  <button
+                    key={cls.id}
+                    onClick={() => setSelectedClass(cls)}
+                    className={`group p-6 text-left border rounded-xl transition-all duration-200 hover:scale-[1.02] ${
+                      selectedClass?.id === cls.id
+                        ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md'
+                        : 'border-gray-200 hover:border-blue-300 hover:shadow-lg bg-gradient-to-br from-white to-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className={`text-lg font-semibold transition-colors ${
+                        selectedClass?.id === cls.id ? 'text-blue-700' : 'text-gray-900 group-hover:text-blue-600'
+                      }`}>
+                        {cls.name}
+                      </h3>
+                      <span className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                        {cls.house}
+                      </span>
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <Users className="h-4 w-4 mr-2 text-gray-400" />
+                      <span className="text-sm font-medium">{cls.students?.length || 0} gyerek</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Attendance Form */}
+        {selectedClass && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Users className="h-6 w-6 mr-3 text-blue-600" />
+                Jelenlét rögzítése - {selectedClass.name}
+              </h2>
+            </div>
+            <div className="p-6">
               <AttendanceForm
                 classData={selectedClass}
                 todayAttendance={todayAttendance.map(record => ({
@@ -209,73 +270,9 @@ export const PedagogusAttendanceView: React.FC = () => {
                 }))}
                 onSubmit={handleAttendanceSubmit}
               />
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Gyors műveletek</h3>
-              <div className="space-y-3">
-                <button 
-                  onClick={() => setShowHistory(true)}
-                  disabled={!selectedClass}
-                  className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <Calendar className="h-4 w-4 mr-3" />
-                  Korábbi jelenlétek
-                </button>
-              </div>
             </div>
-
-            {selectedClass && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Osztály információk</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <BookOpen className="h-4 w-4 mr-3 text-gray-500" />
-                    <div>
-                      <div className="font-medium text-gray-900">{selectedClass.name}</div>
-                      <div className="text-sm text-gray-600">{selectedClass.house}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <Users className="h-4 w-4 mr-3 text-gray-500" />
-                    <div>
-                      <div className="font-medium text-gray-900">{selectedClass.students?.length || 0} gyerek</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedClass && todayAttendance.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Mai statisztikák</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                      <span className="text-gray-700">Jelen</span>
-                    </div>
-                    <span className="font-semibold text-green-600">
-                      {todayAttendance.filter(a => a.present).length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <XCircle className="h-4 w-4 mr-2 text-red-500" />
-                      <span className="text-gray-700">Hiányzik</span>
-                    </div>
-                    <span className="font-semibold text-red-600">
-                      {todayAttendance.filter(a => !a.present).length}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
+        )}
 
         {/* History Modal */}
         {showHistory && selectedClass && (

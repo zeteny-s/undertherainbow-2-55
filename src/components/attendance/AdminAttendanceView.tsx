@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Settings, BookOpen, Calendar, UserPlus } from 'lucide-react';
+import { Users, Plus, BookOpen, Calendar, UserPlus } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { CreateClassModal } from './CreateClassModal';
 import { ClassDetailModal } from './ClassDetailModal';
@@ -109,115 +109,114 @@ export const AdminAttendanceView: React.FC = () => {
           <p className="text-gray-600">Osztályok és pedagógusok kezelése</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Classes Section */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-blue-600" />
-                  Osztályok ({classes.length})
-                </h2>
-                <button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Új osztály
-                </button>
+        {/* Header Actions */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-sm"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Új osztály létrehozása
+            </button>
+            <button 
+              onClick={() => setShowReportsModal(true)}
+              className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 shadow-sm"
+            >
+              <Calendar className="h-5 w-5 mr-2" />
+              Jelenlét riportok
+            </button>
+          </div>
+          
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{classes.length}</div>
+              <div className="text-sm text-gray-600">Osztály</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {classes.filter(cls => cls.pedagogus_id).length}
               </div>
-
-              {classes.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Még nincsenek osztályok</h3>
-                  <p className="text-gray-600 mb-4">Kezdje el az első osztály létrehozásával</p>
-                  <button 
-                    onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Osztály létrehozása
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {classes.map((cls) => (
-                    <div
-                      key={cls.id}
-                      onClick={() => handleClassSelect(cls)}
-                      className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md cursor-pointer transition-all"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-semibold text-gray-900">{cls.name}</h3>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          {cls.house}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          {cls.profiles?.name || 'Nincs hozzárendelve pedagógus'}
-                        </div>
-                        <div className="flex items-center">
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          {cls.student_count} gyerek
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="text-sm text-gray-600">Pedagógus</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {classes.reduce((sum, cls) => sum + (cls.student_count || 0), 0)}
+              </div>
+              <div className="text-sm text-gray-600">Gyerek</div>
             </div>
           </div>
+        </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Gyors műveletek</h3>
-              <div className="space-y-3">
+        {/* Classes Grid */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Users className="h-6 w-6 mr-3 text-blue-600" />
+              Osztályok ({classes.length})
+            </h2>
+          </div>
+          
+          <div className="p-6">
+            {classes.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Users className="h-12 w-12 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Még nincsenek osztályok</h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Kezdje el az első osztály létrehozásával és adjon hozzá gyerekeket és pedagógusokat.
+                </p>
                 <button 
                   onClick={() => setShowCreateModal(true)}
-                  className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-sm"
                 >
-                  <Plus className="h-4 w-4 mr-3" />
-                  Új osztály létrehozása
-                </button>
-                <button 
-                  onClick={() => setShowReportsModal(true)}
-                  className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  <Calendar className="h-4 w-4 mr-3" />
-                  Jelenlét riportok
-                </button>
-                <button className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  <Settings className="h-4 w-4 mr-3" />
-                  Beállítások
+                  <Plus className="h-5 w-5 mr-2 inline" />
+                  Első osztály létrehozása
                 </button>
               </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Statisztikák</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Összes osztály:</span>
-                  <span className="font-semibold">{classes.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Aktív pedagógusok:</span>
-                  <span className="font-semibold">
-                    {classes.filter(cls => cls.pedagogus_id).length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Összes gyerek:</span>
-                  <span className="font-semibold">
-                    {classes.reduce((sum, cls) => sum + (cls.student_count || 0), 0)}
-                  </span>
-                </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {classes.map((cls) => (
+                  <div
+                    key={cls.id}
+                    onClick={() => handleClassSelect(cls)}
+                    className="group p-6 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] bg-gradient-to-br from-white to-gray-50"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {cls.name}
+                      </h3>
+                      <span className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                        {cls.house}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center text-gray-600">
+                        <UserPlus className="h-4 w-4 mr-3 text-gray-400" />
+                        <span className="text-sm">
+                          {cls.profiles?.name || 'Nincs hozzárendelve pedagógus'}
+                        </span>
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <BookOpen className="h-4 w-4 mr-3 text-gray-400" />
+                        <span className="text-sm font-medium">
+                          {cls.student_count} gyerek
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="text-xs text-gray-500">
+                        Kattintson a részletekért
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
 
