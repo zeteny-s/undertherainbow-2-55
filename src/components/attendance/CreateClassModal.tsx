@@ -18,7 +18,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     house: '',
-    pedagogus_id: ''
+    pedagogus_ids: [] as string[]
   });
   const [students, setStudents] = useState<string[]>(['']);
   const [pedagogusProfiles, setPedagogusProfiles] = useState<PedagogusProfile[]>([]);
@@ -46,6 +46,15 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
+    }));
+  };
+
+  const handlePedagogusToggle = (pedagogusId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      pedagogus_ids: prev.pedagogus_ids.includes(pedagogusId)
+        ? prev.pedagogus_ids.filter(id => id !== pedagogusId)
+        : [...prev.pedagogus_ids, pedagogusId]
     }));
   };
   const handleStudentChange = (index: number, value: string) => {
@@ -81,7 +90,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({
       } = await supabase.from('classes').insert({
         name: formData.name.trim(),
         house: formData.house.trim(),
-        pedagogus_id: formData.pedagogus_id || null
+        pedagogus_ids: formData.pedagogus_ids.length > 0 ? formData.pedagogus_ids : []
       }).select().single();
       if (classError) throw classError;
 
@@ -138,13 +147,29 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({
 
           {/* Pedagogus Assignment */}
           <div>
-            <label htmlFor="pedagogus_id" className="block text-sm font-medium text-gray-700 mb-2">Pedagógusok hozzárendelése</label>
-            <select id="pedagogus_id" name="pedagogus_id" value={formData.pedagogus_id} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <option value="">Válasszon pedagógust (opcionális)</option>
-              {pedagogusProfiles.map(profile => <option key={profile.id} value={profile.id}>
-                  {profile.name || profile.email}
-                </option>)}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Pedagógusok hozzárendelése</label>
+            <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-3">
+              {pedagogusProfiles.length > 0 ? pedagogusProfiles.map(profile => (
+                <label key={profile.id} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.pedagogus_ids.includes(profile.id)}
+                    onChange={() => handlePedagogusToggle(profile.id)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    {profile.name || profile.email}
+                  </span>
+                </label>
+              )) : (
+                <p className="text-sm text-gray-500">Nincsenek elérhető pedagógusok</p>
+              )}
+            </div>
+            {formData.pedagogus_ids.length > 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.pedagogus_ids.length} pedagógus kiválasztva
+              </p>
+            )}
           </div>
 
           {/* Students */}
