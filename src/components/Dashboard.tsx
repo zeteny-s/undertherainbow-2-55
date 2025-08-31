@@ -109,15 +109,20 @@ export const Dashboard: React.FC = () => {
     categoryData: []
   });
   const [loading, setLoading] = useState(true);
-  // Global period selectors for this page
-  const [selectedYear, setSelectedYear] = useState<'all' | number>('all');
-  const [selectedMonth, setSelectedMonth] = useState<'all' | number>('all');
+  // Individual chart selectors instead of global ones
+  const [monthlyChartYear, setMonthlyChartYear] = useState<'all' | number>('all');
+  const [monthlyChartMonth, setMonthlyChartMonth] = useState<'all' | number>('all');
+  const [orgChartYear, setOrgChartYear] = useState<'all' | number>('all');
+  const [orgChartMonth, setOrgChartMonth] = useState<'all' | number>('all');
+  const [paymentChartYear, setPaymentChartYear] = useState<'all' | number>('all');
+  const [paymentChartMonth, setPaymentChartMonth] = useState<'all' | number>('all');
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [currentExpenseWeekIndex, setCurrentExpenseWeekIndex] = useState(0);
   const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
   const [expenseWeekHistory, setExpenseWeekHistory] = useState<WeekData[]>([]);
   const [showWeekHistory, setShowWeekHistory] = useState(false);
   const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
+  const [allInvoices, setAllInvoices] = useState<any[]>([]); // Store all invoices for filtering
   const { notifications, addNotification, removeNotification } = useNotifications();
   const [showAllMunkaszam, setShowAllMunkaszam] = useState(false);
 
@@ -177,6 +182,31 @@ export const Dashboard: React.FC = () => {
   const isExcludedPartner = (partner?: string | null): boolean => {
     if (!partner) return false;
     return EXCLUDED_NORMALIZED_SET.has(normalizePartnerName(partner));
+  };
+
+  // Helper functions to update individual chart data
+  const updateMonthlyChart = (year: 'all' | number, month: 'all' | number) => {
+    const filteredBase = allInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+    setChartData(prev => ({
+      ...prev,
+      monthlyData: generateMonthlyData(filteredBase, year, month)
+    }));
+  };
+
+  const updateOrgChart = (year: 'all' | number, month: 'all' | number) => {
+    const filteredBase = allInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+    setChartData(prev => ({
+      ...prev,
+      organizationData: generateOrganizationData(filteredBase, year, month)
+    }));
+  };
+
+  const updatePaymentChart = (year: 'all' | number, month: 'all' | number) => {
+    const filteredBase = allInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+    setChartData(prev => ({
+      ...prev,
+      paymentTypeData: generatePaymentTypeData(filteredBase, year, month)
+    }));
   };
 
   const getTimeBasedGreeting = () => {
@@ -268,6 +298,7 @@ export const Dashboard: React.FC = () => {
 
       // Filter out specific partners from cost analytics (normalized matching)
       const filteredInvoicesBase = (invoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+      setAllInvoices(invoices || []); // Store all invoices for chart filtering
       // Per-card selectors control their own filters; base remains unfiltered by year/month here
       const filteredInvoices = filteredInvoicesBase;
       const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
@@ -294,9 +325,9 @@ export const Dashboard: React.FC = () => {
       setWeekHistory(weekHistoryData);
       setExpenseWeekHistory(weekHistoryData);
 
-      const monthlyData = generateMonthlyData(filteredInvoicesBase);
-      const organizationData = generateOrganizationData(filteredInvoicesBase);
-      const paymentTypeData = generatePaymentTypeData(filteredInvoicesBase);
+      const monthlyData = generateMonthlyData(filteredInvoicesBase, monthlyChartYear, monthlyChartMonth);
+      const organizationData = generateOrganizationData(filteredInvoicesBase, orgChartYear, orgChartMonth);
+      const paymentTypeData = generatePaymentTypeData(filteredInvoicesBase, paymentChartYear, paymentChartMonth);
       const weeklyTrend = weekHistoryData[0]?.data || [];
       const expenseData = generateExpenseData(filteredInvoices, payrollSummaries || []);
       const topPartnersData = generateTopPartnersData(filteredInvoices);
@@ -381,40 +412,72 @@ export const Dashboard: React.FC = () => {
     }).format(date);
   };
 
-  const generateMonthlyData = (invoices: any[]) => {
+  const generateMonthlyData = (invoices: any[], yearFilter: 'all' | number = 'all', monthFilter: 'all' | number = 'all') => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
-    // Use normalized partner exclusion
     
     return months.map((month, index) => {
-      // Count all invoices for the month (for display purposes)
-      const allMonthInvoices = invoices.filter(inv => {
+      // Filter invoices based on the chart's own filters
+      let monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
-        return date.getFullYear() === currentYear && date.getMonth() === index;
+        const invoiceYear = date.getFullYear();
+        const invoiceMonth = date.getMonth();
+        
+        // Apply year filter
+        if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
+        
+        // Apply month filter - if specific month selected, only show that month
+        if (monthFilter !== 'all') {
+          return invoiceMonth === (monthFilter - 1);
+        }
+        
+        // If no specific month filter, show current year by default
+        return yearFilter === 'all' ? invoiceYear === currentYear : true;
       });
+
+      // Further filter by current month being processed
+      if (monthFilter === 'all') {
+        monthInvoices = monthInvoices.filter(inv => {
+          const date = new Date(inv.invoice_date);
+          return date.getMonth() === index;
+        });
+      }
       
-      // Filter for amount calculations only
-      const monthInvoicesForAmount = allMonthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
-      
-      const alapitvanyInvoices = allMonthInvoices.filter(inv => inv.organization === 'alapitvany');
-      const ovodaInvoices = allMonthInvoices.filter(inv => inv.organization === 'ovoda');
-      
+      const monthInvoicesForAmount = monthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+      const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
+      const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
       const invoiceAmount = monthInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0);
       
       return {
         month,
         alapitvany: alapitvanyInvoices.length,
         ovoda: ovodaInvoices.length,
-        total: allMonthInvoices.length,
-        amount: invoiceAmount // Remove payroll from monthly invoice trend
+        total: monthInvoices.length,
+        amount: invoiceAmount
       };
     });
   };
 
-  const generateOrganizationData = (invoices: any[]) => {
-    const alapitvanyInvoices = invoices.filter(inv => inv.organization === 'alapitvany');
-    const ovodaInvoices = invoices.filter(inv => inv.organization === 'ovoda');
+  const generateOrganizationData = (invoices: any[], yearFilter: 'all' | number = 'all', monthFilter: 'all' | number = 'all') => {
+    // Filter invoices based on the chart's own filters
+    const filteredInvoices = invoices.filter(inv => {
+      if (!inv.invoice_date) return false;
+      const date = new Date(inv.invoice_date);
+      const invoiceYear = date.getFullYear();
+      const invoiceMonth = date.getMonth();
+      
+      // Apply year filter
+      if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
+      
+      // Apply month filter
+      if (monthFilter !== 'all' && invoiceMonth !== (monthFilter - 1)) return false;
+      
+      return true;
+    });
+
+    const alapitvanyInvoices = filteredInvoices.filter(inv => inv.organization === 'alapitvany');
+    const ovodaInvoices = filteredInvoices.filter(inv => inv.organization === 'ovoda');
     
     return [
       { 
@@ -432,9 +495,25 @@ export const Dashboard: React.FC = () => {
     ];
   };
 
-  const generatePaymentTypeData = (invoices: any[]) => {
-    const bankTransferInvoices = invoices.filter(inv => inv.invoice_type === 'bank_transfer');
-    const cardCashInvoices = invoices.filter(inv => inv.invoice_type === 'card_cash_afterpay');
+  const generatePaymentTypeData = (invoices: any[], yearFilter: 'all' | number = 'all', monthFilter: 'all' | number = 'all') => {
+    // Filter invoices based on the chart's own filters
+    const filteredInvoices = invoices.filter(inv => {
+      if (!inv.invoice_date) return false;
+      const date = new Date(inv.invoice_date);
+      const invoiceYear = date.getFullYear();
+      const invoiceMonth = date.getMonth();
+      
+      // Apply year filter
+      if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
+      
+      // Apply month filter
+      if (monthFilter !== 'all' && invoiceMonth !== (monthFilter - 1)) return false;
+      
+      return true;
+    });
+
+    const bankTransferInvoices = filteredInvoices.filter(inv => inv.invoice_type === 'bank_transfer');
+    const cardCashInvoices = filteredInvoices.filter(inv => inv.invoice_type === 'card_cash_afterpay');
     
     return [
       { 
@@ -444,10 +523,10 @@ export const Dashboard: React.FC = () => {
         color: '#059669' 
       },
       { 
-        name: 'Kártya/Készpénz/Utánvét', 
+        name: 'Kártya/Készpénz/Utólag', 
         value: cardCashInvoices.length, 
         amount: cardCashInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
-        color: '#7c3aed' 
+        color: '#dc2626' 
       }
     ];
   };
@@ -992,28 +1071,6 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{getTimeBasedGreeting()}</h2>
             <p className="text-gray-600 text-sm sm:text-base">Számla feldolgozási statisztikák és üzleti elemzések</p>
           </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Összes év</option>
-              {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Összes hónap</option>
-              {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
-                <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
-              ))}
-            </select>
-          </div>
           {/* Hide refresh button on mobile */}
           <button
             onClick={fetchDashboardData}
@@ -1093,8 +1150,12 @@ export const Dashboard: React.FC = () => {
               </h3>
               <div className="flex items-center gap-2">
                 <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={monthlyChartYear}
+                  onChange={(e) => {
+                    const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setMonthlyChartYear(newYear);
+                    updateMonthlyChart(newYear, monthlyChartMonth);
+                  }}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
@@ -1103,8 +1164,12 @@ export const Dashboard: React.FC = () => {
                   ))}
                 </select>
                 <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={monthlyChartMonth}
+                  onChange={(e) => {
+                    const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setMonthlyChartMonth(newMonth);
+                    updateMonthlyChart(monthlyChartYear, newMonth);
+                  }}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
@@ -1532,8 +1597,12 @@ export const Dashboard: React.FC = () => {
               </span>
               <span className="inline-flex items-center gap-2">
                 <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={orgChartYear}
+                  onChange={(e) => {
+                    const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setOrgChartYear(newYear);
+                    updateOrgChart(newYear, orgChartMonth);
+                  }}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
@@ -1542,8 +1611,12 @@ export const Dashboard: React.FC = () => {
                   ))}
                 </select>
                 <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={orgChartMonth}
+                  onChange={(e) => {
+                    const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setOrgChartMonth(newMonth);
+                    updateOrgChart(orgChartYear, newMonth);
+                  }}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
@@ -1601,8 +1674,12 @@ export const Dashboard: React.FC = () => {
               </span>
               <span className="inline-flex items-center gap-2">
                 <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={paymentChartYear}
+                  onChange={(e) => {
+                    const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setPaymentChartYear(newYear);
+                    updatePaymentChart(newYear, paymentChartMonth);
+                  }}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
@@ -1611,8 +1688,12 @@ export const Dashboard: React.FC = () => {
                   ))}
                 </select>
                 <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={paymentChartMonth}
+                  onChange={(e) => {
+                    const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setPaymentChartMonth(newMonth);
+                    updatePaymentChart(paymentChartYear, newMonth);
+                  }}
                   className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
