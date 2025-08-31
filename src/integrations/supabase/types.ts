@@ -2074,6 +2074,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      is_current_user_admin_or_manager: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_current_user_in_team: {
         Args: { _team_id: string }
         Returns: boolean
