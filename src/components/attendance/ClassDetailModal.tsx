@@ -255,7 +255,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                   <div className="font-semibold text-gray-900">{classData.house}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Pedagógus</div>
+                  <div className="text-sm text-gray-600">Pedagógusok</div>
                   <div className="font-semibold text-gray-900">
                     {classData.profiles?.name || 'Nincs hozzárendelve'}
                   </div>
