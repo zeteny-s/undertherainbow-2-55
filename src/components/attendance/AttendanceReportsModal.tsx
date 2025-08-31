@@ -7,6 +7,12 @@ interface AttendanceReportsModalProps {
   onClose: () => void;
 }
 
+interface Class {
+  id: string;
+  name: string;
+  house: string;
+}
+
 interface AttendanceRecord {
   id: string;
   attendance_date: string;
@@ -35,20 +41,50 @@ interface ClassSummary {
 
 export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ onClose }) => {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [classes, setClasses] = useState<Class[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [classSummaries, setClassSummaries] = useState<ClassSummary[]>([]);
+  const [classSummary, setClassSummary] = useState<ClassSummary | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const { addNotification } = useNotifications();
 
   useEffect(() => {
-    fetchAttendanceData();
-  }, [selectedDate]);
+    fetchClasses();
+  }, []);
+
+  useEffect(() => {
+    if (selectedClass) {
+      fetchAttendanceData();
+    }
+  }, [selectedDate, selectedClass]);
+
+  const fetchClasses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .select('id, name, house')
+        .order('name');
+
+      if (error) throw error;
+      setClasses(data || []);
+      
+      // Auto-select first class if available
+      if (data && data.length > 0) {
+        setSelectedClass(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      addNotification('error', 'Hiba az osztályok betöltésekor');
+    }
+  };
 
   const fetchAttendanceData = async () => {
+    if (!selectedClass) return;
+    
     setLoading(true);
     try {
-      // Fetch attendance records for the selected date
+      // Fetch attendance records for the selected date and class
       const { data: records, error: recordsError } = await supabase
         .from('attendance_records')
         .select(`
@@ -67,45 +103,47 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
           )
         `)
         .eq('attendance_date', selectedDate)
-        .order('classes(name)', { ascending: true });
+        .eq('class_id', selectedClass)
+        .order('students(name)', { ascending: true });
 
       if (recordsError) throw recordsError;
 
       setAttendanceRecords(records || []);
 
-      // Calculate class summaries
-      const summaries: Record<string, ClassSummary> = {};
-      
-      records?.forEach(record => {
-        const classId = record.class_id;
-        if (!summaries[classId]) {
-          summaries[classId] = {
-            class_id: classId,
-            class_name: record.classes.name,
-            house: record.classes.house,
+      // Calculate class summary for the selected class
+      if (records && records.length > 0) {
+        const summary: ClassSummary = {
+          class_id: selectedClass,
+          class_name: records[0].classes.name,
+          house: records[0].classes.house,
+          total_students: records.length,
+          present_students: records.filter(r => r.present).length,
+          absent_students: records.filter(r => !r.present).length,
+          attendance_rate: 0
+        };
+        
+        summary.attendance_rate = summary.total_students > 0 
+          ? (summary.present_students / summary.total_students) * 100 
+          : 0;
+
+        setClassSummary(summary);
+      } else {
+        // If no records, create empty summary for selected class
+        const selectedClassData = classes.find(c => c.id === selectedClass);
+        if (selectedClassData) {
+          setClassSummary({
+            class_id: selectedClass,
+            class_name: selectedClassData.name,
+            house: selectedClassData.house,
             total_students: 0,
             present_students: 0,
             absent_students: 0,
             attendance_rate: 0
-          };
-        }
-        
-        summaries[classId].total_students++;
-        if (record.present) {
-          summaries[classId].present_students++;
+          });
         } else {
-          summaries[classId].absent_students++;
+          setClassSummary(null);
         }
-      });
-
-      // Calculate attendance rates
-      Object.values(summaries).forEach(summary => {
-        summary.attendance_rate = summary.total_students > 0 
-          ? (summary.present_students / summary.total_students) * 100 
-          : 0;
-      });
-
-      setClassSummaries(Object.values(summaries));
+      }
     } catch (error) {
       console.error('Error fetching attendance data:', error);
       addNotification('error', 'Hiba a jelenlét adatok betöltésekor');
@@ -115,14 +153,7 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
   };
 
   const filteredRecords = attendanceRecords.filter(record =>
-    record.students.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.classes.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.classes.house.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredSummaries = classSummaries.filter(summary =>
-    summary.class_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    summary.house.toLowerCase().includes(searchTerm.toLowerCase())
+    record.students.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -142,9 +173,27 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Date and Search Controls */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+          {/* Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="class" className="block text-sm font-medium text-gray-700 mb-2">
+                Osztály kiválasztása
+              </label>
+              <select
+                id="class"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="">Válasszon osztályt</option>
+                {classes.map(cls => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name} - {cls.house}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
                 Dátum kiválasztása
               </label>
@@ -156,9 +205,9 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-            <div className="flex-1">
+            <div>
               <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-                Keresés
+                Keresés gyerek neve alapján
               </label>
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -167,142 +216,129 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
                   id="search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Keresés gyerek vagy osztály neve alapján..."
+                  placeholder="Keresés..."
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
           </div>
 
-          {loading ? (
+          {!selectedClass ? (
+            <div className="text-center py-16">
+              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Válasszon osztályt</h3>
+              <p className="text-gray-600">Kérjük válasszon egy osztályt a jelenlét riportok megtekintéséhez.</p>
+            </div>
+          ) : loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600">Betöltés...</p>
             </div>
           ) : (
             <>
-              {/* Class Summaries */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Osztály összesítők - {selectedDate}
-                </h3>
-                
-                {filteredSummaries.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                    <div>Nincs jelenlét adat erre a napra</div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    {filteredSummaries.map((summary) => (
-                      <div key={summary.class_id} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-gray-900">{summary.class_name}</h4>
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {summary.house}
-                          </span>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Összes gyerek:</span>
-                            <span className="font-medium">{summary.total_students}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-green-600">Jelen:</span>
-                            <span className="font-medium text-green-600">{summary.present_students}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-red-600">Hiányzik:</span>
-                            <span className="font-medium text-red-600">{summary.absent_students}</span>
-                          </div>
-                          <div className="pt-2 border-t border-gray-200">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Jelenlét:</span>
-                              <span className="font-semibold text-blue-600">
-                                {summary.attendance_rate.toFixed(1)}%
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+              {/* Class Summary */}
+              {classSummary && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Users className="h-5 w-5 mr-2" />
+                    {classSummary.class_name} - {selectedDate}
+                  </h3>
+                  
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-xl font-semibold text-blue-900">{classSummary.class_name}</h4>
+                      <span className="px-3 py-1 text-sm font-medium bg-blue-200 text-blue-800 rounded-full">
+                        {classSummary.house}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{classSummary.total_students}</div>
+                        <div className="text-sm text-blue-700">Összes gyerek</div>
                       </div>
-                    ))}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{classSummary.present_students}</div>
+                        <div className="text-sm text-green-700">Jelen</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">{classSummary.absent_students}</div>
+                        <div className="text-sm text-red-700">Hiányzik</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{classSummary.attendance_rate.toFixed(1)}%</div>
+                        <div className="text-sm text-purple-700">Jelenlét</div>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Detailed Records */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Részletes jelenlét ({filteredRecords.length} rekord)
+                  Részletes jelenlét ({filteredRecords.length} gyerek)
                 </h3>
                 
                 {filteredRecords.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <div>Nincs találat a keresési feltételeknek</div>
+                  <div className="text-center py-12 text-gray-500">
+                    <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="text-lg font-medium text-gray-900 mb-2">Nincs jelenlét adat</div>
+                    <div>Nincs rögzített jelenlét erre a napra és osztályra.</div>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Gyerek neve
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Osztály
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Ház
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Jelenlét
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Megjegyzés
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredRecords.map((record) => (
-                          <tr key={record.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {record.students.name}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{record.classes.name}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {record.classes.house}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                {record.present ? (
-                                  <>
-                                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                                    <span className="text-sm font-medium text-green-600">Jelen</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <XCircle className="h-4 w-4 text-red-500 mr-2" />
-                                    <span className="text-sm font-medium text-red-600">Hiányzik</span>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-500">
-                                {record.notes || '-'}
-                              </div>
-                            </td>
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Gyerek neve
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Jelenlét
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Megjegyzés
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredRecords.map((record) => (
+                            <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {record.students.name}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  {record.present ? (
+                                    <>
+                                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                                      <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                        Jelen
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                                      <span className="text-sm font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                                        Hiányzik
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-sm text-gray-500">
+                                  {record.notes || '-'}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
