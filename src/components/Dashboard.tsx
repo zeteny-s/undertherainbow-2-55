@@ -466,8 +466,37 @@ export const Dashboard: React.FC = () => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
+    // If a specific month is selected, return data for only that month
+    if (monthFilter !== 'all') {
+      const selectedMonthIndex = monthFilter - 1;
+      const monthInvoices = invoices.filter(inv => {
+        if (!inv.invoice_date) return false;
+        const date = new Date(inv.invoice_date);
+        const invoiceYear = date.getFullYear();
+        const invoiceMonth = date.getMonth();
+        
+        // Apply year filter
+        if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
+        
+        return invoiceMonth === selectedMonthIndex;
+      });
+      
+      const monthInvoicesForAmount = monthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+      const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
+      const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
+      const invoiceAmount = monthInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+      
+      return [{
+        month: months[selectedMonthIndex],
+        alapitvany: alapitvanyInvoices.length,
+        ovoda: ovodaInvoices.length,
+        total: monthInvoices.length,
+        amount: invoiceAmount
+      }];
+    }
+    
+    // Show all months - default behavior
     return months.map((month, index) => {
-      // Filter invoices based on the chart's own filters
       let monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
@@ -477,22 +506,12 @@ export const Dashboard: React.FC = () => {
         // Apply year filter
         if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
         
-        // Apply month filter - if specific month selected, only show that month
-        if (monthFilter !== 'all') {
-          return invoiceMonth === (monthFilter - 1);
-        }
+        // Filter by current month being processed
+        if (invoiceMonth !== index) return false;
         
-        // If no specific month filter, show current year by default
+        // If no specific year filter, show current year by default
         return yearFilter === 'all' ? invoiceYear === currentYear : true;
       });
-
-      // Further filter by current month being processed
-      if (monthFilter === 'all') {
-        monthInvoices = monthInvoices.filter(inv => {
-          const date = new Date(inv.invoice_date);
-          return date.getMonth() === index;
-        });
-      }
       
       const monthInvoicesForAmount = monthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
@@ -1431,41 +1450,44 @@ export const Dashboard: React.FC = () => {
                 <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                 Munkaszám megoszlás
               </h3>
-              <div className="flex items-center gap-2">
-                <select
-                  value={munkaszamYear}
-                  onChange={(e) => {
-                    const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
-                    setMunkaszamYear(newYear);
-                    updateMunkaszamChart(newYear, munkaszamMonth);
-                  }}
-                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">Összes év</option>
-                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-                <select
-                  value={munkaszamMonth}
-                  onChange={(e) => {
-                    const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
-                    setMunkaszamMonth(newMonth);
-                    updateMunkaszamChart(munkaszamYear, newMonth);
-                  }}
-                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">Összes hónap</option>
-                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
-                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
-                  ))}
-                </select>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={munkaszamYear}
+                    onChange={(e) => {
+                      const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                      setMunkaszamYear(newYear);
+                      updateMunkaszamChart(newYear, munkaszamMonth);
+                    }}
+                    className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">Összes év</option>
+                    {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={munkaszamMonth}
+                    onChange={(e) => {
+                      const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                      setMunkaszamMonth(newMonth);
+                      updateMunkaszamChart(munkaszamYear, newMonth);
+                    }}
+                    className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">Összes hónap</option>
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                      <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                    ))}
+                  </select>
+                </div>
                 {chartData.munkaszamData.length > 5 && (
                   <button
                     onClick={() => setShowAllMunkaszam(true)}
-                    className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                    className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors whitespace-nowrap"
                   >
-                    Összes megtekintése
+                    <span className="hidden sm:inline">Összes megtekintése</span>
+                    <span className="sm:hidden">Összes</span>
                   </button>
                 )}
               </div>
