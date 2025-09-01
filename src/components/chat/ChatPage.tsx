@@ -396,34 +396,46 @@ export const ChatPage: React.FC = () => {
               </div>
             </div>
           </> : (/* Welcome Screen */
-      <div className="flex-1 flex flex-col items-center justify-center p-12">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 mobile-container">
             <div className="text-center max-w-2xl animate-fade-in">
               
-              <p className="text-xl text-gray-600 mb-12 leading-relaxed">
+              <p className="mobile-text-sm sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 lg:mb-12 leading-relaxed">
                 Tedd fel kérdéseid, és kezdj beszélgetni az intelligens asszisztenssel. 
                 Egyszerűen kezdj el gépelni alul!
               </p>
               
               {/* Quick start input */}
-              <div className="max-w-2xl mx-auto mb-8">
-                <div className="flex items-center space-x-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 hover-glow transition-all duration-300">
+              <div className="max-w-2xl mx-auto mb-4 sm:mb-6 lg:mb-8">
+                <div className="flex items-center space-x-2 sm:space-x-4 bg-white rounded-lg sm:rounded-2xl shadow-lg sm:shadow-2xl border border-gray-100 p-3 sm:p-6 hover-glow transition-all duration-300">
                   <div className="flex-1">
-                    <textarea value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }} placeholder="Írj egy üzenetet az AI-nak..." rows={1} className="w-full text-lg focus:outline-none placeholder-gray-500 resize-none bg-gray-50 rounded-xl px-4 py-3 border-0" style={{
-                  maxHeight: '120px'
-                }} />
+                    <textarea 
+                      value={inputMessage} 
+                      onChange={e => setInputMessage(e.target.value)} 
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }} 
+                      placeholder="Írj egy üzenetet az AI-nak..." 
+                      rows={1} 
+                      className="w-full mobile-text-sm sm:text-base lg:text-lg focus:outline-none placeholder-gray-500 resize-none bg-gray-50 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3 border-0" 
+                      style={{
+                        maxHeight: '120px'
+                      }} 
+                    />
                   </div>
-                  <button onClick={sendMessage} disabled={!inputMessage.trim()} className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover-lift">
-                    <Send className="w-6 h-6" />
+                  <button 
+                    onClick={sendMessage} 
+                    disabled={!inputMessage.trim()} 
+                    className="p-3 sm:p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover-lift mobile-touch-target"
+                  >
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
                   </button>
                 </div>
               </div>
               
-              <div className="text-base text-gray-500">
+              <div className="mobile-text-xs sm:text-sm lg:text-base text-gray-500">
                 Vagy válassz a korábbi beszélgetések közül az oldalsávban
               </div>
             </div>

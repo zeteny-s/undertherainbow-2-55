@@ -25,12 +25,22 @@ export const CalendarPage: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>(undefined);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'delete'>('create');
   const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchEvents();
     }
   }, [user, currentDate]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const fetchEvents = async () => {
     if (!user?.id) return;
@@ -371,13 +381,17 @@ export const CalendarPage: React.FC = () => {
     }
 
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl">
+      <div className="bg-white rounded-lg sm:rounded-2xl border border-gray-200 overflow-hidden shadow-xl mobile-full">
         <div className="grid grid-cols-7 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map(day => (
-            <div key={day} className="p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
-              {day}
-            </div>
-          ))}
+          {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map((day, index) => {
+            const mobileDay = ['H', 'K', 'Sz', 'Cs', 'P', 'Sz', 'V'][index];
+            return (
+              <div key={day} className="p-2 sm:p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
+                <span className="hidden sm:inline">{day}</span>
+                <span className="sm:hidden mobile-text-xs">{mobileDay}</span>
+              </div>
+            );
+          })}
         </div>
         
         <div className="grid grid-cols-7">
@@ -389,7 +403,7 @@ export const CalendarPage: React.FC = () => {
             return (
               <div
                 key={index}
-                className={`min-h-32 p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-50 transition-colors ${
+                className={`min-h-20 sm:min-h-32 p-1 sm:p-2 border-r border-b border-gray-100 last:border-r-0 cursor-pointer hover:bg-blue-50 transition-colors ${
                   !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
                 } ${isToday ? 'bg-blue-50' : ''}`}
                 onClick={() => {
@@ -399,11 +413,11 @@ export const CalendarPage: React.FC = () => {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, day)}
               >
-                <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600' : ''}`}>
+                <div className={`mobile-text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${isToday ? 'text-blue-600' : ''}`}>
                   {day.getDate()}
                 </div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 3).map((event) => (
+                <div className="space-y-0.5 sm:space-y-1">
+                  {dayEvents.slice(0, isMobile ? 2 : 3).map((event) => (
                     <div
                       key={event.id}
                       draggable
@@ -413,15 +427,15 @@ export const CalendarPage: React.FC = () => {
                         e.stopPropagation();
                         openModal('edit', event);
                       }}
-                      className="text-xs p-1 rounded truncate text-white cursor-move transition-all hover:opacity-80"
+                      className="mobile-text-xs text-xs sm:text-xs p-0.5 sm:p-1 rounded truncate text-white cursor-move transition-all hover:opacity-80"
                       style={{ backgroundColor: event.color || '#3b82f6' }}
                     >
                       {event.title}
                     </div>
                   ))}
-                  {dayEvents.length > 3 && (
-                    <div className="text-xs text-gray-500 font-medium">
-                      +{dayEvents.length - 3} további
+                  {dayEvents.length > (isMobile ? 2 : 3) && (
+                    <div className="mobile-text-xs text-xs text-gray-500 font-medium">
+                      +{dayEvents.length - (isMobile ? 2 : 3)} további
                     </div>
                   )}
                 </div>
