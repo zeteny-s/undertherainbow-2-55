@@ -28,6 +28,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
 
   const profileType = user?.user_metadata?.profile_type;
 
+  // Check if today is weekend (Saturday = 6, Sunday = 0)
+  const isWeekend = () => {
+    const today = new Date();
+    const day = today.getDay();
+    return day === 0 || day === 6; // Sunday or Saturday
+  };
+
   // Menu items based on profile type
   const getMenuItems = () => {
     const commonItems = [
@@ -53,6 +60,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       },
     ];
 
+    const jelenletiItem = !isWeekend() ? {
+      id: 'jelenleti',
+      label: 'Jelenléti',
+      icon: Users,
+    } : null;
+
     switch (profileType) {
       case 'adminisztracio':
         return [
@@ -67,21 +80,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
             label: 'Számlák',
             icon: FileText,
           },
-          {
-            id: 'jelenleti',
-            label: 'Jelenléti',
-            icon: Users,
-          },
+          ...(jelenletiItem ? [jelenletiItem] : []),
         ];
       
       case 'pedagogus':
         return [
           ...commonItems,
-          {
-            id: 'jelenleti',
-            label: 'Jelenléti',
-            icon: Users,
-          },
+          ...(jelenletiItem ? [jelenletiItem] : []),
         ];
       
       case 'haz_vezeto':
@@ -97,6 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
             label: 'Számlák',
             icon: FileText,
           },
+          ...(jelenletiItem ? [jelenletiItem] : []),
         ];
       
       case 'vezetoi':

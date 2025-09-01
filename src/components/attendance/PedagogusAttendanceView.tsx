@@ -52,14 +52,21 @@ export const PedagogusAttendanceView: React.FC = () => {
 
   const fetchClasses = async () => {
     try {
-      const { data, error } = await supabase
+      const profileType = user?.user_metadata?.profile_type;
+      let query = supabase
         .from('classes')
         .select(`
           *,
           students (*)
-        `)
-        .eq('pedagogus_id', user!.id)
-        .order('name');
+        `);
+
+      // If pedagogus, only show their classes
+      // If admin or house leader, show all classes
+      if (profileType === 'pedagogus') {
+        query = query.contains('pedagogus_ids', [user!.id]);
+      }
+
+      const { data, error } = await query.order('name');
 
       if (error) throw error;
       
