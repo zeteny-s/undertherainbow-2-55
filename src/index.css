@@ -483,6 +483,80 @@
   }
 }
 
+/* Mobile-first responsive styles */
+@media (max-width: 768px) {
+  /* Base text size reductions for mobile */
+  html {
+    font-size: 14px;
+  }
+  
+  /* Touch-friendly buttons */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Stack items on mobile */
+  .mobile-stack > * {
+    width: 100% !important;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Reduce padding on mobile */
+  .mobile-compact {
+    padding: 0.75rem !important;
+  }
+  
+  /* Extra compact for very tight spaces */
+  .mobile-extra-compact {
+    padding: 0.5rem !important;
+  }
+  
+  /* Hide on mobile */
+  .hidden-mobile {
+    display: none !important;
+  }
+  
+  /* Full width on mobile */
+  .mobile-full {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  
+  /* Smaller gaps on mobile */
+  .mobile-gap-sm {
+    gap: 0.5rem !important;
+  }
+  
+  /* Responsive text sizes */
+  .mobile-text-xs { font-size: 0.6875rem; }
+  .mobile-text-sm { font-size: 0.75rem; }
+  .mobile-text-base { font-size: 0.875rem; }
+  .mobile-text-lg { font-size: 1rem; }
+  .mobile-text-xl { font-size: 1.125rem; }
+  
+  /* Ensure horizontal scrolling is prevented */
+  .mobile-no-overflow {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  /* Responsive spacing */
+  .mobile-p-2 { padding: 0.5rem !important; }
+  .mobile-p-3 { padding: 0.75rem !important; }
+  .mobile-p-4 { padding: 1rem !important; }
+  .mobile-px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+  .mobile-px-3 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .mobile-py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+  .mobile-py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+  
+  /* Mobile margins */
+  .mobile-m-1 { margin: 0.25rem !important; }
+  .mobile-m-2 { margin: 0.5rem !important; }
+  .mobile-mx-2 { margin-left: 0.5rem !important; margin-right: 0.5rem !important; }
+  .mobile-my-2 { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+}
+
 /* Touch-friendly button sizes */
 .btn-touch {
   min-height: 44px;

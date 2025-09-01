@@ -210,47 +210,47 @@ export const ChatPage: React.FC = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
+  return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex mobile-no-overflow">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 ease-in-out bg-white border-r border-gray-200 flex flex-col ${isMobile ? 'fixed inset-y-0 left-0 z-50 shadow-xl' : 'relative'}`}>
+      <div className={`${sidebarOpen ? (isMobile ? 'w-72' : 'w-80') : 'w-0'} transition-all duration-300 ease-in-out bg-white border-r border-gray-200 flex flex-col ${isMobile ? 'fixed inset-y-0 left-0 z-50 shadow-xl' : 'relative'}`}>
         {sidebarOpen && <>
             {/* Sidebar Header */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Beszélgetések</h2>
-                <div className="flex items-center space-x-2">
-                  <button onClick={createNewConversation} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Új beszélgetés">
-                    <Plus className="w-4 h-4 text-gray-600" />
+            <div className="p-3 sm:p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mobile-text-sm">Beszélgetések</h2>
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <button onClick={createNewConversation} className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors mobile-touch-target" title="Új beszélgetés">
+                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
                   </button>
-                  <button onClick={() => setShowHistory(true)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Mapák kezelése">
-                    <FolderPlus className="w-4 h-4 text-gray-600" />
+                  <button onClick={() => setShowHistory(true)} className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors mobile-touch-target" title="Mapák kezelése">
+                    <FolderPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Conversations List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-4 space-y-1.5 sm:space-y-2">
               {/* Folders */}
               {folders.map(folder => {
             const folderConversations = conversations.filter(c => c.folder_id === folder.id);
             return <div key={folder.id} className="mb-4">
-                    <div className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700">
-                      <div className="w-3 h-3 rounded-full" style={{
+                    <div className="flex items-center space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700">
+                      <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full" style={{
                   backgroundColor: folder.color || '#6b7280'
                 }} />
-                      <span>{folder.name}</span>
+                      <span className="mobile-text-xs">{folder.name}</span>
                       <span className="text-xs text-gray-500">({folderConversations.length})</span>
                     </div>
                     {folderConversations.map(conversation => <button key={conversation.id} onClick={() => {
                 selectConversation(conversation.id);
                 if (isMobile) setSidebarOpen(false);
-              }} className={`w-full text-left px-6 py-3 text-sm rounded-lg transition-colors ${activeConversation === conversation.id ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-500' : 'hover:bg-gray-50 text-gray-700'}`}>
-                        <div className="flex items-center space-x-2">
-                          <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                          <span className="truncate">{conversation.title}</span>
+              }} className={`w-full text-left px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 text-xs sm:text-sm rounded-lg transition-colors mobile-touch-target ${activeConversation === conversation.id ? 'bg-blue-50 text-blue-700 border-l-2 sm:border-l-4 border-blue-500' : 'hover:bg-gray-50 text-gray-700'}`}>
+                        <div className="flex items-center space-x-1.5 sm:space-x-2">
+                          <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="truncate mobile-text-xs">{conversation.title}</span>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-500 mt-0.5 sm:mt-1">
                           {new Date(conversation.last_message_at).toLocaleDateString('hu-HU')}
                         </div>
                       </button>)}
@@ -317,15 +317,15 @@ export const ChatPage: React.FC = () => {
 
         {activeConversation ? <>
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 max-w-4xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 max-w-4xl mx-auto w-full mobile-full mobile-px-2">
               {messages.map((message, index) => {
             if (message.role === 'user') {
               return <div key={message.id} className="flex justify-end animate-fade-in" style={{
                 animationDelay: `${index * 0.1}s`
               }}>
-                      <div className="max-w-3xl rounded-2xl p-6 shadow-lg hover-lift transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200">
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                        <p className="text-xs mt-3 opacity-70 text-blue-100">
+                      <div className="max-w-xs sm:max-w-sm lg:max-w-3xl rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-lg hover-lift transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200 mobile-full">
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed mobile-text-xs">{message.content}</p>
+                        <p className="text-xs mt-2 sm:mt-3 opacity-70 text-blue-100">
                           {new Date(message.created_at).toLocaleTimeString('hu-HU', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -337,9 +337,9 @@ export const ChatPage: React.FC = () => {
               return <div key={message.id} className="flex justify-start animate-fade-in" style={{
                 animationDelay: `${index * 0.1}s`
               }}>
-                      <div className="max-w-4xl w-full">
-                        <StreamingText text={message.content} className="text-sm text-gray-800 leading-relaxed" />
-                        <p className="text-xs mt-2 text-gray-500">
+                      <div className="max-w-full sm:max-w-3xl lg:max-w-4xl w-full mobile-full">
+                        <StreamingText text={message.content} className="text-xs sm:text-sm text-gray-800 leading-relaxed mobile-text-xs" />
+                        <p className="text-xs mt-1 sm:mt-2 text-gray-500">
                           {new Date(message.created_at).toLocaleTimeString('hu-HU', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -365,20 +365,20 @@ export const ChatPage: React.FC = () => {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t border-gray-200 p-6 shadow-lg">
-              <div className="flex items-end space-x-4 max-w-4xl mx-auto w-full">
+            <div className="bg-white border-t border-gray-200 p-3 sm:p-4 lg:p-6 shadow-lg mobile-compact">
+              <div className="flex items-end space-x-2 sm:space-x-3 lg:space-x-4 max-w-4xl mx-auto w-full mobile-full">
                 <div className="flex-1 relative">
                   <textarea value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   sendMessage();
                 }
-              }} placeholder="Írj egy üzenetet az AI-nak..." rows={1} className="w-full resize-none border border-gray-200 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-gray-50 focus:bg-white transition-colors" style={{
+              }} placeholder="Írj egy üzenetet az AI-nak..." rows={1} className="w-full resize-none border border-gray-200 rounded-lg sm:rounded-xl lg:rounded-2xl px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-gray-50 focus:bg-white transition-colors text-xs sm:text-sm mobile-text-xs" style={{
                 maxHeight: '120px'
               }} />
                 </div>
-                <button onClick={sendMessage} disabled={!inputMessage.trim()} className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover-lift">
-                  <Send className="w-5 h-5" />
+                <button onClick={sendMessage} disabled={!inputMessage.trim()} className="p-2.5 sm:p-3 lg:p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl lg:rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover-lift mobile-touch-target">
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
