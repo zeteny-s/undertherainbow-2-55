@@ -78,10 +78,10 @@ const AppContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Betöltés...</p>
+          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-2 border-foreground-subtle border-t-primary mx-auto mb-4"></div>
+          <p className="text-foreground-muted text-sm sm:text-base">Betöltés...</p>
         </div>
       </div>
     );
@@ -92,7 +92,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-surface flex">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
@@ -101,8 +101,8 @@ const AppContent: React.FC = () => {
       />
       <main className={`flex-1 transition-all duration-300 ease-in-out ${
         sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'
-      } pt-14 sm:pt-16 lg:pt-0`}>
-        <div className="min-h-screen">
+      } pt-14 sm:pt-16 lg:pt-0 overflow-x-hidden`}>
+        <div className="min-h-screen bg-surface">
           {renderActiveComponent()}
         </div>
       </main>

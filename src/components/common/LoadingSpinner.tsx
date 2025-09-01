@@ -12,20 +12,20 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 }) => {
   const sizeClasses = {
     sm: 'h-4 w-4',
-    md: 'h-8 w-8',
-    lg: 'h-12 w-12'
+    md: 'h-6 w-6 sm:h-8 sm:w-8',
+    lg: 'h-8 w-8 sm:h-12 sm:w-12'
   };
 
   const textSizeClasses = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg'
+    sm: 'text-xs sm:text-sm',
+    md: 'text-sm sm:text-base',
+    lg: 'text-base sm:text-lg'
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <RefreshCw className={`${sizeClasses[size]} animate-spin text-blue-600 mr-2`} />
-      <span className={`${textSizeClasses[size]} text-gray-600`}>{text}</span>
+    <div className="flex items-center justify-center gap-2 sm:gap-3">
+      <RefreshCw className={`${sizeClasses[size]} animate-spin text-primary`} />
+      <span className={`${textSizeClasses[size]} text-foreground-muted font-medium`}>{text}</span>
     </div>
   );
 };

@@ -173,16 +173,16 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
   const totalStudents = students.length;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-xl animate-scale-in">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in">
+      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-xl animate-scale-in mobile-modal">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-DEFAULT bg-surface">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-primary" />
-              {classData.name}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 border-b border-DEFAULT bg-surface gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2 sm:gap-3 truncate">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+              <span className="truncate">{classData.name}</span>
             </h2>
-            <p className="text-foreground-muted mt-1 text-sm">
+            <p className="text-foreground-muted mt-1 text-xs sm:text-sm">
               {new Date(selectedDate).toLocaleDateString('hu-HU', {
                 year: 'numeric',
                 month: 'long',
@@ -191,33 +191,33 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
               })}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-md">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <span className="px-2 py-1 text-xs sm:text-sm font-medium bg-primary/10 text-primary rounded-md">
               {classData.house}
             </span>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
+              className="p-2 hover:bg-surface-hover rounded-lg transition-colors mobile-touch-target"
             >
-              <X className="w-5 h-5 text-foreground-subtle" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-foreground-subtle" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto scrollbar-custom">
+        <div className="p-4 sm:p-6 max-h-[calc(95vh-200px)] sm:max-h-[calc(90vh-200px)] overflow-y-auto scrollbar-custom mobile-modal-content">
           {/* Statistics */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center p-4 bg-surface-elevated border border-DEFAULT rounded-xl">
-              <div className="text-2xl font-semibold text-foreground">{totalStudents}</div>
-              <div className="text-sm text-foreground-muted mt-1">Összes gyerek</div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="text-center p-3 sm:p-4 bg-surface-elevated border border-DEFAULT rounded-xl">
+              <div className="text-lg sm:text-2xl font-semibold text-foreground">{totalStudents}</div>
+              <div className="text-xs sm:text-sm text-foreground-muted mt-1">Összes</div>
             </div>
-            <div className="text-center p-4 bg-success/5 border border-success/20 rounded-xl">
-              <div className="text-2xl font-semibold text-success">{presentCount}</div>
-              <div className="text-sm text-success/80 mt-1">Jelen</div>
+            <div className="text-center p-3 sm:p-4 bg-success/5 border border-success/20 rounded-xl">
+              <div className="text-lg sm:text-2xl font-semibold text-success">{presentCount}</div>
+              <div className="text-xs sm:text-sm text-success/80 mt-1">Jelen</div>
             </div>
-            <div className="text-center p-4 bg-error/5 border border-error/20 rounded-xl">
-              <div className="text-2xl font-semibold text-error">{absentCount}</div>
-              <div className="text-sm text-error/80 mt-1">Hiányzik</div>
+            <div className="text-center p-3 sm:p-4 bg-error/5 border border-error/20 rounded-xl">
+              <div className="text-lg sm:text-2xl font-semibold text-error">{absentCount}</div>
+              <div className="text-xs sm:text-sm text-error/80 mt-1">Hiányzik</div>
             </div>
           </div>
 
@@ -231,44 +231,46 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
           )}
 
           {/* Students List */}
-          <div className="space-y-4 mb-6">
+          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
             {students.map((student, index) => (
               <div 
                 key={student.id} 
-                className="border border-DEFAULT rounded-xl p-4 hover:border-border-hover transition-all duration-200 animate-slide-in-right"
+                className="border border-DEFAULT rounded-xl p-3 sm:p-4 hover:border-border-hover transition-all duration-200 animate-slide-in-right"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-foreground flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 sm:mb-3">
+                  <h3 className="font-medium text-foreground flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                     </div>
-                    {student.name}
+                    <span className="truncate">{student.name}</span>
                   </h3>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-2 sm:flex gap-2">
                     <button
                       onClick={() => handleAttendanceToggle(student.id, true)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                      className={`flex items-center justify-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg border transition-all duration-200 text-sm mobile-touch-target ${
                         attendance[student.id]
                           ? 'bg-success/10 border-success/30 text-success'
                           : 'bg-white border-DEFAULT text-foreground-muted hover:bg-success/5 hover:border-success/20'
                       }`}
                     >
                       <CheckCircle className="w-4 h-4" />
-                      Jelen
+                      <span className="hidden sm:inline">Jelen</span>
+                      <span className="sm:hidden">✓</span>
                     </button>
                     
                     <button
                       onClick={() => handleAttendanceToggle(student.id, false)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
+                      className={`flex items-center justify-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg border transition-all duration-200 text-sm mobile-touch-target ${
                         !attendance[student.id]
                           ? 'bg-error/10 border-error/30 text-error'
                           : 'bg-white border-DEFAULT text-foreground-muted hover:bg-error/5 hover:border-error/20'
                       }`}
                     >
                       <XCircle className="w-4 h-4" />
-                      Hiányzik
+                      <span className="hidden sm:inline">Hiányzik</span>
+                      <span className="sm:hidden">✗</span>
                     </button>
                   </div>
                 </div>
@@ -315,10 +317,10 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-DEFAULT bg-surface">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 p-4 sm:p-6 border-t border-DEFAULT bg-surface">
           <button
             onClick={onClose}
-            className="px-6 py-3 text-foreground-muted bg-white border border-DEFAULT rounded-lg hover:bg-surface-hover transition-all duration-200 font-medium"
+            className="px-6 py-3 text-foreground-muted bg-white border border-DEFAULT rounded-lg hover:bg-surface-hover transition-all duration-200 font-medium mobile-touch-target order-2 sm:order-1"
           >
             Bezárás
           </button>
@@ -326,7 +328,7 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
           <button
             onClick={handleSave}
             disabled={saving || !hasChanges || students.length === 0}
-            className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium hover-lift"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium hover-lift mobile-touch-target order-1 sm:order-2"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Mentés...' : 'Jelenlét mentése'}

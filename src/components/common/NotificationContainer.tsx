@@ -13,12 +13,12 @@ export const NotificationContainer: React.FC<NotificationContainerProps> = ({
   position = 'bottom-right' 
 }) => {
   const positionClasses = {
-    'bottom-right': 'fixed bottom-4 right-4 z-50',
-    'top-right': 'fixed top-20 right-4 z-50'
+    'bottom-right': 'fixed bottom-2 sm:bottom-4 right-2 sm:right-4 z-50',
+    'top-right': 'fixed top-16 sm:top-20 right-2 sm:right-4 z-50'
   };
 
   return (
-    <div className={`${positionClasses[position]} space-y-3 w-80 max-w-[calc(100vw-2rem)]`}>
+    <div className={`${positionClasses[position]} space-y-2 sm:space-y-3 w-[calc(100vw-1rem)] sm:w-80 max-w-[calc(100vw-1rem)]`}>
       {notifications.map((notification) => (
         <Notification
           key={notification.id}

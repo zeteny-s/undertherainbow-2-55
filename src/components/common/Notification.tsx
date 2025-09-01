@@ -13,38 +13,50 @@ interface NotificationProps {
 }
 
 export const Notification: React.FC<NotificationProps> = ({ notification, onRemove }) => {
+  const iconBgColors = {
+    success: 'bg-success/10',
+    error: 'bg-error/10', 
+    info: 'bg-primary/10'
+  };
+
+  const iconColors = {
+    success: 'text-success',
+    error: 'text-error',
+    info: 'text-primary'
+  };
+
   return (
-    <div className="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden transform transition-all duration-300 ease-in-out">
-      <div className="p-4">
-        <div className="flex items-start">
+    <div className="bg-surface-elevated shadow-lg rounded-lg border border-DEFAULT overflow-hidden transform transition-all duration-300 ease-in-out animate-slide-in-right">
+      <div className="p-3 sm:p-4">
+        <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
             {notification.type === 'success' && (
-              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                <Check className="h-4 w-4 text-green-600" />
+              <div className={`w-5 h-5 sm:w-6 sm:h-6 ${iconBgColors.success} rounded-full flex items-center justify-center`}>
+                <Check className={`h-3 w-3 sm:h-4 sm:w-4 ${iconColors.success}`} />
               </div>
             )}
             {notification.type === 'error' && (
-              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-4 w-4 text-red-600" />
+              <div className={`w-5 h-5 sm:w-6 sm:h-6 ${iconBgColors.error} rounded-full flex items-center justify-center`}>
+                <AlertCircle className={`h-3 w-3 sm:h-4 sm:w-4 ${iconColors.error}`} />
               </div>
             )}
             {notification.type === 'info' && (
-              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="h-4 w-4 text-blue-600" />
+              <div className={`w-5 h-5 sm:w-6 sm:h-6 ${iconBgColors.info} rounded-full flex items-center justify-center`}>
+                <AlertCircle className={`h-3 w-3 sm:h-4 sm:w-4 ${iconColors.info}`} />
               </div>
             )}
           </div>
-          <div className="ml-3 flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 break-words">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-foreground break-words leading-relaxed">
               {notification.message}
             </p>
           </div>
-          <div className="ml-4 flex-shrink-0">
+          <div className="flex-shrink-0">
             <button
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-foreground-subtle hover:text-foreground transition-colors p-1 mobile-touch-target"
               onClick={() => onRemove(notification.id)}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3 sm:h-4 sm:w-4" />
             </button>
           </div>
         </div>
