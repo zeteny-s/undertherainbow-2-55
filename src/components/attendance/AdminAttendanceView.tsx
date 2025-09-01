@@ -4,6 +4,7 @@ import { supabase } from '../../integrations/supabase/client';
 import { CreateClassModal } from './CreateClassModal';
 import { ClassDetailModal } from './ClassDetailModal';
 import { AttendanceReportsModal } from './AttendanceReportsModal';
+import { MissingAttendanceAlert } from './MissingAttendanceAlert';
 import { useNotifications } from '../../hooks/useNotifications';
 interface Class {
   id: string;
@@ -84,6 +85,13 @@ export const AdminAttendanceView: React.FC = () => {
   const handleClassSelect = (cls: Class) => {
     setSelectedClass(cls);
   };
+
+  const handleViewClassFromAlert = (classId: string) => {
+    const cls = classes.find(c => c.id === classId);
+    if (cls) {
+      setSelectedClass(cls);
+    }
+  };
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -98,6 +106,9 @@ export const AdminAttendanceView: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Jelenléti rendszer</h1>
           <p className="text-gray-600">Osztályok és pedagógusok kezelése</p>
         </div>
+
+        {/* Missing Attendance Alert */}
+        <MissingAttendanceAlert onViewClass={handleViewClassFromAlert} />
 
         {/* Header Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
