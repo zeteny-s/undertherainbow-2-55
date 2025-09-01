@@ -230,15 +230,15 @@ export const DocumentsPage: React.FC = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dokumentumok</h1>
-          <p className="text-gray-600 mt-1">Dokumentumok kezelése és szervezése</p>
+          <h1 className="text-2xl font-bold text-foreground">Dokumentumok</h1>
+          <p className="text-foreground-muted mt-1">Dokumentumok kezelése és szervezése</p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-            <Upload className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Feltöltés</span>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <label className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg cursor-pointer hover:bg-surface-hover transition-colors">
+            <Upload className="w-4 h-4 text-foreground-muted" />
+            <span className="text-sm font-medium text-foreground">Feltöltés</span>
             <input
               type="file"
               multiple
@@ -251,7 +251,7 @@ export const DocumentsPage: React.FC = () => {
             />
           </label>
           <button
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
             onClick={() => setShowScanner(true)}
           >
             <FileText className="w-4 h-4" />
