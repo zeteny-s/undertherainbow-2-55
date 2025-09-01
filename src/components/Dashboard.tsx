@@ -116,6 +116,12 @@ export const Dashboard: React.FC = () => {
   const [orgChartMonth, setOrgChartMonth] = useState<'all' | number>('all');
   const [paymentChartYear, setPaymentChartYear] = useState<'all' | number>('all');
   const [paymentChartMonth, setPaymentChartMonth] = useState<'all' | number>('all');
+  const [topPartnersYear, setTopPartnersYear] = useState<'all' | number>('all');
+  const [topPartnersMonth, setTopPartnersMonth] = useState<'all' | number>('all');
+  const [munkaszamYear, setMunkaszamYear] = useState<'all' | number>('all');
+  const [munkaszamMonth, setMunkaszamMonth] = useState<'all' | number>('all');
+  const [catYear, setCatYear] = useState<'all' | number>('all');
+  const [catMonth, setCatMonth] = useState<'all' | number>('all');
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [currentExpenseWeekIndex, setCurrentExpenseWeekIndex] = useState(0);
   const [weekHistory, setWeekHistory] = useState<WeekData[]>([]);
@@ -123,6 +129,8 @@ export const Dashboard: React.FC = () => {
   const [showWeekHistory, setShowWeekHistory] = useState(false);
   const [showExpenseWeekHistory, setShowExpenseWeekHistory] = useState(false);
   const [allInvoices, setAllInvoices] = useState<any[]>([]); // Store all invoices for filtering
+  const [allPayrollRecords, setAllPayrollRecords] = useState<PayrollRecord[]>([]);
+  const [allPayrollSummaries, setAllPayrollSummaries] = useState<PayrollSummary[]>([]);
   const { notifications, addNotification, removeNotification } = useNotifications();
   const [showAllMunkaszam, setShowAllMunkaszam] = useState(false);
 
@@ -207,6 +215,49 @@ export const Dashboard: React.FC = () => {
       ...prev,
       paymentTypeData: generatePaymentTypeData(filteredBase, year, month)
     }));
+  };
+
+  const updateTopPartnersChart = (year: 'all' | number, month: 'all' | number) => {
+    const filteredBase = allInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+    const filteredByDate = filterInvoicesByDate(filteredBase, year, month);
+    setChartData(prev => ({
+      ...prev,
+      topPartnersData: generateTopPartnersData(filteredByDate)
+    }));
+  };
+
+  const updateMunkaszamChart = (year: 'all' | number, month: 'all' | number) => {
+    const filteredByDate = filterInvoicesByDate(allInvoices, year, month);
+    setChartData(prev => ({
+      ...prev,
+      munkaszamData: generateMunkaszamData(filteredByDate, allPayrollRecords)
+    }));
+  };
+
+  const updateCategoryChart = (year: 'all' | number, month: 'all' | number) => {
+    const filteredBase = allInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
+    const filteredByDate = filterInvoicesByDate(filteredBase, year, month);
+    setChartData(prev => ({
+      ...prev,
+      categoryData: generateCategoryData(filteredByDate, allPayrollSummaries)
+    }));
+  };
+
+  // Helper function to filter invoices by year/month
+  const filterInvoicesByDate = (invoices: any[], year: 'all' | number, month: 'all' | number) => {
+    if (year === 'all' && month === 'all') return invoices;
+    
+    return invoices.filter(inv => {
+      if (!inv.invoice_date) return false;
+      const date = new Date(inv.invoice_date);
+      const invYear = date.getFullYear();
+      const invMonth = date.getMonth() + 1;
+      
+      const yearMatch = year === 'all' || invYear === year;
+      const monthMatch = month === 'all' || invMonth === month;
+      
+      return yearMatch && monthMatch;
+    });
   };
 
   const getTimeBasedGreeting = () => {
@@ -299,6 +350,8 @@ export const Dashboard: React.FC = () => {
       // Filter out specific partners from cost analytics (normalized matching)
       const filteredInvoicesBase = (invoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       setAllInvoices(invoices || []); // Store all invoices for chart filtering
+      setAllPayrollRecords(payrollRecords || []); // Store payroll records for chart filtering
+      setAllPayrollSummaries(payrollSummaries || []); // Store payroll summaries for chart filtering
       // Per-card selectors control their own filters; base remains unfiltered by year/month here
       const filteredInvoices = filteredInvoicesBase;
       const filteredThisMonthInvoices = (thisMonthInvoices || []).filter(inv => inv.partner && !isExcludedPartner(inv.partner));
@@ -1217,6 +1270,36 @@ export const Dashboard: React.FC = () => {
                 <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
                 Legmagasabb partneri kiadások
               </h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={topPartnersYear}
+                  onChange={(e) => {
+                    const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setTopPartnersYear(newYear);
+                    updateTopPartnersChart(newYear, topPartnersMonth);
+                  }}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={topPartnersMonth}
+                  onChange={(e) => {
+                    const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setTopPartnersMonth(newMonth);
+                    updateTopPartnersChart(topPartnersYear, newMonth);
+                  }}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             {chartData.topPartnersData.length === 0 && (
@@ -1290,14 +1373,44 @@ export const Dashboard: React.FC = () => {
                 <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                 Munkaszám megoszlás
               </h3>
-              {chartData.munkaszamData.length > 5 && (
-                <button
-                  onClick={() => setShowAllMunkaszam(true)}
-                  className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+              <div className="flex items-center gap-2">
+                <select
+                  value={munkaszamYear}
+                  onChange={(e) => {
+                    const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setMunkaszamYear(newYear);
+                    updateMunkaszamChart(newYear, munkaszamMonth);
+                  }}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  Összes megtekintése
-                </button>
-              )}
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={munkaszamMonth}
+                  onChange={(e) => {
+                    const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setMunkaszamMonth(newMonth);
+                    updateMunkaszamChart(munkaszamYear, newMonth);
+                  }}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+                {chartData.munkaszamData.length > 5 && (
+                  <button
+                    onClick={() => setShowAllMunkaszam(true)}
+                    className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                  >
+                    Összes megtekintése
+                  </button>
+                )}
+              </div>
             </div>
             
             {chartData.munkaszamData.length === 0 && (
@@ -1397,6 +1510,36 @@ export const Dashboard: React.FC = () => {
                 <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600" />
                 Kategória szerinti kiadások
               </h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={catYear}
+                  onChange={(e) => {
+                    const newYear = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setCatYear(newYear);
+                    updateCategoryChart(newYear, catMonth);
+                  }}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes év</option>
+                  {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <select
+                  value={catMonth}
+                  onChange={(e) => {
+                    const newMonth = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                    setCatMonth(newMonth);
+                    updateCategoryChart(catYear, newMonth);
+                  }}
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Összes hónap</option>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                    <option key={m} value={m}>{m.toString().padStart(2,'0')}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             {chartData.categoryData.length === 0 && (
