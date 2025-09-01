@@ -317,15 +317,15 @@ export const ChatPage: React.FC = () => {
 
         {activeConversation ? <>
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 max-w-4xl mx-auto w-full mobile-full mobile-px-2">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 lg:p-6 space-y-2 sm:space-y-4 lg:space-y-6 w-full mobile-container">
               {messages.map((message, index) => {
             if (message.role === 'user') {
               return <div key={message.id} className="flex justify-end animate-fade-in" style={{
                 animationDelay: `${index * 0.1}s`
               }}>
-                      <div className="max-w-xs sm:max-w-sm lg:max-w-3xl rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-lg hover-lift transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200 mobile-full">
-                        <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed mobile-text-xs">{message.content}</p>
-                        <p className="text-xs mt-2 sm:mt-3 opacity-70 text-blue-100">
+                      <div className="max-w-[85%] sm:max-w-sm lg:max-w-3xl rounded-lg sm:rounded-2xl p-2 sm:p-4 lg:p-6 shadow-lg transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                        <p className="mobile-text-fit sm:text-sm whitespace-pre-wrap leading-relaxed break-words">{message.content}</p>
+                        <p className="mobile-text-xs mt-1 sm:mt-3 opacity-70 text-blue-100">
                           {new Date(message.created_at).toLocaleTimeString('hu-HU', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -337,9 +337,9 @@ export const ChatPage: React.FC = () => {
               return <div key={message.id} className="flex justify-start animate-fade-in" style={{
                 animationDelay: `${index * 0.1}s`
               }}>
-                      <div className="max-w-full sm:max-w-3xl lg:max-w-4xl w-full mobile-full">
-                        <StreamingText text={message.content} className="text-xs sm:text-sm text-gray-800 leading-relaxed mobile-text-xs" />
-                        <p className="text-xs mt-1 sm:mt-2 text-gray-500">
+                      <div className="max-w-full sm:max-w-3xl lg:max-w-4xl w-full">
+                        <StreamingText text={message.content} className="mobile-text-fit sm:text-sm text-gray-800 leading-relaxed break-words" />
+                        <p className="mobile-text-xs mt-1 sm:mt-2 text-gray-500">
                           {new Date(message.created_at).toLocaleTimeString('hu-HU', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -365,20 +365,33 @@ export const ChatPage: React.FC = () => {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t border-gray-200 p-3 sm:p-4 lg:p-6 shadow-lg mobile-compact">
-              <div className="flex items-end space-x-2 sm:space-x-3 lg:space-x-4 max-w-4xl mx-auto w-full mobile-full">
-                <div className="flex-1 relative">
-                  <textarea value={inputMessage} onChange={e => setInputMessage(e.target.value)} onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }} placeholder="Írj egy üzenetet az AI-nak..." rows={1} className="w-full resize-none border border-gray-200 rounded-lg sm:rounded-xl lg:rounded-2xl px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-gray-50 focus:bg-white transition-colors text-xs sm:text-sm mobile-text-xs" style={{
-                maxHeight: '120px'
-              }} />
+            <div className="bg-white border-t border-gray-200 p-2 sm:p-4 lg:p-6 shadow-lg">
+              <div className="flex items-end space-x-2 sm:space-x-3 lg:space-x-4 w-full mobile-container">
+                <div className="flex-1 relative min-w-0">
+                  <textarea 
+                    value={inputMessage} 
+                    onChange={e => setInputMessage(e.target.value)} 
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }} 
+                    placeholder="Írj egy üzenetet..." 
+                    rows={2} 
+                    className="w-full resize-none border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-gray-50 focus:bg-white transition-colors mobile-text-fit overflow-y-auto" 
+                    style={{
+                      minHeight: '44px',
+                      maxHeight: '88px'
+                    }} 
+                  />
                 </div>
-                <button onClick={sendMessage} disabled={!inputMessage.trim()} className="p-2.5 sm:p-3 lg:p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl lg:rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl hover-lift mobile-touch-target">
-                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                <button 
+                  onClick={sendMessage} 
+                  disabled={!inputMessage.trim()} 
+                  className="mobile-btn-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg flex-shrink-0"
+                >
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>

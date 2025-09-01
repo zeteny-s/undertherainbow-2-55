@@ -1947,40 +1947,40 @@ export const Dashboard: React.FC = () => {
 
       {/* Heti Aktivitás Chart - 5TH POSITION */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+        <h3 className="mobile-text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 lg:mb-6 flex items-center flex-wrap">
+          <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600 flex-shrink-0" />
+          <span className="flex-1">Heti aktivitás</span>
+        </h3>
         <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 flex items-center">
-            <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
-            Heti aktivitás
-          </h3>
           <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
             {weekHistory[currentWeekIndex] && (
-              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
+              <span className="mobile-text-xs sm:text-sm font-medium text-gray-600 text-center sm:text-left">
                 {weekHistory[currentWeekIndex].weekLabel}
               </span>
             )}
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-1 sm:space-x-2">
               <button
                 onClick={() => navigateWeek('prev')}
                 disabled={currentWeekIndex >= weekHistory.length - 1}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mobile-touch-target"
                 title="Előző hét"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
               <button
                 onClick={() => setShowWeekHistory(!showWeekHistory)}
-                className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                className="px-2 py-1.5 sm:px-3 sm:py-2 mobile-text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-1 sm:space-x-2"
               >
-                <History className="h-4 w-4" />
+                <History className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Előzmények</span>
               </button>
               <button
                 onClick={() => navigateWeek('next')}
                 disabled={currentWeekIndex <= 0}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mobile-touch-target"
                 title="Következő hét"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             </div>
           </div>

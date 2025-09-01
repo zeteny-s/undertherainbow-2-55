@@ -168,8 +168,8 @@ export const CalendarPage: React.FC = () => {
     return (
       <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl border border-gray-200 overflow-hidden shadow-xl mobile-full">
         {/* Mobile: Show day selector instead of full week grid */}
-        <div className="block sm:hidden">
-          <div className="p-3 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+        <div className="block sm:hidden mobile-container">
+          <div className="p-2 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => {
@@ -177,15 +177,15 @@ export const CalendarPage: React.FC = () => {
                   newDate.setDate(currentDate.getDate() - 1);
                   setCurrentDate(newDate);
                 }}
-                className="p-1 hover:bg-gray-200 rounded mobile-touch-target"
+                className="p-2 hover:bg-gray-200 rounded mobile-touch-target"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <div className="text-center">
-                <div className="text-xs font-medium text-gray-600">
+              <div className="text-center flex-1 px-2">
+                <div className="mobile-text-xs font-medium text-gray-600">
                   {currentDate.toLocaleDateString('hu-HU', { weekday: 'short' })}
                 </div>
-                <div className={`text-sm font-bold ${
+                <div className={`mobile-text-sm font-bold ${
                   currentDate.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'
                 }`}>
                   {currentDate.getDate()}
@@ -197,30 +197,30 @@ export const CalendarPage: React.FC = () => {
                   newDate.setDate(currentDate.getDate() + 1);
                   setCurrentDate(newDate);
                 }}
-                className="p-1 hover:bg-gray-200 rounded mobile-touch-target"
+                className="p-2 hover:bg-gray-200 rounded mobile-touch-target"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
           {/* Mobile day view content */}
-          <div className="flex">
-            <div className="w-12 border-r border-gray-200 bg-gray-50">
+          <div className="flex overflow-hidden">
+            <div className="w-10 border-r border-gray-200 bg-gray-50 flex-shrink-0">
               {Array.from({ length: 24 }, (_, hour) => (
-                <div key={hour} className="h-12 border-b border-gray-100 p-1 text-xs text-gray-500 font-medium">
+                <div key={hour} className="h-10 border-b border-gray-100 p-0.5 mobile-text-xs text-gray-500 font-medium flex items-center justify-center">
                   {hour.toString().padStart(2, '0')}
                 </div>
               ))}
             </div>
-            <div className="flex-1 relative" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, currentDate)}>
+            <div className="flex-1 relative overflow-hidden" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, currentDate)}>
               {Array.from({ length: 24 }, (_, hour) => (
                 <div
                   key={hour}
                   onClick={() => createEventAtHour(currentDate, hour)}
-                  className="h-12 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
+                  className="h-10 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors relative group"
                 >
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-1 flex items-center justify-center transition-opacity">
-                    <Plus className="w-3 h-3 text-blue-600" />
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-blue-50 rounded-md m-0.5 flex items-center justify-center transition-opacity">
+                    <Plus className="w-2.5 h-2.5 text-blue-600" />
                   </div>
                 </div>
               ))}
@@ -241,17 +241,17 @@ export const CalendarPage: React.FC = () => {
                       e.stopPropagation();
                       openModal('edit', event);
                     }}
-                    className="absolute left-1 right-1 p-1.5 rounded text-xs text-white cursor-move transition-all duration-200"
+                    className="absolute left-0.5 right-0.5 p-1 rounded mobile-text-xs text-white cursor-move transition-all duration-200 overflow-hidden"
                     style={{
                       backgroundColor: event.color || '#3b82f6',
-                      top: `${startHour * 48}px`,
-                      height: `${Math.max(duration * 48, 24)}px`,
+                      top: `${startHour * 40}px`,
+                      height: `${Math.max(duration * 40, 20)}px`,
                       zIndex: 10,
                     }}
                   >
-                    <div className="font-medium truncate text-xs">{event.title}</div>
-                    {event.location && duration > 1 && (
-                      <div className="truncate opacity-90 text-xs">{event.location}</div>
+                    <div className="font-medium truncate mobile-text-xs">{event.title}</div>
+                    {event.location && duration > 1.5 && (
+                      <div className="truncate opacity-90 mobile-text-xs">{event.location}</div>
                     )}
                   </div>
                 );
