@@ -99,8 +99,10 @@ export const ModernAttendanceView: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-foreground-subtle border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+        <div className="text-center animate-fade-in">
+          <div className="relative">
+            <div className="w-12 h-12 border-2 border-foreground-subtle border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          </div>
           <p className="text-foreground-muted">Betöltés...</p>
         </div>
       </div>
@@ -108,75 +110,73 @@ export const ModernAttendanceView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-surface to-surface-hover mobile-no-overflow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in">
         {/* Header Section */}
-        <div className="mb-6 sm:mb-8">
-          <div className="glass-card rounded-2xl p-4 sm:p-6 lg:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <h1 className="heading-2 bg-gradient-primary bg-clip-text text-transparent mb-2">
-                  Jelenléti rendszer
-                </h1>
-                <p className="text-foreground-muted body-text">
-                  Osztályok és pedagógusok kezelése
-                </p>
-              </div>
+        <div className="mb-8 sm:mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2">
+                Jelenléti rendszer
+              </h1>
+              <p className="text-foreground-muted text-sm sm:text-base">
+                Osztályok és pedagógusok kezelése
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-all duration-200 hover-lift text-sm font-medium mobile-touch-target"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Új osztály</span>
+              </button>
               
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="btn-primary flex items-center justify-center gap-2 px-4 py-3 mobile-text-sm font-semibold mobile-touch-target"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Új osztály</span>
-                </button>
-                
-                <button
-                  onClick={() => setShowReportsModal(true)}
-                  className="glass-button flex items-center justify-center gap-2 px-4 py-3 mobile-text-sm font-medium mobile-touch-target"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>Riportok</span>
-                </button>
+              <button
+                onClick={() => setShowReportsModal(true)}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-surface border border-DEFAULT rounded-lg hover:bg-surface-hover transition-all duration-200 hover-lift text-sm font-medium text-foreground mobile-touch-target"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Riportok</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
+            <div className="bg-surface-elevated border border-DEFAULT rounded-xl p-4 sm:p-6 hover-lift">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xl sm:text-2xl font-semibold text-foreground">{classes.length}</p>
+                  <p className="text-sm text-foreground-muted mt-1">Osztály</p>
+                </div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                </div>
               </div>
             </div>
 
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mt-6 sm:mt-8">
-              <div className="glass-card rounded-xl p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xl sm:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">{classes.length}</p>
-                    <p className="mobile-text-sm sm:text-sm text-foreground-muted mt-1">Osztály</p>
-                  </div>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </div>
+            <div className="bg-surface-elevated border border-DEFAULT rounded-xl p-4 sm:p-6 hover-lift">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xl sm:text-2xl font-semibold text-foreground">{assignedPedagogus}</p>
+                  <p className="text-sm text-foreground-muted mt-1">Pedagógus</p>
+                </div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
                 </div>
               </div>
+            </div>
 
-              <div className="glass-card rounded-xl p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xl sm:text-2xl font-bold text-success">{assignedPedagogus}</p>
-                    <p className="mobile-text-sm sm:text-sm text-foreground-muted mt-1">Pedagógus</p>
-                  </div>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
-                  </div>
+            <div className="bg-surface-elevated border border-DEFAULT rounded-xl p-4 sm:p-6 hover-lift">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xl sm:text-2xl font-semibold text-foreground">{totalStudents}</p>
+                  <p className="text-sm text-foreground-muted mt-1">Gyerek</p>
                 </div>
-              </div>
-
-              <div className="glass-card rounded-xl p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xl sm:text-2xl font-bold text-warning">{totalStudents}</p>
-                    <p className="mobile-text-sm sm:text-sm text-foreground-muted mt-1">Gyerek</p>
-                  </div>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
-                  </div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
                 </div>
               </div>
             </div>
@@ -189,9 +189,9 @@ export const ModernAttendanceView: React.FC = () => {
         </div>
 
         {/* Classes Section */}
-        <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="bg-surface-elevated border border-DEFAULT rounded-xl overflow-hidden">
           <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-DEFAULT">
-            <h2 className="heading-3 text-foreground flex items-center gap-2 sm:gap-3">
+            <h2 className="text-base sm:text-lg font-medium text-foreground flex items-center gap-2 sm:gap-3">
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <span>Osztályok ({classes.length})</span>
             </h2>
@@ -199,19 +199,19 @@ export const ModernAttendanceView: React.FC = () => {
 
           <div className="p-4 sm:p-6">
             {classes.length === 0 ? (
-              <div className="text-center py-12 sm:py-16 px-4">
+              <div className="text-center py-12 sm:py-16 animate-fade-in px-4">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-6 h-6 sm:w-8 sm:h-8 text-foreground-subtle" />
                 </div>
-                <h3 className="heading-3 text-foreground mb-2">
+                <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">
                   Még nincsenek osztályok
                 </h3>
-                <p className="text-foreground-muted body-text mb-6 max-w-md mx-auto leading-relaxed">
+                <p className="text-sm sm:text-base text-foreground-muted mb-6 max-w-md mx-auto leading-relaxed">
                   Kezdje el az első osztály létrehozásával és adjon hozzá gyerekeket és pedagógusokat.
                 </p>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="btn-primary inline-flex items-center gap-2 px-6 py-3 font-semibold mobile-touch-target"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-all duration-200 hover-lift font-medium mobile-touch-target"
                 >
                   <Plus className="w-4 h-4" />
                   Első osztály létrehozása
@@ -219,17 +219,18 @@ export const ModernAttendanceView: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                {classes.map((cls) => (
+                {classes.map((cls, index) => (
                   <div
                     key={cls.id}
                     onClick={() => handleClassSelect(cls)}
-                    className="group glass-card hover-lift cursor-pointer transition-all duration-200 p-4 sm:p-6 rounded-xl"
+                    className="group p-4 sm:p-6 border border-DEFAULT rounded-xl hover:border-border-hover cursor-pointer transition-all duration-200 hover-lift bg-white animate-slide-in-right"
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="heading-3 text-foreground group-hover:text-primary transition-colors truncate flex-1 pr-2">
+                      <h3 className="text-base sm:text-lg font-medium text-foreground group-hover:text-primary transition-colors truncate flex-1 pr-2">
                         {cls.name}
                       </h3>
-                      <span className="px-2 py-1 mobile-text-xs font-medium bg-primary/10 text-primary rounded-md flex-shrink-0">
+                      <span className="px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-md flex-shrink-0">
                         {cls.house}
                       </span>
                     </div>
@@ -237,20 +238,20 @@ export const ModernAttendanceView: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 sm:gap-3 text-foreground-muted min-w-0">
                         <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                        <span className="mobile-text-xs sm:text-sm truncate">
+                        <span className="text-xs sm:text-sm truncate">
                           {cls.profiles?.name || 'Nincs hozzárendelve'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3 text-foreground-muted">
                         <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                        <span className="mobile-text-xs sm:text-sm font-medium">
+                        <span className="text-xs sm:text-sm font-medium">
                           {cls.student_count} gyerek
                         </span>
                       </div>
                     </div>
 
                     <div className="mt-4 pt-4 border-t border-DEFAULT">
-                      <p className="mobile-text-xs text-foreground-subtle group-hover:text-primary transition-colors">
+                      <p className="text-xs text-foreground-subtle group-hover:text-primary transition-colors">
                         Kattintson a részletekért →
                       </p>
                     </div>

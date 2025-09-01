@@ -466,39 +466,8 @@ export const Dashboard: React.FC = () => {
     const months = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     
-    // If a specific month is selected, only return that month's data
-    if (monthFilter !== 'all') {
-      const monthIndex = monthFilter - 1;
-      let monthInvoices = invoices.filter(inv => {
-        if (!inv.invoice_date) return false;
-        const date = new Date(inv.invoice_date);
-        const invoiceYear = date.getFullYear();
-        const invoiceMonth = date.getMonth();
-        
-        // Apply year filter
-        const yearMatch = yearFilter === 'all' || invoiceYear === yearFilter;
-        // Apply month filter
-        const monthMatch = invoiceMonth === monthIndex;
-        
-        return yearMatch && monthMatch;
-      });
-      
-      const monthInvoicesForAmount = monthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
-      const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
-      const ovodaInvoices = monthInvoices.filter(inv => inv.organization === 'ovoda');
-      const invoiceAmount = monthInvoicesForAmount.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-      
-      return [{
-        month: months[monthIndex],
-        alapitvany: alapitvanyInvoices.length,
-        ovoda: ovodaInvoices.length,
-        total: monthInvoices.length,
-        amount: invoiceAmount
-      }];
-    }
-    
-    // If no specific month is selected, show all months
     return months.map((month, index) => {
+      // Filter invoices based on the chart's own filters
       let monthInvoices = invoices.filter(inv => {
         if (!inv.invoice_date) return false;
         const date = new Date(inv.invoice_date);
@@ -508,12 +477,22 @@ export const Dashboard: React.FC = () => {
         // Apply year filter
         if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
         
-        // For this specific month in the loop
-        if (invoiceMonth !== index) return false;
+        // Apply month filter - if specific month selected, only show that month
+        if (monthFilter !== 'all') {
+          return invoiceMonth === (monthFilter - 1);
+        }
         
-        // If no year filter, default to current year
+        // If no specific month filter, show current year by default
         return yearFilter === 'all' ? invoiceYear === currentYear : true;
       });
+
+      // Further filter by current month being processed
+      if (monthFilter === 'all') {
+        monthInvoices = monthInvoices.filter(inv => {
+          const date = new Date(inv.invoice_date);
+          return date.getMonth() === index;
+        });
+      }
       
       const monthInvoicesForAmount = monthInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
       const alapitvanyInvoices = monthInvoices.filter(inv => inv.organization === 'alapitvany');
@@ -1200,13 +1179,13 @@ export const Dashboard: React.FC = () => {
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="heading-1 bg-gradient-primary bg-clip-text text-transparent mb-1 sm:mb-2">{getTimeBasedGreeting()}</h2>
-            <p className="text-foreground-muted body-text">Számla feldolgozási statisztikák és üzleti elemzések</p>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">{getTimeBasedGreeting()}</h2>
+            <p className="text-gray-600 text-sm sm:text-base">Számla feldolgozási statisztikák és üzleti elemzések</p>
           </div>
           {/* Hide refresh button on mobile */}
           <button
             onClick={fetchDashboardData}
-            className="btn-primary hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-2xl shadow-glass transition-all duration-200 hover:shadow-xl"
+            className="hidden sm:inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Frissítés
@@ -1280,7 +1259,7 @@ export const Dashboard: React.FC = () => {
                 <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                 Havi számla trend
               </h3>
-              <div className="flex flex-wrap items-center gap-2 mobile-container">
+              <div className="flex items-center gap-2">
                 <select
                   value={monthlyChartYear}
                   onChange={(e) => {
@@ -1288,7 +1267,7 @@ export const Dashboard: React.FC = () => {
                     setMonthlyChartYear(newYear);
                     updateMonthlyChart(newYear, monthlyChartMonth);
                   }}
-                  className="px-2 py-1.5 mobile-text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
                   {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
@@ -1302,7 +1281,7 @@ export const Dashboard: React.FC = () => {
                     setMonthlyChartMonth(newMonth);
                     updateMonthlyChart(monthlyChartYear, newMonth);
                   }}
-                  className="px-2 py-1.5 mobile-text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
                   {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
@@ -1452,7 +1431,7 @@ export const Dashboard: React.FC = () => {
                 <Hash className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                 Munkaszám megoszlás
               </h3>
-              <div className="flex flex-wrap items-center gap-2 mobile-container">
+              <div className="flex items-center gap-2">
                 <select
                   value={munkaszamYear}
                   onChange={(e) => {
@@ -1460,7 +1439,7 @@ export const Dashboard: React.FC = () => {
                     setMunkaszamYear(newYear);
                     updateMunkaszamChart(newYear, munkaszamMonth);
                   }}
-                  className="px-2 py-1.5 mobile-text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes év</option>
                   {[new Date().getFullYear(), new Date().getFullYear()-1, new Date().getFullYear()-2].map(y => (
@@ -1474,7 +1453,7 @@ export const Dashboard: React.FC = () => {
                     setMunkaszamMonth(newMonth);
                     updateMunkaszamChart(munkaszamYear, newMonth);
                   }}
-                  className="px-2 py-1.5 mobile-text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary flex-shrink-0"
+                  className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Összes hónap</option>
                   {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
@@ -1484,10 +1463,9 @@ export const Dashboard: React.FC = () => {
                 {chartData.munkaszamData.length > 5 && (
                   <button
                     onClick={() => setShowAllMunkaszam(true)}
-                    className="px-2 py-1.5 mobile-text-xs sm:text-sm font-medium rounded-lg text-primary bg-surface hover:bg-surface-hover transition-colors whitespace-nowrap flex-shrink-0"
+                    className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
                   >
-                    <span className="hidden sm:inline">Összes megtekintése</span>
-                    <span className="sm:hidden">Összes</span>
+                    Összes megtekintése
                   </button>
                 )}
               </div>
@@ -2108,67 +2086,65 @@ export const Dashboard: React.FC = () => {
 
         {/* Desktop Table View */}
         <div className="hidden sm:block overflow-x-auto">
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <table className="min-w-full divide-y divide-border">
-              <thead className="bg-gradient-to-r from-surface to-surface-hover">
-                <tr>
-                  <th className="px-3 lg:px-6 py-4 text-left text-xs font-semibold text-foreground-muted uppercase tracking-wider">
-                    Fájl név
-                  </th>
-                  <th className="px-3 lg:px-6 py-4 text-left text-xs font-semibold text-foreground-muted uppercase tracking-wider">
-                    Szervezet
-                  </th>
-                  <th className="px-3 lg:px-6 py-4 text-left text-xs font-semibold text-foreground-muted uppercase tracking-wider">
-                    Feltöltve
-                  </th>
-                  <th className="px-3 lg:px-6 py-4 text-left text-xs font-semibold text-foreground-muted uppercase tracking-wider">
-                    Partner
-                  </th>
-                  <th className="px-3 lg:px-6 py-4 text-left text-xs font-semibold text-foreground-muted uppercase tracking-wider">
-                    Összeg
-                  </th>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fájl név
+                </th>
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Szervezet
+                </th>
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Feltöltve
+                </th>
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Partner
+                </th>
+                <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Összeg
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {recentInvoices.map((invoice) => (
+                <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                        {invoice.file_name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {invoice.organization === 'alapitvany' ? (
+                        <>
+                          <Building2 className="h-4 w-4 text-blue-800 mr-2" />
+                          <span className="text-sm text-gray-900">Alapítvány</span>
+                        </>
+                      ) : (
+                        <>
+                          <GraduationCap className="h-4 w-4 text-orange-800 mr-2" />
+                          <span className="text-sm text-gray-900">Óvoda</span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(invoice.uploaded_at)}
+                  </td>
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {invoice.partner || '-'}
+                  </td>
+                  <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {invoice.amount ? formatCurrency(invoice.amount) : '-'}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-surface-elevated divide-y divide-border">
-                {recentInvoices.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-surface-hover transition-colors">
-                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
-                        <span className="text-sm font-medium text-foreground truncate max-w-xs">
-                          {invoice.file_name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {invoice.organization === 'alapitvany' ? (
-                          <>
-                            <Building2 className="h-4 w-4 text-primary mr-2" />
-                            <span className="text-sm text-foreground">Alapítvány</span>
-                          </>
-                        ) : (
-                          <>
-                            <GraduationCap className="h-4 w-4 text-secondary mr-2" />
-                            <span className="text-sm text-foreground">Óvoda</span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
-                      {formatDate(invoice.uploaded_at)}
-                    </td>
-                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {invoice.partner || '-'}
-                    </td>
-                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-semibold bg-gradient-primary bg-clip-text text-transparent">
-                      {invoice.amount ? formatCurrency(invoice.amount) : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
         
         {recentInvoices.length === 0 && (

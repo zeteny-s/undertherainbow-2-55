@@ -228,17 +228,17 @@ export const DocumentsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6 mobile-no-overflow">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="heading-2 text-foreground">Dokumentumok</h1>
-          <p className="text-foreground-muted body-text mt-1">Dokumentumok kezelése és szervezése</p>
+          <h1 className="text-2xl font-bold text-gray-900">Dokumentumok</h1>
+          <p className="text-gray-600 mt-1">Dokumentumok kezelése és szervezése</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <label className="glass-button cursor-pointer hover-lift flex-shrink-0">
-            <Upload className="w-4 h-4 text-foreground-muted" />
-            <span className="mobile-text-xs sm:text-sm font-medium text-foreground">Feltöltés</span>
+        <div className="flex items-center gap-3">
+          <label className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            <Upload className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Feltöltés</span>
             <input
               type="file"
               multiple
@@ -251,11 +251,11 @@ export const DocumentsPage: React.FC = () => {
             />
           </label>
           <button
-            className="btn-primary flex-shrink-0 mobile-btn-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             onClick={() => setShowScanner(true)}
           >
             <FileText className="w-4 h-4" />
-            <span className="mobile-text-xs sm:text-sm font-semibold">Szkennelés</span>
+            <span className="text-sm font-medium">Szkennelés</span>
           </button>
         </div>
       </div>
@@ -421,14 +421,14 @@ export const DocumentsPage: React.FC = () => {
               ))}
 
               {docs.length === 0 && !loading && (
-                <div className="px-4 sm:px-6 py-12 text-center">
-                  <FileText className="w-12 h-12 text-foreground-subtle mx-auto mb-4" />
-                  <h3 className="heading-3 text-foreground mb-2">Nincs dokumentum</h3>
-                  <p className="text-foreground-muted body-text mb-6">Ebben a mappában még nincsenek dokumentumok.</p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <label className="btn-primary cursor-pointer mobile-btn-sm w-full sm:w-auto">
+                <div className="px-6 py-12 text-center">
+                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nincs dokumentum</h3>
+                  <p className="text-gray-500 mb-6">Ebben a mappában még nincsenek dokumentumok.</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
                       <Upload className="w-4 h-4" />
-                      <span className="mobile-text-xs sm:text-sm font-semibold">Fájl feltöltése</span>
+                      <span className="text-sm font-medium">Fájl feltöltése</span>
                       <input
                         type="file"
                         multiple
@@ -441,11 +441,11 @@ export const DocumentsPage: React.FC = () => {
                       />
                     </label>
                     <button
-                      className="glass-button hover-lift mobile-btn-sm w-full sm:w-auto"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                       onClick={() => setShowScanner(true)}
                     >
                       <FileText className="w-4 h-4" />
-                      <span className="mobile-text-xs sm:text-sm font-medium">Szkennelés</span>
+                      <span className="text-sm font-medium">Szkennelés</span>
                     </button>
                   </div>
                 </div>

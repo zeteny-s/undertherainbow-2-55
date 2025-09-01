@@ -18,81 +18,69 @@ interface StatsSectionProps {
 
 export const StatsSection: React.FC<StatsSectionProps> = ({ stats, formatCurrency }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 animate-fade-in">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       <StatCard
         title="Összes számla"
         value={stats.totalInvoices}
         icon={FileText}
-        change={{
-          value: "+5.2%",
-          isPositive: true
-        }}
-        className="hover-glow animate-float"
+        iconColor="text-blue-600"
+        bgColor="bg-blue-100"
       />
       
       <StatCard
         title="Teljes Kiadás"
         value={formatCurrency(stats.totalAmount)}
         icon={DollarSign}
-        change={{
-          value: "+12.1%",
-          isPositive: true
-        }}
-        className="hover-glow animate-float"
+        iconColor="text-green-600"
+        bgColor="bg-green-100"
       />
       
       <StatCard
         title="Alapítvány"
         value={stats.alapitvanyCount}
         icon={Building2}
-        className="hover-glow animate-float"
+        iconColor="text-purple-600"
+        bgColor="bg-purple-100"
       />
       
       <StatCard
         title="Óvoda"
         value={stats.ovodaCount}
         icon={GraduationCap}
-        className="hover-glow animate-float"
+        iconColor="text-orange-600"
+        bgColor="bg-orange-100"
       />
       
       <StatCard
         title="Banki átutalás"
         value={stats.bankTransferCount}
         icon={Banknote}
-        change={{
-          value: "+3.1%",
-          isPositive: true
-        }}
-        className="hover-glow animate-float"
+        iconColor="text-indigo-600"
+        bgColor="bg-indigo-100"
       />
       
       <StatCard
         title="Kártya/Készpénz"
         value={stats.cardCashCount}
         icon={CreditCard}
-        className="hover-glow animate-float"
+        iconColor="text-pink-600"
+        bgColor="bg-pink-100"
       />
       
       <StatCard
         title="Ez a hónap"
         value={stats.thisMonthCount}
         icon={Calendar}
-        change={{
-          value: "+8.3%",
-          isPositive: true
-        }}
-        className="hover-glow animate-float"
+        iconColor="text-teal-600"
+        bgColor="bg-teal-100"
       />
       
       <StatCard
         title="Feldolgozás alatt"
         value={stats.pendingCount}
         icon={Clock}
-        change={{
-          value: "-2.1%",
-          isPositive: false
-        }}
-        className="hover-glow animate-float"
+        iconColor="text-yellow-600"
+        bgColor="bg-yellow-100"
       />
     </div>
   );

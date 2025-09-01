@@ -153,9 +153,11 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div className="glass-card rounded-xl p-8 shadow-glass">
-          <div className="w-8 h-8 border-2 border-foreground-subtle border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div className="bg-white rounded-xl p-8 shadow-xl animate-scale-in">
+          <div className="relative">
+            <div className="w-12 h-12 border-2 border-foreground-subtle border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          </div>
           <p className="text-foreground-muted text-center">Betöltés...</p>
         </div>
       </div>
@@ -171,16 +173,16 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
   const totalStudents = students.length;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
-      <div className="glass-card rounded-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-glass mobile-modal">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in">
+      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-xl animate-scale-in mobile-modal">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 border-b border-DEFAULT bg-gradient-glass gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 border-b border-DEFAULT bg-surface gap-3">
           <div className="min-w-0 flex-1">
-            <h2 className="heading-2 text-foreground flex items-center gap-2 sm:gap-3 truncate">
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground flex items-center gap-2 sm:gap-3 truncate">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <span className="truncate">{classData.name}</span>
             </h2>
-            <p className="text-foreground-muted mt-1 mobile-text-xs sm:text-sm">
+            <p className="text-foreground-muted mt-1 text-xs sm:text-sm">
               {new Date(selectedDate).toLocaleDateString('hu-HU', {
                 year: 'numeric',
                 month: 'long',
@@ -190,12 +192,12 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <span className="px-2 py-1 mobile-text-xs sm:text-sm font-medium bg-primary/10 text-primary rounded-md">
+            <span className="px-2 py-1 text-xs sm:text-sm font-medium bg-primary/10 text-primary rounded-md">
               {classData.house}
             </span>
             <button
               onClick={onClose}
-              className="glass-button p-2 hover:bg-surface-hover rounded-lg transition-colors mobile-touch-target"
+              className="p-2 hover:bg-surface-hover rounded-lg transition-colors mobile-touch-target"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5 text-foreground-subtle" />
             </button>
@@ -205,24 +207,24 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
         <div className="p-4 sm:p-6 max-h-[calc(95vh-200px)] sm:max-h-[calc(90vh-200px)] overflow-y-auto scrollbar-custom mobile-modal-content">
           {/* Statistics */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-            <div className="text-center p-3 sm:p-4 glass-card rounded-xl">
-              <div className="text-lg sm:text-2xl font-bold text-foreground">{totalStudents}</div>
-              <div className="mobile-text-xs sm:text-sm text-foreground-muted mt-1">Összes</div>
+            <div className="text-center p-3 sm:p-4 bg-surface-elevated border border-DEFAULT rounded-xl">
+              <div className="text-lg sm:text-2xl font-semibold text-foreground">{totalStudents}</div>
+              <div className="text-xs sm:text-sm text-foreground-muted mt-1">Összes</div>
             </div>
-            <div className="text-center p-3 sm:p-4 glass-card rounded-xl border border-success/20">
-              <div className="text-lg sm:text-2xl font-bold text-success">{presentCount}</div>
-              <div className="mobile-text-xs sm:text-sm text-success/80 mt-1">Jelen</div>
+            <div className="text-center p-3 sm:p-4 bg-success/5 border border-success/20 rounded-xl">
+              <div className="text-lg sm:text-2xl font-semibold text-success">{presentCount}</div>
+              <div className="text-xs sm:text-sm text-success/80 mt-1">Jelen</div>
             </div>
-            <div className="text-center p-3 sm:p-4 glass-card rounded-xl border border-error/20">
-              <div className="text-lg sm:text-2xl font-bold text-error">{absentCount}</div>
-              <div className="mobile-text-xs sm:text-sm text-error/80 mt-1">Hiányzik</div>
+            <div className="text-center p-3 sm:p-4 bg-error/5 border border-error/20 rounded-xl">
+              <div className="text-lg sm:text-2xl font-semibold text-error">{absentCount}</div>
+              <div className="text-xs sm:text-sm text-error/80 mt-1">Hiányzik</div>
             </div>
           </div>
 
           {/* Existing Records Notice */}
           {existingRecords.length > 0 && (
-            <div className="mb-6 p-4 glass-card border border-warning/20 rounded-xl">
-              <p className="mobile-text-sm text-foreground-muted">
+            <div className="mb-6 p-4 bg-warning/5 border border-warning/20 rounded-xl">
+              <p className="text-sm text-foreground-muted">
                 Erre a napra már van jelenlét rögzítve. A módosítások felülírják a korábbi bejegyzéseket.
               </p>
             </div>
@@ -230,26 +232,27 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
 
           {/* Students List */}
           <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-            {students.map((student) => (
+            {students.map((student, index) => (
               <div 
                 key={student.id} 
-                className="glass-card rounded-xl p-3 sm:p-4 hover:border-border-hover transition-colors"
+                className="border border-DEFAULT rounded-xl p-3 sm:p-4 hover:border-border-hover transition-all duration-200 animate-slide-in-right"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 sm:mb-3">
                   <h3 className="font-medium text-foreground flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <User className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                     </div>
-                    <span className="truncate mobile-text-sm sm:text-base">{student.name}</span>
+                    <span className="truncate">{student.name}</span>
                   </h3>
                   
                   <div className="grid grid-cols-2 sm:flex gap-2">
                     <button
                       onClick={() => handleAttendanceToggle(student.id, true)}
-                      className={`flex items-center justify-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg border transition-colors mobile-text-xs sm:text-sm mobile-touch-target ${
+                      className={`flex items-center justify-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg border transition-all duration-200 text-sm mobile-touch-target ${
                         attendance[student.id]
                           ? 'bg-success/10 border-success/30 text-success'
-                          : 'glass-button border-DEFAULT text-foreground-muted hover:bg-success/5 hover:border-success/20'
+                          : 'bg-white border-DEFAULT text-foreground-muted hover:bg-success/5 hover:border-success/20'
                       }`}
                     >
                       <CheckCircle className="w-4 h-4" />
@@ -259,10 +262,10 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
                     
                     <button
                       onClick={() => handleAttendanceToggle(student.id, false)}
-                      className={`flex items-center justify-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg border transition-colors mobile-text-xs sm:text-sm mobile-touch-target ${
+                      className={`flex items-center justify-center gap-1 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-lg border transition-all duration-200 text-sm mobile-touch-target ${
                         !attendance[student.id]
                           ? 'bg-error/10 border-error/30 text-error'
-                          : 'glass-button border-DEFAULT text-foreground-muted hover:bg-error/5 hover:border-error/20'
+                          : 'bg-white border-DEFAULT text-foreground-muted hover:bg-error/5 hover:border-error/20'
                       }`}
                     >
                       <XCircle className="w-4 h-4" />
@@ -273,8 +276,8 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
                 </div>
 
                 {!attendance[student.id] && (
-                  <div className="mt-4 p-3 glass-card rounded-lg">
-                    <label className="block mobile-text-sm text-foreground-muted mb-2 flex items-center gap-2">
+                  <div className="mt-4 p-3 bg-surface rounded-lg">
+                    <label className="block text-sm text-foreground-muted mb-2 flex items-center gap-2">
                       <MessageSquare className="w-4 h-4" />
                       Megjegyzés (opcionális)
                     </label>
@@ -283,7 +286,7 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
                       value={notes[student.id] || ''}
                       onChange={(e) => handleNotesChange(student.id, e.target.value)}
                       placeholder="Hiányzás oka..."
-                      className="w-full px-3 py-2 border border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors mobile-text-sm bg-white"
+                      className="w-full px-3 py-2 border border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm bg-white"
                     />
                   </div>
                 )}
@@ -292,12 +295,12 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
           </div>
 
           {students.length === 0 && (
-            <div className="text-center py-16">
+            <div className="text-center py-16 animate-fade-in">
               <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-foreground-subtle" />
               </div>
-              <h3 className="heading-3 text-foreground mb-2">Nincsenek gyerekek</h3>
-              <p className="text-foreground-muted body-text">
+              <h3 className="text-lg font-medium text-foreground mb-2">Nincsenek gyerekek</h3>
+              <p className="text-foreground-muted">
                 Kérje meg az adminisztrátort, hogy adjon hozzá gyerekeket ehhez az osztályhoz.
               </p>
             </div>
@@ -305,8 +308,8 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
 
           {/* Unsaved Changes Warning */}
           {hasChanges && (
-            <div className="mb-6 p-4 glass-card border border-warning/20 rounded-xl">
-              <p className="mobile-text-sm text-foreground-muted">
+            <div className="mb-6 p-4 bg-warning/5 border border-warning/20 rounded-xl animate-bounce-in">
+              <p className="text-sm text-foreground-muted">
                 Nem mentett módosításai vannak. Ne felejtse el menteni a jelenlétet!
               </p>
             </div>
@@ -314,10 +317,10 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 p-4 sm:p-6 border-t border-DEFAULT bg-gradient-glass">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 p-4 sm:p-6 border-t border-DEFAULT bg-surface">
           <button
             onClick={onClose}
-            className="glass-button px-6 py-3 font-medium mobile-touch-target order-2 sm:order-1"
+            className="px-6 py-3 text-foreground-muted bg-white border border-DEFAULT rounded-lg hover:bg-surface-hover transition-all duration-200 font-medium mobile-touch-target order-2 sm:order-1"
           >
             Bezárás
           </button>
@@ -325,7 +328,7 @@ export const ClassAttendanceModal: React.FC<ClassAttendanceModalProps> = ({
           <button
             onClick={handleSave}
             disabled={saving || !hasChanges || students.length === 0}
-            className="btn-primary flex items-center justify-center gap-2 px-6 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed mobile-touch-target order-1 sm:order-2"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium hover-lift mobile-touch-target order-1 sm:order-2"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Mentés...' : 'Jelenlét mentése'}
