@@ -106,7 +106,7 @@ export const ModernMissingAlert: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-surface-elevated border border-DEFAULT rounded-xl p-4 animate-pulse">
+      <div className="glass-card rounded-xl p-4 animate-pulse">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 bg-foreground-subtle/20 rounded animate-pulse"></div>
           <div className="h-4 bg-foreground-subtle/20 rounded flex-1"></div>
@@ -117,16 +117,16 @@ export const ModernMissingAlert: React.FC = () => {
 
   if (missingClasses.length === 0) {
     return (
-      <div className="bg-success/5 border border-success/20 rounded-xl p-4 sm:p-6 animate-fade-in">
+      <div className="glass-card rounded-xl p-4 sm:p-6 border border-success/20">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success/10 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <Users className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-medium text-foreground text-sm sm:text-base">
+            <h3 className="font-semibold text-foreground mobile-text-sm sm:text-base">
               Minden osztály rögzítette a jelenlétet
             </h3>
-            <p className="text-xs sm:text-sm text-foreground-muted mt-1">
+            <p className="mobile-text-xs sm:text-sm text-foreground-muted mt-1">
               {new Date(selectedDate).toLocaleDateString('hu-HU', {
                 year: 'numeric',
                 month: 'long',
@@ -140,19 +140,19 @@ export const ModernMissingAlert: React.FC = () => {
   }
 
   return (
-    <div className="bg-warning/5 border border-warning/20 rounded-xl p-4 sm:p-6 animate-fade-in">
+    <div className="glass-card rounded-xl p-4 sm:p-6 border border-warning/20">
       <div className="flex items-start gap-3 sm:gap-4">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning/10 rounded-xl flex items-center justify-center flex-shrink-0">
           <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
         </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
             <div className="min-w-0 flex-1">
-              <h3 className="font-medium text-foreground text-sm sm:text-base">
+              <h3 className="font-semibold text-foreground mobile-text-sm sm:text-base">
                 Hiányzó jelenléti adatok
               </h3>
-              <p className="text-xs sm:text-sm text-foreground-muted mt-1">
+              <p className="mobile-text-xs sm:text-sm text-foreground-muted mt-1">
                 {missingClasses.length} osztály még nem rögzítette a jelenlétet
               </p>
             </div>
@@ -163,29 +163,28 @@ export const ModernMissingAlert: React.FC = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="text-xs sm:text-sm border border-DEFAULT rounded-lg px-2 py-2 sm:px-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors min-w-0"
+                className="mobile-text-xs sm:text-sm border border-DEFAULT rounded-lg px-2 py-2 sm:px-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors min-w-0"
               />
             </div>
           </div>
 
           <div className="space-y-2 sm:space-y-3">
-            {missingClasses.map((cls, index) => (
+            {missingClasses.map((cls) => (
               <div
                 key={cls.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-white border border-DEFAULT rounded-lg hover:border-border-hover transition-all duration-200 hover-lift animate-slide-in-right"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-white border border-DEFAULT rounded-lg hover:border-border-hover transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Users className="w-3 h-3 sm:w-4 sm:h-4 text-warning" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{cls.name}</h4>
+                    <h4 className="font-medium text-foreground mobile-text-sm sm:text-base truncate">{cls.name}</h4>
                     <div className="flex items-center gap-2 sm:gap-4 mt-1">
-                      <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium">
+                      <span className="px-2 py-0.5 bg-primary/10 text-primary rounded mobile-text-xs font-medium">
                         {cls.house}
                       </span>
-                      <span className="text-xs sm:text-sm text-foreground-muted">
+                      <span className="mobile-text-xs sm:text-sm text-foreground-muted">
                         {cls.student_count} gyerek
                       </span>
                     </div>
@@ -194,7 +193,7 @@ export const ModernMissingAlert: React.FC = () => {
 
                 <button
                   onClick={() => handleViewClass(cls.id)}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-all duration-200 hover-lift mobile-touch-target w-full sm:w-auto"
+                  className="btn-primary flex items-center justify-center gap-2 px-4 py-2.5 mobile-text-xs sm:text-sm font-semibold rounded-lg mobile-touch-target w-full sm:w-auto"
                 >
                   <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>Rögzítés</span>
