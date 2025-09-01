@@ -227,19 +227,16 @@ export const Dashboard: React.FC = () => {
   };
 
   const updateMunkaszamChart = (year: 'all' | number, month: 'all' | number) => {
-    const filteredByDate = filterInvoicesByDate(allInvoices, year, month);
     setChartData(prev => ({
       ...prev,
-      munkaszamData: generateMunkaszamData(filteredByDate, allPayrollRecords)
+      munkaszamData: generateMunkaszamData(allInvoices, allPayrollRecords, year, month)
     }));
   };
 
   const updateCategoryChart = (year: 'all' | number, month: 'all' | number) => {
-    const filteredBase = allInvoices.filter(inv => inv.partner && !isExcludedPartner(inv.partner));
-    const filteredByDate = filterInvoicesByDate(filteredBase, year, month);
     setChartData(prev => ({
       ...prev,
-      categoryData: generateCategoryData(filteredByDate, allPayrollSummaries)
+      categoryData: generateCategoryData(allInvoices, allPayrollSummaries, year, month)
     }));
   };
 
@@ -394,8 +391,8 @@ export const Dashboard: React.FC = () => {
       console.log('Dashboard - Payroll summaries count:', payrollSummaries?.length || 0);
       console.log('Dashboard - Payroll summaries sample:', payrollSummaries?.slice(0, 2));
       
-      const munkaszamData = generateMunkaszamData(invoices || [], payrollRecords || []); // Use payroll records for project codes
-      const categoryData = generateCategoryData(invoices || [], payrollSummaries || []); // Use payroll summaries for accuracy
+      const munkaszamData = generateMunkaszamData(invoices || [], payrollRecords || [], 'all', 'all'); // Use payroll records for project codes
+      const categoryData = generateCategoryData(invoices || [], payrollSummaries || [], 'all', 'all'); // Use payroll summaries for accuracy
       
       // Debug: Check if payroll data is being included in the results
       console.log('Dashboard - Munkaszam data with payroll:', munkaszamData?.filter(item => item.payrollAmount > 0 || item.rentalAmount > 0));
@@ -691,14 +688,47 @@ export const Dashboard: React.FC = () => {
     return partnersArray;
   };
   
-  const generateMunkaszamData = (invoices: any[], payrollRecords: PayrollRecord[] = []) => {
+  const generateMunkaszamData = (invoices: any[], payrollRecords: PayrollRecord[] = [], yearFilter: 'all' | number = 'all', monthFilter: 'all' | number = 'all') => {
     console.log('generateMunkaszamData - Payroll records input:', payrollRecords?.length || 0);
-    // Group invoices by munkaszam and calculate total spending using all invoices
+    
+    // Filter invoices based on year/month filters first
+    const filteredInvoices = invoices.filter(inv => {
+      if (!inv.invoice_date) return false;
+      const date = new Date(inv.invoice_date);
+      const invoiceYear = date.getFullYear();
+      const invoiceMonth = date.getMonth() + 1;
+      
+      // Apply year filter
+      if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
+      
+      // Apply month filter
+      if (monthFilter !== 'all' && invoiceMonth !== monthFilter) return false;
+      
+      return true;
+    });
+    
+    // Filter payroll records based on year/month filters
+    const filteredPayrollRecords = payrollRecords.filter(record => {
+      if (!record.record_date) return false;
+      const date = new Date(record.record_date);
+      const recordYear = date.getFullYear();
+      const recordMonth = date.getMonth() + 1;
+      
+      // Apply year filter
+      if (yearFilter !== 'all' && recordYear !== yearFilter) return false;
+      
+      // Apply month filter
+      if (monthFilter !== 'all' && recordMonth !== monthFilter) return false;
+      
+      return true;
+    });
+    
+    // Group invoices by munkaszam and calculate total spending using filtered invoices
     const munkaszamSpending: { [key: string]: { invoiceAmount: number; payrollAmount: number; rentalAmount: number; count: number } } = {};
     
-    // Process all invoices - include all for count, exclude specific partners from amount only
+    // Process filtered invoices - include all for count, exclude specific partners from amount only
     // Use normalized partner exclusion
-    invoices.forEach(invoice => {
+    filteredInvoices.forEach(invoice => {
       // Use 'Nincs munkaszám' for invoices without a munkaszam
       const munkaszam = (invoice.munkaszam && invoice.munkaszam.trim()) ? invoice.munkaszam.trim() : 'Nincs munkaszám';
       
@@ -718,10 +748,10 @@ export const Dashboard: React.FC = () => {
       }
     });
     
-    // Process payroll records by project code - separate rental and non-rental
-    console.log('generateMunkaszamData - Processing payroll records...');
-    console.log('generateMunkaszamData - First record structure:', payrollRecords[0]);
-    payrollRecords.forEach(record => {
+    // Process filtered payroll records by project code - separate rental and non-rental
+    console.log('generateMunkaszamData - Processing filtered payroll records...');
+    console.log('generateMunkaszamData - First filtered record structure:', filteredPayrollRecords[0]);
+    filteredPayrollRecords.forEach(record => {
       const munkaszam = (record.project_code && record.project_code.trim()) ? record.project_code.trim() : 'Nincs munkaszám';
       console.log('generateMunkaszamData - Processing record:', { munkaszam, amount: record.amount, is_rental: record.is_rental });
       
@@ -763,9 +793,37 @@ export const Dashboard: React.FC = () => {
     return munkaszamArray;
   };
   
-  const generateCategoryData = (invoices: any[], payrollSummaries: PayrollSummary[] = []) => {
+  const generateCategoryData = (invoices: any[], payrollSummaries: PayrollSummary[] = [], yearFilter: 'all' | number = 'all', monthFilter: 'all' | number = 'all') => {
     console.log('generateCategoryData - Payroll summaries input:', payrollSummaries?.length || 0);
-    // Group invoices by category and calculate total spending using all invoices
+    
+    // Filter invoices based on year/month filters first
+    const filteredInvoices = invoices.filter(inv => {
+      if (!inv.invoice_date) return false;
+      const date = new Date(inv.invoice_date);
+      const invoiceYear = date.getFullYear();
+      const invoiceMonth = date.getMonth() + 1;
+      
+      // Apply year filter
+      if (yearFilter !== 'all' && invoiceYear !== yearFilter) return false;
+      
+      // Apply month filter
+      if (monthFilter !== 'all' && invoiceMonth !== monthFilter) return false;
+      
+      return true;
+    });
+    
+    // Filter payroll summaries based on year/month filters
+    const filteredPayrollSummaries = payrollSummaries.filter(summary => {
+      // Apply year filter
+      if (yearFilter !== 'all' && summary.year !== yearFilter) return false;
+      
+      // Apply month filter
+      if (monthFilter !== 'all' && summary.month !== monthFilter) return false;
+      
+      return true;
+    });
+    
+    // Group invoices by category and calculate total spending using filtered invoices
     const categorySpending: { [key: string]: { amount: number; count: number } } = {};
     
     // Define valid categories
@@ -787,8 +845,8 @@ export const Dashboard: React.FC = () => {
       categorySpending[category] = { amount: 0, count: 0 };
     });
     
-    // Process all invoices - exclude specified partners from both amount and count (normalized)
-    invoices.forEach(invoice => {
+    // Process filtered invoices - exclude specified partners from both amount and count (normalized)
+    filteredInvoices.forEach(invoice => {
       // Skip invoices from excluded partners or if partner is null
       if (!invoice.partner || isExcludedPartner(invoice.partner)) {
         return;
@@ -814,31 +872,31 @@ export const Dashboard: React.FC = () => {
       categorySpending[category].count += 1;
     });
     
-    // Add rental costs from payroll summaries to "Bérleti díjak" category
-    console.log('generateCategoryData - Checking payroll summaries for rental costs...');
-    console.log('generateCategoryData - Sample summary rental_costs field:', payrollSummaries[0]?.rental_costs);
+    // Add rental costs from filtered payroll summaries to "Bérleti díjak" category
+    console.log('generateCategoryData - Checking filtered payroll summaries for rental costs...');
+    console.log('generateCategoryData - Sample summary rental_costs field:', filteredPayrollSummaries[0]?.rental_costs);
     
-    const totalRentalCosts = payrollSummaries.reduce((sum, summary) => 
+    const totalRentalCosts = filteredPayrollSummaries.reduce((sum, summary) => 
       sum + (summary.rental_costs || 0), 0);
     
     console.log('generateCategoryData - Total rental costs:', totalRentalCosts);
     
     if (totalRentalCosts > 0) {
       categorySpending['Bérleti díjak'].amount += totalRentalCosts;
-      // Add a count entry for payroll summaries
-      categorySpending['Bérleti díjak'].count += payrollSummaries.length;
+      // Add a count entry for filtered payroll summaries
+      categorySpending['Bérleti díjak'].count += filteredPayrollSummaries.length;
     }
     
-    // Add non-rental payroll costs to "Bérköltség" category
-    const totalNonRentalCosts = payrollSummaries.reduce((sum, summary) => 
+    // Add non-rental payroll costs from filtered summaries to "Bérköltség" category
+    const totalNonRentalCosts = filteredPayrollSummaries.reduce((sum, summary) => 
       sum + (summary.non_rental_costs || 0), 0);
     
     console.log('generateCategoryData - Total non-rental costs:', totalNonRentalCosts);
     
     if (totalNonRentalCosts > 0) {
       categorySpending['Bérköltség'].amount += totalNonRentalCosts;
-      // Add a count entry for payroll summaries
-      categorySpending['Bérköltség'].count += payrollSummaries.length;
+      // Add a count entry for filtered payroll summaries
+      categorySpending['Bérköltség'].count += filteredPayrollSummaries.length;
     }
     
     // Color mapping for categories
