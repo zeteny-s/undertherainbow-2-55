@@ -117,7 +117,7 @@ export const ModernMissingAlert: React.FC = () => {
 
   if (missingClasses.length === 0) {
     return (
-      <div className="bg-success/5 border border-success/20 rounded-xl p-4 sm:p-6 animate-fade-in">
+      <div className="bg-success/5 border border-success/20 rounded-xl p-4 sm:p-6">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success/10 rounded-lg flex items-center justify-center flex-shrink-0">
             <Users className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
@@ -140,7 +140,7 @@ export const ModernMissingAlert: React.FC = () => {
   }
 
   return (
-    <div className="bg-warning/5 border border-warning/20 rounded-xl p-4 sm:p-6 animate-fade-in">
+    <div className="bg-warning/5 border border-warning/20 rounded-xl p-4 sm:p-6">
       <div className="flex items-start gap-3 sm:gap-4">
         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0">
           <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
@@ -163,17 +163,16 @@ export const ModernMissingAlert: React.FC = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="text-xs sm:text-sm border border-DEFAULT rounded-lg px-2 py-2 sm:px-3 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors min-w-0"
+                className="text-xs sm:text-sm border border-border rounded-lg px-2 py-2 sm:px-3 bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors min-w-0"
               />
             </div>
           </div>
 
           <div className="space-y-2 sm:space-y-3">
-            {missingClasses.map((cls, index) => (
+            {missingClasses.map((cls) => (
               <div
                 key={cls.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-white border border-DEFAULT rounded-lg hover:border-border-hover transition-all duration-200 hover-lift animate-slide-in-right"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-surface border border-border rounded-lg hover:border-border-hover transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -194,7 +193,7 @@ export const ModernMissingAlert: React.FC = () => {
 
                 <button
                   onClick={() => handleViewClass(cls.id)}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-all duration-200 hover-lift mobile-touch-target w-full sm:w-auto"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors w-full sm:w-auto"
                 >
                   <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>Rögzítés</span>

@@ -99,10 +99,8 @@ export const ModernAttendanceView: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center animate-fade-in">
-          <div className="relative">
-            <div className="w-12 h-12 border-2 border-foreground-subtle border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-          </div>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-foreground-subtle border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-foreground-muted">Betöltés...</p>
         </div>
       </div>
@@ -111,7 +109,7 @@ export const ModernAttendanceView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header Section */}
         <div className="mb-8 sm:mb-12">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -127,7 +125,7 @@ export const ModernAttendanceView: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-all duration-200 hover-lift text-sm font-medium mobile-touch-target"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
               >
                 <Plus className="w-4 h-4" />
                 <span>Új osztály</span>
@@ -135,7 +133,7 @@ export const ModernAttendanceView: React.FC = () => {
               
               <button
                 onClick={() => setShowReportsModal(true)}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-surface border border-DEFAULT rounded-lg hover:bg-surface-hover transition-all duration-200 hover-lift text-sm font-medium text-foreground mobile-touch-target"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm font-medium text-foreground"
               >
                 <Calendar className="w-4 h-4" />
                 <span>Riportok</span>
@@ -145,7 +143,7 @@ export const ModernAttendanceView: React.FC = () => {
 
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
-            <div className="bg-surface-elevated border border-DEFAULT rounded-xl p-4 sm:p-6 hover-lift">
+            <div className="bg-surface-elevated border border-border rounded-xl p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xl sm:text-2xl font-semibold text-foreground">{classes.length}</p>
@@ -157,7 +155,7 @@ export const ModernAttendanceView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-surface-elevated border border-DEFAULT rounded-xl p-4 sm:p-6 hover-lift">
+            <div className="bg-surface-elevated border border-border rounded-xl p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xl sm:text-2xl font-semibold text-foreground">{assignedPedagogus}</p>
@@ -169,7 +167,7 @@ export const ModernAttendanceView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-surface-elevated border border-DEFAULT rounded-xl p-4 sm:p-6 hover-lift">
+            <div className="bg-surface-elevated border border-border rounded-xl p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xl sm:text-2xl font-semibold text-foreground">{totalStudents}</p>
@@ -189,8 +187,8 @@ export const ModernAttendanceView: React.FC = () => {
         </div>
 
         {/* Classes Section */}
-        <div className="bg-surface-elevated border border-DEFAULT rounded-xl overflow-hidden">
-          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-DEFAULT">
+        <div className="bg-surface-elevated border border-border rounded-xl overflow-hidden">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border">
             <h2 className="text-base sm:text-lg font-medium text-foreground flex items-center gap-2 sm:gap-3">
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <span>Osztályok ({classes.length})</span>
@@ -199,7 +197,7 @@ export const ModernAttendanceView: React.FC = () => {
 
           <div className="p-4 sm:p-6">
             {classes.length === 0 ? (
-              <div className="text-center py-12 sm:py-16 animate-fade-in px-4">
+              <div className="text-center py-12 sm:py-16 px-4">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-6 h-6 sm:w-8 sm:h-8 text-foreground-subtle" />
                 </div>
@@ -211,7 +209,7 @@ export const ModernAttendanceView: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-all duration-200 hover-lift font-medium mobile-touch-target"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
                 >
                   <Plus className="w-4 h-4" />
                   Első osztály létrehozása
@@ -219,12 +217,11 @@ export const ModernAttendanceView: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                {classes.map((cls, index) => (
+                {classes.map((cls) => (
                   <div
                     key={cls.id}
                     onClick={() => handleClassSelect(cls)}
-                    className="group p-4 sm:p-6 border border-DEFAULT rounded-xl hover:border-border-hover cursor-pointer transition-all duration-200 hover-lift bg-white animate-slide-in-right"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    className="group p-4 sm:p-6 border border-border rounded-xl hover:border-border-hover cursor-pointer transition-colors bg-surface"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <h3 className="text-base sm:text-lg font-medium text-foreground group-hover:text-primary transition-colors truncate flex-1 pr-2">
@@ -250,7 +247,7 @@ export const ModernAttendanceView: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-DEFAULT">
+                    <div className="mt-4 pt-4 border-t border-border">
                       <p className="text-xs text-foreground-subtle group-hover:text-primary transition-colors">
                         Kattintson a részletekért →
                       </p>
