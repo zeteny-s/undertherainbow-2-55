@@ -86,12 +86,6 @@ export const AdminAttendanceView: React.FC = () => {
     setSelectedClass(cls);
   };
 
-  const handleViewClassFromAlert = (classId: string) => {
-    const cls = classes.find(c => c.id === classId);
-    if (cls) {
-      setSelectedClass(cls);
-    }
-  };
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -108,7 +102,7 @@ export const AdminAttendanceView: React.FC = () => {
         </div>
 
         {/* Missing Attendance Alert */}
-        <MissingAttendanceAlert onViewClass={handleViewClassFromAlert} />
+        <MissingAttendanceAlert />
 
         {/* Header Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">

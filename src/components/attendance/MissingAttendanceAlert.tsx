@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Calendar, Users, Eye } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
+import { ClassAttendanceModal } from './ClassAttendanceModal';
 
 interface Class {
   id: string;
@@ -10,13 +11,22 @@ interface Class {
 }
 
 interface MissingAttendanceAlertProps {
-  onViewClass?: (classId: string) => void;
+  // No props needed - component manages its own state
 }
 
-export const MissingAttendanceAlert: React.FC<MissingAttendanceAlertProps> = ({ onViewClass }) => {
+interface MissingAttendanceAlertState {
+  showClassModal: boolean;
+  selectedClassId: string | null;
+}
+
+export const MissingAttendanceAlert: React.FC<MissingAttendanceAlertProps> = () => {
   const [missingClasses, setMissingClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [modalState, setModalState] = useState<MissingAttendanceAlertState>({
+    showClassModal: false,
+    selectedClassId: null
+  });
 
   useEffect(() => {
     checkMissingAttendance();
@@ -75,6 +85,22 @@ export const MissingAttendanceAlert: React.FC<MissingAttendanceAlertProps> = ({ 
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewClass = (classId: string) => {
+    setModalState({
+      showClassModal: true,
+      selectedClassId: classId
+    });
+  };
+
+  const handleCloseModal = () => {
+    setModalState({
+      showClassModal: false,
+      selectedClassId: null
+    });
+    // Refresh the missing classes data after closing modal
+    checkMissingAttendance();
   };
 
   if (loading) {
@@ -157,20 +183,27 @@ export const MissingAttendanceAlert: React.FC<MissingAttendanceAlertProps> = ({ 
                   </div>
                 </div>
                 
-                {onViewClass && (
-                  <button
-                    onClick={() => onViewClass(cls.id)}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-md hover:bg-yellow-200 transition-colors"
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Részletek
-                  </button>
-                )}
+                <button
+                  onClick={() => handleViewClass(cls.id)}
+                  className="flex items-center px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-md hover:bg-yellow-200 transition-colors"
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Részletek
+                </button>
               </div>
             ))}
           </div>
         </div>
       </div>
+      
+      {/* Class Attendance Modal */}
+      {modalState.showClassModal && modalState.selectedClassId && (
+        <ClassAttendanceModal
+          onClose={handleCloseModal}
+          classId={modalState.selectedClassId}
+          selectedDate={selectedDate}
+        />
+      )}
     </div>
   );
 };

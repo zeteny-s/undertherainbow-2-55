@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Users, CheckCircle, XCircle, Search, BookOpen, Edit2 } from 'lucide-react';
+import { X, Calendar, Users, CheckCircle, XCircle, Search, BookOpen } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useNotifications } from '../../hooks/useNotifications';
-import { EditableAttendanceModal } from './EditableAttendanceModal';
 
 interface AttendanceReportsModalProps {
   onClose: () => void;
@@ -37,7 +36,6 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const { addNotification } = useNotifications();
 
   // Fetch all classes on component mount
@@ -152,23 +150,12 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
             <Calendar className="h-6 w-6 mr-3 text-blue-600" />
             Jelenlét riportok
           </h2>
-          <div className="flex items-center space-x-3">
-            {selectedClassData && (
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                Szerkesztés
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-blue-200 rounded-lg transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-blue-200 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         <div className="p-6 space-y-6">
@@ -363,15 +350,6 @@ export const AttendanceReportsModal: React.FC<AttendanceReportsModalProps> = ({ 
             Bezárás
           </button>
         </div>
-
-        {/* Editable Attendance Modal */}
-        {showEditModal && selectedClassData && (
-          <EditableAttendanceModal
-            onClose={() => setShowEditModal(false)}
-            classData={selectedClassData}
-            selectedDate={selectedDate}
-          />
-        )}
       </div>
     </div>
   );
