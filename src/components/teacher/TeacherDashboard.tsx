@@ -160,11 +160,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onTabChange 
 
       const activities: RecentActivity[] = [];
 
-      // Get recent attendance records
+      // Get recent attendance records (group by date and class to avoid duplicates)
       const { data: recentAttendance } = await supabase
         .from('attendance_records')
         .select(`
-          id,
+          class_id,
           attendance_date,
           created_at,
           classes!inner(name)
@@ -172,18 +172,29 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onTabChange 
         .in('class_id', classIds)
         .eq('pedagogus_id', user.id)
         .gte('created_at', weekAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(3);
+        .order('created_at', { ascending: false });
 
       if (recentAttendance) {
+        // Remove duplicates by creating a unique key for each attendance session
+        const uniqueAttendance = new Map();
         recentAttendance.forEach(record => {
-          activities.push({
-            id: record.id,
-            type: 'attendance',
-            description: `Jelenlét rögzítve - ${record.classes.name}`,
-            timestamp: record.created_at
-          });
+          const key = `${record.class_id}-${record.attendance_date}`;
+          if (!uniqueAttendance.has(key)) {
+            uniqueAttendance.set(key, record);
+          }
         });
+
+        // Convert back to array and take latest 3
+        Array.from(uniqueAttendance.values())
+          .slice(0, 3)
+          .forEach(record => {
+            activities.push({
+              id: `attendance-${record.class_id}-${record.attendance_date}`,
+              type: 'attendance',
+              description: `Jelenlét rögzítve - ${record.classes.name}`,
+              timestamp: record.created_at
+            });
+          });
       }
 
       // Get recent calendar events created
@@ -206,10 +217,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onTabChange 
         });
       }
 
-      // Sort activities by timestamp
+      // Sort activities by timestamp and remove any remaining duplicates
       activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const uniqueActivities = activities.filter((activity, index, arr) => 
+        arr.findIndex(a => a.id === activity.id) === index
+      );
 
-      setRecentActivities(activities.slice(0, 5));
+      setRecentActivities(uniqueActivities.slice(0, 5));
 
       // Calculate stats
       const totalStudents = classesWithAttendance.reduce((sum, cls) => sum + cls.studentCount, 0);
