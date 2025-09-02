@@ -13,7 +13,7 @@ import { DocumentsPage } from './components/documents/DocumentsPage';
 import { CalendarPage } from './components/calendar/CalendarPage';
 import { ChatPage } from './components/chat/ChatPage';
 import { JelenletiPage } from './components/JelenletiPage';
-import { PedagogusBlankDashboard } from './components/PedagogusBlankDashboard';
+import { TeacherDashboard } from './components/teacher/TeacherDashboard';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -52,7 +52,7 @@ const AppContent: React.FC = () => {
         if (profileType === 'vezetoi') {
           return <ManagerDashboard />;
         } else if (profileType === 'pedagogus') {
-          return <PedagogusBlankDashboard />;
+          return <TeacherDashboard />;
         }
         return <Dashboard />;
       case 'calendar':
