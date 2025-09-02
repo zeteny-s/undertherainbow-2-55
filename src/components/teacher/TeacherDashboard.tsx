@@ -53,7 +53,11 @@ interface RecentActivity {
   timestamp: string;
 }
 
-export const TeacherDashboard: React.FC = () => {
+interface TeacherDashboardProps {
+  onTabChange?: (tab: string) => void;
+}
+
+export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onTabChange }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<TeacherStats>({
@@ -150,6 +154,63 @@ export const TeacherDashboard: React.FC = () => {
 
       setUpcomingEvents(events || []);
 
+      // Fetch recent activities from last 7 days
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const activities: RecentActivity[] = [];
+
+      // Get recent attendance records
+      const { data: recentAttendance } = await supabase
+        .from('attendance_records')
+        .select(`
+          id,
+          attendance_date,
+          created_at,
+          classes!inner(name)
+        `)
+        .in('class_id', classIds)
+        .eq('pedagogus_id', user.id)
+        .gte('created_at', weekAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (recentAttendance) {
+        recentAttendance.forEach(record => {
+          activities.push({
+            id: record.id,
+            type: 'attendance',
+            description: `Jelenlét rögzítve - ${record.classes.name}`,
+            timestamp: record.created_at
+          });
+        });
+      }
+
+      // Get recent calendar events created
+      const { data: recentEvents } = await supabase
+        .from('calendar_events')
+        .select('id, title, created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', weekAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(2);
+
+      if (recentEvents) {
+        recentEvents.forEach(event => {
+          activities.push({
+            id: event.id,
+            type: 'event',
+            description: `Esemény létrehozva - ${event.title}`,
+            timestamp: event.created_at
+          });
+        });
+      }
+
+      // Sort activities by timestamp
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      setRecentActivities(activities.slice(0, 5));
+
       // Calculate stats
       const totalStudents = classesWithAttendance.reduce((sum, cls) => sum + cls.studentCount, 0);
       const totalPresent = classesWithAttendance.reduce((sum, cls) => sum + cls.todayAttendance.present, 0);
@@ -159,21 +220,11 @@ export const TeacherDashboard: React.FC = () => {
       setStats({
         activeClasses: classesWithAttendance.length,
         totalStudents,
-        pendingTasks: 0, // Placeholder for future task management
+        pendingTasks: 0, // Will be connected when task management is implemented
         weekEvents: events?.length || 0,
         attendanceRate,
-        unreadMessages: 0 // Placeholder for future messaging system
+        unreadMessages: 0 // Will be connected when messaging is implemented
       });
-
-      // Mock recent activities for now
-      setRecentActivities([
-        {
-          id: '1',
-          type: 'attendance',
-          description: 'Jelenlét rögzítve - 9.A osztály',
-          timestamp: new Date().toISOString()
-        }
-      ]);
 
     } catch (error) {
       console.error('Error loading teacher data:', error);
@@ -265,7 +316,10 @@ export const TeacherDashboard: React.FC = () => {
                   </div>
                   <h2 className="text-lg sm:text-xl font-semibold text-foreground">Feladataim</h2>
                 </div>
-                <button className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors mobile-touch-target">
+                <button 
+                  onClick={() => onTabChange?.('tasks')}
+                  className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors mobile-touch-target"
+                >
                   <Plus className="h-4 w-4 text-primary" />
                 </button>
               </div>
@@ -276,7 +330,7 @@ export const TeacherDashboard: React.FC = () => {
                 description="A feladatok itt jelennek meg, amikor az adminisztráció vagy vezetőség kiírja őket."
                 action={{
                   label: "Feladatok megtekintése",
-                  onClick: () => console.log("Navigate to tasks")
+                  onClick: () => onTabChange?.('tasks')
                 }}
               />
             </div>
@@ -325,7 +379,10 @@ export const TeacherDashboard: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <button className="w-full mt-3 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium mobile-touch-target">
+                      <button 
+                        onClick={() => onTabChange?.('jelenleti')}
+                        className="w-full mt-3 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium mobile-touch-target"
+                      >
                         Jelenlét felvétele
                       </button>
                     </div>
@@ -381,19 +438,31 @@ export const TeacherDashboard: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button className="p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-all hover-lift text-center mobile-touch-target">
+                <button 
+                  onClick={() => onTabChange?.('jelenleti')}
+                  className="p-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-all hover-lift text-center mobile-touch-target"
+                >
                   <UserCheck className="h-5 w-5 mx-auto mb-2 text-primary" />
                   <span className="text-xs font-medium text-foreground block">Jelenlét</span>
                 </button>
-                <button className="p-3 bg-success/10 hover:bg-success/20 rounded-lg transition-all hover-lift text-center mobile-touch-target">
+                <button 
+                  onClick={() => onTabChange?.('calendar')}
+                  className="p-3 bg-success/10 hover:bg-success/20 rounded-lg transition-all hover-lift text-center mobile-touch-target"
+                >
                   <Calendar className="h-5 w-5 mx-auto mb-2 text-success" />
                   <span className="text-xs font-medium text-foreground block">Esemény</span>
                 </button>
-                <button className="p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-all hover-lift text-center mobile-touch-target">
+                <button 
+                  onClick={() => onTabChange?.('chat')}
+                  className="p-3 bg-warning/10 hover:bg-warning/20 rounded-lg transition-all hover-lift text-center mobile-touch-target"
+                >
                   <Send className="h-5 w-5 mx-auto mb-2 text-warning" />
                   <span className="text-xs font-medium text-foreground block">Üzenet</span>
                 </button>
-                <button className="p-3 bg-error/10 hover:bg-error/20 rounded-lg transition-all hover-lift text-center mobile-touch-target">
+                <button 
+                  onClick={() => onTabChange?.('documents')}
+                  className="p-3 bg-error/10 hover:bg-error/20 rounded-lg transition-all hover-lift text-center mobile-touch-target"
+                >
                   <Upload className="h-5 w-5 mx-auto mb-2 text-error" />
                   <span className="text-xs font-medium text-foreground block">Dokumentum</span>
                 </button>
@@ -409,7 +478,10 @@ export const TeacherDashboard: React.FC = () => {
                   </div>
                   <h2 className="text-lg sm:text-xl font-semibold text-foreground">Heti Események</h2>
                 </div>
-                <button className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors mobile-touch-target">
+                <button 
+                  onClick={() => onTabChange?.('calendar')}
+                  className="p-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors mobile-touch-target"
+                >
                   <Plus className="h-4 w-4 text-primary" />
                 </button>
               </div>
@@ -457,7 +529,7 @@ export const TeacherDashboard: React.FC = () => {
                 description="Az üzenetek és közlemények itt jelennek meg."
                 action={{
                   label: "Chat megnyitása",
-                  onClick: () => console.log("Navigate to chat")
+                  onClick: () => onTabChange?.('chat')
                 }}
               />
             </div>

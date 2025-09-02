@@ -52,7 +52,7 @@ const AppContent: React.FC = () => {
         if (profileType === 'vezetoi') {
           return <ManagerDashboard />;
         } else if (profileType === 'pedagogus') {
-          return <TeacherDashboard />;
+          return <TeacherDashboard onTabChange={setActiveTab} />;
         }
         return <Dashboard />;
       case 'calendar':
