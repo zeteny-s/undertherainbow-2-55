@@ -274,14 +274,14 @@ export const DocumentsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sidebar */}
         <aside className="lg:col-span-3">
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Folder className="w-5 h-5 text-gray-600" />
               <h3 className="font-semibold text-gray-900">Mappák</h3>
             </div>
             
             <div className="space-y-4 mb-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Új mappa neve"
@@ -369,28 +369,28 @@ export const DocumentsPage: React.FC = () => {
 
             <div className="divide-y divide-gray-200">
               {docs.map((doc) => (
-                <div key={doc.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div key={doc.id} className="px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <FileText className="w-5 h-5 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900 truncate">{doc.title}</h3>
-                        <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
-                          <span>{doc.file_name}</span>
-                          <span>•</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-gray-500 mt-1">
+                          <span className="truncate">{doc.file_name}</span>
+                          <span className="hidden sm:inline">•</span>
                           <span>{Math.round((doc.file_size || 0) / 1024)} KB</span>
-                          <span>•</span>
+                          <span className="hidden sm:inline">•</span>
                           <span>{formatDate(doc.created_at)}</span>
                         </div>
                         {doc.description && (
-                          <p className="text-sm text-gray-600 mt-1 truncate">{doc.description}</p>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{doc.description}</p>
                         )}
                       </div>
                     </div>
 
-                     <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-1 sm:gap-2 flex-shrink-0">
                       <button
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         onClick={() => setPreviewDocId(doc.id)}
