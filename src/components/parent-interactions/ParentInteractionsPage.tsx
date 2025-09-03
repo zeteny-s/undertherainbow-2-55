@@ -52,31 +52,58 @@ export const ParentInteractionsPage: React.FC = () => {
       
       if (!user?.id) return;
       
-      const { data: houseLeaderData } = await supabase
-        .from('house_leaders')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!houseLeaderData) {
+      // Check if user is a house leader from metadata instead of database table
+      const profileType = user.user_metadata?.profile_type;
+      if (profileType !== 'haz_vezeto') {
         setLoading(false);
         return;
       }
 
-      setHouseLeader(houseLeaderData as HouseLeader);
+      // Create a house leader object from user metadata
+      const houseLeaderData: HouseLeader = {
+        id: user.id,
+        user_id: user.id,
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'House Leader',
+        email: user.email || '',
+        status: 'active',
+        max_families: 20,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-      const { data: assignments } = await supabase
-        .from('family_assignments')
-        .select(`families (*)`)
-        .eq('house_leader_id', houseLeaderData.id)
-        .eq('status', 'active')
-        .eq('academic_year', academicYear);
+      setHouseLeader(houseLeaderData);
 
-      const familyList = assignments?.map((a: any) => a.families).filter(Boolean) as Family[] || [];
-      setFamilies(familyList);
+      // For now, we'll create mock families since the family assignment system isn't fully set up
+      // This should be replaced with real database queries when the family system is implemented
+      const mockFamilies: Family[] = [
+        {
+          id: '1',
+          name: 'Smith Family',
+          primary_contact_name: 'John Smith',
+          primary_contact_email: 'john.smith@example.com',
+          primary_contact_phone: '+36301234567',
+          address: '1234 Budapest, Example Street 12.',
+          children_count: 2,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'Johnson Family',
+          primary_contact_name: 'Mary Johnson',
+          primary_contact_email: 'mary.johnson@example.com',
+          primary_contact_phone: '+36301234568',
+          address: '1234 Budapest, Sample Avenue 34.',
+          children_count: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+
+      setFamilies(mockFamilies);
       
-      if (familyList.length > 0) {
-        setSelectedFamily(familyList[0]);
+      if (mockFamilies.length > 0) {
+        setSelectedFamily(mockFamilies[0]);
       }
 
       const { data: typesData } = await supabase
@@ -201,11 +228,16 @@ export const ParentInteractionsPage: React.FC = () => {
   }
 
   if (!houseLeader) {
+    const profileType = user?.user_metadata?.profile_type;
     return (
       <EmptyState
         icon={AlertCircle}
         title="Access Restricted"
-        description="Only House Leaders can access the Parent Interaction Tracking system."
+        description={
+          profileType === 'haz_vezeto' 
+            ? "Loading house leader data..." 
+            : "Only House Leaders can access the Parent Interaction Tracking system."
+        }
       />
     );
   }
