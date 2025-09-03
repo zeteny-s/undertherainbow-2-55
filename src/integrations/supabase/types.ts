@@ -17,42 +17,36 @@ export type Database = {
       annual_progress: {
         Row: {
           academic_year: string
-          created_at: string | null
+          created_at: string
           family_id: string
-          goal_hours: number | null
           house_leader_id: string
           id: string
           last_interaction_date: string | null
-          status: string | null
           total_hours: number | null
           total_interactions: number | null
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           academic_year: string
-          created_at?: string | null
+          created_at?: string
           family_id: string
-          goal_hours?: number | null
           house_leader_id: string
           id?: string
           last_interaction_date?: string | null
-          status?: string | null
           total_hours?: number | null
           total_interactions?: number | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           academic_year?: string
-          created_at?: string | null
+          created_at?: string
           family_id?: string
-          goal_hours?: number | null
           house_leader_id?: string
           id?: string
           last_interaction_date?: string | null
-          status?: string | null
           total_hours?: number | null
           total_interactions?: number | null
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -60,13 +54,6 @@ export type Database = {
             columns: ["family_id"]
             isOneToOne: false
             referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "annual_progress_house_leader_id_fkey"
-            columns: ["house_leader_id"]
-            isOneToOne: false
-            referencedRelation: "house_leaders"
             referencedColumns: ["id"]
           },
         ]
@@ -860,81 +847,92 @@ export type Database = {
       }
       families: {
         Row: {
-          address: string | null
-          children_count: number | null
-          created_at: string | null
+          child_age: number | null
+          child_name: string | null
+          created_at: string
+          house_leader_id: string
           id: string
           name: string
-          primary_contact_email: string | null
-          primary_contact_name: string | null
-          primary_contact_phone: string | null
-          updated_at: string | null
+          notes: string | null
+          start_date: string | null
+          updated_at: string
         }
         Insert: {
-          address?: string | null
-          children_count?: number | null
-          created_at?: string | null
+          child_age?: number | null
+          child_name?: string | null
+          created_at?: string
+          house_leader_id: string
           id?: string
           name: string
-          primary_contact_email?: string | null
-          primary_contact_name?: string | null
-          primary_contact_phone?: string | null
-          updated_at?: string | null
+          notes?: string | null
+          start_date?: string | null
+          updated_at?: string
         }
         Update: {
-          address?: string | null
-          children_count?: number | null
-          created_at?: string | null
+          child_age?: number | null
+          child_name?: string | null
+          created_at?: string
+          house_leader_id?: string
           id?: string
           name?: string
-          primary_contact_email?: string | null
-          primary_contact_name?: string | null
-          primary_contact_phone?: string | null
-          updated_at?: string | null
+          notes?: string | null
+          start_date?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
-      family_assignments: {
+      family_interactions: {
         Row: {
-          academic_year: string
-          assigned_date: string | null
-          created_at: string | null
+          category: string
+          created_at: string
+          duration_minutes: number
           family_id: string
           house_leader_id: string
           id: string
-          status: string | null
+          interaction_date: string
+          location: string | null
+          next_steps: string | null
+          notes: string | null
+          referral_opportunity: boolean | null
+          satisfaction_level: number | null
+          updated_at: string
         }
         Insert: {
-          academic_year: string
-          assigned_date?: string | null
-          created_at?: string | null
+          category: string
+          created_at?: string
+          duration_minutes?: number
           family_id: string
           house_leader_id: string
           id?: string
-          status?: string | null
+          interaction_date?: string
+          location?: string | null
+          next_steps?: string | null
+          notes?: string | null
+          referral_opportunity?: boolean | null
+          satisfaction_level?: number | null
+          updated_at?: string
         }
         Update: {
-          academic_year?: string
-          assigned_date?: string | null
-          created_at?: string | null
+          category?: string
+          created_at?: string
+          duration_minutes?: number
           family_id?: string
           house_leader_id?: string
           id?: string
-          status?: string | null
+          interaction_date?: string
+          location?: string | null
+          next_steps?: string | null
+          notes?: string | null
+          referral_opportunity?: boolean | null
+          satisfaction_level?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "family_assignments_family_id_fkey"
+            foreignKeyName: "family_interactions_family_id_fkey"
             columns: ["family_id"]
             isOneToOne: false
             referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "family_assignments_house_leader_id_fkey"
-            columns: ["house_leader_id"]
-            isOneToOne: false
-            referencedRelation: "house_leaders"
             referencedColumns: ["id"]
           },
         ]
@@ -1041,42 +1039,6 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           user_id?: string
-        }
-        Relationships: []
-      }
-      interaction_types: {
-        Row: {
-          color: string | null
-          created_at: string | null
-          description: string | null
-          hour_value: number
-          icon: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          tier: number | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string | null
-          description?: string | null
-          hour_value: number
-          icon?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          tier?: number | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string | null
-          description?: string | null
-          hour_value?: number
-          icon?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          tier?: number | null
         }
         Relationships: []
       }
@@ -1351,94 +1313,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      parent_interactions: {
-        Row: {
-          action_items: string[] | null
-          attachments: Json | null
-          created_at: string | null
-          cultural_notes: string | null
-          description: string
-          duration_minutes: number | null
-          family_id: string
-          follow_up_completed: boolean | null
-          follow_up_date: string | null
-          hour_value: number
-          house_leader_id: string
-          id: string
-          interaction_date: string
-          interaction_type_id: string
-          key_topics: string[] | null
-          participants: string[] | null
-          quality_rating: number | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          action_items?: string[] | null
-          attachments?: Json | null
-          created_at?: string | null
-          cultural_notes?: string | null
-          description: string
-          duration_minutes?: number | null
-          family_id: string
-          follow_up_completed?: boolean | null
-          follow_up_date?: string | null
-          hour_value: number
-          house_leader_id: string
-          id?: string
-          interaction_date: string
-          interaction_type_id: string
-          key_topics?: string[] | null
-          participants?: string[] | null
-          quality_rating?: number | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          action_items?: string[] | null
-          attachments?: Json | null
-          created_at?: string | null
-          cultural_notes?: string | null
-          description?: string
-          duration_minutes?: number | null
-          family_id?: string
-          follow_up_completed?: boolean | null
-          follow_up_date?: string | null
-          hour_value?: number
-          house_leader_id?: string
-          id?: string
-          interaction_date?: string
-          interaction_type_id?: string
-          key_topics?: string[] | null
-          participants?: string[] | null
-          quality_rating?: number | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "parent_interactions_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "parent_interactions_house_leader_id_fkey"
-            columns: ["house_leader_id"]
-            isOneToOne: false
-            referencedRelation: "house_leaders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "parent_interactions_interaction_type_id_fkey"
-            columns: ["interaction_type_id"]
-            isOneToOne: false
-            referencedRelation: "interaction_types"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       payroll_records: {
         Row: {

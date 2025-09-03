@@ -14,6 +14,7 @@ import { CalendarPage } from './components/calendar/CalendarPage';
 import { ChatPage } from './components/chat/ChatPage';
 import { JelenletiPage } from './components/JelenletiPage';
 import { TeacherDashboard } from './components/teacher/TeacherDashboard';
+import { FamilyRelationshipsPage } from './components/family-relationships/FamilyRelationshipsPage';
 
 
 const AppContent: React.FC = () => {
@@ -68,6 +69,8 @@ const AppContent: React.FC = () => {
         return <DocumentsPage />;
       case 'payroll':
         return <PayrollCosts />;
+      case 'family-relationships':
+        return <FamilyRelationshipsPage />;
       case 'jelenleti':
         return <JelenletiPage />;
       case 'settings':
