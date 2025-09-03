@@ -37,10 +37,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
         if (!name.trim()) {
           throw new Error('Név megadása kötelező');
         }
-        if (profileType === 'vezetoi' && managerPassword !== 'Finance123.') {
+        if (profileType === 'vezetoi' && managerPassword !== 'Finance123') {
           throw new Error('Hibás vezetői jelszó');
         }
-        if (profileType === 'haz_vezeto' && managerPassword !== 'Hazvezeto123.') {
+        if (profileType === 'haz_vezeto' && managerPassword !== 'House123') {
           throw new Error('Hibás házvezetői jelszó');
         }
 
