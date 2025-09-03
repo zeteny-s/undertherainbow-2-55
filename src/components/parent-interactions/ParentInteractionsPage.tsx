@@ -50,10 +50,12 @@ export const ParentInteractionsPage: React.FC = () => {
     try {
       setLoading(true);
       
+      if (!user?.id) return;
+      
       const { data: houseLeaderData } = await supabase
         .from('house_leaders')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .single();
 
       if (!houseLeaderData) {
@@ -108,7 +110,13 @@ export const ParentInteractionsPage: React.FC = () => {
         .lte('interaction_date', academicYearEnd)
         .order('interaction_date', { ascending: false });
 
-      setInteractions(data || []);
+      setInteractions((data || []).map((interaction: any) => ({
+        ...interaction,
+        duration_minutes: interaction.duration_minutes ?? undefined,
+        action_items: interaction.action_items ?? [],
+        key_topics: interaction.key_topics ?? [],
+        participants: interaction.participants ?? []
+      })));
     } catch (error) {
       console.error('Error loading interactions:', error);
     }
@@ -126,7 +134,12 @@ export const ParentInteractionsPage: React.FC = () => {
         .eq('academic_year', academicYear)
         .maybeSingle();
 
-      setProgress(data);
+      setProgress(data ? {
+        ...data,
+        total_hours: data.total_hours ?? 0,
+        total_interactions: data.total_interactions ?? 0,
+        goal_hours: data.goal_hours ?? 0
+      } : null);
     } catch (error) {
       console.error('Error loading progress:', error);
     }
@@ -164,7 +177,14 @@ export const ParentInteractionsPage: React.FC = () => {
       if (error) throw error;
 
       if (data) {
-        setInteractions(prev => [data, ...prev]);
+        const mappedData = {
+          ...data,
+          duration_minutes: data.duration_minutes ?? undefined,
+          action_items: data.action_items ?? [],
+          key_topics: data.key_topics ?? [],
+          participants: data.participants ?? []
+        };
+        setInteractions(prev => [mappedData, ...prev]);
         loadProgress();
       }
     } catch (error) {

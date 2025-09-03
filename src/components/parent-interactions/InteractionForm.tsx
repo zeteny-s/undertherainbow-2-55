@@ -285,6 +285,46 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
+            Action Items
+          </label>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={newActionItem}
+              onChange={(e) => setNewActionItem(e.target.value)}
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Add action item"
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addActionItem())}
+            />
+            <button
+              type="button"
+              onClick={addActionItem}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {formData.action_items.map((item, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded text-sm text-green-700"
+              >
+                {item}
+                <button
+                  type="button"
+                  onClick={() => removeActionItem(index)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Follow-up Date
           </label>
           <input
