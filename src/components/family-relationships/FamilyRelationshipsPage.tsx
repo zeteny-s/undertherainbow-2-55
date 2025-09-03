@@ -53,7 +53,7 @@ export const FamilyRelationshipsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading families:', error);
-      addNotification('Hiba a családok betöltésekor', 'error');
+      addNotification('error', 'Hiba a családok betöltésekor');
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ export const FamilyRelationshipsPage: React.FC = () => {
       setInteractions(data as FamilyInteraction[] || []);
     } catch (error) {
       console.error('Error loading interactions:', error);
-      addNotification('Hiba az interakciók betöltésekor', 'error');
+      addNotification('error', 'Hiba az interakciók betöltésekor');
     }
   };
 
@@ -123,14 +123,10 @@ export const FamilyRelationshipsPage: React.FC = () => {
       
       setFamilies(prev => [...prev, data]);
       setShowFamilyForm(false);
-      addNotification('Család sikeresen hozzáadva', 'success');
+      addNotification('success', 'Család sikeresen hozzáadva');
     } catch (error) {
       console.error('Error creating family:', error);
-      addNotification({
-        title: 'Hiba',
-        message: 'Hiba a család hozzáadásakor',
-        type: 'error'
-      });
+      addNotification('error', 'Hiba a család hozzáadásakor');
     }
   };
 
@@ -153,18 +149,10 @@ export const FamilyRelationshipsPage: React.FC = () => {
         setSelectedFamily(data);
       }
       setEditingFamily(null);
-      addNotification({
-        title: 'Siker',
-        message: 'Család sikeresen frissítve',
-        type: 'success'
-      });
+      addNotification('success', 'Család sikeresen frissítve');
     } catch (error) {
       console.error('Error updating family:', error);
-      addNotification({
-        title: 'Hiba',
-        message: 'Hiba a család frissítésekor',
-        type: 'error'
-      });
+      addNotification('error', 'Hiba a család frissítésekor');
     }
   };
 
@@ -185,18 +173,10 @@ export const FamilyRelationshipsPage: React.FC = () => {
         const remainingFamilies = families.filter(f => f.id !== familyId);
         setSelectedFamily(remainingFamilies.length > 0 ? remainingFamilies[0] : null);
       }
-      addNotification({
-        title: 'Siker',
-        message: 'Család sikeresen törölve',
-        type: 'success'
-      });
+      addNotification('success', 'Család sikeresen törölve');
     } catch (error) {
       console.error('Error deleting family:', error);
-      addNotification({
-        title: 'Hiba',
-        message: 'Hiba a család törlésekor',
-        type: 'error'
-      });
+      addNotification('error', 'Hiba a család törlésekor');
     }
   };
 
@@ -226,18 +206,10 @@ export const FamilyRelationshipsPage: React.FC = () => {
       setInteractions(prev => [data as FamilyInteraction, ...prev]);
       setShowInteractionForm(false);
       loadProgress(selectedFamily.id); // Reload progress after adding interaction
-      addNotification({
-        title: 'Siker',
-        message: 'Interakció sikeresen hozzáadva',
-        type: 'success'
-      });
+      addNotification('success', 'Interakció sikeresen hozzáadva');
     } catch (error) {
       console.error('Error creating interaction:', error);
-      addNotification({
-        title: 'Hiba',
-        message: 'Hiba az interakció hozzáadásakor',
-        type: 'error'
-      });
+      addNotification('error', 'Hiba az interakció hozzáadásakor');
     }
   };
 
@@ -260,18 +232,10 @@ export const FamilyRelationshipsPage: React.FC = () => {
       if (selectedFamily) {
         loadProgress(selectedFamily.id); // Reload progress after updating interaction
       }
-      addNotification({
-        title: 'Siker',
-        message: 'Interakció sikeresen frissítve',
-        type: 'success'
-      });
+      addNotification('success', 'Interakció sikeresen frissítve');
     } catch (error) {
       console.error('Error updating interaction:', error);
-      addNotification({
-        title: 'Hiba',
-        message: 'Hiba az interakció frissítésekor',
-        type: 'error'
-      });
+      addNotification('error', 'Hiba az interakció frissítésekor');
     }
   };
 
@@ -291,18 +255,10 @@ export const FamilyRelationshipsPage: React.FC = () => {
       if (selectedFamily) {
         loadProgress(selectedFamily.id); // Reload progress after deleting interaction
       }
-      addNotification({
-        title: 'Siker',
-        message: 'Interakció sikeresen törölve', 
-        type: 'success'
-      });
+      addNotification('success', 'Interakció sikeresen törölve');
     } catch (error) {
       console.error('Error deleting interaction:', error);
-      addNotification({
-        title: 'Hiba',
-        message: 'Hiba az interakció törlésekor',
-        type: 'error'
-      });
+      addNotification('error', 'Hiba az interakció törlésekor');
     }
   };
 
