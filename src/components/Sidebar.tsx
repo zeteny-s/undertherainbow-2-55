@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle, Users, Heart } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 
@@ -92,11 +92,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       case 'haz_vezeto':
         return [
           ...commonItems,
-          {
-            id: 'parent-interactions',
-            label: 'Szülői kapcsolatok',
-            icon: Heart,
-          },
           {
             id: 'upload',
             label: 'Iktató',

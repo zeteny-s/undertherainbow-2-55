@@ -14,7 +14,7 @@ import { CalendarPage } from './components/calendar/CalendarPage';
 import { ChatPage } from './components/chat/ChatPage';
 import { JelenletiPage } from './components/JelenletiPage';
 import { TeacherDashboard } from './components/teacher/TeacherDashboard';
-import { ParentInteractionsPage } from './components/parent-interactions/ParentInteractionsPage';
+
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -68,8 +68,6 @@ const AppContent: React.FC = () => {
         return <DocumentsPage />;
       case 'payroll':
         return <PayrollCosts />;
-      case 'parent-interactions':
-        return <ParentInteractionsPage />;
       case 'jelenleti':
         return <JelenletiPage />;
       case 'settings':
