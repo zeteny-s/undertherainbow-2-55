@@ -1,14 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Check, X, Plus, FileText, Loader, AlertCircle, Edit, RotateCcw } from 'lucide-react';
+import { X, Camera } from 'lucide-react';
 import jsPDF from 'jspdf';
 import Cookies from 'js-cookie';
-
-interface ScannedPage {
-  id: string;
-  originalImage: string;
-  processedImage: string;
-  canvas?: HTMLCanvasElement;
-}
 
 interface MobileScannerProps {
   onScanComplete: (pdfBlob: Blob, fileName: string) => void;
@@ -20,319 +13,24 @@ interface Point {
   y: number;
 }
 
-interface ManualCropperProps {
-  imageData: string;
-  initialPoints: Point[];
-  onApply: (points: Point[]) => void;
-  onCancel: () => void;
-}
-
-// Manual Cropper Component using Konva
-const ManualCropper: React.FC<ManualCropperProps> = ({ imageData, initialPoints, onApply, onCancel }) => {
-  const [points, setPoints] = useState<Point[]>(initialPoints);
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
-  const [scale, setScale] = useState(1);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const [isDragging, setIsDragging] = useState<number | null>(null);
-
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const containerWidth = window.innerWidth - 32; // Account for padding
-      const containerHeight = window.innerHeight - 200; // Account for header and buttons
-
-      const scaleX = containerWidth / img.width;
-      const scaleY = containerHeight / img.height;
-      const newScale = Math.min(scaleX, scaleY, 1);
-
-      const displayWidth = img.width * newScale;
-      const displayHeight = img.height * newScale;
-
-      canvas.width = displayWidth;
-      canvas.height = displayHeight;
-
-      setImageSize({ width: displayWidth, height: displayHeight });
-      setScale(newScale);
-
-      // Scale the initial points to match the display size
-      const scaledPoints = initialPoints.map(point => ({
-        x: point.x * newScale,
-        y: point.y * newScale
-      }));
-      setPoints(scaledPoints);
-
-      // Draw the image
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0, displayWidth, displayHeight);
-        drawOverlay(ctx, scaledPoints);
-      }
-    };
-    img.src = imageData;
-    // Store reference for cleanup
-    (imageRef as any).current = img;
-  }, [imageData, initialPoints]);
-
-  const drawOverlay = (ctx: CanvasRenderingContext2D, currentPoints: Point[]) => {
-    if (currentPoints.length !== 4) return;
-
-    // Clear previous overlay
-    const img = imageRef.current;
-    if (img) {
-      ctx.clearRect(0, 0, imageSize.width, imageSize.height);
-      ctx.drawImage(img, 0, 0, imageSize.width, imageSize.height);
-    }
-
-    // Draw crop area with professional blue styling
-    ctx.strokeStyle = '#3B82F6';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = 'rgba(59, 130, 246, 0.3)';
-    ctx.shadowBlur = 6;
-    
-    ctx.beginPath();
-    ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-    for (let i = 1; i < currentPoints.length; i++) {
-      ctx.lineTo(currentPoints[i].x, currentPoints[i].y);
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    ctx.shadowBlur = 0;
-
-    // Draw corner handles with blue accents
-    currentPoints.forEach((point, index) => {
-      // Outer blue ring
-      ctx.fillStyle = '#3B82F6';
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 18, 0, 2 * Math.PI);
-      ctx.fill();
-      
-      // Inner white circle
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
-      ctx.fill();
-
-      // Corner number with blue text
-      ctx.fillStyle = '#3B82F6';
-      ctx.font = 'bold 14px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText((index + 1).toString(), point.x, point.y + 5);
-    });
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Find the closest point
-    let closestIndex = -1;
-    let minDistance = Infinity;
-
-    points.forEach((point, index) => {
-      const distance = Math.hypot(x - point.x, y - point.y);
-      if (distance < 30 && distance < minDistance) {
-        minDistance = distance;
-        closestIndex = index;
-      }
-    });
-
-    if (closestIndex !== -1) {
-      setIsDragging(closestIndex);
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isDragging === null) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.max(0, Math.min(imageSize.width, e.clientX - rect.left));
-    const y = Math.max(0, Math.min(imageSize.height, e.clientY - rect.top));
-
-    const newPoints = [...points];
-    newPoints[isDragging] = { x, y };
-    setPoints(newPoints);
-
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      drawOverlay(ctx, newPoints);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(null);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-
-    // Find the closest point
-    let closestIndex = -1;
-    let minDistance = Infinity;
-
-    points.forEach((point, index) => {
-      const distance = Math.hypot(x - point.x, y - point.y);
-      if (distance < 40 && distance < minDistance) {
-        minDistance = distance;
-        closestIndex = index;
-      }
-    });
-
-    if (closestIndex !== -1) {
-      setIsDragging(closestIndex);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    if (isDragging === null) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = Math.max(0, Math.min(imageSize.width, touch.clientX - rect.left));
-    const y = Math.max(0, Math.min(imageSize.height, touch.clientY - rect.top));
-
-    const newPoints = [...points];
-    newPoints[isDragging] = { x, y };
-    setPoints(newPoints);
-
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      drawOverlay(ctx, newPoints);
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    setIsDragging(null);
-  };
-
-  const handleApply = () => {
-    // Scale points back to original image size
-    const originalPoints = points.map(point => ({
-      x: point.x / scale,
-      y: point.y / scale
-    }));
-    onApply(originalPoints);
-  };
-
-  const resetPoints = () => {
-    const scaledPoints = initialPoints.map(point => ({
-      x: point.x * scale,
-      y: point.y * scale
-    }));
-    setPoints(scaledPoints);
-
-    const ctx = canvasRef.current?.getContext('2d');
-    if (ctx) {
-      drawOverlay(ctx, scaledPoints);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      {/* Header */}
-      <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Manuális vágás</h3>
-          <button
-            onClick={resetPoints}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-            title="Visszaállítás"
-          >
-            <RotateCcw className="h-5 w-5 text-gray-600" />
-          </button>
-        </div>
-        <p className="text-sm text-gray-600 mt-1">
-          Húzza a sarkok pontjait a pontos vágáshoz
-        </p>
-      </div>
-
-      {/* Canvas Container */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50 overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          className="max-w-full max-h-full border-2 border-gray-300 rounded-xl shadow-lg cursor-crosshair bg-white"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{ touchAction: 'none' }}
-        />
-      </div>
-
-      {/* Controls */}
-      <div className="p-4 bg-white border-t border-gray-200 shadow-lg">
-        <div className="flex items-center justify-between space-x-4">
-          <button
-            onClick={onCancel}
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all"
-          >
-            <X className="h-4 w-4 mr-2" />
-            Mégse
-          </button>
-          <button
-            onClick={handleApply}
-            className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
-          >
-            <Check className="h-4 w-4 mr-2" />
-            Alkalmazás
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Apple-quality scanning experience with minimal UI and luxurious design
 
 export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, onClose }) => {
-  const [scannedPages, setScannedPages] = useState<ScannedPage[]>([]);
-  const [currentStep, setCurrentStep] = useState<'camera' | 'preview' | 'naming' | 'manualCrop'>('camera');
+  // Simplified state management for Apple-like experience
   const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [openCVReady, setOpenCVReady] = useState(false);
-  const [, setDocumentDetected] = useState(false);
-  const [fileName, setFileName] = useState('');
-  
-  // Manual cropping state
-  const [manualCropData, setManualCropData] = useState<{
-    imageData: string;
-    originalCanvas: HTMLCanvasElement;
-    detectedPoints: Point[];
-  } | null>(null);
-  
-  // Track if PDF creation has started (for mobile preview hiding)
-  const [pdfCreationStarted, setPdfCreationStarted] = useState(false);
+  const [documentDetected, setDocumentDetected] = useState(false);
+  const [captureAnimation, setCaptureAnimation] = useState(false);
 
+  // Core refs for camera and processing
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<number | null>(null);
   const lastDetectionRef = useRef<Point[] | null>(null);
+  const stabilityCountRef = useRef(0);
 
   // Load OpenCV.js
   useEffect(() => {
@@ -361,14 +59,12 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
 
         script.onerror = () => {
           console.error('Failed to load OpenCV');
-          setError('Nem sikerült betölteni a dokumentum felismerő rendszert');
           setOpenCVReady(false);
         };
 
         document.head.appendChild(script);
       } catch (err) {
         console.error('OpenCV loading error:', err);
-        setError('Dokumentum felismerő rendszer betöltési hiba');
         setOpenCVReady(false);
       }
     };
@@ -403,28 +99,25 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   // Initialize camera with high resolution
   const initializeCamera = useCallback(async () => {
     try {
-      setError(null);
-      
       // Check if we already have permission
       const hasPermission = await checkCameraPermission();
       if (!hasPermission) {
         // Only show permission dialog if not already granted
         const shouldAsk = !Cookies.get('camera_permission_asked');
         if (!shouldAsk) {
-          setError('Kamera hozzáférés megtagadva. Engedélyezze a kamera használatát a böngésző beállításaiban.');
           return;
         }
         Cookies.set('camera_permission_asked', 'true', { expires: 1 }); // Expires in 1 day
       }
       
-      const constraints = {
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          frameRate: { ideal: 60 } // Increased for smoother detection
-        }
-      };
+        const constraints = {
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 3840, min: 1920 },
+            height: { ideal: 2160, min: 1080 },
+            frameRate: { ideal: 60 }
+          }
+        };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
@@ -435,7 +128,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          console.log('Camera ready, starting document detection');
           setCameraReady(true);
           if (openCVReady) {
             startDocumentDetection();
@@ -444,7 +136,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     } catch (err) {
       console.error('Camera initialization error:', err);
-      setError('Kamera hozzáférés megtagadva. Engedélyezze a kamera használatát.');
     }
   }, [openCVReady, checkCameraPermission]);
 
@@ -609,33 +300,32 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   };
 
-  // Enhanced detection state management
-  const [lastValidDetection, setLastValidDetection] = useState<{
-    contour: Point[];
-    timestamp: number;
-  } | null>(null);
-
-  // Start continuous document detection
+  // Enhanced Apple-style document detection with stability
   const startDocumentDetection = useCallback(() => {
-    if (!openCVReady || !videoRef.current || !cameraReady) {
-      console.log('Cannot start detection - missing requirements');
-      return;
-    }
-
-    console.log('Starting enhanced document detection');
+    if (!openCVReady || !videoRef.current || !cameraReady) return;
 
     const detectDocument = () => {
-      if (!videoRef.current || !cameraReady) return;
+      if (!videoRef.current || !cameraReady || !overlayCanvasRef.current) return;
 
       try {
         const video = videoRef.current;
+        const overlay = overlayCanvasRef.current;
+        const ctx = overlay.getContext('2d');
+        if (!ctx) return;
+
+        // Update overlay size to match video
+        const rect = video.getBoundingClientRect();
+        overlay.width = rect.width;
+        overlay.height = rect.height;
+
+        // Clear previous overlay
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
 
         // Create temporary canvas for processing
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = video.videoWidth;
         tempCanvas.height = video.videoHeight;
         const tempCtx = tempCanvas.getContext('2d');
-
         if (!tempCtx) return;
 
         // Draw current video frame
@@ -645,23 +335,54 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         const contour = detectDocumentEdges(tempCanvas);
 
         if (contour && contour.length === 4) {
-          setDocumentDetected(true);
-          setLastValidDetection({ 
-            contour, 
-            timestamp: Date.now() 
-          });
+          stabilityCountRef.current++;
           lastDetectionRef.current = contour;
-        } else {
-          // Keep last detection for up to 2 seconds for stability
-          const now = Date.now();
-          if (lastValidDetection && now - lastValidDetection.timestamp < 2000) {
+
+          // Only show as detected after 3 consecutive stable detections (Apple-style stability)
+          if (stabilityCountRef.current >= 3) {
             setDocumentDetected(true);
-            lastDetectionRef.current = lastValidDetection.contour;
-          } else {
-            setDocumentDetected(false);
-            lastDetectionRef.current = null;
-            setLastValidDetection(null);
+            
+            // Draw elegant blue outline (Apple-style)
+            const scaleX = overlay.width / video.videoWidth;
+            const scaleY = overlay.height / video.videoHeight;
+
+            const scaledPoints = contour.map(point => ({
+              x: point.x * scaleX,
+              y: point.y * scaleY
+            }));
+
+            // Apple-style blue outline with subtle glow
+            ctx.strokeStyle = '#007AFF';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(0, 122, 255, 0.3)';
+            ctx.shadowBlur = 8;
+            
+            ctx.beginPath();
+            ctx.moveTo(scaledPoints[0].x, scaledPoints[0].y);
+            for (let i = 1; i < scaledPoints.length; i++) {
+              ctx.lineTo(scaledPoints[i].x, scaledPoints[i].y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+
+            // Clean corner indicators
+            ctx.shadowBlur = 0;
+            scaledPoints.forEach(point => {
+              ctx.fillStyle = '#007AFF';
+              ctx.beginPath();
+              ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+              ctx.fill();
+              
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+              ctx.fill();
+            });
           }
+        } else {
+          stabilityCountRef.current = 0;
+          setDocumentDetected(false);
+          lastDetectionRef.current = null;
         }
 
       } catch (error) {
@@ -669,11 +390,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     };
 
-    // Run detection every 100ms for better performance while maintaining smooth feedback
-    detectionIntervalRef.current = window.setInterval(detectDocument, 100);
-  }, [openCVReady, cameraReady, lastValidDetection]);
-
-  // Remove all visual overlays - clean camera view only
+    // 60fps detection for smooth Apple-like experience
+    detectionIntervalRef.current = window.setInterval(detectDocument, 16);
+  }, [openCVReady, cameraReady]);
 
   // Cleanup camera and detection
   const cleanupCamera = useCallback(() => {
@@ -689,29 +408,23 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     
     setCameraReady(false);
     setDocumentDetected(false);
+    stabilityCountRef.current = 0;
     lastDetectionRef.current = null;
   }, []);
 
   useEffect(() => {
-    if (currentStep === 'camera') {
-      if (openCVReady) {
-        initializeCamera();
-      }
-    } else {
-      cleanupCamera();
+    if (openCVReady) {
+      initializeCamera();
     }
-
-    return () => {
-      cleanupCamera();
-    };
-  }, [currentStep, openCVReady, initializeCamera, cleanupCamera]);
+    return cleanupCamera;
+  }, [openCVReady, initializeCamera, cleanupCamera]);
 
   // Start detection when both camera and OpenCV are ready
   useEffect(() => {
-    if (cameraReady && openCVReady && currentStep === 'camera') {
+    if (cameraReady && openCVReady) {
       startDocumentDetection();
     }
-  }, [cameraReady, openCVReady, currentStep, startDocumentDetection]);
+  }, [cameraReady, openCVReady, startDocumentDetection]);
 
   // Enhanced perspective correction using proven logic
   const performPerspectiveCorrection = async (canvas: HTMLCanvasElement, contour: Point[]): Promise<HTMLCanvasElement> => {
@@ -806,11 +519,14 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     return canvas;
   };
 
-  // Capture and process photo using live-detected edges - INSTANT RESPONSE
+  // Apple-style instant capture with elegant animation
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !cameraReady || processing) return;
 
-    console.log('Capturing photo instantly...');
+    // Instant visual feedback
+    setCaptureAnimation(true);
+    setTimeout(() => setCaptureAnimation(false), 200);
+
     setProcessing(true);
 
     const video = videoRef.current;
@@ -822,599 +538,160 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       return;
     }
 
-    // Set canvas size to video dimensions
+    // Capture at highest resolution
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    // Draw video frame to canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Process the image immediately - no delay for instant response
-    processImage(canvas, lastDetectionRef.current);
+    // Process immediately in background (Apple-style)
+    processAndSaveDocument(canvas, lastDetectionRef.current);
   }, [cameraReady, processing]);
 
-  // Process captured image with live-detected contour
-  const processImage = async (originalCanvas: HTMLCanvasElement, detectedContour: Point[] | null) => {
+  // Apple-style streamlined processing: capture → enhance → save
+  const processAndSaveDocument = async (originalCanvas: HTMLCanvasElement, detectedContour: Point[] | null) => {
     try {
-      const imageData = originalCanvas.toDataURL('image/jpeg', 0.9);
+      let processedCanvas = originalCanvas;
 
-      // Use the live-detected contour if available
+      // Apply perspective correction if edges were detected
       if (detectedContour && detectedContour.length === 4) {
-        console.log('Using live-detected edges for cropping');
-        await performPerspectiveCorrection(originalCanvas, detectedContour);
+        processedCanvas = await performPerspectiveCorrection(originalCanvas, detectedContour);
       } else {
-        console.log('No live detection available, attempting edge detection on captured image');
-        // Fallback: try to detect edges on the captured image
+        // Fallback: try to detect edges on captured image
         const fallbackContour = detectDocumentEdges(originalCanvas);
         if (fallbackContour && fallbackContour.length === 4) {
-          await performPerspectiveCorrection(originalCanvas, fallbackContour);
-          detectedContour = fallbackContour;
-        } else {
-          console.log('No document edges detected, offering manual crop');
-          // If no edges detected, use full image corners for manual cropping
-          detectedContour = [
-            { x: 0, y: 0 },
-            { x: originalCanvas.width, y: 0 },
-            { x: originalCanvas.width, y: originalCanvas.height },
-            { x: 0, y: originalCanvas.height }
-          ];
+          processedCanvas = await performPerspectiveCorrection(originalCanvas, fallbackContour);
         }
       }
 
-      // Set up manual cropping data
-      setManualCropData({
-        imageData,
-        originalCanvas,
-        detectedPoints: detectedContour || []
-      });
-
-      // Go to manual crop step
-      setCurrentStep('manualCrop');
-
-    } catch (err) {
-      console.error('Image processing error:', err);
-      setError('Kép feldolgozási hiba. Próbálja újra.');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  // Handle manual crop apply
-  const handleManualCropApply = async (adjustedPoints: Point[]) => {
-    if (!manualCropData) return;
-
-    setProcessing(true);
-    try {
-      // Apply perspective correction with user-adjusted points
-      let processedCanvas = await performPerspectiveCorrection(manualCropData.originalCanvas, adjustedPoints);
-      
-      // Enhance image quality
+      // Apply enhancement for document quality
       const enhancedCanvas = enhanceImage(processedCanvas);
-      const enhancedImageData = enhancedCanvas.toDataURL('image/jpeg', 0.95);
-
-      // Create new scanned page
-      const newPage: ScannedPage = {
-        id: Date.now().toString(),
-        originalImage: manualCropData.imageData,
-        processedImage: enhancedImageData,
-        canvas: enhancedCanvas
-      };
-
-      setScannedPages(prev => [...prev, newPage]);
-      setManualCropData(null);
-      setCurrentStep('preview');
-    } catch (err) {
-      console.error('Manual crop processing error:', err);
-      setError('Manuális vágás feldolgozási hiba. Próbálja újra.');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  // Handle manual crop cancel
-  const handleManualCropCancel = () => {
-    setManualCropData(null);
-    setCurrentStep('camera');
-  };
-
-  // Remove a scanned page
-  const removePage = (pageId: string) => {
-    setScannedPages(prev => prev.filter(page => page.id !== pageId));
-  };
-
-  // Add another page
-  const addAnotherPage = () => {
-    setCurrentStep('camera');
-  };
-
-  // Generate default filename
-  const generateDefaultFilename = () => {
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0];
-    return `scanned_document_${dateStr}`;
-  };
-
-  // Generate PDF from scanned pages
-  const generatePDF = async () => {
-    if (scannedPages.length === 0) return;
-
-    // Set PDF creation started for mobile preview hiding
-    setPdfCreationStarted(true);
-
-    setProcessing(true);
-    
-    try {
-      // Create PDF with A4 format
+      
+      // Generate PDF immediately (Apple-style single-step)
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
-      
-      // A4 dimensions in mm
+
+      const img = new Image();
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.src = enhancedCanvas.toDataURL('image/jpeg', 0.95);
+      });
+
+      // Calculate optimal sizing for A4
       const pageWidth = 210;
       const pageHeight = 297;
-      const margin = 10; // Margin around the image in mm
+      const margin = 10;
       const maxWidth = pageWidth - (margin * 2);
       const maxHeight = pageHeight - (margin * 2);
       
-      let isFirstPage = true;
-
-      for (const page of scannedPages) {
-        if (!isFirstPage) {
-          pdf.addPage();
-        }
-
-        // Load image to get dimensions
-        const img = new Image();
-        await new Promise((resolve) => {
-          img.onload = resolve;
-          img.src = page.processedImage;
-        });
-        
-        // Calculate aspect ratio
-        const aspectRatio = img.width / img.height;
-        
-        // Calculate dimensions that fit within the page while maintaining aspect ratio
-        let imgWidth, imgHeight;
-        
-        if (aspectRatio > maxWidth / maxHeight) {
-          // Image is wider than the page ratio
-          imgWidth = maxWidth;
-          imgHeight = imgWidth / aspectRatio;
-        } else {
-          // Image is taller than the page ratio
-          imgHeight = maxHeight;
-          imgWidth = imgHeight * aspectRatio;
-        }
-        
-        // Calculate centering offsets
-        const xOffset = margin + (maxWidth - imgWidth) / 2;
-        const yOffset = margin + (maxHeight - imgHeight) / 2;
-
-        // Add image to PDF centered with margins
-        pdf.addImage(page.processedImage, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
-        isFirstPage = false;
+      const aspectRatio = img.width / img.height;
+      let imgWidth, imgHeight;
+      
+      if (aspectRatio > maxWidth / maxHeight) {
+        imgWidth = maxWidth;
+        imgHeight = imgWidth / aspectRatio;
+      } else {
+        imgHeight = maxHeight;
+        imgWidth = imgHeight * aspectRatio;
       }
+      
+      const xOffset = margin + (maxWidth - imgWidth) / 2;
+      const yOffset = margin + (maxHeight - imgHeight) / 2;
 
+      pdf.addImage(img.src, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `document_${timestamp}`;
+      
       const pdfBlob = pdf.output('blob');
-      const finalFileName = fileName.trim() || generateDefaultFilename();
+      onScanComplete(pdfBlob, filename);
 
-      onScanComplete(pdfBlob, finalFileName);
     } catch (err) {
-      console.error('PDF generation error:', err);
-      setError('PDF készítési hiba. Próbálja újra.');
+      console.error('Document processing error:', err);
     } finally {
       setProcessing(false);
     }
   };
 
-  // State for edge detection overlay
-  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  // Simplified component - no complex multi-step flow needed for Apple experience
 
-  // Update overlay with edge detection
-  const updateOverlay = useCallback(() => {
-    if (!overlayCanvasRef.current || !videoRef.current || !cameraReady) return;
+  // Apple-quality camera interface - minimal and luxurious
 
-    const overlay = overlayCanvasRef.current;
-    const video = videoRef.current;
-    const ctx = overlay.getContext('2d');
-    if (!ctx) return;
-
-    // Match overlay size to video display size
-    const rect = video.getBoundingClientRect();
-    overlay.width = rect.width;
-    overlay.height = rect.height;
-
-    // Clear previous drawing
-    ctx.clearRect(0, 0, overlay.width, overlay.height);
-
-    // Draw edge detection overlay if document is detected
-    if (lastDetectionRef.current && lastDetectionRef.current.length === 4) {
-      const scaleX = overlay.width / video.videoWidth;
-      const scaleY = overlay.height / video.videoHeight;
-
-      // Scale detection points to overlay size
-      const scaledPoints = lastDetectionRef.current.map(point => ({
-        x: point.x * scaleX,
-        y: point.y * scaleY
-      }));
-
-      // Draw document outline
-      ctx.strokeStyle = '#00ff00';
-      ctx.lineWidth = 3;
-      ctx.shadowColor = 'rgba(0, 255, 0, 0.5)';
-      ctx.shadowBlur = 8;
-      
-      ctx.beginPath();
-      ctx.moveTo(scaledPoints[0].x, scaledPoints[0].y);
-      for (let i = 1; i < scaledPoints.length; i++) {
-        ctx.lineTo(scaledPoints[i].x, scaledPoints[i].y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-
-      // Draw corner indicators
-      ctx.shadowBlur = 0;
-      scaledPoints.forEach((point) => {
-        // Outer green ring
-        ctx.fillStyle = '#00ff00';
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
-        ctx.fill();
-        
-        // Inner white circle
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-
-      // Draw "DOCUMENT DETECTED" text
-      ctx.fillStyle = '#00ff00';
-      ctx.font = 'bold 16px system-ui';
-      ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-      ctx.shadowBlur = 4;
-      ctx.fillText('DOKUMENTUM ÉSZLELVE', overlay.width / 2, 60);
-    }
-  }, [cameraReady]);
-
-  // Update overlay continuously
-  useEffect(() => {
-    if (currentStep === 'camera' && cameraReady) {
-      const updateInterval = setInterval(updateOverlay, 50);
-      return () => clearInterval(updateInterval);
-    }
-  }, [currentStep, cameraReady, updateOverlay]);
-
-  // Render camera view with live edge detection overlay
-  const renderCameraView = () => (
+  return (
     <div className="fixed inset-0 bg-black z-50">
-      {/* Exit button - minimal and discrete */}
-      <div className="absolute top-4 left-4 z-20">
-        <button
-          onClick={onClose}
-          className="w-10 h-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center transition-all"
-        >
-          <X className="h-5 w-5 text-white" />
-        </button>
-      </div>
-
-      {/* Fullscreen camera preview with edge detection overlay */}
-      <div className="absolute inset-0">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Live edge detection overlay */}
-        <canvas
-          ref={overlayCanvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none z-10"
-        />
-        
-        {/* Processing overlay */}
-        {processing && (
-          <div className="absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center z-20">
-            <div className="text-white text-center">
-              <Loader className="h-12 w-12 animate-spin mx-auto mb-4" />
-              <p className="text-lg font-semibold">Dokumentum feldolgozása...</p>
-              <p className="text-sm opacity-80 mt-1">Kivágás és minőség javítás</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Capture button with visual feedback */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="relative">
-          {/* Pulse ring when document detected */}
-          {lastDetectionRef.current && (
-            <div className="absolute inset-0 w-16 h-16 rounded-full bg-green-400 opacity-30 animate-ping"></div>
-          )}
-          <button
-            onClick={capturePhoto}
-            disabled={!cameraReady || !openCVReady || processing}
-            className={`w-16 h-16 rounded-full shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 hover:scale-105 ${
-              lastDetectionRef.current ? 'bg-green-400 ring-4 ring-green-400 ring-opacity-50' : 'bg-white'
-            }`}
-          />
-        </div>
-      </div>
-
-      {/* Status indicator */}
-      <div className="absolute top-16 right-4 z-20">
-        <div className={`px-3 py-2 rounded-lg text-sm font-medium ${
-          !cameraReady || !openCVReady
-            ? 'bg-yellow-500 text-white'
-            : lastDetectionRef.current
-            ? 'bg-green-500 text-white'
-            : 'bg-gray-800 bg-opacity-70 text-white'
-        }`}>
-          {!cameraReady || !openCVReady
-            ? 'Inicializálás...'
-            : lastDetectionRef.current
-            ? 'Dokumentum észlelve'
-            : 'Keressen dokumentumot'
-          }
-        </div>
-      </div>
-
-      {/* Error message - top of screen */}
-      {error && (
-        <div className="absolute top-16 left-4 right-4 z-20">
-          <div className="bg-red-500 bg-opacity-90 rounded-lg p-3">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-white flex-shrink-0" />
-              <p className="text-sm text-white">{error}</p>
-            </div>
+      {/* Capture animation overlay */}
+      {captureAnimation && (
+        <div className="absolute inset-0 bg-white opacity-70 z-30 animate-fade-out" />
+      )}
+      
+      {/* Processing overlay with elegant design */}
+      {processing && (
+        <div className="absolute inset-0 bg-black bg-opacity-90 flex items-center justify-center z-40">
+          <div className="text-center">
+            <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+            <p className="text-white text-lg font-medium tracking-wide">Processing...</p>
           </div>
         </div>
       )}
 
-      {/* Hidden canvas for image processing */}
+      {/* Minimal close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-6 left-6 z-30 w-10 h-10 rounded-full bg-black bg-opacity-30 hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center"
+      >
+        <X className="w-5 h-5 text-white" />
+      </button>
+
+      {/* Camera preview */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full h-full object-cover"
+      />
+
+      {/* Elegant edge detection overlay */}
+      <canvas
+        ref={overlayCanvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none z-10"
+      />
+
+      {/* Apple-style capture button */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="relative flex items-center justify-center">
+          {/* Outer ring with document detection feedback */}
+          <div 
+            className={`w-20 h-20 rounded-full border-4 transition-all duration-300 ${
+              documentDetected 
+                ? 'border-blue-400 shadow-lg shadow-blue-400/30' 
+                : 'border-white border-opacity-40'
+            }`}
+          />
+          
+          {/* Inner capture button */}
+          <button
+            onClick={capturePhoto}
+            disabled={!cameraReady || !openCVReady || processing}
+            className={`absolute w-16 h-16 rounded-full transition-all duration-200 transform active:scale-95 disabled:opacity-50 ${
+              documentDetected
+                ? 'bg-blue-500 shadow-xl shadow-blue-500/30 hover:scale-105'
+                : 'bg-white hover:scale-105'
+            }`}
+          >
+            <Camera className={`w-6 h-6 mx-auto ${documentDetected ? 'text-white' : 'text-gray-800'}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Hidden processing canvas */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 
-  // Render preview view
-  const renderPreviewView = () => (
-    <div className="h-full flex flex-col bg-gray-100">
-      {/* Header */}
-      <div className="p-4 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Beolvasott dokumentumok ({scannedPages.length})
-          </h3>
-          <button
-            onClick={() => setCurrentStep('camera')}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-
-      {/* Scanned pages */}
-      <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${pdfCreationStarted ? 'hidden md:block' : ''}`}>
-        {scannedPages.map((page, index) => (
-          <div key={page.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">
-                Oldal {index + 1}
-              </span>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => {
-                    // Set up manual cropping for this page
-                    setManualCropData({
-                      imageData: page.originalImage,
-                      originalCanvas: page.canvas || document.createElement('canvas'),
-                      detectedPoints: [
-                        { x: 0, y: 0 },
-                        { x: page.canvas?.width || 0, y: 0 },
-                        { x: page.canvas?.width || 0, y: page.canvas?.height || 0 },
-                        { x: 0, y: page.canvas?.height || 0 }
-                      ]
-                    });
-                    setCurrentStep('manualCrop');
-                  }}
-                  className="text-blue-600 hover:text-blue-800 transition-colors"
-                  title="Manuális vágás"
-                >
-                  <Edit className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => removePage(page.id)}
-                  className="text-red-600 hover:text-red-800 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <div className="p-3">
-              <img
-                src={page.processedImage}
-                alt={`Scanned page ${index + 1}`}
-                className="w-full h-auto rounded border border-gray-200 shadow-sm"
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Mobile-only page count indicator */}
-      <div className={`md:hidden p-4 bg-gray-50 border-t border-gray-200 ${pdfCreationStarted ? '' : 'hidden'}`}>
-        <div className="text-center">
-          {scannedPages.length > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
-              {scannedPages.length} oldal beolvasva - PDF készítése folyamatban...
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="p-4 bg-white border-t border-gray-200">
-        <div className="flex items-center justify-between space-x-3">
-          <button
-            onClick={addAnotherPage}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Újabb oldal
-          </button>
-
-          <button
-            onClick={() => {
-              setCurrentStep('naming');
-            }}
-            disabled={scannedPages.length === 0}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Tovább ({scannedPages.length} oldal)
-          </button>
-        </div>
-
-        {error && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // Render naming view
-  const renderNamingView = () => (
-    <div className="h-full flex flex-col bg-gray-100">
-      {/* Header */}
-      <div className="p-4 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Dokumentum neve
-          </h3>
-          <button
-            onClick={() => setCurrentStep('preview')}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-
-      {/* Naming form */}
-      <div className="flex-1 p-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fájl neve
-            </label>
-            <input
-              type="text"
-              value={fileName}
-              onChange={(e) => setFileName(e.target.value)}
-              placeholder={generateDefaultFilename()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              A .pdf kiterjesztés automatikusan hozzáadódik
-            </p>
-          </div>
-
-          <div className="mb-6">
-            <p className="text-sm text-gray-600 mb-3">Gyors javaslatok:</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                'szamla_' + new Date().toISOString().split('T')[0],
-                'bizonylat_' + new Date().toISOString().split('T')[0],
-                'dokumentum_' + new Date().toISOString().split('T')[0],
-                'beolvasott_' + new Date().toISOString().split('T')[0]
-              ].map((suggestion) => (
-                <button
-                  key={suggestion}
-                  onClick={() => setFileName(suggestion)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-sm text-gray-600">
-            <p className="mb-2">Előnézet:</p>
-            <p className="font-mono bg-gray-100 px-3 py-2 rounded border">
-              {(fileName.trim() || generateDefaultFilename()) + '.pdf'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="p-4 bg-white border-t border-gray-200">
-        <div className="flex items-center justify-between space-x-3">
-          <button
-            onClick={() => setCurrentStep('preview')}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-          >
-            Vissza
-          </button>
-
-          <button
-            onClick={generatePDF}
-            disabled={processing}
-            className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {processing ? (
-              <>
-                <Loader className="h-4 w-4 mr-2 animate-spin" />
-                PDF készítése...
-              </>
-            ) : (
-              <>
-                <FileText className="h-4 w-4 mr-2" />
-                PDF készítése ({scannedPages.length} oldal)
-              </>
-            )}
-          </button>
-        </div>
-
-        {error && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="fixed inset-0 bg-black z-50">
-      {currentStep === 'camera' && renderCameraView()}
-      {currentStep === 'preview' && renderPreviewView()}
-      {currentStep === 'naming' && renderNamingView()}
-      {currentStep === 'manualCrop' && manualCropData && (
-        <ManualCropper
-          imageData={manualCropData.imageData}
-          initialPoints={manualCropData.detectedPoints}
-          onApply={handleManualCropApply}
-          onCancel={handleManualCropCancel}
-        />
-      )}
-    </div>
-  );
 };
 
 // Extend Window interface for OpenCV
