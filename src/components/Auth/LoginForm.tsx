@@ -17,6 +17,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
   const [profileType, setProfileType] = useState<'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi'>('adminisztracio');
   const [managerPassword, setManagerPassword] = useState('');
   const [showManagerPassword, setShowManagerPassword] = useState(false);
+  const [house, setHouse] = useState<'Feketerigo' | 'Torockó' | 'Levél'>('Feketerigo');
 
   const { signIn, signUp } = useAuth();
 

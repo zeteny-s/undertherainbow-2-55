@@ -69,9 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string, name?: string, profileType: 'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi' = 'adminisztracio') => {
+  const signUp = async (email: string, password: string, name?: string, profileType: 'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi' = 'adminisztracio', house?: string) => {
     try {
-      console.log('Attempting sign up for:', email, 'with name:', name, 'profile type:', profileType);
+      console.log('Attempting sign up for:', email, 'with name:', name, 'profile type:', profileType, 'house:', house);
       
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -80,6 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: {
             name: name?.trim() || '',
             profile_type: profileType,
+            house: house || undefined,
           },
           // Disable email confirmation for internal tool
           emailRedirectTo: undefined,
