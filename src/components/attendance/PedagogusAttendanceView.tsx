@@ -52,7 +52,10 @@ export const PedagogusAttendanceView: React.FC = () => {
 
   const fetchClasses = async () => {
     try {
-      const profileType = user?.user_metadata?.profile_type;
+      const { data: userData } = await supabase.auth.getUser();
+      const profileType = userData?.user?.user_metadata?.profile_type;
+      const userHouse = userData?.user?.user_metadata?.house;
+      
       let query = supabase
         .from('classes')
         .select(`
@@ -61,9 +64,12 @@ export const PedagogusAttendanceView: React.FC = () => {
         `);
 
       // If pedagogus, only show their classes
-      // If admin or house leader, show all classes
+      // If house leader, show only their house classes  
+      // If admin or manager, show all classes
       if (profileType === 'pedagogus') {
         query = query.contains('pedagogus_ids', [user!.id]);
+      } else if (profileType === 'haz_vezeto' && userHouse) {
+        query = query.eq('house', userHouse);
       }
 
       const { data, error } = await query.order('name');

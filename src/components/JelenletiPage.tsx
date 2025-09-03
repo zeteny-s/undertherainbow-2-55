@@ -9,8 +9,9 @@ export const JelenletiPage: React.FC = () => {
   const isAdminisztracio = user?.user_metadata?.profile_type === 'adminisztracio';
   const isVezetoi = user?.user_metadata?.profile_type === 'vezetoi';
   const isPedagogus = user?.user_metadata?.profile_type === 'pedagogus';
+  const isHazVezeto = user?.user_metadata?.profile_type === 'haz_vezeto';
 
-  if (isAdminisztracio || isVezetoi) {
+  if (isAdminisztracio || isVezetoi || isHazVezeto) {
     return <AdminAttendanceView />;
   }
 

@@ -34,7 +34,11 @@ export const ModernAttendanceView: React.FC = () => {
 
   const fetchClasses = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: userData } = await supabase.auth.getUser();
+      const profileType = userData?.user?.user_metadata?.profile_type;
+      const userHouse = userData?.user?.user_metadata?.house;
+
+      let query = supabase
         .from('classes')
         .select(`
           id,
@@ -42,8 +46,14 @@ export const ModernAttendanceView: React.FC = () => {
           house,
           pedagogus_id,
           created_at
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Filter by house for house leaders
+      if (profileType === 'haz_vezeto' && userHouse) {
+        query = query.eq('house', userHouse);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
