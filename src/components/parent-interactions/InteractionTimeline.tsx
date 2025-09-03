@@ -1,8 +1,8 @@
 import React from 'react';
-import { formatDateTime } from '@/utils/formatters';
+import { formatDateTime } from '../../utils/formatters';
 import { Edit, Trash2, Star, Calendar, Clock, Users, MessageSquare, CheckCircle } from 'lucide-react';
 import * as Icons from 'lucide-react';
-import type { ParentInteraction } from '@/types/parent-interactions';
+import type { ParentInteraction } from '../../types/parent-interactions';
 
 interface InteractionTimelineProps {
   interactions: ParentInteraction[];
@@ -20,7 +20,7 @@ export const InteractionTimeline: React.FC<InteractionTimelineProps> = ({
     return IconComponent || MessageSquare;
   };
 
-  const renderQualityRating = (rating?: number) => {
+  const renderQualityRating = (rating?: number | null) => {
     if (!rating) return null;
     
     return (
@@ -39,7 +39,7 @@ export const InteractionTimeline: React.FC<InteractionTimelineProps> = ({
     );
   };
 
-  const formatFollowUpDate = (date?: string) => {
+  const formatFollowUpDate = (date?: string | null) => {
     if (!date) return null;
     const followUpDate = new Date(date);
     const today = new Date();
@@ -128,7 +128,7 @@ export const InteractionTimeline: React.FC<InteractionTimelineProps> = ({
                 </p>
 
                 {/* Participants */}
-                {interaction.participants.length > 0 && (
+                {interaction.participants && interaction.participants.length > 0 && (
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-4 h-4 text-gray-500" />
                     <div className="flex flex-wrap gap-1">
@@ -142,7 +142,7 @@ export const InteractionTimeline: React.FC<InteractionTimelineProps> = ({
                 )}
 
                 {/* Key Topics */}
-                {interaction.key_topics.length > 0 && (
+                {interaction.key_topics && interaction.key_topics.length > 0 && (
                   <div className="mb-2">
                     <div className="flex flex-wrap gap-1">
                       {interaction.key_topics.map((topic: string, idx: number) => (
@@ -155,7 +155,7 @@ export const InteractionTimeline: React.FC<InteractionTimelineProps> = ({
                 )}
 
                 {/* Action Items */}
-                {interaction.action_items.length > 0 && (
+                {interaction.action_items && interaction.action_items.length > 0 && (
                   <div className="mb-2">
                     <h5 className="text-xs font-medium text-gray-500 mb-1">Action Items:</h5>
                     <ul className="space-y-1">

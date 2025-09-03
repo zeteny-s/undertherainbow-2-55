@@ -61,7 +61,7 @@ export const ParentInteractionsPage: React.FC = () => {
         return;
       }
 
-      setHouseLeader(houseLeaderData);
+      setHouseLeader(houseLeaderData as HouseLeader);
 
       const { data: assignments } = await supabase
         .from('family_assignments')
@@ -83,7 +83,7 @@ export const ParentInteractionsPage: React.FC = () => {
         .eq('is_active', true)
         .order('tier', { ascending: true });
 
-      setInteractionTypes(typesData || []);
+      setInteractionTypes(typesData as InteractionType[] || []);
 
     } catch (error) {
       console.error('Error initializing data:', error);

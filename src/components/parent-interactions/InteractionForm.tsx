@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { CalendarIcon, X, Star, Plus } from 'lucide-react';
-import { format } from 'date-fns';
-import type { InteractionType, InteractionForm as InteractionFormData } from '@/types/parent-interactions';
+import React, { useState } from 'react';
+import { Plus, Minus, Calendar, Clock, Users, MessageSquare, Star } from 'lucide-react';
+import type { InteractionType, InteractionForm as InteractionFormData } from '../../types/parent-interactions';
 
 interface InteractionFormProps {
   interactionTypes: InteractionType[];
   onSubmit: (data: InteractionFormData) => void;
-  initialData?: InteractionFormData;
-  onCancel?: () => void;
-  isEditing?: boolean;
+  onCancel: () => void;
+  isEditing: boolean;
 }
 
 export const InteractionForm: React.FC<InteractionFormProps> = ({
   interactionTypes,
   onSubmit,
-  initialData,
   onCancel,
-  isEditing = false
+  isEditing
 }) => {
   const [formData, setFormData] = useState<InteractionFormData>({
     interaction_type_id: '',
@@ -34,35 +31,26 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
 
   const [newParticipant, setNewParticipant] = useState('');
   const [newTopic, setNewTopic] = useState('');
-  const [newAction, setNewAction] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showFollowUpPicker, setShowFollowUpPicker] = useState(false);
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-    }
-  }, [initialData]);
+  const [newActionItem, setNewActionItem] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
-    if (!isEditing) {
-      // Reset form after creating new interaction
-      setFormData({
-        interaction_type_id: '',
-        interaction_date: new Date(),
-        title: '',
-        description: '',
-        participants: [],
-        key_topics: [],
-        action_items: [],
-        follow_up_date: undefined,
-        quality_rating: undefined,
-        cultural_notes: '',
-        duration_minutes: undefined
-      });
-    }
+    
+    // Reset form
+    setFormData({
+      interaction_type_id: '',
+      interaction_date: new Date(),
+      title: '',
+      description: '',
+      participants: [],
+      key_topics: [],
+      action_items: [],
+      follow_up_date: undefined,
+      quality_rating: undefined,
+      cultural_notes: '',
+      duration_minutes: undefined
+    });
   };
 
   const addParticipant = () => {
@@ -99,17 +87,17 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
     }));
   };
 
-  const addAction = () => {
-    if (newAction.trim()) {
+  const addActionItem = () => {
+    if (newActionItem.trim()) {
       setFormData(prev => ({
         ...prev,
-        action_items: [...prev.action_items, newAction.trim()]
+        action_items: [...prev.action_items, newActionItem.trim()]
       }));
-      setNewAction('');
+      setNewActionItem('');
     }
   };
 
-  const removeAction = (index: number) => {
+  const removeActionItem = (index: number) => {
     setFormData(prev => ({
       ...prev,
       action_items: prev.action_items.filter((_, i) => i !== index)
@@ -119,298 +107,253 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
   const selectedType = interactionTypes.find(t => t.id === formData.interaction_type_id);
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="flex items-center justify-between mb-6 p-4 border-b border-gray-200">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 h-full overflow-y-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <MessageSquare className="w-5 h-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-gray-900">
-          {isEditing ? 'Edit Interaction' : 'New Parent Interaction'}
+          {isEditing ? 'Edit Interaction' : 'New Interaction'}
         </h3>
-        {isEditing && onCancel && (
-          <button
-            onClick={onCancel}
-            className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Cancel
-          </button>
-        )}
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 px-4 pb-4 space-y-4 overflow-y-auto">
-        {/* Interaction Type */}
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Interaction Type
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Interaction Type *
           </label>
           <select
             value={formData.interaction_type_id}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
-              setFormData(prev => ({ ...prev, interaction_type_id: e.target.value }))
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            onChange={(e) => setFormData(prev => ({ ...prev, interaction_type_id: e.target.value }))}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            <option value="">Select interaction type</option>
-            {interactionTypes.map((type) => (
+            <option value="">Select type...</option>
+            {interactionTypes.map(type => (
               <option key={type.id} value={type.id}>
-                {type.name} ({type.hour_value}h)
+                {type.name} (Tier {type.tier} - {type.hour_value}h)
               </option>
             ))}
           </select>
-          {selectedType && (
-            <p className="text-xs text-gray-500 mt-1">
-              {selectedType.description}
-            </p>
+          {selectedType && selectedType.description && (
+            <p className="text-xs text-gray-500 mt-1">{selectedType.description}</p>
           )}
         </div>
 
-        {/* Date and Time */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Interaction Date
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Calendar className="w-4 h-4 inline mr-1" />
+              Date *
             </label>
             <input
-              type="datetime-local"
-              value={format(formData.interaction_date, "yyyy-MM-dd'T'HH:mm")}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                setFormData(prev => ({ ...prev, interaction_date: new Date(e.target.value) }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              type="date"
+              value={formData.interaction_date.toISOString().split('T')[0]}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                interaction_date: new Date(e.target.value) 
+              }))}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Clock className="w-4 h-4 inline mr-1" />
               Duration (minutes)
             </label>
             <input
               type="number"
-              min="1"
-              placeholder="Optional"
               value={formData.duration_minutes || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                setFormData(prev => ({ 
-                  ...prev, 
-                  duration_minutes: e.target.value ? parseInt(e.target.value) : undefined 
-                }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                duration_minutes: e.target.value ? parseInt(e.target.value) : undefined 
+              }))}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="1"
             />
           </div>
         </div>
 
-        {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Title
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Title *
           </label>
           <input
             type="text"
-            placeholder="Brief title for this interaction"
             value={formData.title}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-              setFormData(prev => ({ ...prev, title: e.target.value }))
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Brief title for this interaction"
             required
           />
         </div>
 
-        {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Description *
           </label>
           <textarea
-            placeholder="Detailed description of the interaction..."
             value={formData.description}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => 
-              setFormData(prev => ({ ...prev, description: e.target.value }))
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-20"
+            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            rows={3}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Describe what happened during this interaction"
             required
           />
         </div>
 
-        {/* Participants */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Users className="w-4 h-4 inline mr-1" />
             Participants
           </label>
           <div className="flex gap-2 mb-2">
             <input
               type="text"
-              placeholder="Add participant"
               value={newParticipant}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewParticipant(e.target.value)}
-              onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => setNewParticipant(e.target.value)}
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Add participant name"
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
             />
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={addParticipant}
               className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Plus className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {formData.participants.map((participant: string, index: number) => (
-              <span key={index} className="inline-flex items-center px-2 py-1 bg-gray-100 border border-gray-200 rounded text-xs">
+          <div className="flex flex-wrap gap-2">
+            {formData.participants.map((participant, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 border border-gray-200 rounded text-sm"
+              >
                 {participant}
-                <X 
-                  className="w-3 h-3 ml-1 cursor-pointer hover:text-red-500" 
+                <button
+                  type="button"
                   onClick={() => removeParticipant(index)}
-                />
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
               </span>
             ))}
           </div>
         </div>
 
-        {/* Key Topics */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Key Topics
           </label>
           <div className="flex gap-2 mb-2">
             <input
               type="text"
-              placeholder="Add key topic"
               value={newTopic}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTopic(e.target.value)}
-              onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && (e.preventDefault(), addTopic())}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => setNewTopic(e.target.value)}
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Add topic discussed"
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTopic())}
             />
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={addTopic}
               className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Plus className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {formData.key_topics.map((topic: string, index: number) => (
-              <span key={index} className="inline-flex items-center px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+          <div className="flex flex-wrap gap-2">
+            {formData.key_topics.map((topic, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700"
+              >
                 {topic}
-                <X 
-                  className="w-3 h-3 ml-1 cursor-pointer hover:text-red-500" 
+                <button
+                  type="button"
                   onClick={() => removeTopic(index)}
-                />
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
               </span>
             ))}
           </div>
         </div>
 
-        {/* Action Items */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Action Items
-          </label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              placeholder="Add action item"
-              value={newAction}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewAction(e.target.value)}
-              onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && (e.preventDefault(), addAction())}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button 
-              type="button" 
-              onClick={addAction}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="space-y-1">
-            {formData.action_items.map((action: string, index: number) => (
-              <div key={index} className="flex items-center gap-2 text-xs bg-gray-50 p-2 rounded">
-                <span className="flex-1">{action}</span>
-                <X 
-                  className="w-3 h-3 cursor-pointer text-gray-500 hover:text-red-500" 
-                  onClick={() => removeAction(index)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Follow-up Date */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Follow-up Date (Optional)
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Follow-up Date
           </label>
           <input
             type="date"
-            value={formData.follow_up_date ? format(formData.follow_up_date, 'yyyy-MM-dd') : ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-              setFormData(prev => ({ 
-                ...prev, 
-                follow_up_date: e.target.value ? new Date(e.target.value) : undefined 
-              }))
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={formData.follow_up_date?.toISOString().split('T')[0] || ''}
+            onChange={(e) => setFormData(prev => ({ 
+              ...prev, 
+              follow_up_date: e.target.value ? new Date(e.target.value) : undefined 
+            }))}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {/* Quality Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Quality Rating (Optional)
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Star className="w-4 h-4 inline mr-1" />
+            Quality Rating
           </label>
-          <div className="flex items-center gap-1 mt-2">
+          <div className="flex gap-2">
             {Array.from({ length: 5 }).map((_, index) => (
-              <Star
-                key={index}
-                className={`w-6 h-6 cursor-pointer transition-colors ${
-                  (formData.quality_rating || 0) > index
-                    ? "text-yellow-500 fill-current"
-                    : "text-gray-300 hover:text-yellow-400"
-                }`}
-                onClick={() => 
-                  setFormData(prev => ({ 
-                    ...prev, 
-                    quality_rating: index + 1 === formData.quality_rating ? undefined : index + 1 
-                  }))
-                }
-              />
-            ))}
-            {formData.quality_rating && (
               <button
+                key={index}
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, quality_rating: undefined }))}
-                className="ml-2 text-xs text-gray-500 hover:text-gray-700"
+                onClick={() => setFormData(prev => ({ 
+                  ...prev, 
+                  quality_rating: index + 1 
+                }))}
+                className={`p-1 ${
+                  formData.quality_rating && index < formData.quality_rating
+                    ? 'text-yellow-500'
+                    : 'text-gray-300'
+                }`}
               >
-                Clear
+                <Star className="w-5 h-5 fill-current" />
               </button>
-            )}
+            ))}
           </div>
         </div>
 
-        {/* Cultural Notes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Cultural Notes (Optional)
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Cultural Notes
           </label>
           <textarea
-            placeholder="Any cultural considerations or notes..."
-            value={formData.cultural_notes}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => 
-              setFormData(prev => ({ ...prev, cultural_notes: e.target.value }))
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-16"
+            value={formData.cultural_notes || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, cultural_notes: e.target.value }))}
+            rows={2}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Any cultural considerations or notes"
           />
         </div>
 
-        <button 
-          type="submit" 
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400"
-          disabled={!formData.title || !formData.description || !formData.interaction_type_id}
-        >
-          {isEditing ? 'Update Interaction' : 'Create Interaction'}
-        </button>
+        <div className="flex gap-3 pt-4 border-t">
+          <button
+            type="submit"
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+          >
+            {isEditing ? 'Update Interaction' : 'Create Interaction'}
+          </button>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );

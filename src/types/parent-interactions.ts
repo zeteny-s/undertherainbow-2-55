@@ -15,10 +15,10 @@ export interface HouseLeader {
   user_id: string;
   name: string;
   email: string;
-  status: 'active' | 'inactive';
-  max_families: number;
-  created_at: string;
-  updated_at: string;
+  status: string | null;
+  max_families: number | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface FamilyAssignment {
@@ -34,13 +34,13 @@ export interface FamilyAssignment {
 export interface InteractionType {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   hour_value: number;
-  tier: 1 | 2 | 3 | 4;
-  color: string;
-  icon: string;
-  is_active: boolean;
-  created_at: string;
+  tier: number | null;
+  color: string | null;
+  icon: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
 }
 
 export interface ParentInteraction {
@@ -49,24 +49,20 @@ export interface ParentInteraction {
   family_id: string;
   interaction_type_id: string;
   interaction_date: string;
-  duration_minutes?: number;
+  duration_minutes?: number | null;
   hour_value: number;
   title: string;
   description: string;
-  participants: string[];
-  key_topics: string[];
-  action_items: string[];
-  follow_up_date?: string;
-  follow_up_completed: boolean;
-  quality_rating?: number;
-  cultural_notes?: string;
-  attachments: Array<{
-    name: string;
-    url: string;
-    type: string;
-  }>;
-  created_at: string;
-  updated_at: string;
+  participants: string[] | null;
+  key_topics: string[] | null;
+  action_items: string[] | null;
+  follow_up_date?: string | null;
+  follow_up_completed: boolean | null;
+  quality_rating?: number | null;
+  cultural_notes?: string | null;
+  attachments: any;
+  created_at: string | null;
+  updated_at: string | null;
   interaction_types?: InteractionType;
   families?: Family;
 }
@@ -76,13 +72,13 @@ export interface AnnualProgress {
   house_leader_id: string;
   family_id: string;
   academic_year: string;
-  total_hours: number;
-  total_interactions: number;
-  goal_hours: number;
-  last_interaction_date?: string;
-  status: 'in_progress' | 'completed' | 'at_risk';
-  created_at: string;
-  updated_at: string;
+  total_hours: number | null;
+  total_interactions: number | null;
+  goal_hours: number | null;
+  last_interaction_date?: string | null;
+  status: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface InteractionForm {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
-import type { Family, AnnualProgress } from '@/types/parent-interactions';
+import type { Family, AnnualProgress } from '../../types/parent-interactions';
 
 interface FamilyHeaderProps {
   families: Family[];
