@@ -295,11 +295,20 @@ export const InvoiceUpload: React.FC = () => {
   };
 
   const handleScanComplete = async (pdfBlob: Blob, fileName: string) => {
+    console.log('Invoice scan completed:', fileName, pdfBlob);
     setShowScanner(false);
     
-    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    // Ensure filename has proper extension  
+    const finalFileName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+    const file = new File([pdfBlob], finalFileName, { type: 'application/pdf' });
     
-    await handleFiles([file]);
+    try {
+      await handleFiles([file]);
+      console.log('Invoice scan uploaded successfully');
+    } catch (error) {
+      console.error('Failed to upload scanned invoice:', error);
+      addNotification('error', 'Hiba történt a szkennelt számla mentésekor');
+    }
   };
 
   const startExtraction = async (fileId: string) => {

@@ -209,9 +209,20 @@ export const DocumentsPage: React.FC = () => {
   };
 
   const handleScanComplete = async (pdfBlob: Blob, defaultName: string) => {
+    console.log('Document scan completed:', defaultName, pdfBlob);
     setShowScanner(false);
-    const file = new File([pdfBlob], defaultName || `Scan-${Date.now()}.pdf`, { type: 'application/pdf' });
-    await uploadFiles([file]);
+    
+    // Ensure filename has proper extension
+    const fileName = defaultName.endsWith('.pdf') ? defaultName : `${defaultName}.pdf`;
+    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    
+    try {
+      await uploadFiles([file]);
+      console.log('Document scan uploaded successfully');
+    } catch (error) {
+      console.error('Failed to upload scanned document:', error);
+      alert('Hiba történt a dokumentum mentésekor');
+    }
   };
 
   const handleDocumentUpdated = (updatedDoc: DocumentRow) => {

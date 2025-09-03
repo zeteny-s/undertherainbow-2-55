@@ -669,8 +669,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     };
 
-    // Run detection every 30ms for faster, smoother real-time feedback
-    detectionIntervalRef.current = window.setInterval(detectDocument, 30);
+    // Run detection every 100ms for better performance while maintaining smooth feedback
+    detectionIntervalRef.current = window.setInterval(detectDocument, 100);
   }, [openCVReady, cameraReady, lastValidDetection]);
 
   // Remove all visual overlays - clean camera view only
@@ -806,11 +806,11 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     return canvas;
   };
 
-  // Capture and process photo using live-detected edges
+  // Capture and process photo using live-detected edges - INSTANT RESPONSE
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !cameraReady || processing) return;
 
-    console.log('Capturing photo...');
+    console.log('Capturing photo instantly...');
     setProcessing(true);
 
     const video = videoRef.current;
@@ -829,10 +829,8 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     // Draw video frame to canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Process the image using the live-detected contour
-    setTimeout(() => {
-      processImage(canvas, lastDetectionRef.current);
-    }, 100);
+    // Process the image immediately - no delay for instant response
+    processImage(canvas, lastDetectionRef.current);
   }, [cameraReady, processing]);
 
   // Process captured image with live-detected contour
@@ -1011,7 +1009,86 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
     }
   };
 
-  // Render clean fullscreen camera view
+  // State for edge detection overlay
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Update overlay with edge detection
+  const updateOverlay = useCallback(() => {
+    if (!overlayCanvasRef.current || !videoRef.current || !cameraReady) return;
+
+    const overlay = overlayCanvasRef.current;
+    const video = videoRef.current;
+    const ctx = overlay.getContext('2d');
+    if (!ctx) return;
+
+    // Match overlay size to video display size
+    const rect = video.getBoundingClientRect();
+    overlay.width = rect.width;
+    overlay.height = rect.height;
+
+    // Clear previous drawing
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+    // Draw edge detection overlay if document is detected
+    if (lastDetectionRef.current && lastDetectionRef.current.length === 4) {
+      const scaleX = overlay.width / video.videoWidth;
+      const scaleY = overlay.height / video.videoHeight;
+
+      // Scale detection points to overlay size
+      const scaledPoints = lastDetectionRef.current.map(point => ({
+        x: point.x * scaleX,
+        y: point.y * scaleY
+      }));
+
+      // Draw document outline
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = 'rgba(0, 255, 0, 0.5)';
+      ctx.shadowBlur = 8;
+      
+      ctx.beginPath();
+      ctx.moveTo(scaledPoints[0].x, scaledPoints[0].y);
+      for (let i = 1; i < scaledPoints.length; i++) {
+        ctx.lineTo(scaledPoints[i].x, scaledPoints[i].y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+
+      // Draw corner indicators
+      ctx.shadowBlur = 0;
+      scaledPoints.forEach((point) => {
+        // Outer green ring
+        ctx.fillStyle = '#00ff00';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Inner white circle
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+
+      // Draw "DOCUMENT DETECTED" text
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 16px system-ui';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 4;
+      ctx.fillText('DOKUMENTUM ÉSZLELVE', overlay.width / 2, 60);
+    }
+  }, [cameraReady]);
+
+  // Update overlay continuously
+  useEffect(() => {
+    if (currentStep === 'camera' && cameraReady) {
+      const updateInterval = setInterval(updateOverlay, 50);
+      return () => clearInterval(updateInterval);
+    }
+  }, [currentStep, cameraReady, updateOverlay]);
+
+  // Render camera view with live edge detection overlay
   const renderCameraView = () => (
     <div className="fixed inset-0 bg-black z-50">
       {/* Exit button - minimal and discrete */}
@@ -1024,7 +1101,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         </button>
       </div>
 
-      {/* Fullscreen camera preview */}
+      {/* Fullscreen camera preview with edge detection overlay */}
       <div className="absolute inset-0">
         <video
           ref={videoRef}
@@ -1032,6 +1109,12 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           playsInline
           muted
           className="w-full h-full object-cover"
+        />
+        
+        {/* Live edge detection overlay */}
+        <canvas
+          ref={overlayCanvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-none z-10"
         />
         
         {/* Processing overlay */}
@@ -1046,13 +1129,39 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         )}
       </div>
 
-      {/* Simple white capture button - center bottom */}
+      {/* Capture button with visual feedback */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-        <button
-          onClick={capturePhoto}
-          disabled={!cameraReady || !openCVReady || processing}
-          className="w-16 h-16 rounded-full bg-white shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 hover:scale-105"
-        />
+        <div className="relative">
+          {/* Pulse ring when document detected */}
+          {lastDetectionRef.current && (
+            <div className="absolute inset-0 w-16 h-16 rounded-full bg-green-400 opacity-30 animate-ping"></div>
+          )}
+          <button
+            onClick={capturePhoto}
+            disabled={!cameraReady || !openCVReady || processing}
+            className={`w-16 h-16 rounded-full shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 hover:scale-105 ${
+              lastDetectionRef.current ? 'bg-green-400 ring-4 ring-green-400 ring-opacity-50' : 'bg-white'
+            }`}
+          />
+        </div>
+      </div>
+
+      {/* Status indicator */}
+      <div className="absolute top-16 right-4 z-20">
+        <div className={`px-3 py-2 rounded-lg text-sm font-medium ${
+          !cameraReady || !openCVReady
+            ? 'bg-yellow-500 text-white'
+            : lastDetectionRef.current
+            ? 'bg-green-500 text-white'
+            : 'bg-gray-800 bg-opacity-70 text-white'
+        }`}>
+          {!cameraReady || !openCVReady
+            ? 'Inicializálás...'
+            : lastDetectionRef.current
+            ? 'Dokumentum észlelve'
+            : 'Keressen dokumentumot'
+          }
+        </div>
       </div>
 
       {/* Error message - top of screen */}
@@ -1069,7 +1178,6 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
 
       {/* Hidden canvas for image processing */}
       <canvas ref={canvasRef} className="hidden" />
-      {/* Remove overlay canvas entirely - no more edge detection visuals */}
     </div>
   );
 
