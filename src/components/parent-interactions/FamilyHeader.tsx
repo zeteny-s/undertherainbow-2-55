@@ -31,10 +31,10 @@ export const FamilyHeader: React.FC<FamilyHeaderProps> = ({
   };
 
   const getProgressStatus = () => {
-    if (currentHours >= goalHours) return 'Completed';
-    if (currentHours >= goalHours * 0.75) return 'On Track';
-    if (currentHours >= goalHours * 0.5) return 'Needs Attention';
-    return 'At Risk';
+    if (currentHours >= goalHours) return 'Befejezve';
+    if (currentHours >= goalHours * 0.75) return 'Jó ütemben';
+    if (currentHours >= goalHours * 0.5) return 'Figyelmet igényel';
+    return 'Veszélyben';
   };
 
   // Generate academic year options (current and previous 2 years)
@@ -50,12 +50,12 @@ export const FamilyHeader: React.FC<FamilyHeaderProps> = ({
   }
 
   return (
-    <div className="bg-white border-b border-gray-200 p-6 mb-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
+    <div className="bg-white border-b border-gray-200 p-3 sm:p-6 mb-4 sm:mb-6 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
           <div className="min-w-0 flex-1">
             <label className="text-sm font-medium text-gray-600 mb-2 block">
-              Selected Family
+              Kiválasztott család
             </label>
             <select
               value={selectedFamily?.id || ''}
@@ -63,9 +63,9 @@ export const FamilyHeader: React.FC<FamilyHeaderProps> = ({
                 const family = families.find(f => f.id === e.target.value);
                 if (family) onFamilyChange(family);
               }}
-              className="w-64 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Select a family</option>
+              <option value="">Válasszon családot</option>
               {families.map((family) => (
                 <option key={family.id} value={family.id}>
                   {family.name} {family.primary_contact_name && `- ${family.primary_contact_name}`}
@@ -76,14 +76,14 @@ export const FamilyHeader: React.FC<FamilyHeaderProps> = ({
 
           <div className="min-w-0">
             <label className="text-sm font-medium text-gray-600 mb-2 block">
-              Academic Year
+              Tanév
             </label>
             <div className="relative">
               <Calendar className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <select
                 value={academicYear}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onAcademicYearChange(e.target.value)}
-                className="w-32 pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full sm:w-32 pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {academicYearOptions.map((year) => (
                   <option key={year} value={year}>
@@ -98,21 +98,21 @@ export const FamilyHeader: React.FC<FamilyHeaderProps> = ({
 
       {selectedFamily && (
         <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 break-words">
                 {selectedFamily.name}
               </h3>
               {selectedFamily.primary_contact_name && (
-                <p className="text-sm text-gray-600">
-                  Primary Contact: {selectedFamily.primary_contact_name}
+                <p className="text-sm text-gray-600 break-words">
+                  Elsődleges kapcsolat: {selectedFamily.primary_contact_name}
                 </p>
               )}
             </div>
             
-            <div className="text-right">
-              <div className="text-2xl font-bold text-gray-900">
-                {currentHours.toFixed(1)} / {goalHours} hrs
+            <div className="text-left sm:text-right">
+              <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                {currentHours.toFixed(1)} / {goalHours} óra
               </div>
               <div className={`text-sm font-medium ${
                 progressPercentage >= 100 ? 'text-green-600' :
@@ -132,8 +132,8 @@ export const FamilyHeader: React.FC<FamilyHeaderProps> = ({
           </div>
           
           <div className="flex justify-between text-xs text-gray-500">
-            <span>{progress?.total_interactions || 0} interactions</span>
-            <span>{progressPercentage.toFixed(0)}% complete</span>
+            <span>{progress?.total_interactions || 0} kapcsolat</span>
+            <span>{progressPercentage.toFixed(0)}% kész</span>
           </div>
         </div>
       )}

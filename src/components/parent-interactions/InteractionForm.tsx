@@ -111,25 +111,25 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
       <div className="flex items-center gap-2 mb-6">
         <MessageSquare className="w-5 h-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-gray-900">
-          {isEditing ? 'Edit Interaction' : 'New Interaction'}
+          {isEditing ? 'Kapcsolat szerkesztése' : 'Új kapcsolat'}
         </h3>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Interaction Type *
+            Kapcsolat típusa *
           </label>
           <select
             value={formData.interaction_type_id}
             onChange={(e) => setFormData(prev => ({ ...prev, interaction_type_id: e.target.value }))}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            <option value="">Select type...</option>
+            <option value="">Válasszon típust...</option>
             {interactionTypes.map(type => (
               <option key={type.id} value={type.id}>
-                {type.name} (Tier {type.tier} - {type.hour_value}h)
+                {type.name} (Szint {type.tier} - {type.hour_value}ó)
               </option>
             ))}
           </select>
@@ -138,11 +138,11 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
-              Date *
+              Dátum *
             </label>
             <input
               type="date"
@@ -151,7 +151,7 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
                 ...prev, 
                 interaction_date: new Date(e.target.value) 
               }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
@@ -159,7 +159,7 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Clock className="w-4 h-4 inline mr-1" />
-              Duration (minutes)
+              Időtartam (perc)
             </label>
             <input
               type="number"
@@ -168,7 +168,7 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
                 ...prev, 
                 duration_minutes: e.target.value ? parseInt(e.target.value) : undefined 
               }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
             />
           </div>
@@ -176,28 +176,28 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title *
+            Cím *
           </label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Brief title for this interaction"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Rövid cím a kapcsolathoz"
             required
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description *
+            Leírás *
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             rows={3}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Describe what happened during this interaction"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Írja le, mi történt a kapcsolat során"
             required
           />
         </div>
@@ -205,15 +205,15 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Users className="w-4 h-4 inline mr-1" />
-            Participants
+            Résztvevők
           </label>
           <div className="flex gap-2 mb-2">
             <input
               type="text"
               value={newParticipant}
               onChange={(e) => setNewParticipant(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Add participant name"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Résztvevő név hozzáadása"
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
             />
             <button
@@ -245,15 +245,15 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Key Topics
+            Kulcstémák
           </label>
           <div className="flex gap-2 mb-2">
             <input
               type="text"
               value={newTopic}
               onChange={(e) => setNewTopic(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Add topic discussed"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Megbeszélt téma hozzáadása"
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTopic())}
             />
             <button
@@ -285,15 +285,15 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Action Items
+            Feladatok
           </label>
           <div className="flex gap-2 mb-2">
             <input
               type="text"
               value={newActionItem}
               onChange={(e) => setNewActionItem(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Add action item"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Feladat hozzáadása"
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addActionItem())}
             />
             <button
@@ -325,7 +325,7 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Follow-up Date
+            Követés dátuma
           </label>
           <input
             type="date"
@@ -334,14 +334,14 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
               ...prev, 
               follow_up_date: e.target.value ? new Date(e.target.value) : undefined 
             }))}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Star className="w-4 h-4 inline mr-1" />
-            Quality Rating
+            Minőségi értékelés
           </label>
           <div className="flex gap-2">
             {Array.from({ length: 5 }).map((_, index) => (
@@ -366,31 +366,31 @@ export const InteractionForm: React.FC<InteractionFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Cultural Notes
+            Kulturális megjegyzések
           </label>
           <textarea
             value={formData.cultural_notes || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, cultural_notes: e.target.value }))}
             rows={2}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Any cultural considerations or notes"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Kulturális szempontok vagy megjegyzések"
           />
         </div>
 
-        <div className="flex gap-3 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
           <button
             type="submit"
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm"
           >
-            {isEditing ? 'Update Interaction' : 'Create Interaction'}
+            {isEditing ? 'Kapcsolat frissítése' : 'Kapcsolat létrehozása'}
           </button>
           {isEditing && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm"
             >
-              Cancel
+              Mégse
             </button>
           )}
         </div>

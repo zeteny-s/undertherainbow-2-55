@@ -78,22 +78,22 @@ export const ParentInteractionsPage: React.FC = () => {
       const mockFamilies: Family[] = [
         {
           id: '1',
-          name: 'Smith Family',
-          primary_contact_name: 'John Smith',
-          primary_contact_email: 'john.smith@example.com',
+          name: 'Kovács Család',
+          primary_contact_name: 'Kovács János',
+          primary_contact_email: 'kovacs.janos@example.com',
           primary_contact_phone: '+36301234567',
-          address: '1234 Budapest, Example Street 12.',
+          address: '1234 Budapest, Példa utca 12.',
           children_count: 2,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
         {
           id: '2',
-          name: 'Johnson Family',
-          primary_contact_name: 'Mary Johnson',
-          primary_contact_email: 'mary.johnson@example.com',
+          name: 'Nagy Család',
+          primary_contact_name: 'Nagy Mária',
+          primary_contact_email: 'nagy.maria@example.com',
           primary_contact_phone: '+36301234568',
-          address: '1234 Budapest, Sample Avenue 34.',
+          address: '1234 Budapest, Minta sugárút 34.',
           children_count: 1,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -222,7 +222,7 @@ export const ParentInteractionsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <LoadingSpinner size="lg" text="Loading parent interactions..." />
+        <LoadingSpinner size="lg" text="Szülői kapcsolatok betöltése..." />
       </div>
     );
   }
@@ -232,11 +232,11 @@ export const ParentInteractionsPage: React.FC = () => {
     return (
       <EmptyState
         icon={AlertCircle}
-        title="Access Restricted"
+        title="Hozzáférés korlátozva"
         description={
           profileType === 'haz_vezeto' 
-            ? "Loading house leader data..." 
-            : "Only House Leaders can access the Parent Interaction Tracking system."
+            ? "Házvezetői adatok betöltése..." 
+            : "Csak a házvezetők férhetnek hozzá a szülői kapcsolatok követési rendszerhez."
         }
       />
     );
@@ -246,14 +246,14 @@ export const ParentInteractionsPage: React.FC = () => {
     return (
       <EmptyState
         icon={Users}
-        title="No Families Assigned"
-        description={`No families are currently assigned to you for the ${academicYear} academic year.`}
+        title="Nincsenek hozzárendelt családok"
+        description={`A ${academicYear} tanévre még nincsenek családok hozzárendelve.`}
       />
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-gray-50 min-h-screen">
       <FamilyHeader
         families={families}
         selectedFamily={selectedFamily}
@@ -263,8 +263,8 @@ export const ParentInteractionsPage: React.FC = () => {
         onAcademicYearChange={setAcademicYear}
       />
       
-      <div className="flex-1 flex min-h-0 px-6">
-        <div className="w-3/5 pr-4 flex flex-col">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 px-3 sm:px-6 pb-4">
+        <div className="w-full lg:w-3/5 lg:pr-4 flex flex-col mb-6 lg:mb-0">
           <InteractionTimeline
             interactions={interactions}
             onEdit={setEditingInteraction}
@@ -272,7 +272,7 @@ export const ParentInteractionsPage: React.FC = () => {
           />
         </div>
         
-        <div className="w-2/5 pl-4 border-l border-gray-200">
+        <div className="w-full lg:w-2/5 lg:pl-4 lg:border-l lg:border-gray-200">
           <InteractionForm
             interactionTypes={interactionTypes}
             onSubmit={handleCreateInteraction}
