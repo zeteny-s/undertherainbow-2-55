@@ -21,6 +21,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   const [detectionStable, setDetectionStable] = useState(false);
   const [autoCapturing, setAutoCapturing] = useState(false);
   const [flashEffect, setFlashEffect] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedPoints, setCapturedPoints] = useState<Point[] | null>(null);
+  const [fileName, setFileName] = useState('');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,9 +31,10 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<number | null>(null);
   const lastDetectionRef = useRef<Point[] | null>(null);
-  const stableDetectionRef = useRef<Point[] | null>(null);
   const stableFrameCountRef = useRef(0);
   const autoCaptureTimeoutRef = useRef<number | null>(null);
+  const detectionHistoryRef = useRef<Point[][]>([]);
+  const missedDetectionCountRef = useRef(0);
 
   // Load OpenCV.js
   useEffect(() => {
@@ -226,21 +230,30 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       const detectedPoints = detectDocumentEdges(canvas);
       
       if (detectedPoints && detectedPoints.length === 4) {
-        // Check stability - compare with previous detection
-        const isStable = stableDetectionRef.current && 
-          detectedPoints.every((point, i) => {
-            const prev = stableDetectionRef.current![i];
-            return Math.abs(point.x - prev.x) < 20 && Math.abs(point.y - prev.y) < 20;
-          });
+        // Add to detection history for better stability
+        detectionHistoryRef.current.push(detectedPoints);
+        if (detectionHistoryRef.current.length > 5) {
+          detectionHistoryRef.current.shift();
+        }
+        missedDetectionCountRef.current = 0;
+
+        // Check stability using recent history
+        const isStable = detectionHistoryRef.current.length >= 3 && 
+          detectionHistoryRef.current.slice(-3).every(points =>
+            points.every((point, i) => {
+              const prev = detectedPoints[i];
+              return Math.abs(point.x - prev.x) < 30 && Math.abs(point.y - prev.y) < 30;
+            })
+          );
 
         if (isStable) {
           stableFrameCountRef.current++;
-          if (stableFrameCountRef.current >= 30 && !autoCapturing) { // 0.5s at 60fps
+          if (stableFrameCountRef.current >= 60 && !autoCapturing) { // 1s at 60fps
             setDetectionStable(true);
             startAutoCapture();
           }
         } else {
-          stableFrameCountRef.current = 0;
+          stableFrameCountRef.current = Math.max(0, stableFrameCountRef.current - 1);
           setDetectionStable(false);
           if (autoCaptureTimeoutRef.current) {
             clearTimeout(autoCaptureTimeoutRef.current);
@@ -249,22 +262,28 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
           }
         }
 
-        stableDetectionRef.current = detectedPoints;
         lastDetectionRef.current = detectedPoints;
         setDocumentDetected(true);
         
-        // Draw thin, smooth overlay
+        // Draw thick, smooth overlay
         drawDetectionOverlay(overlayCtx, detectedPoints, overlayCanvas.width, overlayCanvas.height);
       } else {
-        lastDetectionRef.current = null;
-        stableDetectionRef.current = null;
-        stableFrameCountRef.current = 0;
-        setDocumentDetected(false);
-        setDetectionStable(false);
-        if (autoCaptureTimeoutRef.current) {
-          clearTimeout(autoCaptureTimeoutRef.current);
-          autoCaptureTimeoutRef.current = null;
-          setAutoCapturing(false);
+        // Allow some missed detections before clearing
+        missedDetectionCountRef.current++;
+        if (missedDetectionCountRef.current > 10) { // Allow 10 missed frames
+          detectionHistoryRef.current = [];
+          lastDetectionRef.current = null;
+          stableFrameCountRef.current = 0;
+          setDocumentDetected(false);
+          setDetectionStable(false);
+          if (autoCaptureTimeoutRef.current) {
+            clearTimeout(autoCaptureTimeoutRef.current);
+            autoCaptureTimeoutRef.current = null;
+            setAutoCapturing(false);
+          }
+        } else if (lastDetectionRef.current) {
+          // Keep showing last good detection
+          drawDetectionOverlay(overlayCtx, lastDetectionRef.current, overlayCanvas.width, overlayCanvas.height);
         }
       }
     }, 16); // ~60fps for smooth detection
@@ -289,9 +308,9 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   ) => {
     if (points.length !== 4) return;
 
-    // Set styles for thin, smooth lines
+    // Set styles for thick, smooth lines
     ctx.strokeStyle = detectionStable ? '#22C55E' : '#3B82F6';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.setLineDash([]);
@@ -406,23 +425,17 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       // Get detected points and order them properly
       const detectedPoints = orderPoints(lastDetectionRef.current);
       
-      // Process the image with perspective correction
-      const processedCanvas = await processDocumentImage(captureCanvas, detectedPoints);
+      // Set captured image for preview
+      setCapturedImage(captureCanvas.toDataURL('image/jpeg', 0.9));
+      setCapturedPoints(detectedPoints);
       
-      // Generate PDF immediately
-      const pdf = new jsPDF();
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (processedCanvas.height * imgWidth) / processedCanvas.width;
-      
-      pdf.addImage(processedCanvas.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, imgWidth, imgHeight);
-      
-      // Generate filename
+      // Generate default filename
       const now = new Date();
-      const filename = `document_${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+      const defaultName = `document_${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+      setFileName(defaultName);
       
-      // Convert to blob and complete scan
-      const pdfBlob = pdf.output('blob');
-      onScanComplete(pdfBlob, filename);
+      // Stop camera and detection
+      cleanup();
       
     } catch (error) {
       console.error('Document capture error:', error);
@@ -435,6 +448,54 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         autoCaptureTimeoutRef.current = null;
       }
     }
+  };
+
+  // Save the processed document
+  const saveDocument = async () => {
+    if (!capturedImage || !capturedPoints) return;
+
+    setProcessing(true);
+    try {
+      // Create canvas from captured image
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.drawImage(img, 0, 0);
+        
+        // Process the image with perspective correction
+        const processedCanvas = await processDocumentImage(canvas, capturedPoints);
+        
+        // Generate PDF
+        const pdf = new jsPDF();
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (processedCanvas.height * imgWidth) / processedCanvas.width;
+        
+        pdf.addImage(processedCanvas.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, imgWidth, imgHeight);
+        
+        // Convert to blob and complete scan
+        const pdfBlob = pdf.output('blob');
+        onScanComplete(pdfBlob, fileName);
+      };
+      img.src = capturedImage;
+    } catch (error) {
+      console.error('Save error:', error);
+      setError('Save failed');
+      setProcessing(false);
+    }
+  };
+
+  // Retake photo
+  const retakePhoto = () => {
+    setCapturedImage(null);
+    setCapturedPoints(null);
+    setFileName('');
+    setProcessing(false);
+    initializeCamera();
   };
 
   // Cleanup function
@@ -471,6 +532,86 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
   useEffect(() => {
     return cleanup;
   }, [cleanup]);
+
+  // Preview mode with edge adjustment
+  if (capturedImage) {
+    return (
+      <div className="fixed inset-0 bg-black z-50">
+        <div className="relative w-full h-full flex flex-col">
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={retakePhoto}
+                className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-lg text-white text-sm"
+              >
+                Retake
+              </button>
+              <h3 className="text-white font-medium">Preview</h3>
+              <button
+                onClick={saveDocument}
+                disabled={processing}
+                className="px-4 py-2 bg-blue-500 rounded-lg text-white text-sm disabled:opacity-50"
+              >
+                {processing ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+
+          {/* Preview Image */}
+          <div className="flex-1 flex items-center justify-center p-4 pt-20">
+            <div className="relative max-w-full max-h-full">
+              <img
+                src={capturedImage}
+                alt="Captured document"
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+              {/* Edge indicators */}
+              {capturedPoints && (
+                <div className="absolute inset-0">
+                  <svg className="w-full h-full">
+                    <polygon
+                      points={capturedPoints.map(p => `${p.x},${p.y}`).join(' ')}
+                      fill="none"
+                      stroke="#3B82F6"
+                      strokeWidth="3"
+                    />
+                    {capturedPoints.map((point, i) => (
+                      <circle
+                        key={i}
+                        cx={point.x}
+                        cy={point.y}
+                        r="8"
+                        fill="#3B82F6"
+                        stroke="white"
+                        strokeWidth="2"
+                      />
+                    ))}
+                  </svg>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* File Name Input */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <label className="block text-white text-sm font-medium mb-2">
+                Document Name
+              </label>
+              <input
+                type="text"
+                value={fileName}
+                onChange={(e) => setFileName(e.target.value)}
+                className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm rounded-lg text-white placeholder-white/60 border border-white/20 focus:outline-none focus:border-blue-400"
+                placeholder="Enter document name"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Main camera view - Apple-style minimal design
   return (
@@ -549,7 +690,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
                 <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
                 <p className="text-center px-6 mb-6">{error}</p>
                 <button
-                  onClick={initializeCamera}
+                  onClick={retakePhoto}
                   className="px-6 py-2 bg-white/20 rounded-lg backdrop-blur-sm"
                 >
                   Retry
