@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Settings as SettingsIcon, Moon, Sun, Monitor, Bell, Shield, Database, Download, Upload, Palette, Globe, Save, Check, AlertCircle, X } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { BackupManager } from './BackupManager';
 
 interface Notification {
@@ -11,6 +12,7 @@ interface Notification {
 
 export const Settings: React.FC = () => {
   const { settings, updateSettings, resetSettings, exportSettings, importSettings } = useSettings();
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'backup'>('general');
@@ -38,22 +40,22 @@ export const Settings: React.FC = () => {
       },
     };
     updateSettings(newSettings);
-    addNotification('success', 'Beállítás frissítve!');
+    addNotification('success', t('settings.messages.settingUpdated'));
   };
 
   const handleTopLevelChange = (key: string, value: any) => {
     updateSettings({ [key]: value });
-    addNotification('success', 'Beállítás frissítve!');
+    addNotification('success', t('settings.messages.settingUpdated'));
   };
 
   const handleResetSettings = () => {
     resetSettings();
-    addNotification('info', 'Beállítások visszaállítva az alapértelmezett értékekre');
+    addNotification('info', t('settings.messages.settingsReset'));
   };
 
   const handleExportSettings = () => {
     exportSettings();
-    addNotification('success', 'Beállítások exportálva');
+    addNotification('success', t('settings.messages.settingsExported'));
   };
 
   const handleImportSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,9 +64,9 @@ export const Settings: React.FC = () => {
 
     try {
       await importSettings(file);
-      addNotification('success', 'Beállítások sikeresen importálva');
+      addNotification('success', t('settings.messages.settingsImported'));
     } catch (error) {
-      addNotification('error', error instanceof Error ? error.message : 'Hibás beállítás fájl');
+      addNotification('error', error instanceof Error ? error.message : t('settings.messages.invalidFile'));
     }
 
     event.target.value = '';
@@ -74,17 +76,17 @@ export const Settings: React.FC = () => {
     setSaving(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
-      addNotification('success', 'Beállítások sikeresen mentve!');
+      addNotification('success', t('settings.messages.settingsSaved'));
     } catch (error) {
-      addNotification('error', 'Hiba történt a beállítások mentése során');
+      addNotification('error', t('settings.messages.settingsSaveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const tabs = [
-    { id: 'general', label: 'Általános', icon: SettingsIcon },
-    { id: 'backup', label: 'Biztonsági mentés', icon: Database }
+    { id: 'general', label: t('settings.tabs.general'), icon: SettingsIcon },
+    { id: 'backup', label: t('settings.tabs.backup'), icon: Database }
   ];
 
   return (
@@ -140,9 +142,9 @@ export const Settings: React.FC = () => {
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center">
               <SettingsIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-blue-600" />
-              Beállítások
+              {t('settings.title')}
             </h2>
-            <p className="text-gray-600 text-sm sm:text-base">Alkalmazás testreszabása és konfigurálása</p>
+            <p className="text-gray-600 text-sm sm:text-base">{t('settings.subtitle')}</p>
           </div>
           
           {activeTab === 'general' && (
@@ -159,7 +161,7 @@ export const Settings: React.FC = () => {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Mentés
+                  {t('settings.save')}
                 </>
               )}
             </button>
@@ -199,13 +201,13 @@ export const Settings: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
             <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
               <Palette className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600 mr-2 sm:mr-3" />
-              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Megjelenés</h3>
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">{t('settings.sections.appearance')}</h3>
             </div>
             
             <div className="space-y-4 sm:space-y-6">
               {/* Theme Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Téma</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">{t('settings.theme.title')}</label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
                     onClick={() => handleTopLevelChange('theme', 'light')}
@@ -216,7 +218,7 @@ export const Settings: React.FC = () => {
                     }`}
                   >
                     <Sun className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-yellow-500" />
-                    <span className="text-sm font-medium">Világos</span>
+                    <span className="text-sm font-medium">{t('settings.theme.light')}</span>
                   </button>
                   
                   <button
@@ -228,7 +230,7 @@ export const Settings: React.FC = () => {
                     }`}
                   >
                     <Moon className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-gray-700" />
-                    <span className="text-sm font-medium">Sötét</span>
+                    <span className="text-sm font-medium">{t('settings.theme.dark')}</span>
                   </button>
                   
                   <button
@@ -240,7 +242,7 @@ export const Settings: React.FC = () => {
                     }`}
                   >
                     <Monitor className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-gray-600" />
-                    <span className="text-sm font-medium">Rendszer</span>
+                    <span className="text-sm font-medium">{t('settings.theme.system')}</span>
                   </button>
                 </div>
               </div>
@@ -249,8 +251,8 @@ export const Settings: React.FC = () => {
               <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Kompakt mód</label>
-                    <p className="text-xs text-gray-500">Kisebb távolságok és elemek</p>
+                    <label className="text-sm font-medium text-gray-700">{t('settings.display.compactMode')}</label>
+                    <p className="text-xs text-gray-500">{t('settings.display.compactModeDesc')}</p>
                   </div>
                   <button
                     onClick={() => handleSettingChange('display', 'compactMode', !settings.display.compactMode)}
@@ -268,8 +270,8 @@ export const Settings: React.FC = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Animációk</label>
-                    <p className="text-xs text-gray-500">Átmenetek és mozgások</p>
+                    <label className="text-sm font-medium text-gray-700">{t('settings.display.animations')}</label>
+                    <p className="text-xs text-gray-500">{t('settings.display.animationsDesc')}</p>
                   </div>
                   <button
                     onClick={() => handleSettingChange('display', 'showAnimations', !settings.display.showAnimations)}
@@ -287,8 +289,8 @@ export const Settings: React.FC = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Nagy kontraszt</label>
-                    <p className="text-xs text-gray-500">Jobb láthatóság</p>
+                    <label className="text-sm font-medium text-gray-700">{t('settings.display.highContrast')}</label>
+                    <p className="text-xs text-gray-500">{t('settings.display.highContrastDesc')}</p>
                   </div>
                   <button
                     onClick={() => handleSettingChange('display', 'highContrast', !settings.display.highContrast)}
@@ -311,14 +313,14 @@ export const Settings: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
             <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
               <Bell className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600 mr-2 sm:mr-3" />
-              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Értesítések</h3>
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">{t('settings.sections.notifications')}</h3>
             </div>
             
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">E-mail értesítések</label>
-                  <p className="text-xs text-gray-500">Fontos események e-mailben</p>
+                  <label className="text-sm font-medium text-gray-700">{t('settings.notifications.email')}</label>
+                  <p className="text-xs text-gray-500">{t('settings.notifications.emailDesc')}</p>
                 </div>
                 <button
                   onClick={() => handleSettingChange('notifications', 'emailNotifications', !settings.notifications.emailNotifications)}
@@ -336,8 +338,8 @@ export const Settings: React.FC = () => {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Push értesítések</label>
-                  <p className="text-xs text-gray-500">Böngésző értesítések</p>
+                  <label className="text-sm font-medium text-gray-700">{t('settings.notifications.push')}</label>
+                  <p className="text-xs text-gray-500">{t('settings.notifications.pushDesc')}</p>
                 </div>
                 <button
                   onClick={() => handleSettingChange('notifications', 'pushNotifications', !settings.notifications.pushNotifications)}
@@ -355,8 +357,8 @@ export const Settings: React.FC = () => {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Számla feldolgozás</label>
-                  <p className="text-xs text-gray-500">Értesítés feldolgozás után</p>
+                  <label className="text-sm font-medium text-gray-700">{t('settings.notifications.invoiceProcessed')}</label>
+                  <p className="text-xs text-gray-500">{t('settings.notifications.invoiceProcessedDesc')}</p>
                 </div>
                 <button
                   onClick={() => handleSettingChange('notifications', 'invoiceProcessed', !settings.notifications.invoiceProcessed)}
@@ -374,8 +376,8 @@ export const Settings: React.FC = () => {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Rendszer frissítések</label>
-                  <p className="text-xs text-gray-500">Új funkciók és javítások</p>
+                  <label className="text-sm font-medium text-gray-700">{t('settings.notifications.systemUpdates')}</label>
+                  <p className="text-xs text-gray-500">{t('settings.notifications.systemUpdatesDesc')}</p>
                 </div>
                 <button
                   onClick={() => handleSettingChange('notifications', 'systemUpdates', !settings.notifications.systemUpdates)}
@@ -393,11 +395,60 @@ export const Settings: React.FC = () => {
             </div>
           </div>
 
+          {/* Language & Region */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
+              <Globe className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-indigo-600 mr-2 sm:mr-3" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">{t('settings.sections.language')}</h3>
+            </div>
+            
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">{t('settings.language.title')}</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleTopLevelChange('language', 'hu')}
+                    className={`p-3 sm:p-4 border-2 rounded-lg transition-all text-left ${
+                      settings.language === 'hu' 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-lg">🇭🇺</span>
+                      <div>
+                        <span className="text-sm font-medium block">{t('settings.language.hungarian')}</span>
+                        <span className="text-xs text-gray-500">Magyar</span>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleTopLevelChange('language', 'en')}
+                    className={`p-3 sm:p-4 border-2 rounded-lg transition-all text-left ${
+                      settings.language === 'en' 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-lg">🇺🇸</span>
+                      <div>
+                        <span className="text-sm font-medium block">{t('settings.language.english')}</span>
+                        <span className="text-xs text-gray-500">English</span>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Privacy & Security */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
             <div className="flex items-center mb-3 sm:mb-4 lg:mb-6">
               <Shield className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600 mr-2 sm:mr-3" />
-              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Adatvédelem és biztonság</h3>
+              <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">{t('settings.sections.privacy')}</h3>
             </div>
             
             <div className="space-y-4 sm:space-y-6">

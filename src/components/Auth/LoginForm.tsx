@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, AlertCircle, User, Shield } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, AlertCircle, User, Shield, Globe } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useSettings } from '../../contexts/SettingsContext';
 
 interface LoginFormProps {
   onToggleMode: () => void;
@@ -18,8 +20,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
   const [managerPassword, setManagerPassword] = useState('');
   const [showManagerPassword, setShowManagerPassword] = useState(false);
   const [house, setHouse] = useState<'Feketerigo' | 'Torockó' | 'Levél'>('Feketerigo');
+  const [selectedLanguage, setSelectedLanguage] = useState<'hu' | 'en'>('hu');
 
   const { signIn, signUp } = useAuth();
+  const { t } = useTranslation();
+  const { updateSettings } = useSettings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,20 +35,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
       if (isSignUp) {
         // Validate required fields for sign up
         if (!email.trim()) {
-          throw new Error('E-mail cím megadása kötelező');
+          throw new Error(t('auth.errors.emailRequired'));
         }
         if (!password || password.length < 6) {
-          throw new Error('A jelszónak legalább 6 karakter hosszúnak kell lennie');
+          throw new Error(t('auth.errors.passwordMinLength'));
         }
         if (!name.trim()) {
-          throw new Error('Név megadása kötelező');
+          throw new Error(t('auth.errors.nameRequired'));
         }
         if (profileType === 'vezetoi' && managerPassword !== 'Finance123') {
-          throw new Error('Hibás vezetői jelszó');
+          throw new Error(t('auth.errors.wrongManagerPassword'));
         }
         if (profileType === 'haz_vezeto' && managerPassword !== 'House123') {
-          throw new Error('Hibás házvezetői jelszó');
+          throw new Error(t('auth.errors.wrongHouseLeaderPassword'));
         }
+
+        // Update language setting before signup
+        updateSettings({ language: selectedLanguage });
 
         console.log('Attempting to sign up user:', { email, name });
         const { error } = await signUp(email.trim(), password, name.trim(), profileType);
@@ -55,20 +63,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
           if (error.message.includes('User already registered') || 
               error.message.includes('user_already_exists') ||
               error.message.includes('already_registered')) {
-            setError('Ez az e-mail cím már regisztrálva van. Kérjük, jelentkezzen be helyette.');
+            setError(t('auth.errors.userAlreadyExists'));
             // Automatically switch to login mode after a short delay
             setTimeout(() => {
               onToggleMode();
               setError(null);
             }, 2000);
           } else if (error.message.includes('Invalid email')) {
-            setError('Érvénytelen e-mail cím formátum');
+            setError(t('auth.errors.invalidEmail'));
           } else if (error.message.includes('Password')) {
-            setError('A jelszó nem felel meg a követelményeknek');
+            setError(t('auth.errors.passwordRequirements'));
           } else if (error.message.includes('signup_disabled')) {
-            setError('A regisztráció jelenleg nem elérhető');
+            setError(t('auth.errors.signupDisabled'));
           } else {
-            setError(`Regisztráció sikertelen: ${error.message}`);
+            setError(`${t('auth.errors.registrationFailed')}: ${error.message}`);
           }
         } else {
           // Registration successful
@@ -80,10 +88,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
       } else {
         // Sign in
         if (!email.trim()) {
-          throw new Error('E-mail cím megadása kötelező');
+          throw new Error(t('auth.errors.emailRequired'));
         }
         if (!password) {
-          throw new Error('Jelszó megadása kötelező');
+          throw new Error(t('auth.errors.loginRequired'));
         }
 
         console.log('Attempting to sign in user:', email);
@@ -94,13 +102,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
           
           if (error.message.includes('Invalid login credentials') || 
               error.message.includes('invalid_credentials')) {
-            setError('Hibás e-mail cím vagy jelszó. Kérjük, ellenőrizze az adatokat.');
+            setError(t('auth.errors.invalidCredentials'));
           } else if (error.message.includes('Email not confirmed')) {
-            setError('Kérjük, erősítse meg e-mail címét a regisztráció befejezéséhez.');
+            setError(t('auth.errors.emailNotConfirmed'));
           } else if (error.message.includes('Too many requests')) {
-            setError('Túl sok próbálkozás. Kérjük, várjon egy kicsit és próbálja újra.');
+            setError(t('auth.errors.tooManyRequests'));
           } else {
-            setError(`Bejelentkezés sikertelen: ${error.message}`);
+            setError(`${t('auth.errors.loginFailed')}: ${error.message}`);
           }
         } else {
           console.log('Sign in successful');
@@ -109,7 +117,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
       }
     } catch (err) {
       console.error('Authentication error:', err);
-      setError(err instanceof Error ? err.message : 'Váratlan hiba történt. Kérjük, próbálja újra.');
+      setError(err instanceof Error ? err.message : t('auth.errors.unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -124,10 +132,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
               <LogIn className="h-8 w-8 text-blue-800" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {isSignUp ? 'Regisztráció' : 'Bejelentkezés'}
+              {isSignUp ? t('auth.signup') : t('auth.login')}
             </h1>
             <p className="text-gray-600">
-              Feketerigó Alapítvány számla kezelő rendszer
+              {t('auth.companySystem')}
             </p>
           </div>
 
@@ -140,29 +148,52 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {isSignUp && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Teljes név *
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required={isSignUp}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    placeholder="Kovács János"
-                  />
+              <>
+                <div>
+                  <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('auth.language')} {t('auth.required')}
+                  </label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <select
+                      id="language"
+                      value={selectedLanguage}
+                      onChange={(e) => {
+                        setSelectedLanguage(e.target.value as 'hu' | 'en');
+                        updateSettings({ language: e.target.value as 'hu' | 'en' });
+                      }}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors appearance-none bg-white"
+                    >
+                      <option value="hu">{t('auth.languages.hu')}</option>
+                      <option value="en">{t('auth.languages.en')}</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('auth.name')} {t('auth.required')}
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required={isSignUp}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder={t('auth.namePlaceholder')}
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {isSignUp && (
               <div>
                 <label htmlFor="profileType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Profil típus *
+                  {t('auth.profileType')} {t('auth.required')}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -172,10 +203,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                     onChange={(e) => setProfileType(e.target.value as 'adminisztracio' | 'pedagogus' | 'haz_vezeto' | 'vezetoi')}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors appearance-none bg-white"
                   >
-                    <option value="adminisztracio">Adminisztráció</option>
-                    <option value="pedagogus">Pedagógus</option>
-                    <option value="haz_vezeto">Ház vezető</option>
-                    <option value="vezetoi">Vezetői</option>
+                    <option value="adminisztracio">{t('auth.profileTypes.adminisztracio')}</option>
+                    <option value="pedagogus">{t('auth.profileTypes.pedagogus')}</option>
+                    <option value="haz_vezeto">{t('auth.profileTypes.haz_vezeto')}</option>
+                    <option value="vezetoi">{t('auth.profileTypes.vezetoi')}</option>
                   </select>
                 </div>
               </div>
@@ -184,7 +215,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
             {isSignUp && profileType === 'haz_vezeto' && (
               <div>
                 <label htmlFor="house" className="block text-sm font-medium text-gray-700 mb-2">
-                  Ház *
+                  {t('auth.house')} {t('auth.required')}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -194,9 +225,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                     onChange={(e) => setHouse(e.target.value as 'Feketerigo' | 'Torockó' | 'Levél')}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors appearance-none bg-white"
                   >
-                    <option value="Feketerigo">Feketerigo</option>
-                    <option value="Torockó">Torockó</option>
-                    <option value="Levél">Levél</option>
+                    <option value="Feketerigo">{t('auth.houses.feketerigo')}</option>
+                    <option value="Torockó">{t('auth.houses.torocko')}</option>
+                    <option value="Levél">{t('auth.houses.level')}</option>
                   </select>
                 </div>
               </div>
@@ -205,7 +236,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
             {isSignUp && (profileType === 'vezetoi' || profileType === 'haz_vezeto') && (
               <div>
                 <label htmlFor="managerPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  {profileType === 'vezetoi' ? 'Vezetői jelszó *' : 'Házvezetői jelszó *'}
+                  {profileType === 'vezetoi' ? t('auth.managerPassword') : t('auth.houseLeaderPassword')} {t('auth.required')}
                 </label>
                 <div className="relative">
                   <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -216,7 +247,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                     onChange={(e) => setManagerPassword(e.target.value)}
                     required
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    placeholder={profileType === 'vezetoi' ? 'Vezetői hozzáférési jelszó' : 'Házvezetői hozzáférési jelszó'}
+                    placeholder={profileType === 'vezetoi' ? t('auth.managerPassword') : t('auth.houseLeaderPassword')}
                   />
                   <button
                     type="button"
@@ -226,15 +257,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                     {showManagerPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  {profileType === 'vezetoi' ? 'Vezetői profil létrehozásához szükséges speciális jelszó' : 'Házvezetői profil létrehozásához szükséges speciális jelszó'}
-                </p>
               </div>
             )}
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                E-mail cím *
+                {t('auth.email')} {t('auth.required')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -245,14 +273,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="pelda@email.com"
+                  placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Jelszó *
+                {t('auth.password')} {t('auth.required')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -264,7 +292,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
                   required
                   minLength={6}
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="••••••••"
+                  placeholder={t('auth.passwordPlaceholder')}
                 />
                 <button
                   type="button"
@@ -276,7 +304,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
               </div>
               {isSignUp && (
                 <p className="mt-1 text-xs text-gray-500">
-                  Minimum 6 karakter hosszú jelszó szükséges
+                  {t('auth.minPasswordLength')}
                 </p>
               )}
             </div>
@@ -291,7 +319,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
               ) : (
                 <>
                   {isSignUp ? <UserPlus className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
-                  <span>{isSignUp ? 'Regisztráció' : 'Bejelentkezés'}</span>
+                  <span>{isSignUp ? t('auth.signup') : t('auth.login')}</span>
                 </>
               )}
             </button>
@@ -304,8 +332,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
               className="text-sm text-blue-800 hover:text-blue-900 font-medium transition-colors disabled:opacity-50"
             >
               {isSignUp 
-                ? 'Már van fiókja? Jelentkezzen be' 
-                : 'Nincs még fiókja? Regisztráljon'
+                ? t('auth.alreadyHaveAccount')
+                : t('auth.noAccount')
               }
             </button>
           </div>
@@ -313,7 +341,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode, isSignUp }) 
 
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
-            © 2024 Feketerigó Alapítvány számla kezelő rendszer. Minden jog fenntartva.
+            {t('auth.copyright')}
           </p>
         </div>
       </div>
