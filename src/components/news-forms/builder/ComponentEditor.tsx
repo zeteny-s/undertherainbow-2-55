@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Textarea } from '../../ui/textarea';
-import { Switch } from '../../ui/switch';
 import { CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { FormComponent } from '../../../types/form-types';
 
