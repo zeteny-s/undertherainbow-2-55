@@ -73,13 +73,13 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
 
       <div 
         ref={setNodeRef}
-        className={`relative z-20 max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center ${
+        className={`relative z-30 max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center ${
           isOver ? 'bg-blue-50/30' : ''
         }`}
       >
-        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg">
+        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg z-40">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative z-50">
             <img 
               src={logo} 
               alt="Under the Rainbow Kindergarten and Nursery" 
@@ -90,7 +90,7 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
 
           {/* Form Title */}
           {form.title && (
-            <div className="text-center mb-8">
+            <div className="text-center mb-8 relative z-50">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {form.title}
               </h1>
@@ -101,29 +101,30 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
           )}
 
           {/* Form Content */}
-          <div className="space-y-6">
+          <div className="space-y-6 relative z-50">
             {components.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+              <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50 relative z-50">
                 <p className="text-lg font-medium mb-2">Drop form components here</p>
                 <p className="text-sm">Drag components from the left sidebar to build your form</p>
               </div>
             ) : onComponentSelect ? (
               // Builder mode with sortable components
               <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-4">
+                <div className="space-y-4 relative z-50">
                   {components.map((component) => (
-                    <SortableFormComponent
-                      key={component.id}
-                      component={component}
-                      onSelect={() => onComponentSelect(component)}
-                      onDelete={() => onComponentDelete?.(component.id)}
-                    />
+                    <div key={component.id} className="relative z-50">
+                      <SortableFormComponent
+                        component={component}
+                        onSelect={() => onComponentSelect(component)}
+                        onDelete={() => onComponentDelete?.(component.id)}
+                      />
+                    </div>
                   ))}
                 </div>
               </SortableContext>
             ) : (
               // Preview mode with rendered form
-              <form className="space-y-6">
+              <form className="space-y-6 relative z-50">
                 <FormRenderer
                   components={components}
                   values={previewData}
