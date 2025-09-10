@@ -2349,7 +2349,7 @@ export type Database = {
     Enums: {
       campus_type: "Feketerigó" | "Torockó" | "Levél"
       document_permission: "viewer" | "editor"
-      form_status: "active" | "inactive"
+      form_status: "active" | "inactive" | "draft"
       invoice_category:
         | "Bérleti díjak"
         | "Közüzemi díjak"
@@ -2498,7 +2498,7 @@ export const Constants = {
     Enums: {
       campus_type: ["Feketerigó", "Torockó", "Levél"],
       document_permission: ["viewer", "editor"],
-      form_status: ["active", "inactive"],
+      form_status: ["active", "inactive", "draft"],
       invoice_category: [
         "Bérleti díjak",
         "Közüzemi díjak",

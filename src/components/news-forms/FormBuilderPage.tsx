@@ -9,13 +9,12 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Switch } from '../ui/switch';
 import { Card, CardContent } from '../ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { ComponentLibrary } from './builder/ComponentLibrary';
 import { ComponentEditor } from './builder/ComponentEditor';
 import { LivePreview } from './builder/LivePreview';
-import { Form, FormComponent, CampusType } from '../../types/form-types';
+import { Form, FormComponent, CampusType, FormStatus } from '../../types/form-types';
 import { toast } from 'sonner';
 
 interface FormBuilderPageProps {
@@ -38,10 +37,10 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
     if (isNewForm) {
       setForm({
         id: '',
-        title: '',
+        title: 'Untitled Form',
         description: '',
         campus: 'Feketerigó',
-        status: 'active',
+        status: 'draft' as FormStatus,
         form_components: [],
         created_by: user?.id || '',
         created_at: new Date().toISOString(),
@@ -53,16 +52,29 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
     }
   }, [formId, isNewForm, user]);
 
+  // Auto-save when form data changes
   useEffect(() => {
-    // Auto-save every 30 seconds
-    const interval = setInterval(() => {
-      if (form && form.title) {
+    if (!form || isNewForm) return;
+    
+    const timeoutId = setTimeout(() => {
+      if (form.title && form.title !== 'Untitled Form') {
         handleSave(true);
       }
-    }, 30000);
+    }, 2000); // Save 2 seconds after changes
 
-    return () => clearInterval(interval);
+    return () => clearTimeout(timeoutId);
   }, [form, components]);
+
+  // Auto-save new forms when they get a title
+  useEffect(() => {
+    if (isNewForm && form && form.title && form.title !== 'Untitled Form') {
+      const timeoutId = setTimeout(() => {
+        handleSave(true);
+      }, 1000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [form?.title, isNewForm]);
 
   const fetchForm = async () => {
     if (!formId || isNewForm) return;
@@ -100,14 +112,22 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
 
     setSaving(true);
     try {
+      // For auto-save, keep as draft. For manual save, set to active
+      const status = isAutoSave ? 'draft' as FormStatus : 'active' as FormStatus;
+      
       const formData = {
         title: form.title,
         description: form.description,
         campus: form.campus,
-        status: form.status,
+        status: status,
         form_components: components as any,
         created_by: user.id,
       };
+
+      // Update form status in state if manually saving
+      if (!isAutoSave && form.status === 'draft') {
+        setForm(prev => prev ? {...prev, status: 'active' as FormStatus} : null);
+      }
 
       if (isNewForm) {
         const { data, error } = await supabase
@@ -133,7 +153,9 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
       }
 
       if (!isAutoSave) {
-        toast.success('Form saved successfully');
+        toast.success('Form published successfully');
+      } else {
+        console.log('Auto-saved form as draft');
       }
     } catch (error) {
       console.error('Error saving form:', error);
@@ -260,26 +282,39 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="status">Active</Label>
-                    <Switch
-                      id="status"
-                      checked={form.status === 'active'}
-                      onCheckedChange={(checked: boolean) => 
-                        setForm(prev => prev ? {...prev, status: checked ? 'active' : 'inactive'} : null)
-                      }
-                    />
-                  </div>
+                   <div className="space-y-2">
+                     <Label>Form Status</Label>
+                     <Select 
+                       value={form.status} 
+                       onValueChange={(value: string) => setForm(prev => prev ? {...prev, status: value as FormStatus} : null)}
+                     >
+                       <SelectTrigger>
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="draft">Draft</SelectItem>
+                         <SelectItem value="active">Active</SelectItem>
+                         <SelectItem value="inactive">Inactive</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
                 </div>
               </SheetContent>
             </Sheet>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {form.status === 'draft' && (
+                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                  Draft - Auto-saving...
+                </span>
+              )}
+            </div>
             <Button 
               onClick={() => handleSave()} 
               disabled={saving}
               className="flex items-center gap-2"
             >
               <Save className="h-4 w-4" />
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? 'Saving...' : form.status === 'draft' ? 'Publish' : 'Save'}
             </Button>
           </div>
         </div>

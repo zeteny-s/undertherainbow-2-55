@@ -1,5 +1,5 @@
 export type CampusType = 'Feketerigó' | 'Torockó' | 'Levél';
-export type FormStatus = 'active' | 'inactive';
+export type FormStatus = 'active' | 'inactive' | 'draft';
 
 export interface FormComponent {
   id: string;
