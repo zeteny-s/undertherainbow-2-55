@@ -15,6 +15,8 @@ import { ChatPage } from './components/chat/ChatPage';
 import { JelenletiPage } from './components/JelenletiPage';
 import { TeacherDashboard } from './components/teacher/TeacherDashboard';
 import { FamilyRelationshipsPage } from './components/family-relationships/FamilyRelationshipsPage';
+import { NewsFormsPage } from './components/news-forms/NewsFormsPage';
+import { FormBuilderPage } from './components/news-forms/FormBuilderPage';
 
 
 const AppContent: React.FC = () => {
@@ -71,6 +73,10 @@ const AppContent: React.FC = () => {
         return <PayrollCosts />;
       case 'family-relationships':
         return <FamilyRelationshipsPage />;
+      case 'news-forms':
+        return <NewsFormsPage onNavigate={setActiveTab} />;
+      case 'news-forms-new':
+        return <FormBuilderPage onNavigate={setActiveTab} />;
       case 'jelenleti':
         return <JelenletiPage />;
       case 'settings':

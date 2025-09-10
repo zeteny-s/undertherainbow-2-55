@@ -1,31 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Eye, ArrowLeft, Settings } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTranslation } from '@/hooks/useTranslation';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { supabase } from '../../integrations/supabase/client';
+import { useAuth } from '../../contexts/AuthContext';
+import { LoadingSpinner } from '../common/LoadingSpinner';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Switch } from '../ui/switch';
+import { Card, CardContent } from '../ui/card';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { ComponentLibrary } from './builder/ComponentLibrary';
 import { DropZone } from './builder/DropZone';
 import { ComponentEditor } from './builder/ComponentEditor';
 import { LivePreview } from './builder/LivePreview';
-import { Form, FormComponent, CampusType } from '@/types/form-types';
+import { Form, FormComponent, CampusType } from '../../types/form-types';
 import { toast } from 'sonner';
 
-export const FormBuilderPage = () => {
-  const { formId } = useParams();
-  const navigate = useNavigate();
+interface FormBuilderPageProps {
+  formId?: string;
+  onNavigate: (tab: string) => void;
+}
+
+export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) => {
   const { user } = useAuth();
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Form | null>(null);
@@ -34,7 +34,7 @@ export const FormBuilderPage = () => {
   const [draggedComponent, setDraggedComponent] = useState<FormComponent | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const isNewForm = formId === 'new';
+  const isNewForm = formId === 'new' || !formId;
 
   useEffect(() => {
     if (isNewForm) {
@@ -81,8 +81,8 @@ export const FormBuilderPage = () => {
       setComponents(data.form_components || []);
     } catch (error) {
       console.error('Error fetching form:', error);
-      toast.error(t('newsforms.errors.loadFailed'));
-      navigate('/forms');
+      toast.error('Failed to load form');
+      onNavigate('news-forms');
     } finally {
       setLoading(false);
     }
@@ -91,7 +91,7 @@ export const FormBuilderPage = () => {
   const handleSave = async (isAutoSave = false) => {
     if (!form || !form.title.trim()) {
       if (!isAutoSave) {
-        toast.error(t('newsforms.errors.titleRequired'));
+        toast.error('Form title is required');
       }
       return;
     }
@@ -116,7 +116,7 @@ export const FormBuilderPage = () => {
 
         if (error) throw error;
         setForm(data);
-        navigate(`/forms/${data.id}/edit`, { replace: true });
+        onNavigate(`news-forms-edit-${data.id}`);
       } else {
         const { error } = await supabase
           .from('forms')
@@ -127,12 +127,12 @@ export const FormBuilderPage = () => {
       }
 
       if (!isAutoSave) {
-        toast.success(t('newsforms.saveSuccess'));
+        toast.success('Form saved successfully');
       }
     } catch (error) {
       console.error('Error saving form:', error);
       if (!isAutoSave) {
-        toast.error(t('newsforms.errors.saveFailed'));
+        toast.error('Failed to save form');
       }
     } finally {
       setSaving(false);
@@ -193,17 +193,17 @@ export const FormBuilderPage = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate('/forms')}
+              onClick={() => onNavigate('news-forms')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {t('newsforms.backToForms')}
+              Back to Forms
             </Button>
             <div>
               <h1 className="text-xl font-semibold">
-                {isNewForm ? t('newsforms.newForm') : form.title}
+                {isNewForm ? 'New Form' : form.title}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {t('newsforms.formBuilder')}
+                Form Builder
               </p>
             </div>
           </div>
@@ -214,43 +214,43 @@ export const FormBuilderPage = () => {
               onClick={() => setShowPreview(!showPreview)}
             >
               <Eye className="h-4 w-4 mr-2" />
-              {showPreview ? t('newsforms.hidePreview') : t('newsforms.showPreview')}
+              {showPreview ? 'Hide Preview' : 'Show Preview'}
             </Button>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Settings className="h-4 w-4 mr-2" />
-                  {t('newsforms.formSettings')}
+                  Form Settings
                 </Button>
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
-                  <SheetTitle>{t('newsforms.formSettings')}</SheetTitle>
+                  <SheetTitle>Form Settings</SheetTitle>
                 </SheetHeader>
                 <div className="space-y-6 py-6">
                   <div className="space-y-2">
-                    <Label htmlFor="title">{t('newsforms.formTitle')} *</Label>
+                    <Label htmlFor="title">Form Title *</Label>
                     <Input
                       id="title"
                       value={form.title}
-                      onChange={(e) => setForm(prev => prev ? {...prev, title: e.target.value} : null)}
-                      placeholder={t('newsforms.formTitlePlaceholder')}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(prev => prev ? {...prev, title: e.target.value} : null)}
+                      placeholder="Enter form title"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">{t('newsforms.formDescription')}</Label>
+                    <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
                       value={form.description || ''}
-                      onChange={(e) => setForm(prev => prev ? {...prev, description: e.target.value} : null)}
-                      placeholder={t('newsforms.formDescriptionPlaceholder')}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm(prev => prev ? {...prev, description: e.target.value} : null)}
+                      placeholder="Enter form description"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="campus">{t('newsforms.campus')} *</Label>
+                    <Label htmlFor="campus">Campus *</Label>
                     <Select 
                       value={form.campus} 
-                      onValueChange={(value) => setForm(prev => prev ? {...prev, campus: value as CampusType} : null)}
+                      onValueChange={(value: string) => setForm(prev => prev ? {...prev, campus: value as CampusType} : null)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -263,11 +263,11 @@ export const FormBuilderPage = () => {
                     </Select>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="status">{t('newsforms.active')}</Label>
+                    <Label htmlFor="status">Active</Label>
                     <Switch
                       id="status"
                       checked={form.status === 'active'}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked: boolean) => 
                         setForm(prev => prev ? {...prev, status: checked ? 'active' : 'inactive'} : null)
                       }
                     />
@@ -281,7 +281,7 @@ export const FormBuilderPage = () => {
               className="flex items-center gap-2"
             >
               <Save className="h-4 w-4" />
-              {saving ? t('newsforms.saving') : t('newsforms.save')}
+              {saving ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>

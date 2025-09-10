@@ -31,7 +31,7 @@ export interface ValidationRule {
 export interface Form {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   campus: CampusType;
   status: FormStatus;
   form_components: FormComponent[];

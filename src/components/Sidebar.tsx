@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle, Users, Heart } from 'lucide-react';
+import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle, Users, Heart, Newspaper } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 import { useTranslation } from '../hooks/useTranslation';
@@ -73,6 +73,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
         return [
           ...commonItems,
           {
+            id: 'news-forms',
+            label: 'News & Forms',
+            icon: Newspaper,
+          },
+          {
             id: 'upload',
             label: t('nav.registrar'),
             icon: Upload,
@@ -115,6 +120,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
       case 'vezetoi':
         return [
           ...commonItems,
+          {
+            id: 'news-forms',
+            label: 'News & Forms',
+            icon: Newspaper,
+          },
           {
             id: 'upload',
             label: t('nav.registrar'),
