@@ -4,10 +4,16 @@ import { Send } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Form, FormComponent } from '../../types/form-types';
 import { FormRenderer } from './components/FormRenderer';
 import { toast } from 'sonner';
+import kindergartenLogo from '../../assets/kindergarten-logo.png';
+import decoration1 from '../../assets/decoration-1.png';
+import decoration2 from '../../assets/decoration-2.png';
+import decoration3 from '../../assets/decoration-3.png';
+import decoration4 from '../../assets/decoration-4.png';
+import decoration5 from '../../assets/decoration-5.png';
+import decoration6 from '../../assets/decoration-6.png';
 
 export const PublicFormPage = () => {
   const { formId } = useParams();
@@ -109,103 +115,150 @@ export const PublicFormPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="fixed inset-0 bg-white">
+          <div className="absolute inset-0" 
+               style={{
+                 background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                             radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                             radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                             radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                             radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                             radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+               }} />
+        </div>
+        <div className="relative z-10">
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }
 
   if (!form) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Form not found</h2>
-            <p className="text-muted-foreground">
-              The requested form does not exist or is not available.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="fixed inset-0 bg-white">
+          <div className="absolute inset-0" 
+               style={{
+                 background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                             radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                             radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                             radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                             radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                             radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+               }} />
+        </div>
+        <div className="relative z-10 bg-white rounded-[30px] shadow-2xl p-16 text-center max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Form not found</h2>
+          <p className="text-gray-600">
+            The requested form does not exist or is not available.
+          </p>
+        </div>
       </div>
     );
   }
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl">
-          <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold mb-4">Thank you!</h2>
-            <p className="text-muted-foreground mb-6">
-              Your form has been submitted successfully. We will contact you soon.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              You can safely close this window.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden p-4">
+        {/* Background pattern */}
+        <div className="fixed inset-0 bg-white">
+          <div className="absolute inset-0" 
+               style={{
+                 background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                             radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                             radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                             radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                             radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                             radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+               }} />
+        </div>
+        <div className="relative z-10 bg-white rounded-[30px] shadow-2xl p-16 text-center max-w-2xl">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold mb-4">Thank you!</h2>
+          <p className="text-gray-600 mb-6">
+            Your form has been submitted successfully. We will contact you soon.
+          </p>
+          <p className="text-sm text-gray-500">
+            You can safely close this window.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 py-8 px-4">
-      <div className="container mx-auto max-w-3xl">
-        {/* Fixed Template Header */}
-        <div className="mb-8 text-center">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <img 
-              src="/logo.png" 
-              alt="Logo" 
-              className="h-16 mx-auto mb-4"
-              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                e.currentTarget.style.display = 'none';
-              }}
+    <div className="min-h-screen bg-white relative overflow-hidden">
+      {/* Background pattern */}
+      <div className="fixed inset-0 bg-white">
+        <div className="absolute inset-0" 
+             style={{
+               background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                           radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                           radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                           radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                           radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                           radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+             }} />
+      </div>
+
+      {/* Background decorative images */}
+      <img src={decoration1} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[8%] left-[5%] -rotate-[15deg] w-[120px] md:w-[80px]" />
+      <img src={decoration2} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[15%] right-[8%] rotate-[25deg] w-[90px] md:w-[60px]" />
+      <img src={decoration3} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[35%] left-[12%] rotate-[45deg] w-[80px] md:w-[55px]" />
+      <img src={decoration4} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[55%] right-[15%] -rotate-[30deg] w-[110px] md:w-[75px]" />
+      <img src={decoration5} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[75%] left-[20%] rotate-[60deg] w-[70px] md:w-[50px]" />
+      <img src={decoration6} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[12%] left-[35%] -rotate-[45deg] w-[130px] md:w-[85px]" />
+      <img src={decoration1} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[65%] right-[5%] rotate-[15deg] w-[60px] md:w-[45px]" />
+      <img src={decoration2} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[30%] right-[30%] -rotate-[60deg] w-[100px] md:w-[65px]" />
+      <img src={decoration3} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[80%] right-[35%] rotate-[30deg] w-[140px] md:w-[90px]" />
+      <img src={decoration4} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[45%] left-[45%] -rotate-[20deg] w-[85px] md:w-[55px]" />
+      <img src={decoration5} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[25%] left-[70%] rotate-[50deg] w-[95px] md:w-[60px]" />
+      <img src={decoration6} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[60%] left-[60%] -rotate-[35deg] w-[75px] md:w-[50px]" />
+      <img src={decoration1} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[85%] left-[8%] rotate-[40deg] w-[105px] md:w-[70px]" />
+
+      {/* Main container */}
+      <div className="relative z-10 max-w-[600px] mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center md:px-2.5">
+        <div className="text-center bg-white rounded-[30px] shadow-2xl p-16 relative w-full md:p-10">
+          {/* Logo */}
+          <img 
+            src={kindergartenLogo} 
+            alt="Under the Rainbow Kindergarten and Nursery" 
+            className="max-w-[400px] w-full h-auto mb-8 md:max-w-[300px]"
+          />
+          
+          {/* Form Title */}
+          <h1 className="text-2xl font-bold mb-2 text-gray-900">{form.title}</h1>
+          {form.description && (
+            <p className="text-gray-600 mb-8">{form.description}</p>
+          )}
+          
+          {/* Form Fields */}
+          <form onSubmit={handleSubmit} className="space-y-6 text-left">
+            <FormRenderer
+              components={form.form_components}
+              values={formData}
+              onChange={handleFieldChange}
             />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{form.campus} Campus</h1>
-            <p className="text-gray-600">Child Protection Services</p>
-          </div>
-        </div>
-
-        {/* Form Content Area */}
-        <Card className="bg-white shadow-lg">
-          <CardHeader className="text-center border-b">
-            <CardTitle className="text-2xl font-bold">{form.title}</CardTitle>
-            {form.description && (
-              <p className="text-muted-foreground mt-2">{form.description}</p>
-            )}
-          </CardHeader>
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <FormRenderer
-                components={form.form_components}
-                values={formData}
-                onChange={handleFieldChange}
-              />
-              
-              <div className="pt-6 border-t">
-                <Button 
-                  type="submit" 
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2"
-                  size="lg"
-                >
-                  <Send className="h-5 w-5" />
-                  {submitting ? 'Submitting...' : 'Submit Form'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Footer */}
-        <div className="text-center mt-8 text-sm text-muted-foreground">
-          <p>© 2024 Child Protection Services. All rights reserved.</p>
+            
+            <div className="pt-6">
+              <Button 
+                type="submit" 
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-2"
+                size="lg"
+              >
+                <Send className="h-5 w-5" />
+                {submitting ? 'Submitting...' : 'Submit Form'}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
