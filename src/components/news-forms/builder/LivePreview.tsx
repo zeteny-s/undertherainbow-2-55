@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Eye } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormComponent } from '@/types/form-types';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Form, FormComponent } from '../../../types/form-types';
 import { FormRenderer } from '../components/FormRenderer';
 
 interface LivePreviewProps {
@@ -24,10 +24,10 @@ export const LivePreview = ({ form, components }: LivePreviewProps) => {
       <div className="border-b p-4 bg-card">
         <div className="flex items-center gap-2">
           <Eye className="h-5 w-5" />
-          <h3 className="font-semibold">Élő előnézet</h3>
+          <h3 className="font-semibold">Live Preview</h3>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Így fogják látni a felhasználók az űrlapot
+          See how users will view this form
         </p>
       </div>
 
@@ -40,7 +40,7 @@ export const LivePreview = ({ form, components }: LivePreviewProps) => {
                 <span className="text-xs text-gray-500">Logo</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{form.campus} Campus</h1>
-              <p className="text-gray-600">Gyermekvédelmi Szakellátás</p>
+              <p className="text-gray-600">Child Protection Services</p>
             </div>
           </div>
 
@@ -48,7 +48,7 @@ export const LivePreview = ({ form, components }: LivePreviewProps) => {
           <Card className="bg-white shadow-lg">
             <CardHeader className="text-center border-b">
               <CardTitle className="text-2xl font-bold">
-                {form.title || 'Űrlap címe'}
+                {form.title || 'Form Title'}
               </CardTitle>
               {form.description && (
                 <p className="text-muted-foreground mt-2">{form.description}</p>
@@ -57,8 +57,8 @@ export const LivePreview = ({ form, components }: LivePreviewProps) => {
             <CardContent className="p-8">
               {components.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>Még nincsenek komponensek az űrlapon</p>
-                  <p className="text-sm mt-2">Húzza át komponenseket a bal oldalról</p>
+                  <p>No components on the form yet</p>
+                  <p className="text-sm mt-2">Drag components from the left sidebar</p>
                 </div>
               ) : (
                 <form className="space-y-6">

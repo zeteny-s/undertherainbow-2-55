@@ -1,86 +1,85 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, Type, AlignLeft, ChevronDown, CheckSquare, Circle, Upload, Minus } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
-import { useTranslation } from '@/hooks/useTranslation';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ComponentLibraryItem, ComponentType } from '@/types/form-types';
+import { Input } from '../../ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { ComponentLibraryItem } from '../../../types/form-types';
 
 const componentLibrary: ComponentLibraryItem[] = [
   {
     type: 'text-input',
-    name: 'Szöveges beviteli mező',
+    name: 'Text Input Field',
     icon: 'Type',
-    description: 'Egysoros szöveges beviteli mező',
+    description: 'Single line text input field',
     defaultConfig: {
-      placeholder: 'Írja be a szöveget...',
+      placeholder: 'Enter text...',
       required: false
     }
   },
   {
     type: 'textarea',
-    name: 'Hosszú szöveges mező',
+    name: 'Long Text Field',
     icon: 'AlignLeft',
-    description: 'Többsoros szöveges beviteli terület',
+    description: 'Multi-line text input area',
     defaultConfig: {
-      placeholder: 'Írja be a hosszabb szöveget...',
+      placeholder: 'Enter longer text...',
       required: false
     }
   },
   {
     type: 'dropdown',
-    name: 'Legördülő menü',
+    name: 'Dropdown Menu',
     icon: 'ChevronDown',
-    description: 'Opciók közül választható legördülő menü',
+    description: 'Dropdown menu with selectable options',
     defaultConfig: {
-      options: ['1. opció', '2. opció', '3. opció'],
+      options: ['Option 1', 'Option 2', 'Option 3'],
       required: false
     }
   },
   {
     type: 'checkbox',
-    name: 'Jelölőnégyzetek',
+    name: 'Checkboxes',
     icon: 'CheckSquare',
-    description: 'Több opció kiválasztható',
+    description: 'Multiple options can be selected',
     defaultConfig: {
-      options: ['1. opció', '2. opció', '3. opció'],
+      options: ['Option 1', 'Option 2', 'Option 3'],
       required: false
     }
   },
   {
     type: 'radio',
-    name: 'Választógombok',
+    name: 'Radio Buttons',
     icon: 'Circle',
-    description: 'Egy opció kiválasztható',
+    description: 'Single option can be selected',
     defaultConfig: {
-      options: ['1. opció', '2. opció', '3. opció'],
+      options: ['Option 1', 'Option 2', 'Option 3'],
       required: false
     }
   },
   {
     type: 'file-upload',
-    name: 'Fájl feltöltés',
+    name: 'File Upload',
     icon: 'Upload',
-    description: 'Fájlok feltöltése',
+    description: 'Upload files',
     defaultConfig: {
       required: false,
-      acceptedTypes: 'image/*,application/pdf'
+      properties: { acceptedTypes: 'image/*,application/pdf' }
     }
   },
   {
     type: 'text-block',
-    name: 'Szöveges blokk',
+    name: 'Text Block',
     icon: 'Type',
-    description: 'Információs szöveg megjelenítése',
+    description: 'Display informational text',
     defaultConfig: {
-      content: 'Információs szöveg...'
+      properties: { content: 'Information text...' }
     }
   },
   {
     type: 'divider',
-    name: 'Elválasztó vonal',
+    name: 'Divider Line',
     icon: 'Minus',
-    description: 'Vizuális elválasztó elem',
+    description: 'Visual separator element',
     defaultConfig: {}
   }
 ];
@@ -135,7 +134,6 @@ function DraggableComponent({ item }: { item: ComponentLibraryItem }) {
 }
 
 export const ComponentLibrary = () => {
-  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredComponents = componentLibrary.filter(item =>
@@ -146,13 +144,13 @@ export const ComponentLibrary = () => {
   return (
     <div className="h-full flex flex-col">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg">{t('newsforms.componentLibrary')}</CardTitle>
+        <CardTitle className="text-lg">Component Library</CardTitle>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('newsforms.searchComponents')}
+            placeholder="Search components"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -160,7 +158,7 @@ export const ComponentLibrary = () => {
       
       <CardContent className="flex-1 overflow-y-auto space-y-3">
         <p className="text-sm text-muted-foreground mb-4">
-          {t('newsforms.dragToAdd')}
+          Drag components to add them to your form
         </p>
         
         {filteredComponents.map((item) => (
@@ -170,7 +168,7 @@ export const ComponentLibrary = () => {
         {filteredComponents.length === 0 && (
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground">
-              {t('newsforms.noComponentsFound')}
+              No components found
             </p>
           </div>
         )}

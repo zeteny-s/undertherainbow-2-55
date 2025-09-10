@@ -77,8 +77,12 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         .single();
 
       if (error) throw error;
-      setForm(data);
-      setComponents(data.form_components || []);
+      const formData = {
+        ...data,
+        form_components: (data.form_components as unknown as FormComponent[]) || []
+      };
+      setForm(formData);
+      setComponents(formData.form_components);
     } catch (error) {
       console.error('Error fetching form:', error);
       toast.error('Failed to load form');
@@ -89,7 +93,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
   };
 
   const handleSave = async (isAutoSave = false) => {
-    if (!form || !form.title.trim()) {
+    if (!form || !form.title.trim() || !user?.id) {
       if (!isAutoSave) {
         toast.error('Form title is required');
       }
@@ -103,8 +107,8 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         description: form.description,
         campus: form.campus,
         status: form.status,
-        form_components: components,
-        created_by: user?.id,
+        form_components: components as any,
+        created_by: user.id,
       };
 
       if (isNewForm) {
@@ -115,7 +119,11 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
           .single();
 
         if (error) throw error;
-        setForm(data);
+        const savedForm = {
+          ...data,
+          form_components: (data.form_components as unknown as FormComponent[]) || []
+        };
+        setForm(savedForm);
         onNavigate(`news-forms-edit-${data.id}`);
       } else {
         const { error } = await supabase

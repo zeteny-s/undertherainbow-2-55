@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Form, CampusType } from '../../types/form-types';
+import { Form, CampusType, FormComponent } from '../../types/form-types';
 import { toast } from 'sonner';
 
 interface NewsFormsPageProps {
@@ -37,7 +37,11 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setForms(data || []);
+      const formsData = (data || []).map(form => ({
+        ...form,
+        form_components: (form.form_components as unknown as FormComponent[]) || []
+      }));
+      setForms(formsData);
     } catch (error) {
       console.error('Error fetching forms:', error);
       toast.error('Failed to fetch forms');
@@ -60,6 +64,8 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
     });
 
   const handleDuplicate = async (form: Form) => {
+    if (!user?.id) return;
+    
     try {
       const { error } = await supabase
         .from('forms')
@@ -67,9 +73,9 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
           title: `${form.title} - Copy`,
           description: form.description,
           campus: form.campus,
-          status: 'inactive',
-          form_components: form.form_components,
-          created_by: user?.id
+          status: 'inactive' as const,
+          form_components: form.form_components as any,
+          created_by: user.id
         });
 
       if (error) throw error;
@@ -152,14 +158,13 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
 
       {filteredForms.length === 0 ? (
         <EmptyState 
-          icon={<Plus className="h-16 w-16" />}
+          icon={Plus}
           title="No Forms Found"
           description="Create your first form to get started"
-          action={
-            <Button onClick={() => onNavigate('news-forms-new')}>
-              Create First Form
-            </Button>
-          }
+          action={{
+            label: "Create First Form",
+            onClick: () => onNavigate('news-forms-new')
+          }}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

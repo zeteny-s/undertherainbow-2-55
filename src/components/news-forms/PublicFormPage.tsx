@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Send } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormComponent } from '@/types/form-types';
+import { supabase } from '../../integrations/supabase/client';
+import { LoadingSpinner } from '../common/LoadingSpinner';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Form, FormComponent } from '../../types/form-types';
 import { FormRenderer } from './components/FormRenderer';
 import { toast } from 'sonner';
 
@@ -32,8 +32,16 @@ export const PublicFormPage = () => {
         .eq('status', 'active')
         .single();
 
-      if (error) throw error;
-      setForm(data);
+      if (error || !data) {
+        console.error('Form not found or inactive');
+        return;
+      }
+
+      const formWithComponents = {
+        ...data,
+        form_components: (data.form_components as unknown as FormComponent[]) || []
+      };
+      setForm(formWithComponents);
     } catch (error) {
       console.error('Error fetching form:', error);
     } finally {
@@ -48,15 +56,15 @@ export const PublicFormPage = () => {
 
     // Validate required fields
     const requiredFields = form.form_components
-      .filter(component => component.required)
-      .map(component => component.id);
+      .filter((component: FormComponent) => component.required)
+      .map((component: FormComponent) => component.id);
 
     const missingFields = requiredFields.filter(fieldId => 
       !formData[fieldId] || (typeof formData[fieldId] === 'string' && !formData[fieldId].trim())
     );
 
     if (missingFields.length > 0) {
-      toast.error('Kérjük, töltse ki az összes kötelező mezőt');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -73,10 +81,10 @@ export const PublicFormPage = () => {
       if (error) throw error;
       
       setSubmitted(true);
-      toast.success('Űrlap sikeresen elküldve!');
+      toast.success('Form submitted successfully!');
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error('Hiba történt az űrlap elküldésekor');
+      toast.error('Error submitting form');
     } finally {
       setSubmitting(false);
     }
@@ -112,9 +120,9 @@ export const PublicFormPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Űrlap nem található</h2>
+            <h2 className="text-2xl font-bold mb-4">Form not found</h2>
             <p className="text-muted-foreground">
-              A keresett űrlap nem létezik vagy nem érhető el.
+              The requested form does not exist or is not available.
             </p>
           </CardContent>
         </Card>
@@ -132,12 +140,12 @@ export const PublicFormPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold mb-4">Köszönjük!</h2>
+            <h2 className="text-2xl font-bold mb-4">Thank you!</h2>
             <p className="text-muted-foreground mb-6">
-              Az űrlapot sikeresen elküldte. Hamarosan felvesszük Önnel a kapcsolatot.
+              Your form has been submitted successfully. We will contact you soon.
             </p>
             <p className="text-sm text-muted-foreground">
-              Biztonságosan bezárhatja ezt az ablakot.
+              You can safely close this window.
             </p>
           </CardContent>
         </Card>
@@ -155,12 +163,12 @@ export const PublicFormPage = () => {
               src="/logo.png" 
               alt="Logo" 
               className="h-16 mx-auto mb-4"
-              onError={(e) => {
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                 e.currentTarget.style.display = 'none';
               }}
             />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{form.campus} Campus</h1>
-            <p className="text-gray-600">Gyermekvédelmi Szakellátás</p>
+            <p className="text-gray-600">Child Protection Services</p>
           </div>
         </div>
 
@@ -188,7 +196,7 @@ export const PublicFormPage = () => {
                   size="lg"
                 >
                   <Send className="h-5 w-5" />
-                  {submitting ? 'Küldés...' : 'Űrlap elküldése'}
+                  {submitting ? 'Submitting...' : 'Submit Form'}
                 </Button>
               </div>
             </form>
@@ -197,7 +205,7 @@ export const PublicFormPage = () => {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-muted-foreground">
-          <p>© 2024 Gyermekvédelmi Szakellátás. Minden jog fenntartva.</p>
+          <p>© 2024 Child Protection Services. All rights reserved.</p>
         </div>
       </div>
     </div>

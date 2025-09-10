@@ -1,11 +1,9 @@
-import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Settings, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { FormComponent } from '@/types/form-types';
-import { ComponentPreview } from '../components/ComponentPreview';
+import { Settings, Trash2, GripVertical } from 'lucide-react';
+import { Button } from '../../ui/button';
+import { Card, CardContent } from '../../ui/card';
+import { FormComponent } from '../../../types/form-types';
 
 interface SortableFormComponentProps {
   component: FormComponent;
@@ -20,7 +18,7 @@ export const SortableFormComponent = ({ component, onSelect, onDelete }: Sortabl
     setNodeRef,
     transform,
     transition,
-    isDragging
+    isDragging,
   } = useSortable({ id: component.id });
 
   const style = {
@@ -32,37 +30,30 @@ export const SortableFormComponent = ({ component, onSelect, onDelete }: Sortabl
     <Card
       ref={setNodeRef}
       style={style}
-      className={`group relative ${isDragging ? 'opacity-50' : 'hover:shadow-md'} transition-all`}
+      className={`group relative border-2 transition-all ${
+        isDragging ? 'opacity-50 border-primary' : 'border-border hover:border-primary/50'
+      }`}
     >
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div
-            {...attributes}
-            {...listeners}
-            className="flex-shrink-0 p-1 cursor-grab active:cursor-grabbing rounded hover:bg-muted"
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <ComponentPreview component={component} />
-          </div>
-          
-          <div className="flex-shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onSelect}
-              className="h-8 w-8 p-0"
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1">
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
             >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-medium text-sm">{component.label}</h4>
+              <p className="text-xs text-muted-foreground">{component.type}</p>
+            </div>
+          </div>
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button size="sm" variant="ghost" onClick={onSelect}>
               <Settings className="h-4 w-4" />
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onDelete}
-              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-            >
+            <Button size="sm" variant="ghost" onClick={onDelete} className="text-destructive hover:text-destructive">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>

@@ -1,5 +1,4 @@
-import React from 'react';
-import { FormComponent } from '@/types/form-types';
+import { FormComponent } from '../../../types/form-types';
 import { ComponentPreview } from './ComponentPreview';
 
 interface FormRendererProps {

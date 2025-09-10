@@ -1,11 +1,7 @@
-import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Plus, Trash2, Settings } from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { FormComponent } from '@/types/form-types';
+import { Plus } from 'lucide-react';
+import { FormComponent } from '../../../types/form-types';
 import { SortableFormComponent } from './SortableFormComponent';
 
 interface DropZoneProps {
@@ -15,7 +11,6 @@ interface DropZoneProps {
 }
 
 export const DropZone = ({ components, onComponentSelect, onComponentDelete }: DropZoneProps) => {
-  const { t } = useTranslation();
   const { isOver, setNodeRef } = useDroppable({
     id: 'form-builder-dropzone'
   });
@@ -23,9 +18,9 @@ export const DropZone = ({ components, onComponentSelect, onComponentDelete }: D
   return (
     <div className="h-full flex flex-col">
       <div className="border-b p-4">
-        <h2 className="font-semibold">{t('newsforms.formCanvas')}</h2>
+        <h2 className="font-semibold">Form Canvas</h2>
         <p className="text-sm text-muted-foreground">
-          {t('newsforms.dragComponentsHere')}
+          Drag components here to build your form
         </p>
       </div>
 
@@ -42,9 +37,9 @@ export const DropZone = ({ components, onComponentSelect, onComponentDelete }: D
                 <div className="p-4 bg-muted rounded-full mb-4">
                   <Plus className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">{t('newsforms.emptyCanvas')}</h3>
+                <h3 className="text-lg font-medium mb-2">Empty Canvas</h3>
                 <p className="text-muted-foreground max-w-md">
-                  {t('newsforms.emptyCanvasDescription')}
+                  Start building your form by dragging components from the library on the left.
                 </p>
               </div>
             ) : (
