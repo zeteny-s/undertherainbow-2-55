@@ -29,6 +29,21 @@
   --success: 142 76% 36%;
   --warning: 38 92% 50%;
   --error: 0 84% 60%;
+
+  /* Shadcn UI color tokens */
+  --card: 0 0% 100%;
+  --card-foreground: 220 15% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 15% 10%;
+  --muted: 220 15% 96%;
+  --muted-foreground: 220 10% 40%;
+  --accent: 220 15% 94%;
+  --accent-foreground: 220 15% 10%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 220 15% 90%;
+  --ring: 220 100% 60%;
+  --radius: 0.5rem;
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -54,6 +69,17 @@
   
   --border: 220 15% 20%;
   --border-hover: 220 15% 30%;
+
+  /* Shadcn dark theme tokens */
+  --card: 220 18% 10%;
+  --card-foreground: 220 15% 95%;
+  --popover: 220 18% 10%;
+  --popover-foreground: 220 15% 95%;
+  --muted: 220 15% 15%;
+  --muted-foreground: 220 10% 70%;
+  --accent: 220 15% 18%;
+  --accent-foreground: 220 15% 95%;
+  --input: 220 15% 20%;
 }
 
 /* Animation keyframes */
