@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Eye, ArrowLeft, Settings } from 'lucide-react';
+import { Save, ArrowLeft, Settings } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,7 +13,6 @@ import { Switch } from '../ui/switch';
 import { Card, CardContent } from '../ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { ComponentLibrary } from './builder/ComponentLibrary';
-import { DropZone } from './builder/DropZone';
 import { ComponentEditor } from './builder/ComponentEditor';
 import { LivePreview } from './builder/LivePreview';
 import { Form, FormComponent, CampusType } from '../../types/form-types';
@@ -32,7 +31,6 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
   const [components, setComponents] = useState<FormComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<FormComponent | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<FormComponent | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
 
   const isNewForm = formId === 'new' || !formId;
 
@@ -216,14 +214,6 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowPreview(!showPreview)}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              {showPreview ? 'Hide Preview' : 'Show Preview'}
-            </Button>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -301,25 +291,14 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
             <ComponentLibrary />
           </div>
 
-          {/* Form Builder */}
-          <div className="flex-1 flex">
-            <div className={showPreview ? "w-1/2 border-r" : "w-full"}>
-              <DropZone 
-                components={components}
-                onComponentSelect={setSelectedComponent}
-                onComponentDelete={handleComponentDelete}
-              />
-            </div>
-
-            {/* Live Preview */}
-            {showPreview && (
-              <div className="w-1/2">
-                <LivePreview 
-                  form={form}
-                  components={components}
-                />
-              </div>
-            )}
+          {/* Form Builder - Use kindergarten template as main view */}
+          <div className="flex-1">
+            <LivePreview 
+              form={form}
+              components={components}
+              onComponentSelect={setSelectedComponent}
+              onComponentDelete={handleComponentDelete}
+            />
           </div>
 
           {/* Component Editor */}
