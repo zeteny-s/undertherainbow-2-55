@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle, Users, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface SidebarProps {
   activeTab: string;
@@ -12,6 +13,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onToggle }) => {
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -40,29 +42,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
     const commonItems = [
       {
         id: 'dashboard',
-        label: 'Áttekintés',
+        label: t('nav.overview'),
         icon: BarChart3,
       },
       {
         id: 'calendar',
-        label: 'Naptár',
+        label: t('nav.calendar'),
         icon: Calendar,
       },
       {
         id: 'chat',
-        label: 'Chat',
+        label: t('nav.chat'),
         icon: MessageCircle,
       },
       {
         id: 'documents',
-        label: 'Dokumentumok',
+        label: t('nav.documents'),
         icon: FileText,
       },
     ];
 
     const jelenletiItem = !isWeekend() ? {
       id: 'jelenleti',
-      label: 'Jelenléti',
+      label: t('nav.attendance'),
       icon: Users,
     } : null;
 
@@ -72,12 +74,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
           ...commonItems,
           {
             id: 'upload',
-            label: 'Iktató',
+            label: t('nav.registrar'),
             icon: Upload,
           },
           {
             id: 'invoices',
-            label: 'Számlák',
+            label: t('nav.invoices'),
             icon: FileText,
           },
           ...(jelenletiItem ? [jelenletiItem] : []),
@@ -94,17 +96,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
           ...commonItems,
           {
             id: 'family-relationships',
-            label: 'Családi Kapcsolatok',
+            label: t('nav.familyRelationships'),
             icon: Heart,
           },
           {
             id: 'upload',
-            label: 'Iktató',
+            label: t('nav.registrar'),
             icon: Upload,
           },
           {
             id: 'invoices',
-            label: 'Számlák',
+            label: t('nav.invoices'),
             icon: FileText,
           },
           ...(jelenletiItem ? [jelenletiItem] : []),
@@ -115,17 +117,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
           ...commonItems,
           {
             id: 'upload',
-            label: 'Iktató',
+            label: t('nav.registrar'),
             icon: Upload,
           },
           {
             id: 'invoices',
-            label: 'Számlák',
+            label: t('nav.invoices'),
             icon: FileText,
           },
           {
             id: 'payroll',
-            label: 'Bérköltségek',
+            label: t('nav.payroll'),
             icon: DollarSign,
           },
         ];
@@ -139,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
     ...getMenuItems(),
     {
       id: 'settings',
-      label: 'Beállítások',
+      label: t('nav.settings'),
       icon: Settings,
     },
   ];
@@ -153,7 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
   };
 
   const userInitials = getUserInitials(user?.email || '', user?.user_metadata?.name);
-  const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Felhasználó';
+  const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || t('dashboard.greeting.user');
 
   return (
     <>
@@ -219,7 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
             <button
               onClick={() => setShowProfileModal(true)}
               className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              title="Profil megnyitása"
+              title={t('nav.openProfile')}
             >
               {userInitials}
             </button>
@@ -299,7 +301,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
               <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
               {isOpen && (
                 <span className="ml-3 sm:ml-4 text-sm font-medium">
-                  Kijelentkezés
+                  {t('nav.logout')}
                 </span>
               )}
             </button>
@@ -307,7 +309,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen
             {/* Tooltip for collapsed state - desktop only */}
             {!isOpen && (
               <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                Kijelentkezés
+                {t('nav.logout')}
                 <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
               </div>
             )}

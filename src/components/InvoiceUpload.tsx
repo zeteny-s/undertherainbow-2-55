@@ -4,6 +4,7 @@ import { supabase } from '../integrations/supabase/client';
 import { convertFileToBase64, processDocumentWithAI } from '../lib/documentAI';
 import { MobileScanner } from './MobileScanner';
 import { SUPABASE_CONFIG } from '../config/supabase';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface ProcessedData {
   Szervezet?: string;
@@ -45,6 +46,7 @@ interface Notification {
 }
 
 export const InvoiceUpload: React.FC = () => {
+  const { t } = useTranslation();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [exportingToSheets, setExportingToSheets] = useState<string | null>(null);
@@ -247,7 +249,7 @@ export const InvoiceUpload: React.FC = () => {
     });
 
     if (validFiles.length === 0) {
-      addNotification('error', 'Kérjük, válasszon érvényes fájlokat (PDF, JPG, PNG, max. 10MB)');
+      addNotification('error', t('upload.validFiles'));
       return;
     }
 
@@ -256,7 +258,7 @@ export const InvoiceUpload: React.FC = () => {
     const currentFileCount = uploadedFiles.length;
     
     if (currentFileCount + validFiles.length > MAX_FILES) {
-      addNotification('error', `Maximum ${MAX_FILES} számla tölthető fel egyszerre. Jelenleg ${currentFileCount} van feltöltve.`);
+      addNotification('error', `${t('upload.maxFiles')}. Jelenleg ${currentFileCount} van feltöltve.`);
       return;
     }
 
@@ -290,7 +292,7 @@ export const InvoiceUpload: React.FC = () => {
     } else {
       // Otherwise add to queue
       setProcessingQueue(prev => [...prev, ...newFileIds]);
-      addNotification('info', `${newFileIds.length} számla hozzáadva a feldolgozási sorhoz`);
+      addNotification('info', `${newFileIds.length} ${t('upload.addedToQueue')}`);
     }
   };
 

@@ -1,5 +1,137 @@
 export const translations = {
   hu: {
+    // Navigation & Menu
+    nav: {
+      overview: 'Áttekintés',
+      calendar: 'Naptár',
+      chat: 'Chat',
+      documents: 'Dokumentumok',
+      registrar: 'Iktató',
+      invoices: 'Számlák',
+      attendance: 'Jelenléti',
+      familyRelationships: 'Családi Kapcsolatok',
+      payroll: 'Bérköltségek',
+      settings: 'Beállítások',
+      logout: 'Kijelentkezés',
+      openProfile: 'Profil megnyitása'
+    },
+
+    // Dashboard
+    dashboard: {
+      greeting: {
+        morning: 'Jó Reggelt',
+        day: 'Szia',
+        evening: 'Jó estét',
+        night: 'Jó éjszakát',
+        user: 'Felhasználó'
+      },
+      stats: {
+        totalInvoices: 'Összes számla',
+        totalAmount: 'Összes összeg',
+        thisMonth: 'Ezen a hónapon',
+        alapitvany: 'Alapítvány',
+        ovoda: 'Óvoda',
+        bankTransfer: 'Átutalás',
+        cardCash: 'Kártya/Készpénz'
+      },
+      charts: {
+        monthly: 'Havi áttekintés',
+        organization: 'Szervezet szerint',
+        paymentType: 'Fizetési mód',
+        weeklyTrend: 'Heti trend',
+        topPartners: 'Top partnerek',
+        expenses: 'Kiadások',
+        munkaszam: 'Munkaszám elemzés',
+        categories: 'Kategóriák'
+      }
+    },
+
+    // Invoice Upload
+    upload: {
+      title: 'Számla feltöltés és feldolgozás',
+      dragDrop: 'Húzza ide a fájlokat vagy kattintson a tallózáshoz',
+      dropFiles: 'Fájlok ejtése...',
+      supportedFormats: 'Támogatott formátumok: PDF, JPG, PNG (max. 10MB)',
+      scanDocument: 'Dokumentum szkennelése',
+      startProcessing: 'Feldolgozás indítása',
+      cancel: 'Megszakítás',
+      remove: 'Eltávolítás',
+      preview: 'Előnézet',
+      exportToSheets: 'Exportálás táblázatba',
+      processing: 'Feldolgozás...',
+      completed: 'Kész',
+      error: 'Hiba',
+      cancelled: 'Megszakítva',
+      uploading: 'Feltöltés...',
+      aiProcessing: 'AI feldolgozás...',
+      validFiles: 'Kérjük, válasszon érvényes fájlokat (PDF, JPG, PNG, max. 10MB)',
+      maxFiles: 'Maximum 85 számla tölthető fel egyszerre',
+      addedToQueue: 'számla hozzáadva a feldolgozási sorhoz',
+      processingBreak: 'Rövid szünet a feldolgozásban (6. számla után)...',
+      retryProcessing: 'Újrapróbálkozás a feldolgozással...',
+      scanUploadSuccess: 'Szkennelt számla sikeresen feltöltve',
+      scanUploadError: 'Hiba történt a szkennelt számla mentésekor'
+    },
+
+    // Mobile Scanner
+    scanner: {
+      title: 'Dokumentum szkenner',
+      detecting: 'Dokumentum keresése...',
+      detected: 'Dokumentum észlelve',
+      stable: 'Stabil - automatikus rögzítés',
+      autoCapturing: 'Automatikus rögzítés...',
+      processing: 'Feldolgozás...',
+      capture: 'Rögzítés',
+      retake: 'Újra',
+      save: 'Mentés',
+      fileName: 'Fájl név',
+      enterFileName: 'Adja meg a fájl nevét',
+      adjustEdges: 'Szegélyek beállítása',
+      cameraError: 'Kamera hozzáférés megtagadva',
+      loadingError: 'Dokumentum szkenner betöltési hiba',
+      captureError: 'Rögzítés sikertelen',
+      saveError: 'Mentés sikertelen',
+      close: 'Bezárás'
+    },
+
+    // Common UI Elements
+    common: {
+      loading: 'Betöltés...',
+      saving: 'Mentés...',
+      save: 'Mentés',
+      cancel: 'Mégse',
+      edit: 'Szerkesztés',
+      delete: 'Törlés',
+      close: 'Bezárás',
+      back: 'Vissza',
+      next: 'Következő',
+      previous: 'Előző',
+      search: 'Keresés',
+      filter: 'Szűrés',
+      export: 'Exportálás',
+      import: 'Importálás',
+      refresh: 'Frissítés',
+      select: 'Kiválasztás',
+      all: 'Összes',
+      none: 'Nincs',
+      year: 'Év',
+      month: 'Hónap',
+      day: 'Nap',
+      today: 'Ma',
+      yesterday: 'Tegnap',
+      thisWeek: 'Ezen a héten',
+      thisMonth: 'Ezen a hónapon',
+      thisYear: 'Ezen az éven'
+    },
+
+    // Notifications
+    notifications: {
+      success: 'Sikeres',
+      error: 'Hiba',
+      warning: 'Figyelmeztetés',
+      info: 'Információ'
+    },
+
     auth: {
       login: 'Bejelentkezés',
       signup: 'Regisztráció',
@@ -112,6 +244,138 @@ export const translations = {
     }
   },
   en: {
+    // Navigation & Menu
+    nav: {
+      overview: 'Overview',
+      calendar: 'Calendar',
+      chat: 'Chat',
+      documents: 'Documents',
+      registrar: 'Registrar',
+      invoices: 'Invoices',
+      attendance: 'Attendance',
+      familyRelationships: 'Family Relationships',
+      payroll: 'Payroll Costs',
+      settings: 'Settings',
+      logout: 'Sign Out',
+      openProfile: 'Open Profile'
+    },
+
+    // Dashboard
+    dashboard: {
+      greeting: {
+        morning: 'Good Morning',
+        day: 'Hello',
+        evening: 'Good Evening',
+        night: 'Good Night',
+        user: 'User'
+      },
+      stats: {
+        totalInvoices: 'Total Invoices',
+        totalAmount: 'Total Amount',
+        thisMonth: 'This Month',
+        alapitvany: 'Foundation',
+        ovoda: 'Kindergarten',
+        bankTransfer: 'Bank Transfer',
+        cardCash: 'Card/Cash'
+      },
+      charts: {
+        monthly: 'Monthly Overview',
+        organization: 'By Organization',
+        paymentType: 'Payment Type',
+        weeklyTrend: 'Weekly Trend',
+        topPartners: 'Top Partners',
+        expenses: 'Expenses',
+        munkaszam: 'Work Number Analysis',
+        categories: 'Categories'
+      }
+    },
+
+    // Invoice Upload
+    upload: {
+      title: 'Invoice Upload and Processing',
+      dragDrop: 'Drag files here or click to browse',
+      dropFiles: 'Drop files here...',
+      supportedFormats: 'Supported formats: PDF, JPG, PNG (max. 10MB)',
+      scanDocument: 'Scan Document',
+      startProcessing: 'Start Processing',
+      cancel: 'Cancel',
+      remove: 'Remove',
+      preview: 'Preview',
+      exportToSheets: 'Export to Sheets',
+      processing: 'Processing...',
+      completed: 'Completed',
+      error: 'Error',
+      cancelled: 'Cancelled',
+      uploading: 'Uploading...',
+      aiProcessing: 'AI Processing...',
+      validFiles: 'Please select valid files (PDF, JPG, PNG, max. 10MB)',
+      maxFiles: 'Maximum 85 invoices can be uploaded at once',
+      addedToQueue: 'invoices added to processing queue',
+      processingBreak: 'Short break in processing (after 6th invoice)...',
+      retryProcessing: 'Retrying processing...',
+      scanUploadSuccess: 'Scanned invoice uploaded successfully',
+      scanUploadError: 'Error occurred while saving scanned invoice'
+    },
+
+    // Mobile Scanner
+    scanner: {
+      title: 'Document Scanner',
+      detecting: 'Looking for document...',
+      detected: 'Document detected',
+      stable: 'Stable - auto capture',
+      autoCapturing: 'Auto capturing...',
+      processing: 'Processing...',
+      capture: 'Capture',
+      retake: 'Retake',
+      save: 'Save',
+      fileName: 'File Name',
+      enterFileName: 'Enter file name',
+      adjustEdges: 'Adjust Edges',
+      cameraError: 'Camera access denied',
+      loadingError: 'Failed to load document scanner',
+      captureError: 'Capture failed',
+      saveError: 'Save failed',
+      close: 'Close'
+    },
+
+    // Common UI Elements
+    common: {
+      loading: 'Loading...',
+      saving: 'Saving...',
+      save: 'Save',
+      cancel: 'Cancel',
+      edit: 'Edit',
+      delete: 'Delete',
+      close: 'Close',
+      back: 'Back',
+      next: 'Next',
+      previous: 'Previous',
+      search: 'Search',
+      filter: 'Filter',
+      export: 'Export',
+      import: 'Import',
+      refresh: 'Refresh',
+      select: 'Select',
+      all: 'All',
+      none: 'None',
+      year: 'Year',
+      month: 'Month',
+      day: 'Day',
+      today: 'Today',
+      yesterday: 'Yesterday',
+      thisWeek: 'This Week',
+      thisMonth: 'This Month',
+      thisYear: 'This Year'
+    },
+
+    // Notifications
+    notifications: {
+      success: 'Success',
+      error: 'Error',
+      warning: 'Warning',
+      info: 'Information'
+    },
+
     auth: {
       login: 'Sign In',
       signup: 'Sign Up',

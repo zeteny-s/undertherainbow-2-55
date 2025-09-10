@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface MobileScannerProps {
   onScanComplete: (pdfBlob: Blob, fileName: string) => void;
@@ -13,6 +14,7 @@ interface Point {
 }
 
 export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, onClose }) => {
+  const { t } = useTranslation();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
@@ -61,13 +63,13 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
         };
 
         script.onerror = () => {
-          setError('Failed to load document scanner');
+          setError(t('scanner.loadingError'));
           setOpenCVReady(false);
         };
 
         document.head.appendChild(script);
       } catch (err) {
-        setError('Document scanner loading error');
+        setError(t('scanner.loadingError'));
         setOpenCVReady(false);
       }
     };
@@ -103,7 +105,7 @@ export const MobileScanner: React.FC<MobileScannerProps> = ({ onScanComplete, on
       }
     } catch (err) {
       console.error('Camera initialization error:', err);
-      setError('Camera access denied');
+      setError(t('scanner.cameraError'));
     }
   }, [openCVReady]);
 

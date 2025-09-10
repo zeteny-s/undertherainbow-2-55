@@ -8,6 +8,7 @@ import { NotificationContainer } from './common/NotificationContainer';
 import { LoadingSpinner } from './common/LoadingSpinner';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface Stats {
   totalInvoices: number;
@@ -86,6 +87,7 @@ interface WeekData {
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<Stats>({
     totalInvoices: 0,
     totalAmount: 0,
@@ -259,16 +261,16 @@ export const Dashboard: React.FC = () => {
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
-    const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Felhasználó';
+    const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || t('dashboard.greeting.user');
     
     if (hour >= 4 && hour < 10) {
-      return `Jó Reggelt, ${userName}!`;
+      return `${t('dashboard.greeting.morning')}, ${userName}!`;
     } else if (hour >= 10 && hour < 18) {
-      return `Szia, ${userName}!`;
+      return `${t('dashboard.greeting.day')}, ${userName}!`;
     } else if (hour >= 18 && hour < 21) {
-      return `Jó estét, ${userName}!`;
+      return `${t('dashboard.greeting.evening')}, ${userName}!`;
     } else {
-      return `Jó éjszakát, ${userName}!`;
+      return `${t('dashboard.greeting.night')}, ${userName}!`;
     }
   };
 
