@@ -937,6 +937,74 @@ export type Database = {
           },
         ]
       }
+      form_submissions: {
+        Row: {
+          form_id: string
+          id: string
+          ip_address: string | null
+          submission_data: Json
+          submitted_at: string
+        }
+        Insert: {
+          form_id: string
+          id?: string
+          ip_address?: string | null
+          submission_data?: Json
+          submitted_at?: string
+        }
+        Update: {
+          form_id?: string
+          id?: string
+          ip_address?: string | null
+          submission_data?: Json
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forms: {
+        Row: {
+          campus: Database["public"]["Enums"]["campus_type"]
+          created_at: string
+          created_by: string
+          description: string | null
+          form_components: Json
+          id: string
+          status: Database["public"]["Enums"]["form_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campus: Database["public"]["Enums"]["campus_type"]
+          created_at?: string
+          created_by: string
+          description?: string | null
+          form_components?: Json
+          id?: string
+          status?: Database["public"]["Enums"]["form_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campus?: Database["public"]["Enums"]["campus_type"]
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          form_components?: Json
+          id?: string
+          status?: Database["public"]["Enums"]["form_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       house_cash_expenses: {
         Row: {
           amount: number
@@ -2279,7 +2347,9 @@ export type Database = {
       }
     }
     Enums: {
+      campus_type: "Feketerigó" | "Torockó" | "Levél"
       document_permission: "viewer" | "editor"
+      form_status: "active" | "inactive"
       invoice_category:
         | "Bérleti díjak"
         | "Közüzemi díjak"
@@ -2426,7 +2496,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      campus_type: ["Feketerigó", "Torockó", "Levél"],
       document_permission: ["viewer", "editor"],
+      form_status: ["active", "inactive"],
       invoice_category: [
         "Bérleti díjak",
         "Közüzemi díjak",

@@ -1,0 +1,57 @@
+export type CampusType = 'Feketerigó' | 'Torockó' | 'Levél';
+export type FormStatus = 'active' | 'inactive';
+
+export interface FormComponent {
+  id: string;
+  type: ComponentType;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  options?: string[];
+  validation?: ValidationRule[];
+  properties?: Record<string, any>;
+}
+
+export type ComponentType = 
+  | 'text-input'
+  | 'textarea' 
+  | 'dropdown'
+  | 'checkbox'
+  | 'radio'
+  | 'file-upload'
+  | 'text-block'
+  | 'divider';
+
+export interface ValidationRule {
+  type: 'required' | 'email' | 'minLength' | 'maxLength';
+  value?: number;
+  message: string;
+}
+
+export interface Form {
+  id: string;
+  title: string;
+  description?: string;
+  campus: CampusType;
+  status: FormStatus;
+  form_components: FormComponent[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FormSubmission {
+  id: string;
+  form_id: string;
+  submission_data: Record<string, any>;
+  submitted_at: string;
+  ip_address?: string;
+}
+
+export interface ComponentLibraryItem {
+  type: ComponentType;
+  name: string;
+  icon: string;
+  description: string;
+  defaultConfig: Partial<FormComponent>;
+}
