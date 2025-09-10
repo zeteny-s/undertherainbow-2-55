@@ -114,11 +114,11 @@ export const ComponentEditor = ({ component, onUpdate, onClose }: ComponentEdito
                 <SelectTrigger className="border-2 border-border hover:border-border-hover focus:border-primary transition-colors bg-background">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border-2 border-border shadow-lg">
-                  <SelectItem value="text-sm" className="hover:bg-accent focus:bg-accent">Small</SelectItem>
-                  <SelectItem value="text-base" className="hover:bg-accent focus:bg-accent">Medium</SelectItem>
-                  <SelectItem value="text-lg" className="hover:bg-accent focus:bg-accent">Large</SelectItem>
-                  <SelectItem value="text-xl" className="hover:bg-accent focus:bg-accent">Extra Large</SelectItem>
+                <SelectContent className="bg-background border-2 border-border shadow-lg z-50 backdrop-blur-sm">
+                  <SelectItem value="text-sm" className="hover:bg-accent focus:bg-accent bg-background">Small</SelectItem>
+                  <SelectItem value="text-base" className="hover:bg-accent focus:bg-accent bg-background">Medium</SelectItem>
+                  <SelectItem value="text-lg" className="hover:bg-accent focus:bg-accent bg-background">Large</SelectItem>
+                  <SelectItem value="text-xl" className="hover:bg-accent focus:bg-accent bg-background">Extra Large</SelectItem>
                 </SelectContent>
               </Select>
             </div>
