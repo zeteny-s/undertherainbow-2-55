@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Form, FormComponent } from '../../../types/form-types';
+import { FormComponent } from '../../../types/form-types';
 import { FormRenderer } from '../components/FormRenderer';
 import { SortableFormComponent } from './SortableFormComponent';
 import logo from '../../../assets/kindergarten-logo.png';
@@ -13,13 +13,12 @@ import decoration5 from '../../../assets/decoration-5.png';
 import decoration6 from '../../../assets/decoration-6.png';
 
 interface LivePreviewProps {
-  form: Form;
   components: FormComponent[];
   onComponentSelect?: (component: FormComponent) => void;
   onComponentDelete?: (componentId: string) => void;
 }
 
-export const LivePreview = ({ form, components, onComponentSelect, onComponentDelete }: LivePreviewProps) => {
+export const LivePreview = ({ components, onComponentSelect, onComponentDelete }: LivePreviewProps) => {
   const [previewData, setPreviewData] = useState<Record<string, any>>({});
   const { isOver, setNodeRef } = useDroppable({ id: 'form-builder' });
 
@@ -87,18 +86,6 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
               style={{ maxWidth: '300px' }}
             />
           </div>
-
-          {/* Form Title */}
-          {form.title && (
-            <div className="text-center mb-8 relative z-50">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {form.title}
-              </h1>
-              {form.description && (
-                <p className="text-gray-600 text-sm">{form.description}</p>
-              )}
-            </div>
-          )}
 
           {/* Form Content */}
           <div className="space-y-6 relative z-50">

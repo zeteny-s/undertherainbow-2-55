@@ -243,58 +243,60 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
                   Form Settings
                 </Button>
               </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Form Settings</SheetTitle>
+              <SheetContent className="bg-background border-l-2 border-border shadow-xl backdrop-blur-sm">
+                <SheetHeader className="bg-background border-b border-border pb-4">
+                  <SheetTitle className="text-foreground">Form Settings</SheetTitle>
                 </SheetHeader>
-                <div className="space-y-6 py-6">
+                <div className="space-y-6 py-6 bg-background">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Form Title *</Label>
+                    <Label htmlFor="title" className="text-foreground font-medium">Form Title *</Label>
                     <Input
                       id="title"
                       value={form.title}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(prev => prev ? {...prev, title: e.target.value} : null)}
                       placeholder="Enter form title"
+                      className="bg-background border-2 border-border"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description" className="text-foreground font-medium">Description</Label>
                     <Textarea
                       id="description"
                       value={form.description || ''}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm(prev => prev ? {...prev, description: e.target.value} : null)}
                       placeholder="Enter form description"
+                      className="bg-background border-2 border-border"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="campus">Campus *</Label>
+                    <Label htmlFor="campus" className="text-foreground font-medium">Campus *</Label>
                     <Select 
                       value={form.campus} 
                       onValueChange={(value: string) => setForm(prev => prev ? {...prev, campus: value as CampusType} : null)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-background border-2 border-border">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Feketerigó">Feketerigó</SelectItem>
-                        <SelectItem value="Torockó">Torockó</SelectItem>
-                        <SelectItem value="Levél">Levél</SelectItem>
+                      <SelectContent className="bg-background border-2 border-border shadow-lg z-50">
+                        <SelectItem value="Feketerigó" className="bg-background hover:bg-accent">Feketerigó</SelectItem>
+                        <SelectItem value="Torockó" className="bg-background hover:bg-accent">Torockó</SelectItem>
+                        <SelectItem value="Levél" className="bg-background hover:bg-accent">Levél</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                   <div className="space-y-2">
-                     <Label>Form Status</Label>
+                  <div className="space-y-2">
+                     <Label className="text-foreground font-medium">Form Status</Label>
                      <Select 
                        value={form.status} 
                        onValueChange={(value: string) => setForm(prev => prev ? {...prev, status: value as FormStatus} : null)}
                      >
-                       <SelectTrigger>
+                       <SelectTrigger className="bg-background border-2 border-border">
                          <SelectValue />
                        </SelectTrigger>
-                       <SelectContent>
-                         <SelectItem value="draft">Draft</SelectItem>
-                         <SelectItem value="active">Active</SelectItem>
-                         <SelectItem value="inactive">Inactive</SelectItem>
+                       <SelectContent className="bg-background border-2 border-border shadow-lg z-50">
+                         <SelectItem value="draft" className="bg-background hover:bg-accent">Draft</SelectItem>
+                         <SelectItem value="active" className="bg-background hover:bg-accent">Active</SelectItem>
+                         <SelectItem value="inactive" className="bg-background hover:bg-accent">Inactive</SelectItem>
                        </SelectContent>
                      </Select>
                    </div>
@@ -329,7 +331,6 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
           {/* Form Builder - Use kindergarten template as main view */}
           <div className="flex-1 relative z-20">
             <LivePreview 
-              form={form}
               components={components}
               onComponentSelect={setSelectedComponent}
               onComponentDelete={handleComponentDelete}
