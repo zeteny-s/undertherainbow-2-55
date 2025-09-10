@@ -4,6 +4,7 @@ import { supabase } from '../integrations/supabase/client';
 import { useNotifications } from '../hooks/useNotifications';
 import { convertFileToBase64 } from '../lib/documentAI';
 import { formatCurrency } from '../utils/formatters';
+import { useTranslation } from '../hooks/useTranslation';
 interface PayrollRecord {
   id?: string;
   employeeName: string;
@@ -32,6 +33,7 @@ interface PayrollSummary {
   tax_file_url?: string;
 }
 export const PayrollCosts: React.FC = () => {
+  const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const [extractedRecords, setExtractedRecords] = useState<PayrollRecord[]>([]);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export const PayrollCosts: React.FC = () => {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
-      addNotification('error', 'Csak JPG, PNG és PDF fájlokat lehet feltölteni.');
+      addNotification('error', t('payroll.notifications.fileTypeError'));
       return;
     }
     setIsUploading(true);
@@ -134,14 +136,14 @@ export const PayrollCosts: React.FC = () => {
           setCurrentMonthYear(monthYear);
         }
         setStep('preview');
-        addNotification('success', 'Bérköltség adatok sikeresen kinyerve!');
+        addNotification('success', t('payroll.notifications.extracted'));
       } else {
         throw new Error(payrollData?.error || 'Ismeretlen hiba történt');
       }
     } catch (error) {
       console.error('Error processing payroll file:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Ismeretlen hiba történt';
-      addNotification('error', `Hiba történt a feldolgozás során: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : t('common.error');
+      addNotification('error', t('payroll.notifications.processingError') + ' ' + errorMessage);
     } finally {
       setIsUploading(false);
     }

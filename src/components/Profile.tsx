@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Calendar, Save, Edit3, Check, X, AlertCircle, Shield, Key, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../integrations/supabase/client';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface UserProfile {
   id: string;
@@ -18,6 +19,7 @@ interface Notification {
 }
 
 export const Profile: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ export const Profile: React.FC = () => {
 
   const handleSaveProfile = async () => {
     if (!editedName.trim()) {
-      addNotification('error', 'A név mező nem lehet üres');
+      addNotification('error', t('profile.errors.nameRequired'));
       return;
     }
 
@@ -83,11 +85,11 @@ export const Profile: React.FC = () => {
 
       setProfile(prev => prev ? { ...prev, name: editedName.trim() } : null);
       setEditing(false);
-      addNotification('success', 'Profil sikeresen frissítve!');
+      addNotification('success', t('profile.success.profileUpdated'));
 
     } catch (error) {
       console.error('Error updating profile:', error);
-      addNotification('error', error instanceof Error ? error.message : 'Hiba történt a profil frissítése során');
+      addNotification('error', error instanceof Error ? error.message : t('profile.errors.profileUpdateError'));
     } finally {
       setSaving(false);
     }
@@ -96,17 +98,17 @@ export const Profile: React.FC = () => {
   const handleChangePassword = async () => {
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-      addNotification('error', 'Minden jelszó mező kitöltése kötelező');
+      addNotification('error', t('profile.errors.passwordsRequired'));
       return;
     }
 
     if (newPassword.length < 6) {
-      addNotification('error', 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie');
+      addNotification('error', t('profile.errors.passwordLength'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      addNotification('error', 'Az új jelszavak nem egyeznek');
+      addNotification('error', t('profile.errors.passwordMismatch'));
       return;
     }
 
@@ -120,7 +122,7 @@ export const Profile: React.FC = () => {
       });
 
       if (signInError) {
-        throw new Error('Jelenlegi jelszó helytelen');
+        throw new Error(t('profile.errors.currentPasswordIncorrect'));
       }
 
       // Update password
@@ -135,11 +137,11 @@ export const Profile: React.FC = () => {
       setNewPassword('');
       setConfirmPassword('');
       setChangingPassword(false);
-      addNotification('success', 'Jelszó sikeresen megváltoztatva!');
+      addNotification('success', t('profile.success.passwordChanged'));
 
     } catch (error) {
       console.error('Error changing password:', error);
-      addNotification('error', error instanceof Error ? error.message : 'Hiba történt a jelszó megváltoztatása során');
+      addNotification('error', error instanceof Error ? error.message : t('profile.errors.passwordChangeError'));
     } finally {
       setSaving(false);
     }
@@ -167,7 +169,7 @@ export const Profile: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-lg text-gray-600">Profil betöltése...</span>
+          <span className="ml-2 text-lg text-gray-600">{t('profile.loading')}</span>
         </div>
       </div>
     );
@@ -178,9 +180,9 @@ export const Profile: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
           <AlertCircle className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Hiba történt</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('profile.error')}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Nem sikerült betölteni a profil adatokat.
+            {t('profile.errorDesc')}
           </p>
         </div>
       </div>
@@ -234,8 +236,8 @@ export const Profile: React.FC = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Profil beállítások</h2>
-        <p className="text-gray-600">Kezelje fiókja adatait és biztonsági beállításait</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('profile.title')}</h2>
+        <p className="text-gray-600">{t('profile.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -247,19 +249,19 @@ export const Profile: React.FC = () => {
                 {getUserInitials(profile.email, profile.name)}
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                {profile.name || 'Névtelen felhasználó'}
+                {profile.name || t('profile.unnamed')}
               </h3>
               <p className="text-sm text-gray-500 mb-4">{profile.email}</p>
               
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center justify-center space-x-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Regisztráció: {formatDate(profile.created_at)}</span>
+                  <span>{t('profile.registeredAt')} {formatDate(profile.created_at)}</span>
                 </div>
                 {profile.last_sign_in_at && (
                   <div className="flex items-center justify-center space-x-2">
                     <User className="h-4 w-4" />
-                    <span>Utolsó belépés: {formatDate(profile.last_sign_in_at)}</span>
+                    <span>{t('profile.lastSignIn')} {formatDate(profile.last_sign_in_at)}</span>
                   </div>
                 )}
               </div>
@@ -274,7 +276,7 @@ export const Profile: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                 <User className="h-5 w-5 text-gray-600" />
-                <span>Alapinformációk</span>
+                <span>{t('profile.basicInfo')}</span>
               </h4>
               {!editing && (
                 <button
@@ -282,23 +284,23 @@ export const Profile: React.FC = () => {
                   className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 >
                   <Edit3 className="h-4 w-4 mr-1" />
-                  Szerkesztés
+                  {t('common.edit')}
                 </button>
               )}
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail cím</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.emailAddress')}</label>
                 <div className="flex items-center space-x-2">
                   <Mail className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-900">{profile.email}</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Az e-mail cím nem módosítható</p>
+                <p className="text-xs text-gray-500 mt-1">{t('profile.emailNotEditable')}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teljes név</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.fullName')}</label>
                 {editing ? (
                   <div className="flex items-center space-x-2">
                     <input
@@ -306,7 +308,7 @@ export const Profile: React.FC = () => {
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Adja meg a teljes nevét"
+                      placeholder={t('profile.namePlaceholder')}
                     />
                     <button
                       onClick={handleSaveProfile}
@@ -332,7 +334,7 @@ export const Profile: React.FC = () => {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">{profile.name || 'Nincs megadva'}</span>
+                    <span className="text-sm text-gray-900">{profile.name || t('profile.notSpecified')}</span>
                   </div>
                 )}
               </div>
@@ -344,7 +346,7 @@ export const Profile: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-gray-600" />
-                <span>Biztonság</span>
+                <span>{t('profile.security')}</span>
               </h4>
               {!changingPassword && (
                 <button
@@ -352,7 +354,7 @@ export const Profile: React.FC = () => {
                   className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 >
                   <Key className="h-4 w-4 mr-1" />
-                  Jelszó megváltoztatása
+                  {t('profile.changePassword')}
                 </button>
               )}
             </div>

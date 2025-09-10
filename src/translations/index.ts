@@ -186,6 +186,272 @@ export const translations = {
         unexpectedError: 'Váratlan hiba történt. Kérjük, próbálja újra.'
       }
     },
+    // Backup Manager
+    backup: {
+      title: 'Biztonsági mentés kezelő',
+      subtitle: 'Automatikus és manuális biztonsági mentések kezelése',
+      loading: 'Biztonsági mentés adatok betöltése...',
+      autoSchedule: 'Automatikus mentés ütemezése',
+      nextBackup: 'Következő mentés',
+      frequency: 'Gyakoriság',
+      frequencyText: 'Kéthetente hétfőn 02:00-kor',
+      noSchedule: 'Nincs beállítva automatikus mentés',
+      noScheduleDesc: 'Kattintson a "Beállítás" gombra az automatikus mentések aktiválásához.',
+      manualBackup: 'Manuális biztonsági mentés',
+      manualDesc: 'Azonnali biztonsági mentés készítése az elmúlt 2 hét számláiról.',
+      manualDescDetail: 'A mentés tartalmazza az összes fájlt és metaadatot ZIP formátumban.',
+      startBackup: 'Mentés indítása',
+      backupRunning: 'Mentés folyamatban...',
+      history: 'Mentési előzmények',
+      historyEmpty: 'Még nincsenek mentési előzmények',
+      historyEmptyDesc: 'Az első biztonsági mentés után itt jelennek meg az előzmények.',
+      previousBackups: 'Előzmények',
+      refresh: 'Frissítés',
+      setup: 'Beállítás',
+      status: {
+        completed: 'Sikeres',
+        failed: 'Sikertelen', 
+        inProgress: 'Folyamatban',
+        unknown: 'Ismeretlen'
+      },
+      tableHeaders: {
+        date: 'Dátum',
+        filename: 'Fájlnév',
+        invoices: 'Számlák',
+        size: 'Méret'
+      },
+      errors: {
+        loadingData: 'Hiba történt a biztonsági mentés adatok betöltése során',
+        startingBackup: 'Manuális biztonsági mentés indítása...',
+        unexpectedResponse: 'A biztonsági mentés funkcióhívás váratlan tartalmat adott vissza:',
+        backupFailed: 'Biztonsági mentés sikertelen',
+        backupError: 'Hiba történt a biztonsági mentés során:',
+        setupError: 'Hiba történt az automatikus mentés beállítása során',
+        unknownError: 'Ismeretlen hiba'
+      },
+      success: {
+        backupCompleted: 'Biztonsági mentés sikeresen elkészült!',
+        setupCompleted: 'Automatikus biztonsági mentés beállítva!'
+      },
+      description: 'A biztonsági mentések automatikusan feltöltődnek a megadott Google Drive mappába. Minden mentés tartalmazza az elmúlt 2 hét összes számláját és metaadatait ZIP formátumban.'
+    },
+
+    // Profile
+    profile: {
+      title: 'Profil beállítások',
+      subtitle: 'Kezelje fiókja adatait és biztonsági beállításait',
+      loading: 'Profil betöltése...',
+      error: 'Hiba történt',
+      errorDesc: 'Nem sikerült betölteni a profil adatokat.',
+      basicInfo: 'Alapinformációk',
+      security: 'Biztonság',
+      unnamed: 'Névtelen felhasználó',
+      registeredAt: 'Regisztráció:',
+      lastSignIn: 'Utolsó belépés:',
+      emailAddress: 'E-mail cím',
+      emailNotEditable: 'Az e-mail cím nem módosítható',
+      fullName: 'Teljes név',
+      namePlaceholder: 'Adja meg a teljes nevét',
+      notSpecified: 'Nincs megadva',
+      changePassword: 'Jelszó megváltoztatása',
+      currentPassword: 'Jelenlegi jelszó',
+      newPassword: 'Új jelszó',
+      confirmNewPassword: 'Új jelszó megerősítése',
+      currentPasswordPlaceholder: 'Adja meg a jelenlegi jelszavát',
+      newPasswordPlaceholder: 'Adja meg az új jelszót',
+      confirmPasswordPlaceholder: 'Erősítse meg az új jelszót',
+      saveChanges: 'Változások mentése',
+      errors: {
+        nameRequired: 'A név mező nem lehet üres',
+        passwordsRequired: 'Minden jelszó mező kitöltése kötelező',
+        passwordLength: 'Az új jelszónak legalább 6 karakter hosszúnak kell lennie',
+        passwordMismatch: 'Az új jelszavak nem egyeznek',
+        currentPasswordIncorrect: 'Jelenlegi jelszó helytelen',
+        passwordChangeError: 'Hiba történt a jelszó megváltoztatása során',
+        profileUpdateError: 'Hiba történt a profil frissítése során'
+      },
+      success: {
+        profileUpdated: 'Profil sikeresen frissítve!',
+        passwordChanged: 'Jelszó sikeresen megváltoztatva!'
+      },
+      close: 'Bezárás'
+    },
+
+    // Invoice List
+    invoices: {
+      title: 'Számlák',
+      loading: 'Számlák betöltése...',
+      searchPlaceholder: 'Keresés számlák között...',
+      filters: {
+        all: 'Összes',
+        year: 'Év',
+        month: 'Hónap',
+        category: 'Kategória', 
+        munkaszam: 'Munkaszám',
+        organization: 'Szervezet',
+        showFilters: 'Szűrők',
+        showSort: 'Rendezés',
+        sortBy: 'Rendezés',
+        sortDirection: 'Irány'
+      },
+      sortOptions: {
+        invoiceDate: 'Számla dátuma',
+        uploadedAt: 'Feltöltés dátuma',
+        amount: 'Összeg',
+        partner: 'Partner'
+      },
+      tableHeaders: {
+        select: 'Kiválasztás',
+        invoice: 'Számla',
+        partner: 'Partner',
+        amount: 'Összeg',
+        date: 'Dátum',
+        category: 'Kategória',
+        munkaszam: 'Munkaszám',
+        actions: 'Műveletek'
+      },
+      actions: {
+        view: 'Megtekintés',
+        download: 'Letöltés',
+        delete: 'Törlés',
+        selectAll: 'Összes kiválasztása',
+        bulkDownload: 'Kiválasztottak letöltése',
+        bulkDelete: 'Kiválasztottak törlése'
+      },
+      deleteConfirm: {
+        title: 'Számla törlése',
+        message: 'Biztosan törölni szeretné ezt a számlát?',
+        messageDetail: 'Ez a művelet nem visszavonható. A számla fájlja is törlődik a tárolóból.',
+        confirm: 'Igen, törlés',
+        deleting: 'Törlés...'
+      },
+      bulkDeleteConfirm: {
+        title: 'Tömeges törlés',
+        message: 'Biztosan törölni szeretné a kiválasztott számlákat?',
+        messageDetail: 'Ez a művelet nem visszavonható. Minden kiválasztott számla fájlja törlődik.',
+        confirm: 'Igen, mind törlése'
+      },
+      empty: {
+        title: 'Nincsenek számlák',
+        description: 'Még nincsenek feltöltött számlák. Kezdjen egy új számla feltöltésével.'
+      },
+      notifications: {
+        loaded: 'Számlák sikeresen betöltve',
+        loadError: 'Hiba történt a számlák betöltése során',
+        downloaded: 'Fájl sikeresen letöltve!',
+        downloadError: 'Hiba történt a fájl letöltése során:',
+        deleted: 'Számla sikeresen törölve az adatbázisból és a tárolóból!',
+        deleteError: 'Hiba történt a számla törlése során:',
+        bulkDeleted: 'számla sikeresen törölve!',
+        bulkDeleteError: 'számla törlése sikertelen volt.',
+        bulkDownloaded: 'számla sikeresen letöltve ZIP fájlban!',
+        bulkDownloadError: 'Hiba történt a tömeges letöltés során',
+        noFileUrl: 'Nincs elérhető fájl URL a számlához',
+        fileNotFound: 'Fájl nem található a tárolóban',
+        noFilesToDownload: 'Nem sikerült egyetlen fájlt sem letölteni',
+        fileDeleteWarning: 'Fájl törlése a tárolóból sikertelen, de az adatbázis rekord törölve lesz',
+        pathExtractionError: 'Nem sikerült meghatározni a fájl elérési útját a tárolóban'
+      }
+    },
+
+    // Payroll Costs
+    payroll: {
+      title: 'Bérköltség feldolgozás',
+      steps: {
+        organization: 'Szervezet kiválasztása',
+        upload: 'Fájl feltöltés',
+        preview: 'Előnézet',
+        cashQuestion: 'Készpénzes jövedelem',
+        cashPreview: 'Készpénz előnézet',
+        confirm: 'Megerősítés'
+      },
+      selectOrganization: {
+        title: 'Válaszd ki a szervezetet',
+        subtitle: 'Melyik szervezet bérköltség adatait szeretnéd feldolgozni?'
+      },
+      upload: {
+        title: 'Bérköltség fájl feltöltése',
+        description: 'Húzd ide a bérköltség fájlt vagy kattints a tallózáshoz',
+        supportedFormats: 'Támogatott formátumok: JPG, PNG, PDF',
+        processing: 'Feldolgozás...'
+      },
+      preview: {
+        title: 'Kinyert bérköltség adatok',
+        subtitle: 'Ellenőrizd az adatok helyességét'
+      },
+      cashQuestion: {
+        title: 'Készpénzes jövedelem',
+        question: 'Van készpénzes jövedelem is ebben a hónapban?',
+        yes: 'Igen, van',
+        no: 'Nem, nincs'
+      },
+      cashUpload: {
+        title: 'Készpénzes jövedelem fájl',
+        description: 'Húzd ide a készpénzes jövedelem fájlt'
+      },
+      taxUpload: {
+        title: 'Adó dokumentum',
+        description: 'Húzd ide az adó dokumentumot az adóösszeg meghatározásához'
+      },
+      summary: {
+        title: 'Összesítő',
+        payrollRecords: 'Bérköltség tételek:',
+        cashRecords: 'Készpénzes tételek:',
+        totalPayroll: 'Összes bérköltség:',
+        taxAmount: 'Adó összeg:',
+        finalTotal: 'Végső összeg:'
+      },
+      table: {
+        employee: 'Alkalmazott',
+        projectCode: 'Projektkód',
+        amount: 'Összeg',
+        date: 'Dátum',
+        type: 'Típus',
+        actions: 'Műveletek'
+      },
+      types: {
+        rental: 'Bérleti',
+        nonRental: 'Nem bérleti',
+        cash: 'Készpénz',
+        bankTransfer: 'Átutalás'
+      },
+      monthlyView: {
+        title: 'Havi bérköltségek',
+        viewRecords: 'Tételek megtekintése',
+        downloadFiles: 'Fájlok letöltése'
+      },
+      actions: {
+        next: 'Tovább',
+        back: 'Vissza',
+        save: 'Mentés',
+        saving: 'Mentés...',
+        edit: 'Szerkesztés',
+        delete: 'Törlés',
+        ok: 'Rendben',
+        cancel: 'Mégse',
+        close: 'Bezárás'
+      },
+      notifications: {
+        extracted: 'Bérköltség adatok sikeresen kinyerve!',
+        cashExtracted: 'Készpénzes jövedelem adatok sikeresen kinyerve!',
+        taxExtracted: 'Adóadatok sikeresen kinyerve!',
+        saved: 'Bérköltség adatok sikeresen mentve!',
+        updated: 'Rekord sikeresen frissítve!',
+        deleted: 'Rekord sikeresen törölve!',
+        summaryDeleted: 'Havi összesítő sikeresen törölve!',
+        fileTypeError: 'Csak JPG, PNG és PDF fájlokat lehet feltölteni.',
+        noData: 'Nincs menthető adat.',
+        noOrganization: 'Válaszd ki a szervezetet a mentéshez.',
+        notLoggedIn: 'Nem vagy bejelentkezve',
+        processingError: 'Hiba történt a feldolgozás során:',
+        saveError: 'Hiba történt a mentés során:',
+        loadError: 'Hiba történt az összesítők betöltése során',
+        updateError: 'Hiba történt a frissítés során:',
+        deleteError: 'Hiba történt a törlés során:',
+        fileUploadWarning: 'fájl feltöltése nem sikerült, a mentés folytatódik fájllink nélkül.'
+      }
+    },
+
     settings: {
       title: 'Beállítások',
       subtitle: 'Alkalmazás testreszabása és konfigurálása',
@@ -430,6 +696,272 @@ export const translations = {
         unexpectedError: 'An unexpected error occurred. Please try again.'
       }
     },
+    // Backup Manager
+    backup: {
+      title: 'Backup Manager',
+      subtitle: 'Manage automatic and manual backups',
+      loading: 'Loading backup data...',
+      autoSchedule: 'Automatic backup schedule',
+      nextBackup: 'Next backup',
+      frequency: 'Frequency',
+      frequencyText: 'Biweekly on Mondays at 02:00',
+      noSchedule: 'No automatic backup scheduled',
+      noScheduleDesc: 'Click "Setup" to activate automatic backups.',
+      manualBackup: 'Manual backup',
+      manualDesc: 'Create an immediate backup of invoices from the last 2 weeks.',
+      manualDescDetail: 'The backup includes all files and metadata in ZIP format.',
+      startBackup: 'Start backup',
+      backupRunning: 'Backup in progress...',
+      history: 'Backup history',
+      historyEmpty: 'No backup history yet',
+      historyEmptyDesc: 'History will appear here after the first backup.',
+      previousBackups: 'History',
+      refresh: 'Refresh',
+      setup: 'Setup',
+      status: {
+        completed: 'Completed',
+        failed: 'Failed', 
+        inProgress: 'In Progress',
+        unknown: 'Unknown'
+      },
+      tableHeaders: {
+        date: 'Date',
+        filename: 'Filename',
+        invoices: 'Invoices',
+        size: 'Size'
+      },
+      errors: {
+        loadingData: 'Error occurred while loading backup data',
+        startingBackup: 'Starting manual backup...',
+        unexpectedResponse: 'The backup function returned unexpected content:',
+        backupFailed: 'Backup failed',
+        backupError: 'Error occurred during backup:',
+        setupError: 'Error occurred while setting up automatic backup',
+        unknownError: 'Unknown error'
+      },
+      success: {
+        backupCompleted: 'Backup completed successfully!',
+        setupCompleted: 'Automatic backup set up!'
+      },
+      description: 'Backups are automatically uploaded to the specified Google Drive folder. Each backup contains all invoices and metadata from the last 2 weeks in ZIP format.'
+    },
+
+    // Profile
+    profile: {
+      title: 'Profile Settings',
+      subtitle: 'Manage your account data and security settings',
+      loading: 'Loading profile...',
+      error: 'Error occurred',
+      errorDesc: 'Failed to load profile data.',
+      basicInfo: 'Basic Information',
+      security: 'Security',
+      unnamed: 'Unnamed User',
+      registeredAt: 'Registered:',
+      lastSignIn: 'Last sign in:',
+      emailAddress: 'Email Address',
+      emailNotEditable: 'Email address cannot be modified',
+      fullName: 'Full Name',
+      namePlaceholder: 'Enter your full name',
+      notSpecified: 'Not specified',
+      changePassword: 'Change Password',
+      currentPassword: 'Current Password',
+      newPassword: 'New Password',
+      confirmNewPassword: 'Confirm New Password',
+      currentPasswordPlaceholder: 'Enter your current password',
+      newPasswordPlaceholder: 'Enter your new password',
+      confirmPasswordPlaceholder: 'Confirm your new password',
+      saveChanges: 'Save Changes',
+      errors: {
+        nameRequired: 'Name field cannot be empty',
+        passwordsRequired: 'All password fields are required',
+        passwordLength: 'New password must be at least 6 characters long',
+        passwordMismatch: 'New passwords do not match',
+        currentPasswordIncorrect: 'Current password is incorrect',
+        passwordChangeError: 'Error occurred while changing password',
+        profileUpdateError: 'Error occurred while updating profile'
+      },
+      success: {
+        profileUpdated: 'Profile updated successfully!',
+        passwordChanged: 'Password changed successfully!'
+      },
+      close: 'Close'
+    },
+
+    // Invoice List
+    invoices: {
+      title: 'Invoices',
+      loading: 'Loading invoices...',
+      searchPlaceholder: 'Search invoices...',
+      filters: {
+        all: 'All',
+        year: 'Year',
+        month: 'Month',
+        category: 'Category', 
+        munkaszam: 'Work Number',
+        organization: 'Organization',
+        showFilters: 'Filters',
+        showSort: 'Sort',
+        sortBy: 'Sort by',
+        sortDirection: 'Direction'
+      },
+      sortOptions: {
+        invoiceDate: 'Invoice Date',
+        uploadedAt: 'Upload Date',
+        amount: 'Amount',
+        partner: 'Partner'
+      },
+      tableHeaders: {
+        select: 'Select',
+        invoice: 'Invoice',
+        partner: 'Partner',
+        amount: 'Amount',
+        date: 'Date',
+        category: 'Category',
+        munkaszam: 'Work Number',
+        actions: 'Actions'
+      },
+      actions: {
+        view: 'View',
+        download: 'Download',
+        delete: 'Delete',
+        selectAll: 'Select All',
+        bulkDownload: 'Download Selected',
+        bulkDelete: 'Delete Selected'
+      },
+      deleteConfirm: {
+        title: 'Delete Invoice',
+        message: 'Are you sure you want to delete this invoice?',
+        messageDetail: 'This action cannot be undone. The invoice file will also be deleted from storage.',
+        confirm: 'Yes, Delete',
+        deleting: 'Deleting...'
+      },
+      bulkDeleteConfirm: {
+        title: 'Bulk Delete',
+        message: 'Are you sure you want to delete the selected invoices?',
+        messageDetail: 'This action cannot be undone. All selected invoice files will be deleted.',
+        confirm: 'Yes, Delete All'
+      },
+      empty: {
+        title: 'No Invoices',
+        description: 'No invoices uploaded yet. Start by uploading a new invoice.'
+      },
+      notifications: {
+        loaded: 'Invoices loaded successfully',
+        loadError: 'Error occurred while loading invoices',
+        downloaded: 'File downloaded successfully!',
+        downloadError: 'Error occurred while downloading file:',
+        deleted: 'Invoice successfully deleted from database and storage!',
+        deleteError: 'Error occurred while deleting invoice:',
+        bulkDeleted: 'invoices deleted successfully!',
+        bulkDeleteError: 'invoice deletions failed.',
+        bulkDownloaded: 'invoices downloaded successfully in ZIP file!',
+        bulkDownloadError: 'Error occurred during bulk download',
+        noFileUrl: 'No file URL available for invoice',
+        fileNotFound: 'File not found in storage',
+        noFilesToDownload: 'Failed to download any files',
+        fileDeleteWarning: 'File deletion from storage failed, but database record will be deleted',
+        pathExtractionError: 'Could not determine file path in storage'
+      }
+    },
+
+    // Payroll Costs
+    payroll: {
+      title: 'Payroll Processing',
+      steps: {
+        organization: 'Select Organization',
+        upload: 'File Upload',
+        preview: 'Preview',
+        cashQuestion: 'Cash Income',
+        cashPreview: 'Cash Preview',
+        confirm: 'Confirm'
+      },
+      selectOrganization: {
+        title: 'Select Organization',
+        subtitle: 'Which organization payroll data would you like to process?'
+      },
+      upload: {
+        title: 'Upload Payroll File',
+        description: 'Drag payroll file here or click to browse',
+        supportedFormats: 'Supported formats: JPG, PNG, PDF',
+        processing: 'Processing...'
+      },
+      preview: {
+        title: 'Extracted Payroll Data',
+        subtitle: 'Check the accuracy of the data'
+      },
+      cashQuestion: {
+        title: 'Cash Income',
+        question: 'Is there cash income this month as well?',
+        yes: 'Yes, there is',
+        no: 'No, there isn\'t'
+      },
+      cashUpload: {
+        title: 'Cash Income File',
+        description: 'Drag cash income file here'
+      },
+      taxUpload: {
+        title: 'Tax Document',
+        description: 'Drag tax document here to determine tax amount'
+      },
+      summary: {
+        title: 'Summary',
+        payrollRecords: 'Payroll records:',
+        cashRecords: 'Cash records:',
+        totalPayroll: 'Total payroll:',
+        taxAmount: 'Tax amount:',
+        finalTotal: 'Final total:'
+      },
+      table: {
+        employee: 'Employee',
+        projectCode: 'Project Code',
+        amount: 'Amount',
+        date: 'Date',
+        type: 'Type',
+        actions: 'Actions'
+      },
+      types: {
+        rental: 'Rental',
+        nonRental: 'Non-rental',
+        cash: 'Cash',
+        bankTransfer: 'Bank Transfer'
+      },
+      monthlyView: {
+        title: 'Monthly Payroll',
+        viewRecords: 'View Records',
+        downloadFiles: 'Download Files'
+      },
+      actions: {
+        next: 'Next',
+        back: 'Back',
+        save: 'Save',
+        saving: 'Saving...',
+        edit: 'Edit',
+        delete: 'Delete',
+        ok: 'OK',
+        cancel: 'Cancel',
+        close: 'Close'
+      },
+      notifications: {
+        extracted: 'Payroll data extracted successfully!',
+        cashExtracted: 'Cash income data extracted successfully!',
+        taxExtracted: 'Tax data extracted successfully!',
+        saved: 'Payroll data saved successfully!',
+        updated: 'Record updated successfully!',
+        deleted: 'Record deleted successfully!',
+        summaryDeleted: 'Monthly summary deleted successfully!',
+        fileTypeError: 'Only JPG, PNG and PDF files can be uploaded.',
+        noData: 'No data to save.',
+        noOrganization: 'Select organization to save.',
+        notLoggedIn: 'You are not logged in',
+        processingError: 'Error occurred during processing:',
+        saveError: 'Error occurred during save:',
+        loadError: 'Error occurred while loading summaries',
+        updateError: 'Error occurred during update:',
+        deleteError: 'Error occurred during deletion:',
+        fileUploadWarning: 'file upload failed, saving continues without file link.'
+      }
+    },
+
     settings: {
       title: 'Settings',
       subtitle: 'Customize and configure the application',

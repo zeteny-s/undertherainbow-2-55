@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Building2, GraduationCap, Search, Eye, Download, Calendar, RefreshCw, Trash2, AlertTriangle, CheckCircle, X, Banknote, Filter as FilterIcon, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import JSZip from 'jszip';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface Invoice {
   id: string;
@@ -32,6 +33,7 @@ interface Notification {
 }
 
 export const InvoiceList: React.FC = () => {
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,10 +94,10 @@ export const InvoiceList: React.FC = () => {
       });
       
       setInvoices(cleanedData as Invoice[]);
-      addNotification('success', 'Számlák sikeresen betöltve');
+      addNotification('success', t('invoices.notifications.loaded'));
     } catch (error) {
       console.error('Error fetching invoices:', error);
-      addNotification('error', 'Hiba történt a számlák betöltése során');
+      addNotification('error', t('invoices.notifications.loadError'));
     } finally {
       setLoading(false);
     }
@@ -135,13 +137,13 @@ export const InvoiceList: React.FC = () => {
 
           if (storageError) {
             console.warn('Failed to delete file from storage:', storageError);
-            addNotification('info', 'Fájl törlése a tárolóból sikertelen, de az adatbázis rekord törölve lesz');
+            addNotification('info', t('invoices.notifications.fileDeleteWarning'));
           } else {
             console.log('File successfully deleted from storage');
           }
         } else {
           console.warn('Could not extract file path from URL:', invoice.file_url);
-          addNotification('info', 'Nem sikerült meghatározni a fájl elérési útját a tárolóban');
+          addNotification('info', t('invoices.notifications.pathExtractionError'));
         }
       }
 
@@ -155,11 +157,11 @@ export const InvoiceList: React.FC = () => {
       setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
       setDeleteConfirm(null);
 
-      addNotification('success', 'Számla sikeresen törölve az adatbázisból és a tárolóból!');
+      addNotification('success', t('invoices.notifications.deleted'));
 
     } catch (error) {
       console.error('Error deleting invoice:', error);
-      addNotification('error', 'Hiba történt a számla törlése során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
+      addNotification('error', t('invoices.notifications.deleteError') + ' ' + (error instanceof Error ? error.message : t('common.error')));
     } finally {
       setDeleting(false);
     }
@@ -263,7 +265,7 @@ export const InvoiceList: React.FC = () => {
       console.log('Attempting to download file for invoice:', invoice.id, invoice.file_name);
       
       if (!invoice.file_url || invoice.file_url.trim() === '') {
-        addNotification('error', 'Nincs elérhető fájl URL a számlához');
+        addNotification('error', t('invoices.notifications.noFileUrl'));
         return;
       }
 
@@ -286,7 +288,7 @@ export const InvoiceList: React.FC = () => {
 
       if (downloadError) {
         console.error('Supabase storage download error:', downloadError);
-        addNotification('error', `Fájl letöltési hiba: ${downloadError.message}`);
+        addNotification('error', t('invoices.notifications.downloadError') + ' ' + downloadError.message);
         return;
       }
 
@@ -301,13 +303,13 @@ export const InvoiceList: React.FC = () => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        addNotification('success', 'Fájl sikeresen letöltve!');
+        addNotification('success', t('invoices.notifications.downloaded'));
       } else {
-        addNotification('error', 'Fájl nem található a tárolóban');
+        addNotification('error', t('invoices.notifications.fileNotFound'));
       }
     } catch (error) {
       console.error('Error downloading file:', error);
-      addNotification('error', 'Hiba történt a fájl letöltése során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
+      addNotification('error', t('invoices.notifications.downloadError') + ' ' + (error instanceof Error ? error.message : t('common.error')));
     }
   };
 
@@ -350,14 +352,14 @@ export const InvoiceList: React.FC = () => {
       setSelectedInvoices(new Set());
 
       if (successCount > 0) {
-        addNotification('success', `${successCount} számla sikeresen törölve!`);
+        addNotification('success', `${successCount} ${t('invoices.notifications.bulkDeleted')}`);
       }
       if (errorCount > 0) {
-        addNotification('error', `${errorCount} számla törlése sikertelen volt.`);
+        addNotification('error', `${errorCount} ${t('invoices.notifications.bulkDeleteError')}`);
       }
     } catch (error) {
       console.error('Bulk delete error:', error);
-      addNotification('error', 'Hiba történt a tömeges törlés során');
+      addNotification('error', t('invoices.notifications.bulkDownloadError'));
     } finally {
       setBulkDeleting(false);
     }
@@ -412,7 +414,7 @@ export const InvoiceList: React.FC = () => {
       }
 
       if (downloadCount === 0) {
-        addNotification('error', 'Nem sikerült egyetlen fájlt sem letölteni');
+        addNotification('error', t('invoices.notifications.noFilesToDownload'));
         return;
       }
 
@@ -427,10 +429,10 @@ export const InvoiceList: React.FC = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      addNotification('success', `${downloadCount} számla sikeresen letöltve ZIP fájlban!`);
+      addNotification('success', `${downloadCount} ${t('invoices.notifications.bulkDownloaded')}`);
     } catch (error) {
       console.error('Bulk download error:', error);
-      addNotification('error', 'Hiba történt a tömeges letöltés során');
+      addNotification('error', t('invoices.notifications.bulkDownloadError'));
     } finally {
       setBulkDownloading(false);
     }
@@ -459,7 +461,7 @@ export const InvoiceList: React.FC = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-lg text-gray-600">Számlák betöltése...</span>
+          <span className="ml-2 text-lg text-gray-600">{t('invoices.loading')}</span>
         </div>
       </div>
     );

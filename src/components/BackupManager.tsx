@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Calendar, Clock, Database, AlertCircle, CheckCircle, RefreshCw, Play, Settings, History, X } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { SUPABASE_CONFIG } from '../config/supabase';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface BackupSchedule {
   id: number;
@@ -37,6 +38,7 @@ interface Notification {
 }
 
 export const BackupManager: React.FC = () => {
+  const { t } = useTranslation();
   const [schedule, setSchedule] = useState<BackupSchedule | null>(null);
   const [history, setHistory] = useState<BackupHistory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,7 +96,7 @@ export const BackupManager: React.FC = () => {
 
     } catch (error) {
       console.error('Error fetching backup data:', error);
-      addNotification('error', 'Hiba történt a biztonsági mentés adatok betöltése során');
+      addNotification('error', t('backup.errors.loadingData'));
     } finally {
       setLoading(false);
     }
@@ -103,7 +105,7 @@ export const BackupManager: React.FC = () => {
   const runManualBackup = async () => {
     try {
       setManualBackupRunning(true);
-      addNotification('info', 'Manuális biztonsági mentés indítása...');
+      addNotification('info', t('backup.errors.startingBackup'));
 
       const response = await fetch(`${SUPABASE_CONFIG.url}/functions/v1/manual-backup`, {
         method: 'POST',
@@ -130,15 +132,15 @@ export const BackupManager: React.FC = () => {
       const result = await response.json();
 
       if (result.success) {
-        addNotification('success', 'Biztonsági mentés sikeresen elkészült!');
+        addNotification('success', t('backup.success.backupCompleted'));
         await fetchBackupData(); // Refresh data
       } else {
-        throw new Error(result.error || 'Biztonsági mentés sikertelen');
+        throw new Error(result.error || t('backup.errors.backupFailed'));
       }
 
     } catch (error) {
       console.error('Manual backup error:', error);
-      addNotification('error', 'Hiba történt a biztonsági mentés során: ' + (error instanceof Error ? error.message : 'Ismeretlen hiba'));
+      addNotification('error', t('backup.errors.backupError') + ' ' + (error instanceof Error ? error.message : t('backup.errors.unknownError')));
     } finally {
       setManualBackupRunning(false);
     }
@@ -165,15 +167,15 @@ export const BackupManager: React.FC = () => {
       const result = await response.json();
 
       if (result.success) {
-        addNotification('success', 'Automatikus biztonsági mentés beállítva!');
+        addNotification('success', t('backup.success.setupCompleted'));
         await fetchBackupData();
       } else {
-        throw new Error(result.error || 'Beállítás sikertelen');
+        throw new Error(result.error || t('backup.errors.backupFailed'));
       }
 
     } catch (error) {
       console.error('Setup backup cron error:', error);
-      addNotification('error', 'Hiba történt az automatikus mentés beállítása során');
+      addNotification('error', t('backup.errors.setupError'));
     }
   };
 
@@ -210,13 +212,13 @@ export const BackupManager: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'Sikeres';
+        return t('backup.status.completed');
       case 'failed':
-        return 'Sikertelen';
+        return t('backup.status.failed');
       case 'in_progress':
-        return 'Folyamatban';
+        return t('backup.status.inProgress');
       default:
-        return 'Ismeretlen';
+        return t('backup.status.unknown');
     }
   };
 
@@ -225,7 +227,7 @@ export const BackupManager: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-lg text-gray-600">Biztonsági mentés adatok betöltése...</span>
+          <span className="ml-2 text-lg text-gray-600">{t('backup.loading')}</span>
         </div>
       </div>
     );
@@ -284,9 +286,9 @@ export const BackupManager: React.FC = () => {
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 flex items-center">
               <Database className="h-6 w-6 sm:h-8 sm:w-8 mr-3 text-blue-600" />
-              Biztonsági mentés kezelő
+              {t('backup.title')}
             </h2>
-            <p className="text-gray-600 text-sm sm:text-base">Automatikus és manuális biztonsági mentések kezelése</p>
+            <p className="text-gray-600 text-sm sm:text-base">{t('backup.subtitle')}</p>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -295,7 +297,7 @@ export const BackupManager: React.FC = () => {
               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <History className="h-4 w-4 mr-2" />
-              Előzmények
+              {t('backup.previousBackups')}
             </button>
             
             <button
@@ -303,7 +305,7 @@ export const BackupManager: React.FC = () => {
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Frissítés
+              {t('backup.refresh')}
             </button>
           </div>
         </div>
@@ -314,17 +316,17 @@ export const BackupManager: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <Calendar className="h-5 w-5 mr-2 text-green-600" />
-            Automatikus mentés ütemezése
+            {t('backup.autoSchedule')}
           </h3>
           
           {!schedule && (
-            <button
-              onClick={setupBackupCron}
-              className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              Beállítás
-            </button>
+              <button
+                onClick={setupBackupCron}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+              >
+                <Settings className="h-4 w-4 mr-1" />
+                {t('backup.setup')}
+              </button>
           )}
         </div>
 
