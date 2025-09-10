@@ -285,14 +285,14 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex">
+        <div className="flex-1 flex relative">
           {/* Component Library */}
-          <div className="w-80 border-r bg-card">
+          <div className="w-80 border-r bg-card z-10">
             <ComponentLibrary />
           </div>
 
           {/* Form Builder - Use kindergarten template as main view */}
-          <div className="flex-1">
+          <div className="flex-1 relative z-20">
             <LivePreview 
               form={form}
               components={components}
@@ -303,7 +303,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
 
           {/* Component Editor */}
           {selectedComponent && (
-            <div className="w-80 border-l bg-card">
+            <div className="w-80 border-l bg-card z-30">
               <ComponentEditor
                 component={selectedComponent}
                 onUpdate={handleComponentUpdate}

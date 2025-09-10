@@ -33,7 +33,7 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
   const decorationImages = [decoration1, decoration2, decoration3, decoration4, decoration5, decoration6];
 
   return (
-    <div className="h-full overflow-y-auto bg-white relative" style={{
+    <div className="h-full overflow-y-auto bg-white relative z-20" style={{
       background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
                    radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
                    radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
@@ -57,9 +57,9 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
             key={index}
             src={img}
             alt=""
-            className="fixed opacity-20 pointer-events-none z-10"
+            className="absolute opacity-20 pointer-events-none z-0"
             style={{
-              position: 'fixed',
+              position: 'absolute',
               top: pos.top,
               left: pos.left,
               right: pos.right,
@@ -77,7 +77,7 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
           isOver ? 'bg-blue-50/30' : ''
         }`}
       >
-        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg z-40">
+        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg z-40 border border-gray-200">
           {/* Logo */}
           <div className="text-center mb-8 relative z-50">
             <img 
@@ -112,7 +112,7 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
               <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-4 relative z-50">
                   {components.map((component) => (
-                    <div key={component.id} className="relative z-50">
+                    <div key={component.id} className="relative z-50 bg-white">
                       <SortableFormComponent
                         component={component}
                         onSelect={() => onComponentSelect(component)}
@@ -124,7 +124,7 @@ export const LivePreview = ({ form, components, onComponentSelect, onComponentDe
               </SortableContext>
             ) : (
               // Preview mode with rendered form
-              <form className="space-y-6 relative z-50">
+              <form className="space-y-6 relative z-50 bg-white">
                 <FormRenderer
                   components={components}
                   values={previewData}
