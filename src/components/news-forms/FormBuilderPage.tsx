@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, ArrowLeft, Settings, Eye } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -173,6 +174,13 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         ...active.data.current.defaultConfig
       };
       setComponents(prev => [...prev, newComponent]);
+    } else if (active.id !== over.id) {
+      // Reordering existing components
+      setComponents((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
   };
 
