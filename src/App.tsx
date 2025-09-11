@@ -17,6 +17,7 @@ import { TeacherDashboard } from './components/teacher/TeacherDashboard';
 import { FamilyRelationshipsPage } from './components/family-relationships/FamilyRelationshipsPage';
 import { NewsFormsPage } from './components/news-forms/NewsFormsPage';
 import { FormBuilderPage } from './components/news-forms/FormBuilderPage';
+import { NewsletterBuilderPage } from './components/news-forms/NewsletterBuilderPage';
 
 
 const AppContent: React.FC = () => {
@@ -67,6 +68,12 @@ const AppContent: React.FC = () => {
       return <NewsFormsPage onNavigate={setActiveTab} />;
     }
     
+    // Handle dynamic newsletter routes
+    if (activeTab.startsWith('newsletter-edit-')) {
+      const newsletterId = activeTab.replace('newsletter-edit-', '');
+      return <NewsletterBuilderPage newsletterId={newsletterId} onNavigate={setActiveTab} />;
+    }
+    
     switch (activeTab) {
       case 'dashboard':
         // Show different dashboards based on profile type
@@ -94,6 +101,8 @@ const AppContent: React.FC = () => {
         return <NewsFormsPage onNavigate={setActiveTab} />;
       case 'news-forms-new':
         return <FormBuilderPage onNavigate={setActiveTab} />;
+      case 'newsletter-builder':
+        return <NewsletterBuilderPage onNavigate={setActiveTab} />;
       case 'jelenleti':
         return <JelenletiPage />;
       case 'settings':

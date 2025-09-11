@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users } from 'lucide-react';
+import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText, Mail } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -12,10 +12,13 @@ import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Form, CampusType, FormComponent } from '../../types/form-types';
 import { toast } from 'sonner';
+import { NewsletterPage } from './NewsletterPage';
 
 interface NewsFormsPageProps {
   onNavigate: (tab: string) => void;
 }
+
+type ViewType = 'forms' | 'newsletters';
 
 export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
   const { user } = useAuth();
@@ -24,6 +27,10 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [campusFilter, setCampusFilter] = useState<CampusType | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
+  const [activeView, setActiveView] = useState<ViewType>('forms');
+
+  const isNewslettersView = activeView === 'newsletters';
+  const isFormsView = activeView === 'forms';
 
   useEffect(() => {
     fetchForms();
@@ -109,12 +116,17 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
     return <LoadingSpinner />;
   }
 
+  // If newsletters view is active, render NewsletterPage
+  if (isNewslettersView) {
+    return <NewsletterPage onNavigate={onNavigate} />;
+  }
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">News & Forms</h1>
-          <p className="text-muted-foreground">Create and manage forms for different campus locations</p>
+          <p className="text-muted-foreground">Create and manage forms and newsletters for different campus locations</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => onNavigate('news-forms-new')} className="flex items-center gap-2">
@@ -122,6 +134,28 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
             Create New Form
           </Button>
         </div>
+      </div>
+
+      {/* Toggle between Forms and Newsletters */}
+      <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+        <Button
+          variant={isFormsView ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveView('forms')}
+          className="flex items-center gap-2"
+        >
+          <FileText className="h-4 w-4" />
+          Forms
+        </Button>
+        <Button
+          variant={isNewslettersView ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveView('newsletters' as ViewType)}
+          className="flex items-center gap-2"
+        >
+          <Mail className="h-4 w-4" />
+          Newsletters
+        </Button>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">
