@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { Send } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -15,8 +14,11 @@ import decoration4 from '../../assets/decoration-4.png';
 import decoration5 from '../../assets/decoration-5.png';
 import decoration6 from '../../assets/decoration-6.png';
 
-export const PublicFormPage = () => {
-  const { formId } = useParams();
+interface PublicFormPageProps {
+  formId?: string;
+}
+
+export const PublicFormPage = ({ formId }: PublicFormPageProps) => {
   const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
