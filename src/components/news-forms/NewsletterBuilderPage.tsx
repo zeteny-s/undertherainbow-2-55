@@ -305,72 +305,87 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => onNavigate('newsletters')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Vissza
+      <div className="max-w-7xl mx-auto p-8">
+        {/* Clean Header */}
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-6">
+            <Button 
+              variant="ghost" 
+              onClick={() => onNavigate('newsletters')}
+              className="hover:bg-muted/70 px-3"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Back to Newsletters
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {newsletterId ? 'Hírlevél szerkesztése' : 'Új hírlevél'}
+            <div className="space-y-1">
+              <h1 className="text-4xl font-light tracking-tight text-foreground">
+                {newsletterId ? 'Edit Newsletter' : 'Create Newsletter'}
               </h1>
+              <p className="text-muted-foreground">
+                {newsletterId ? 'Update your newsletter content and settings' : 'Build your AI-powered newsletter'}
+              </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {generatedHtml && (
               <Button 
                 variant="outline" 
                 onClick={() => window.open(`/newsletter/${newsletterId}`, '_blank')}
+                className="shadow-sm hover:shadow-md transition-shadow"
               >
-                <Eye className="h-4 w-4 mr-2" />
-                Előnézet
+                <Eye className="h-5 w-5 mr-2" />
+                Preview
               </Button>
             )}
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              Mentés
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              size="lg"
+              className="shadow-sm hover:shadow-md transition-shadow"
+            >
+              {saving ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Save className="h-5 w-5 mr-2" />}
+              Save Newsletter
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Left Panel - Configuration */}
-          <div className="space-y-6">
+          <div className="xl:col-span-1 space-y-6">
             {/* Basic Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Alapadatok</CardTitle>
-                <CardDescription>A hírlevél alapvető információi</CardDescription>
+            <Card className="border-0 shadow-md bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-semibold">Basic Information</CardTitle>
+                <CardDescription className="text-base">Essential newsletter details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Cím *</Label>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-medium">Newsletter Title *</Label>
                   <Input
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Add meg a hírlevél címét"
+                    placeholder="Enter newsletter title..."
+                    className="h-12 bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="description">Leírás</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-medium">Description</Label>
                   <Input
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Rövid leírás a hírlevélről"
+                    placeholder="Brief description of the newsletter..."
+                    className="h-12 bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="campus">Telephely</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="campus" className="text-sm font-medium">Campus</Label>
                   <Select value={campus} onValueChange={(value: CampusType) => setCampus(value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 bg-background/80 border-0 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="border-0 shadow-lg">
                       <SelectItem value="Feketerigó">Feketerigó</SelectItem>
                       <SelectItem value="Torockó">Torockó</SelectItem>
                       <SelectItem value="Levél">Levél</SelectItem>
@@ -381,19 +396,19 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
             </Card>
 
             {/* Form Selection */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Űrlapok kiválasztása</CardTitle>
-                    <CardDescription>Válaszd ki a hírlélben megjelenítendő űrlapokat</CardDescription>
+            <Card className="border-0 shadow-md bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-xl font-semibold">Select Forms</CardTitle>
+                    <CardDescription className="text-base">Choose forms to include in the newsletter</CardDescription>
                   </div>
                   <Select value={campusFilter} onValueChange={setCampusFilter}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-32 h-10 bg-background/80 border-0 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Minden</SelectItem>
+                    <SelectContent className="border-0 shadow-lg">
+                      <SelectItem value="all">All</SelectItem>
                       <SelectItem value="Feketerigó">Feketerigó</SelectItem>
                       <SelectItem value="Torockó">Torockó</SelectItem>
                       <SelectItem value="Levél">Levél</SelectItem>
@@ -402,9 +417,9 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+                <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
                   {filteredForms.map((form) => (
-                    <div key={form.id} className="flex items-start space-x-2">
+                    <div key={form.id} className="flex items-start space-x-3 p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors">
                       <Checkbox
                         id={form.id}
                         checked={selectedFormIds.includes(form.id)}
@@ -415,13 +430,14 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                             setSelectedFormIds(prev => prev.filter(id => id !== form.id));
                           }
                         }}
+                        className="mt-0.5"
                       />
-                      <div className="flex-1">
-                        <Label htmlFor={form.id} className="text-sm font-medium cursor-pointer">
+                      <div className="flex-1 min-w-0">
+                        <Label htmlFor={form.id} className="font-medium cursor-pointer block">
                           {form.title}
                         </Label>
-                        <p className="text-xs text-muted-foreground">
-                          {form.description} • {form.campus}
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {form.description} • <span className="font-medium">{form.campus}</span>
                         </p>
                       </div>
                     </div>
@@ -479,37 +495,37 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
             </Card>
 
             {/* Content Guidelines */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tartalom irányelvek</CardTitle>
-                <CardDescription>Add meg az AI-nak, milyen tartalmat generáljon</CardDescription>
+            <Card className="border-0 shadow-md bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-semibold">Content Guidelines</CardTitle>
+                <CardDescription className="text-base">Provide instructions for AI content generation</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <Textarea
                   value={contentGuidelines}
                   onChange={(e) => setContentGuidelines(e.target.value)}
-                  placeholder="Például: Készíts egy barátságos, családias hangvételű hírlevelelet ami bemutatja az új programokat..."
+                  placeholder="Example: Create a friendly, family-oriented newsletter that showcases new programs and upcoming events..."
                   rows={6}
+                  className="bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow resize-none"
                 />
-                <div className="mt-4">
-                  <Button 
-                    onClick={handleGenerateContent}
-                    disabled={generating || !title.trim() || selectedFormIds.length === 0}
-                    className="w-full gap-2"
-                  >
-                    {generating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Generálás...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-4 w-4" />
-                        Tartalom generálása
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <Button 
+                  onClick={handleGenerateContent}
+                  disabled={generating || !title.trim() || selectedFormIds.length === 0}
+                  size="lg"
+                  className="w-full shadow-sm hover:shadow-md transition-shadow"
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Generating Content...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2" />
+                      Generate Content
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </div>

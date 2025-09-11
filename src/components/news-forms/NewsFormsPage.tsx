@@ -7,7 +7,7 @@ import { EmptyState } from '../common/EmptyState';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Form, CampusType, FormComponent } from '../../types/form-types';
@@ -122,142 +122,168 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">News & Forms</h1>
-          <p className="text-muted-foreground">Create and manage forms and newsletters for different campus locations</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => onNavigate('news-forms-new')} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto p-8 space-y-8">
+        {/* Clean Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-light tracking-tight text-foreground">News & Forms</h1>
+            <p className="text-muted-foreground text-lg">Manage your forms and newsletters with ease</p>
+          </div>
+          <Button onClick={() => onNavigate('news-forms-new')} size="lg" className="shadow-sm hover:shadow-md transition-shadow">
+            <Plus className="h-5 w-5 mr-2" />
             Create New Form
           </Button>
         </div>
-      </div>
 
-      {/* Toggle between Forms and Newsletters */}
-      <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
-        <Button
-          variant={isFormsView ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveView('forms')}
-          className="flex items-center gap-2"
-        >
-          <FileText className="h-4 w-4" />
-          Forms
-        </Button>
-        <Button
-          variant={isNewslettersView ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveView('newsletters' as ViewType)}
-          className="flex items-center gap-2"
-        >
-          <Mail className="h-4 w-4" />
-          Newsletters
-        </Button>
-      </div>
+        {/* Elegant Toggle */}
+        <div className="flex justify-center">
+          <div className="inline-flex p-1 bg-muted/50 rounded-xl border shadow-sm">
+            <Button
+              variant={isFormsView ? 'default' : 'ghost'}
+              size="lg"
+              onClick={() => setActiveView('forms')}
+              className={`flex items-center gap-3 px-8 py-3 transition-all duration-200 ${
+                isFormsView 
+                  ? 'shadow-sm bg-background border' 
+                  : 'hover:bg-muted/70'
+              }`}
+            >
+              <FileText className="h-5 w-5" />
+              <span className="font-medium">Forms</span>
+            </Button>
+            <Button
+              variant={isNewslettersView ? 'default' : 'ghost'}
+              size="lg"
+              onClick={() => setActiveView('newsletters' as ViewType)}
+              className={`flex items-center gap-3 px-8 py-3 transition-all duration-200 ${
+                isNewslettersView 
+                  ? 'shadow-sm bg-background border' 
+                  : 'hover:bg-muted/70'
+              }`}
+            >
+              <Mail className="h-5 w-5" />
+              <span className="font-medium">Newsletters</span>
+            </Button>
+          </div>
+        </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        {/* Clean Filters */}
+        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-card/50 p-6 rounded-xl border shadow-sm">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <Input
               placeholder="Search forms..."
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-12 h-12 text-base bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow"
             />
           </div>
+          <div className="flex gap-3">
+            <Select value={campusFilter} onValueChange={(value: string) => setCampusFilter(value as CampusType | 'all')}>
+              <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
+                <SelectValue placeholder="All Campuses" />
+              </SelectTrigger>
+              <SelectContent className="border-0 shadow-lg">
+                <SelectItem value="all">All Campuses</SelectItem>
+                <SelectItem value="Feketerigó">Feketerigó</SelectItem>
+                <SelectItem value="Torockó">Torockó</SelectItem>
+                <SelectItem value="Levél">Levél</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as 'date' | 'title')}>
+              <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
+                <SelectValue placeholder="Sort by Date" />
+              </SelectTrigger>
+              <SelectContent className="border-0 shadow-lg">
+                <SelectItem value="date">Sort by Date</SelectItem>
+                <SelectItem value="title">Sort by Title</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <Select value={campusFilter} onValueChange={(value: string) => setCampusFilter(value as CampusType | 'all')}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
-            <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900">All Campuses</SelectItem>
-            <SelectItem value="Feketerigó" className="bg-white hover:bg-gray-100 text-gray-900">Feketerigó</SelectItem>
-            <SelectItem value="Torockó" className="bg-white hover:bg-gray-100 text-gray-900">Torockó</SelectItem>
-            <SelectItem value="Levél" className="bg-white hover:bg-gray-100 text-gray-900">Levél</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as 'date' | 'title')}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
-            <SelectItem value="date" className="bg-white hover:bg-gray-100 text-gray-900">Sort by Date</SelectItem>
-            <SelectItem value="title" className="bg-white hover:bg-gray-100 text-gray-900">Sort by Title</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      {filteredForms.length === 0 ? (
-        <EmptyState 
-          icon={Plus}
-          title="No Forms Found"
-          description="Create your first form to get started"
-          action={{
-            label: "Create First Form",
-            onClick: () => onNavigate('news-forms-new')
-          }}
-        />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredForms.map((form) => (
-            <Card key={form.id} className="group hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="line-clamp-2">{form.title}</CardTitle>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Menu className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
-                      <DropdownMenuItem onClick={() => window.open(`/form/${form.id}`, '_blank')} className="bg-white hover:bg-gray-100 text-gray-900">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview (Test Form)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)} className="bg-white hover:bg-gray-100 text-gray-900">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate(`news-forms-submissions-${form.id}`)} className="bg-white hover:bg-gray-100 text-gray-900">
-                        <Users className="h-4 w-4 mr-2" />
-                        Submissions
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDuplicate(form)} className="bg-white hover:bg-gray-100 text-gray-900">
-                        <Copy className="h-4 w-4 mr-2" />
-                        Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleDelete(form.id)}
-                        className="text-red-600 bg-white hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                {form.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">{form.description}</p>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{form.campus}</Badge>
-                </div>
-              </CardContent>
-              <CardFooter className="text-sm text-muted-foreground">
-                Created {new Date(form.created_at).toLocaleDateString()}
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+        {/* Content Grid */}
+        {filteredForms.length === 0 ? (
+          <div className="flex items-center justify-center py-20">
+            <EmptyState 
+              icon={FileText}
+              title="No Forms Found"
+              description="Create your first form to get started with our intuitive form builder"
+              action={{
+                label: "Create First Form",
+                onClick: () => onNavigate('news-forms-new')
+              }}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {filteredForms.map((form) => (
+              <Card key={form.id} className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-0 shadow-md bg-card/80 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-xl font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                        {form.title}
+                      </CardTitle>
+                      {form.description && (
+                        <p className="text-muted-foreground line-clamp-2 mt-2 text-sm leading-relaxed">
+                          {form.description}
+                        </p>
+                      )}
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0">
+                          <Menu className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 shadow-lg">
+                        <DropdownMenuItem onClick={() => window.open(`/form/${form.id}`, '_blank')}>
+                          <Eye className="h-4 w-4 mr-3" />
+                          Preview Form
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)}>
+                          <Edit className="h-4 w-4 mr-3" />
+                          Edit Form
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onNavigate(`news-forms-submissions-${form.id}`)}>
+                          <Users className="h-4 w-4 mr-3" />
+                          View Submissions
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(form)}>
+                          <Copy className="h-4 w-4 mr-3" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(form.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-3" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="font-medium">
+                      {form.campus}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(form.created_at).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
