@@ -40,7 +40,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         title: 'Untitled Form',
         description: '',
         campus: 'Feketerigó',
-        status: 'draft' as FormStatus,
+        status: 'active' as FormStatus,
         form_components: [],
         created_by: user?.id || '',
         created_at: new Date().toISOString(),
@@ -58,7 +58,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
     
     const timeoutId = setTimeout(() => {
       if (form.title && form.title !== 'Untitled Form') {
-        handleSave(true);
+        handleSave();
       }
     }, 2000); // Save 2 seconds after changes
 
@@ -69,7 +69,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
   useEffect(() => {
     if (isNewForm && form && form.title && form.title !== 'Untitled Form') {
       const timeoutId = setTimeout(() => {
-        handleSave(true);
+        handleSave();
       }, 1000);
 
       return () => clearTimeout(timeoutId);
@@ -102,32 +102,22 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
     }
   };
 
-  const handleSave = async (isAutoSave = false) => {
+  const handleSave = async () => {
     if (!form || !form.title.trim() || !user?.id) {
-      if (!isAutoSave) {
-        toast.error('Form title is required');
-      }
+      toast.error('Form title is required');
       return;
     }
 
     setSaving(true);
     try {
-      // For auto-save, keep as draft. For manual save, set to active
-      const status = isAutoSave ? 'draft' as FormStatus : 'active' as FormStatus;
-      
       const formData = {
         title: form.title,
         description: form.description,
         campus: form.campus,
-        status: status,
+        status: 'active' as FormStatus,
         form_components: components as any,
         created_by: user.id,
       };
-
-      // Update form status in state if manually saving
-      if (!isAutoSave && form.status === 'draft') {
-        setForm(prev => prev ? {...prev, status: 'active' as FormStatus} : null);
-      }
 
       if (isNewForm) {
         const { data, error } = await supabase
@@ -142,11 +132,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
           form_components: (data.form_components as unknown as FormComponent[]) || []
         };
         setForm(savedForm);
-        
-        // Only navigate if not auto-saving - stay in news-forms after publishing
-        if (!isAutoSave) {
-          onNavigate('news-forms');
-        }
+        onNavigate('news-forms');
       } else {
         const { error } = await supabase
           .from('forms')
@@ -156,16 +142,10 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         if (error) throw error;
       }
 
-      if (!isAutoSave) {
-        toast.success('Form published successfully! Click Preview to test it.');
-      } else {
-        console.log('Auto-saved form as draft');
-      }
+      toast.success('Form saved successfully! Click Preview to test it.');
     } catch (error) {
       console.error('Error saving form:', error);
-      if (!isAutoSave) {
-        toast.error('Failed to save form');
-      }
+      toast.error('Failed to save form');
     } finally {
       setSaving(false);
     }
@@ -240,7 +220,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {form.status === 'active' && (
+            {!isNewForm && form.id && (
               <Button
                 variant="outline"
                 size="sm"
@@ -299,39 +279,16 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                     <Label className="text-gray-900 font-medium">Form Status</Label>
-                     <Select 
-                       value={form.status} 
-                       onValueChange={(value: string) => setForm(prev => prev ? {...prev, status: value as FormStatus} : null)}
-                     >
-                       <SelectTrigger className="bg-white border-2 border-gray-300 text-gray-900">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent className="bg-white border-2 border-gray-300 shadow-lg z-[60]">
-                         <SelectItem value="draft" className="bg-white hover:bg-gray-100 text-gray-900">Draft</SelectItem>
-                         <SelectItem value="active" className="bg-white hover:bg-gray-100 text-gray-900">Active</SelectItem>
-                         <SelectItem value="inactive" className="bg-white hover:bg-gray-100 text-gray-900">Inactive</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
                 </div>
               </SheetContent>
             </Sheet>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {form.status === 'draft' && (
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                  Draft - Auto-saving...
-                </span>
-              )}
-            </div>
             <Button 
               onClick={() => handleSave()} 
               disabled={saving}
               className="flex items-center gap-2"
             >
               <Save className="h-4 w-4" />
-              {saving ? 'Saving...' : form.status === 'draft' ? 'Publish' : 'Save'}
+              {saving ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>

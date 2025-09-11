@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText } from 'lucide-react';
+import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -11,7 +11,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Form, CampusType, FormComponent } from '../../types/form-types';
-import { DraftsModal } from './DraftsModal';
 import { toast } from 'sonner';
 
 interface NewsFormsPageProps {
@@ -25,7 +24,6 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [campusFilter, setCampusFilter] = useState<CampusType | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
-  const [draftsModalOpen, setDraftsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchForms();
@@ -36,7 +34,6 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
       const { data, error } = await supabase
         .from('forms')
         .select('*')
-        .neq('status', 'draft')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -120,14 +117,6 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
           <p className="text-muted-foreground">Create and manage forms for different campus locations</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setDraftsModalOpen(true)} 
-            className="flex items-center gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            View Drafts
-          </Button>
           <Button onClick={() => onNavigate('news-forms-new')} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Create New Form
@@ -225,9 +214,6 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant={form.status === 'active' ? 'default' : 'secondary'}>
-                    {form.status === 'active' ? 'Active' : 'Inactive'}
-                  </Badge>
                   <Badge variant="outline">{form.campus}</Badge>
                 </div>
               </CardContent>
@@ -238,12 +224,6 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
           ))}
         </div>
       )}
-
-      <DraftsModal 
-        open={draftsModalOpen}
-        onOpenChange={setDraftsModalOpen}
-        onNavigate={onNavigate}
-      />
     </div>
   );
 };
