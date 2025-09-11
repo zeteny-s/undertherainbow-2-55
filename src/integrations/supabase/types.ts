@@ -1343,6 +1343,110 @@ export type Database = {
           },
         ]
       }
+      newsletter_forms: {
+        Row: {
+          created_at: string
+          form_id: string
+          id: string
+          newsletter_id: string
+        }
+        Insert: {
+          created_at?: string
+          form_id: string
+          id?: string
+          newsletter_id: string
+        }
+        Update: {
+          created_at?: string
+          form_id?: string
+          id?: string
+          newsletter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_forms_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_forms_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_name: string
+          image_url: string
+          newsletter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_name: string
+          image_url: string
+          newsletter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_name?: string
+          image_url?: string
+          newsletter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_images_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletters: {
+        Row: {
+          campus: Database["public"]["Enums"]["campus_type"]
+          content_guidelines: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          generated_html: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campus: Database["public"]["Enums"]["campus_type"]
+          content_guidelines?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          generated_html?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campus?: Database["public"]["Enums"]["campus_type"]
+          content_guidelines?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          generated_html?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
