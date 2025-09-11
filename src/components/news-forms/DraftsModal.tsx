@@ -74,74 +74,76 @@ export const DraftsModal = ({ open, onOpenChange, onNavigate }: DraftsModalProps
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-4xl bg-background overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+      <SheetContent side="right" className="w-full sm:max-w-4xl bg-background border-l-2 border-border shadow-xl backdrop-blur-sm overflow-y-auto z-50">
+        <SheetHeader className="bg-background border-b border-border pb-4">
+          <SheetTitle className="flex items-center gap-2 text-foreground">
             <FileText className="h-5 w-5" />
             Draft Forms
           </SheetTitle>
         </SheetHeader>
 
-        {loading ? (
-          <LoadingSpinner />
-        ) : drafts.length === 0 ? (
-          <EmptyState 
-            icon={FileText}
-            title="No Drafts Found"
-            description="You don't have any draft forms yet. Create a new form to see drafts here."
-            action={{
-              label: "Create New Form",
-              onClick: () => {
-                onOpenChange(false);
-                onNavigate('news-forms-new');
-              }
-            }}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
-            {drafts.map((draft) => (
-              <Card key={draft.id} className="group hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-base line-clamp-2">{draft.title}</CardTitle>
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                      Draft
-                    </Badge>
-                  </div>
-                  {draft.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">{draft.description}</p>
-                  )}
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>Last saved: {new Date(draft.updated_at).toLocaleString()}</span>
+        <div className="py-6 bg-background">
+          {loading ? (
+            <LoadingSpinner />
+          ) : drafts.length === 0 ? (
+            <EmptyState 
+              icon={FileText}
+              title="No Drafts Found"
+              description="You don't have any draft forms yet. Create a new form to see drafts here."
+              action={{
+                label: "Create New Form",
+                onClick: () => {
+                  onOpenChange(false);
+                  onNavigate('news-forms-new');
+                }
+              }}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {drafts.map((draft) => (
+                <Card key={draft.id} className="group hover:shadow-md transition-shadow bg-card border-2 border-border">
+                  <CardHeader className="pb-3 bg-card">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-base line-clamp-2 text-foreground">{draft.title}</CardTitle>
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                        Draft
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="w-fit">{draft.campus}</Badge>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleContinueWork(draft.id)}
-                        className="flex-1"
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Continue
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={() => handleDeleteDraft(draft.id)}
-                      >
-                        Delete
-                      </Button>
+                    {draft.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">{draft.description}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="pt-0 bg-card">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>Last saved: {new Date(draft.updated_at).toLocaleString()}</span>
+                      </div>
+                      <Badge variant="outline" className="w-fit bg-background border-2 border-border">{draft.campus}</Badge>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleContinueWork(draft.id)}
+                          className="flex-1"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Continue
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => handleDeleteDraft(draft.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );
