@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Eye, Edit, Copy, Trash2, Users, FileText } from 'lucide-react';
+import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -189,7 +189,7 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm">
-                        <Filter className="h-4 w-4" />
+                        <Menu className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
