@@ -54,7 +54,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
 
   // Auto-save when form data changes
   useEffect(() => {
-    if (!form || isNewForm) return;
+    if (!form || isNewForm || !form.id) return;
     
     const timeoutId = setTimeout(() => {
       if (form.title && form.title !== 'Untitled Form') {
@@ -63,7 +63,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
     }, 2000); // Save 2 seconds after changes
 
     return () => clearTimeout(timeoutId);
-  }, [form, components]);
+  }, [form?.title, form?.description, form?.campus, components.length]);
 
   // Auto-save new forms when they get a title
   useEffect(() => {
@@ -142,7 +142,11 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
           form_components: (data.form_components as unknown as FormComponent[]) || []
         };
         setForm(savedForm);
-        onNavigate(`news-forms-edit-${data.id}`);
+        
+        // Only navigate if not auto-saving
+        if (!isAutoSave) {
+          onNavigate(`news-forms-edit-${data.id}`);
+        }
       } else {
         const { error } = await supabase
           .from('forms')
