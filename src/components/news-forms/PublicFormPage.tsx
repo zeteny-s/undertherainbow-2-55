@@ -229,11 +229,13 @@ export const PublicFormPage = ({ formId }: PublicFormPageProps) => {
       <div className="relative z-10 max-w-[600px] mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center md:px-2.5">
         <div className="text-center bg-white rounded-[30px] shadow-2xl p-16 relative w-full md:p-10">
           {/* Logo */}
-          <img 
-            src={kindergartenLogo} 
-            alt="Under the Rainbow Kindergarten and Nursery" 
-            className="max-w-[400px] w-full h-auto mb-8 md:max-w-[300px]"
-          />
+          <div className="flex justify-center mb-8">
+            <img 
+              src={kindergartenLogo} 
+              alt="Under the Rainbow Kindergarten and Nursery" 
+              className="max-w-[400px] w-full h-auto md:max-w-[300px]"
+            />
+          </div>
           
           {/* Form Title */}
           <h1 className="text-2xl font-bold mb-2 text-gray-900">{form.title}</h1>

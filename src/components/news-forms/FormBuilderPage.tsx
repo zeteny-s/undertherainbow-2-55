@@ -218,7 +218,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="h-screen flex flex-col bg-background">
+      <div className="h-screen flex flex-col bg-white">
         {/* Header */}
         <div className="border-b px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -258,60 +258,60 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
                   Form Settings
                 </Button>
               </SheetTrigger>
-              <SheetContent className="bg-background border-l-2 border-border shadow-xl backdrop-blur-sm">
-                <SheetHeader className="bg-background border-b border-border pb-4">
-                  <SheetTitle className="text-foreground">Form Settings</SheetTitle>
+              <SheetContent className="w-full sm:max-w-md bg-white border-l-2 border-gray-200 shadow-xl z-50">
+                <SheetHeader className="bg-white border-b border-gray-200 pb-4">
+                  <SheetTitle className="text-gray-900 font-semibold">Form Settings</SheetTitle>
                 </SheetHeader>
-                <div className="space-y-6 py-6 bg-background">
+                <div className="space-y-6 py-6 bg-white">
                   <div className="space-y-2">
-                    <Label htmlFor="title" className="text-foreground font-medium">Form Title *</Label>
+                    <Label htmlFor="title" className="text-gray-900 font-medium">Form Title *</Label>
                     <Input
                       id="title"
                       value={form.title}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(prev => prev ? {...prev, title: e.target.value} : null)}
                       placeholder="Enter form title"
-                      className="bg-background border-2 border-border"
+                      className="bg-white border-2 border-gray-300 text-gray-900"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description" className="text-foreground font-medium">Description</Label>
+                    <Label htmlFor="description" className="text-gray-900 font-medium">Description</Label>
                     <Textarea
                       id="description"
                       value={form.description || ''}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm(prev => prev ? {...prev, description: e.target.value} : null)}
                       placeholder="Enter form description"
-                      className="bg-background border-2 border-border"
+                      className="bg-white border-2 border-gray-300 text-gray-900"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="campus" className="text-foreground font-medium">Campus *</Label>
+                    <Label htmlFor="campus" className="text-gray-900 font-medium">Campus *</Label>
                     <Select 
                       value={form.campus} 
                       onValueChange={(value: string) => setForm(prev => prev ? {...prev, campus: value as CampusType} : null)}
                     >
-                      <SelectTrigger className="bg-background border-2 border-border">
+                      <SelectTrigger className="bg-white border-2 border-gray-300 text-gray-900">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-background border-2 border-border shadow-lg z-50">
-                        <SelectItem value="Feketerigó" className="bg-background hover:bg-accent">Feketerigó</SelectItem>
-                        <SelectItem value="Torockó" className="bg-background hover:bg-accent">Torockó</SelectItem>
-                        <SelectItem value="Levél" className="bg-background hover:bg-accent">Levél</SelectItem>
+                      <SelectContent className="bg-white border-2 border-gray-300 shadow-lg z-[60]">
+                        <SelectItem value="Feketerigó" className="bg-white hover:bg-gray-100 text-gray-900">Feketerigó</SelectItem>
+                        <SelectItem value="Torockó" className="bg-white hover:bg-gray-100 text-gray-900">Torockó</SelectItem>
+                        <SelectItem value="Levél" className="bg-white hover:bg-gray-100 text-gray-900">Levél</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                     <Label className="text-foreground font-medium">Form Status</Label>
+                     <Label className="text-gray-900 font-medium">Form Status</Label>
                      <Select 
                        value={form.status} 
                        onValueChange={(value: string) => setForm(prev => prev ? {...prev, status: value as FormStatus} : null)}
                      >
-                       <SelectTrigger className="bg-background border-2 border-border">
+                       <SelectTrigger className="bg-white border-2 border-gray-300 text-gray-900">
                          <SelectValue />
                        </SelectTrigger>
-                       <SelectContent className="bg-background border-2 border-border shadow-lg z-50">
-                         <SelectItem value="draft" className="bg-background hover:bg-accent">Draft</SelectItem>
-                         <SelectItem value="active" className="bg-background hover:bg-accent">Active</SelectItem>
-                         <SelectItem value="inactive" className="bg-background hover:bg-accent">Inactive</SelectItem>
+                       <SelectContent className="bg-white border-2 border-gray-300 shadow-lg z-[60]">
+                         <SelectItem value="draft" className="bg-white hover:bg-gray-100 text-gray-900">Draft</SelectItem>
+                         <SelectItem value="active" className="bg-white hover:bg-gray-100 text-gray-900">Active</SelectItem>
+                         <SelectItem value="inactive" className="bg-white hover:bg-gray-100 text-gray-900">Inactive</SelectItem>
                        </SelectContent>
                      </Select>
                    </div>
@@ -339,7 +339,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         {/* Main Content */}
         <div className="flex-1 flex relative">
           {/* Component Library */}
-          <div className="w-80 border-r bg-card z-10">
+          <div className="w-80 border-r bg-white border-gray-200 z-10">
             <ComponentLibrary />
           </div>
 
@@ -354,7 +354,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
 
           {/* Component Editor */}
           {selectedComponent && (
-            <div className="w-80 border-l bg-card z-30">
+            <div className="w-80 border-l bg-white border-gray-200 z-30">
               <ComponentEditor
                 component={selectedComponent}
                 onUpdate={handleComponentUpdate}

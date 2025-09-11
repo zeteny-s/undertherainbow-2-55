@@ -54,9 +54,9 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
             <SelectTrigger>
               <SelectValue placeholder={component.placeholder || 'Select an option'} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
               {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
-                <SelectItem key={index} value={option}>
+                <SelectItem key={index} value={option} className="bg-white hover:bg-gray-100 text-gray-900">
                   {option}
                 </SelectItem>
               ))}

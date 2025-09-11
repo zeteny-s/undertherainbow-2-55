@@ -88,7 +88,7 @@ export const ComponentEditor = ({ component, onUpdate, onClose }: ComponentEdito
 
         {/* Required Field */}
         {localComponent.type !== 'text-block' && localComponent.type !== 'divider' && (
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="space-y-1">
               <Label htmlFor="required" className="text-sm font-semibold text-foreground">Required Field</Label>
               <p className="text-xs text-muted-foreground">Make this field mandatory for form submission</p>
@@ -111,19 +111,19 @@ export const ComponentEditor = ({ component, onUpdate, onClose }: ComponentEdito
                 value={localComponent.properties?.textSize || 'text-base'}
                 onValueChange={(value) => updateProperty('textSize', value)}
               >
-                <SelectTrigger className="border-2 border-border hover:border-border-hover focus:border-primary transition-colors bg-background">
+                <SelectTrigger className="border-2 border-gray-300 hover:border-gray-400 focus:border-blue-500 transition-colors bg-white text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-2 border-border shadow-lg z-50 backdrop-blur-sm">
-                  <SelectItem value="text-sm" className="hover:bg-accent focus:bg-accent bg-background">Small</SelectItem>
-                  <SelectItem value="text-base" className="hover:bg-accent focus:bg-accent bg-background">Medium</SelectItem>
-                  <SelectItem value="text-lg" className="hover:bg-accent focus:bg-accent bg-background">Large</SelectItem>
-                  <SelectItem value="text-xl" className="hover:bg-accent focus:bg-accent bg-background">Extra Large</SelectItem>
+                <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
+                  <SelectItem value="text-sm" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Small</SelectItem>
+                  <SelectItem value="text-base" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Medium</SelectItem>
+                  <SelectItem value="text-lg" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Large</SelectItem>
+                  <SelectItem value="text-xl" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Extra Large</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="space-y-1">
                 <Label htmlFor="bold" className="text-sm font-semibold text-foreground">Bold Text</Label>
                 <p className="text-xs text-muted-foreground">Make the text appear in bold font weight</p>
@@ -156,7 +156,7 @@ export const ComponentEditor = ({ component, onUpdate, onClose }: ComponentEdito
 
         {/* Options */}
         {hasOptions && (
-          <div className="space-y-4 p-4 bg-muted rounded-lg border border-border">
+          <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label className="text-sm font-semibold text-foreground">Options</Label>

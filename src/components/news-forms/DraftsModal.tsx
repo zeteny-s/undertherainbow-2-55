@@ -74,15 +74,15 @@ export const DraftsModal = ({ open, onOpenChange, onNavigate }: DraftsModalProps
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-4xl bg-background border-l-2 border-border shadow-xl backdrop-blur-sm overflow-y-auto z-50">
-        <SheetHeader className="bg-background border-b border-border pb-4">
-          <SheetTitle className="flex items-center gap-2 text-foreground">
+      <SheetContent side="right" className="w-full sm:max-w-4xl bg-white border-l-2 border-gray-200 shadow-xl overflow-y-auto z-50">
+        <SheetHeader className="bg-white border-b border-gray-200 pb-4">
+          <SheetTitle className="flex items-center gap-2 text-gray-900">
             <FileText className="h-5 w-5" />
             Draft Forms
           </SheetTitle>
         </SheetHeader>
 
-        <div className="py-6 bg-background">
+        <div className="py-6 bg-white">
           {loading ? (
             <LoadingSpinner />
           ) : drafts.length === 0 ? (
@@ -101,25 +101,25 @@ export const DraftsModal = ({ open, onOpenChange, onNavigate }: DraftsModalProps
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {drafts.map((draft) => (
-                <Card key={draft.id} className="group hover:shadow-md transition-shadow bg-card border-2 border-border">
-                  <CardHeader className="pb-3 bg-card">
+                <Card key={draft.id} className="group hover:shadow-md transition-shadow bg-white border-2 border-gray-200">
+                  <CardHeader className="pb-3 bg-white">
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-base line-clamp-2 text-foreground">{draft.title}</CardTitle>
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                      <CardTitle className="text-base line-clamp-2 text-gray-900">{draft.title}</CardTitle>
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
                         Draft
                       </Badge>
                     </div>
                     {draft.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{draft.description}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">{draft.description}</p>
                     )}
                   </CardHeader>
-                  <CardContent className="pt-0 bg-card">
+                  <CardContent className="pt-0 bg-white">
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="h-4 w-4" />
                         <span>Last saved: {new Date(draft.updated_at).toLocaleString()}</span>
                       </div>
-                      <Badge variant="outline" className="w-fit bg-background border-2 border-border">{draft.campus}</Badge>
+                      <Badge variant="outline" className="w-fit bg-white border-2 border-gray-300 text-gray-700">{draft.campus}</Badge>
                       <div className="flex gap-2">
                         <Button 
                           size="sm" 

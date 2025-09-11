@@ -151,20 +151,20 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
           <SelectTrigger className="w-full md:w-48">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Campuses</SelectItem>
-            <SelectItem value="Feketerigó">Feketerigó</SelectItem>
-            <SelectItem value="Torockó">Torockó</SelectItem>
-            <SelectItem value="Levél">Levél</SelectItem>
+          <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
+            <SelectItem value="all" className="bg-white hover:bg-gray-100 text-gray-900">All Campuses</SelectItem>
+            <SelectItem value="Feketerigó" className="bg-white hover:bg-gray-100 text-gray-900">Feketerigó</SelectItem>
+            <SelectItem value="Torockó" className="bg-white hover:bg-gray-100 text-gray-900">Torockó</SelectItem>
+            <SelectItem value="Levél" className="bg-white hover:bg-gray-100 text-gray-900">Levél</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as 'date' | 'title')}>
           <SelectTrigger className="w-full md:w-48">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="date">Sort by Date</SelectItem>
-            <SelectItem value="title">Sort by Title</SelectItem>
+          <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
+            <SelectItem value="date" className="bg-white hover:bg-gray-100 text-gray-900">Sort by Date</SelectItem>
+            <SelectItem value="title" className="bg-white hover:bg-gray-100 text-gray-900">Sort by Title</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -192,26 +192,26 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                         <Filter className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => window.open(`/form/${form.id}`, '_blank')}>
+                    <DropdownMenuContent align="end" className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
+                      <DropdownMenuItem onClick={() => window.open(`/form/${form.id}`, '_blank')} className="bg-white hover:bg-gray-100 text-gray-900">
                         <Eye className="h-4 w-4 mr-2" />
                         Preview (Test Form)
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)}>
+                      <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)} className="bg-white hover:bg-gray-100 text-gray-900">
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onNavigate(`news-forms-submissions-${form.id}`)}>
+                      <DropdownMenuItem onClick={() => onNavigate(`news-forms-submissions-${form.id}`)} className="bg-white hover:bg-gray-100 text-gray-900">
                         <Users className="h-4 w-4 mr-2" />
                         Submissions
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDuplicate(form)}>
+                      <DropdownMenuItem onClick={() => handleDuplicate(form)} className="bg-white hover:bg-gray-100 text-gray-900">
                         <Copy className="h-4 w-4 mr-2" />
                         Duplicate
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => handleDelete(form.id)}
-                        className="text-destructive"
+                        className="text-red-600 bg-white hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete

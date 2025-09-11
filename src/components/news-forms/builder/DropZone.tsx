@@ -34,7 +34,7 @@ export const DropZone = ({ components, onComponentSelect, onComponentDelete }: D
           >
             {components.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="p-4 bg-muted rounded-full mb-4">
+                <div className="p-4 bg-gray-100 rounded-full mb-4 border border-gray-200">
                   <Plus className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-medium mb-2">Empty Canvas</h3>
