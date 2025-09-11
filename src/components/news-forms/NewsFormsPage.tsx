@@ -193,9 +193,9 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onNavigate(`news-forms-preview-${form.id}`)}>
+                      <DropdownMenuItem onClick={() => window.open(`/form/${form.id}`, '_blank')}>
                         <Eye className="h-4 w-4 mr-2" />
-                        Preview
+                        Preview (Test Form)
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)}>
                         <Edit className="h-4 w-4 mr-2" />

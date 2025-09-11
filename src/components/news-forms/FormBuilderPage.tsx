@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, ArrowLeft, Settings } from 'lucide-react';
+import { Save, ArrowLeft, Settings, Eye } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -143,9 +143,9 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
         };
         setForm(savedForm);
         
-        // Only navigate if not auto-saving
+        // Only navigate if not auto-saving - stay in news-forms after publishing
         if (!isAutoSave) {
-          onNavigate(`news-forms-edit-${data.id}`);
+          onNavigate('news-forms');
         }
       } else {
         const { error } = await supabase
@@ -157,7 +157,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
       }
 
       if (!isAutoSave) {
-        toast.success('Form published successfully');
+        toast.success('Form published successfully! Click Preview to test it.');
       } else {
         console.log('Auto-saved form as draft');
       }
@@ -240,6 +240,17 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {form.status === 'active' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/form/${form.id}`, '_blank')}
+                className="flex items-center gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Preview & Test
+              </Button>
+            )}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm">

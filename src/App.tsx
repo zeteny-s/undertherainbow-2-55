@@ -50,6 +50,23 @@ const AppContent: React.FC = () => {
   const renderActiveComponent = () => {
     const profileType = user?.user_metadata?.profile_type;
     
+    // Handle dynamic form routes
+    if (activeTab.startsWith('news-forms-edit-')) {
+      const formId = activeTab.replace('news-forms-edit-', '');
+      return <FormBuilderPage formId={formId} onNavigate={setActiveTab} />;
+    }
+    if (activeTab.startsWith('news-forms-preview-')) {
+      const formId = activeTab.replace('news-forms-preview-', '');
+      window.open(`/form/${formId}`, '_blank');
+      setActiveTab('news-forms'); // Return to forms list after opening preview
+      return <NewsFormsPage onNavigate={setActiveTab} />;
+    }
+    if (activeTab.startsWith('news-forms-submissions-')) {
+      // TODO: Implement submissions view
+      setActiveTab('news-forms');
+      return <NewsFormsPage onNavigate={setActiveTab} />;
+    }
+    
     switch (activeTab) {
       case 'dashboard':
         // Show different dashboards based on profile type
