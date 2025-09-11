@@ -133,9 +133,12 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     case 'text-block':
       return (
         <div className="space-y-2">
-          <div className={`${labelClasses} text-foreground`}>
-            {component.label || 'Text block content goes here...'}
-          </div>
+          <div 
+            className={`${labelClasses} text-foreground`}
+            dangerouslySetInnerHTML={{ 
+              __html: component.properties?.richContent || component.label || 'Text block content goes here...' 
+            }}
+          />
         </div>
       );
 

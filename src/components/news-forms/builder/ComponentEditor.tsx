@@ -3,11 +3,11 @@ import { X, Plus, Minus } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Textarea } from '../../ui/textarea';
 import { Switch } from '../../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { FormComponent } from '../../../types/form-types';
+import { RichTextEditor } from './RichTextEditor';
 
 interface ComponentEditorProps {
   component: FormComponent;
@@ -239,14 +239,17 @@ export const ComponentEditor = ({ component, onUpdate, onClose }: ComponentEdito
         {/* Text Block Content */}
         {localComponent.type === 'text-block' && (
           <div className="space-y-3">
-            <Label htmlFor="content" className="text-sm font-semibold text-foreground">Content</Label>
-            <Textarea
-              id="content"
-              value={localComponent.label}
-              onChange={(e) => setLocalComponent(prev => ({ ...prev, label: e.target.value }))}
-              placeholder="Enter text content..."
-              rows={4}
-              className="border-2 border-border hover:border-border-hover focus:border-primary transition-colors"
+            <Label htmlFor="content" className="text-sm font-semibold text-foreground">Rich Text Content</Label>
+            <RichTextEditor
+              value={localComponent.properties?.richContent || localComponent.label || ''}
+              onChange={(content) => {
+                setLocalComponent(prev => ({
+                  ...prev,
+                  label: content,
+                  properties: { ...prev.properties, richContent: content }
+                }));
+              }}
+              placeholder="Enter rich text content..."
             />
           </div>
         )}
