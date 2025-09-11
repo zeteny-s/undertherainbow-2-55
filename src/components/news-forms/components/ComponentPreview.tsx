@@ -17,12 +17,16 @@ interface ComponentPreviewProps {
 export const ComponentPreview = ({ component, value, onChange }: ComponentPreviewProps) => {
   const fieldStyle = component.properties?.bold ? 'font-bold' : '';
   const textSize = component.properties?.textSize || 'text-base';
+  const fontFamily = component.properties?.fontFamily || 'font-sans';
+  const textAlign = component.properties?.textAlign || 'text-left';
+  
+  const labelClasses = `${fieldStyle} ${textSize} ${fontFamily} ${textAlign}`;
 
   switch (component.type) {
     case 'text-input':
       return (
         <div className="space-y-2">
-          <Label className={`${fieldStyle} ${textSize}`}>{component.label}</Label>
+          <Label className={labelClasses}>{component.label}</Label>
           <Input
             placeholder={component.placeholder || 'Enter text...'}
             value={value || ''}
@@ -35,7 +39,7 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     case 'textarea':
       return (
         <div className="space-y-2">
-          <Label className={`${fieldStyle} ${textSize}`}>{component.label}</Label>
+          <Label className={labelClasses}>{component.label}</Label>
           <Textarea
             placeholder={component.placeholder || 'Enter your message...'}
             value={value || ''}
@@ -49,14 +53,14 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     case 'dropdown':
       return (
         <div className="space-y-2">
-          <Label className={`${fieldStyle} ${textSize}`}>{component.label}</Label>
+          <Label className={labelClasses}>{component.label}</Label>
           <Select value={value} onValueChange={onChange}>
             <SelectTrigger>
               <SelectValue placeholder={component.placeholder || 'Select an option'} />
             </SelectTrigger>
-            <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
+            <SelectContent className="bg-white border-2 border-border shadow-lg z-[60]">
               {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
-                <SelectItem key={index} value={option} className="bg-white hover:bg-gray-100 text-gray-900">
+                <SelectItem key={index} value={option} className="bg-white hover:bg-surface text-foreground">
                   {option}
                 </SelectItem>
               ))}
@@ -68,7 +72,7 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     case 'checkbox':
       return (
         <div className="space-y-3">
-          <Label className={`${fieldStyle} ${textSize}`}>{component.label}</Label>
+          <Label className={labelClasses}>{component.label}</Label>
           <div className="space-y-2">
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
@@ -96,7 +100,7 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     case 'radio':
       return (
         <div className="space-y-3">
-          <Label className={`${fieldStyle} ${textSize}`}>{component.label}</Label>
+          <Label className={labelClasses}>{component.label}</Label>
           <RadioGroup value={value} onValueChange={onChange}>
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
@@ -113,7 +117,7 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     case 'file-upload':
       return (
         <div className="space-y-2">
-          <Label className={`${fieldStyle} ${textSize}`}>{component.label}</Label>
+          <Label className={labelClasses}>{component.label}</Label>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
             <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
             <p className="text-sm text-gray-600 mb-2">
@@ -129,7 +133,7 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     case 'text-block':
       return (
         <div className="space-y-2">
-          <div className={`${fieldStyle} ${textSize} text-gray-900`}>
+          <div className={`${labelClasses} text-foreground`}>
             {component.label || 'Text block content goes here...'}
           </div>
         </div>
@@ -150,9 +154,9 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
     default:
       return (
         <div className="space-y-2">
-          <Label className={`${fieldStyle} ${textSize}`}>{component.label}</Label>
-          <div className="p-4 border rounded bg-gray-50">
-            <p className="text-sm text-gray-600">Component type: {component.type}</p>
+          <Label className={labelClasses}>{component.label}</Label>
+          <div className="p-4 border rounded bg-surface">
+            <p className="text-sm text-foreground-muted">Component type: {component.type}</p>
           </div>
         </div>
       );

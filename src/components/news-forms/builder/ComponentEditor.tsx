@@ -111,22 +111,58 @@ export const ComponentEditor = ({ component, onUpdate, onClose }: ComponentEdito
                 value={localComponent.properties?.textSize || 'text-base'}
                 onValueChange={(value) => updateProperty('textSize', value)}
               >
-                <SelectTrigger className="border-2 border-gray-300 hover:border-gray-400 focus:border-blue-500 transition-colors bg-white text-gray-900">
+                <SelectTrigger className="border-2 border-border hover:border-border-hover focus:border-primary transition-colors bg-white text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200 shadow-lg z-[60]">
-                  <SelectItem value="text-sm" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Small</SelectItem>
-                  <SelectItem value="text-base" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Medium</SelectItem>
-                  <SelectItem value="text-lg" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Large</SelectItem>
-                  <SelectItem value="text-xl" className="hover:bg-gray-100 focus:bg-gray-100 bg-white text-gray-900">Extra Large</SelectItem>
+                <SelectContent className="bg-white border-2 border-border shadow-lg z-[60]">
+                  <SelectItem value="text-sm" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Small</SelectItem>
+                  <SelectItem value="text-base" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Medium</SelectItem>
+                  <SelectItem value="text-lg" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Large</SelectItem>
+                  <SelectItem value="text-xl" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Extra Large</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="space-y-3">
+              <Label htmlFor="fontFamily" className="text-sm font-semibold text-foreground">Font Family</Label>
+              <Select
+                value={localComponent.properties?.fontFamily || 'font-sans'}
+                onValueChange={(value) => updateProperty('fontFamily', value)}
+              >
+                <SelectTrigger className="border-2 border-border hover:border-border-hover focus:border-primary transition-colors bg-white text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-2 border-border shadow-lg z-[60]">
+                  <SelectItem value="font-sans" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Sans Serif</SelectItem>
+                  <SelectItem value="font-serif" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Serif</SelectItem>
+                  <SelectItem value="font-mono" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Monospace</SelectItem>
+                  <SelectItem value="font-display" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Display</SelectItem>
+                  <SelectItem value="font-body" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Body</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="textAlign" className="text-sm font-semibold text-foreground">Text Alignment</Label>
+              <Select
+                value={localComponent.properties?.textAlign || 'text-left'}
+                onValueChange={(value) => updateProperty('textAlign', value)}
+              >
+                <SelectTrigger className="border-2 border-border hover:border-border-hover focus:border-primary transition-colors bg-white text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-2 border-border shadow-lg z-[60]">
+                  <SelectItem value="text-left" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Left</SelectItem>
+                  <SelectItem value="text-center" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Center</SelectItem>
+                  <SelectItem value="text-right" className="hover:bg-surface focus:bg-surface bg-white text-foreground">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-surface rounded-lg border border-border">
               <div className="space-y-1">
                 <Label htmlFor="bold" className="text-sm font-semibold text-foreground">Bold Text</Label>
-                <p className="text-xs text-muted-foreground">Make the text appear in bold font weight</p>
+                <p className="text-xs text-foreground-muted">Make the text appear in bold font weight</p>
               </div>
               <Switch
                 id="bold"

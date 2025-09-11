@@ -3,6 +3,13 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['Inter', 'system-ui', 'sans-serif'],
+        'serif': ['Georgia', 'Times New Roman', 'serif'],
+        'mono': ['Menlo', 'Monaco', 'monospace'],
+        'display': ['Playfair Display', 'serif'],
+        'body': ['Open Sans', 'sans-serif'],
+      },
       colors: {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
