@@ -61,7 +61,7 @@ export const FormSelectionModal = ({ isOpen, onClose, onConfirm, campus }: FormS
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col bg-white border shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
             <CardTitle>Select Forms for Newsletter</CardTitle>
