@@ -113,7 +113,7 @@ function DraggableComponent({ item }: { item: ComponentLibraryItem }) {
       {...listeners}
       {...attributes}
       className={`cursor-grab active:cursor-grabbing transition-all hover:shadow-md border-2 ${
-        isDragging ? 'opacity-50 border-primary' : 'border-border hover:border-primary/50'
+        isDragging ? 'opacity-50 border-primary' : 'border-border hover:border-primary'
       }`}
     >
       <CardContent className="p-4">
