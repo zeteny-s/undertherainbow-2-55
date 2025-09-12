@@ -1,147 +1,226 @@
-import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
-import { AuthPage } from './components/Auth/AuthPage';
+import { NotificationContainer } from './components/common/NotificationContainer';
 import { Sidebar } from './components/Sidebar';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthPage } from './components/Auth/AuthPage';
 import { Dashboard } from './components/Dashboard';
 import { ManagerDashboard } from './components/ManagerDashboard';
-import { InvoiceUpload } from './components/InvoiceUpload';
-import { InvoiceList } from './components/InvoiceList';
-import { Settings } from './components/Settings';
-import { PayrollCosts } from './components/PayrollCosts';
-import { DocumentsPage } from './components/documents/DocumentsPage';
+import { TeacherDashboard } from './components/teacher/TeacherDashboard';
 import { CalendarPage } from './components/calendar/CalendarPage';
 import { ChatPage } from './components/chat/ChatPage';
+import { DocumentsPage } from './components/documents/DocumentsPage';
+import { InvoiceUpload } from './components/InvoiceUpload';
+import { InvoiceList } from './components/InvoiceList';
+import { PayrollCosts } from './components/PayrollCosts';
 import { JelenletiPage } from './components/JelenletiPage';
-import { TeacherDashboard } from './components/teacher/TeacherDashboard';
 import { FamilyRelationshipsPage } from './components/family-relationships/FamilyRelationshipsPage';
 import { NewsFormsPage } from './components/news-forms/NewsFormsPage';
 import { FormBuilderPage } from './components/news-forms/FormBuilderPage';
 import { NewsletterBuilderPage } from './components/news-forms/NewsletterBuilderPage';
+import { PublicFormPage } from './components/news-forms/PublicFormPage';
+import { PublicNewsletterPage } from './components/news-forms/PublicNewsletterPage';
+import { Settings } from './components/Settings';
+import { Profile } from './components/Profile';
+import { useState } from 'react';
 
-
-const AppContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+const AppContent = () => {
   const { user, loading } = useAuth();
-
-  // Handle responsive sidebar behavior
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setSidebarOpen(false); // Reset to collapsed on desktop
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Clear company access on app unmount (when user closes browser/tab)
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      // Company access will be cleared automatically when session ends
-      // This is just for cleanup if needed
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
-  const renderActiveComponent = () => {
-    const profileType = user?.user_metadata?.profile_type;
-    
-    // Handle dynamic form routes
-    if (activeTab.startsWith('news-forms-edit-')) {
-      const formId = activeTab.replace('news-forms-edit-', '');
-      return <FormBuilderPage formId={formId} onNavigate={setActiveTab} />;
-    }
-    if (activeTab.startsWith('news-forms-preview-')) {
-      const formId = activeTab.replace('news-forms-preview-', '');
-      window.open(`/form/${formId}`, '_blank');
-      setActiveTab('news-forms'); // Return to forms list after opening preview
-      return <NewsFormsPage onNavigate={setActiveTab} />;
-    }
-    if (activeTab.startsWith('news-forms-submissions-')) {
-      // TODO: Implement submissions view
-      setActiveTab('news-forms');
-      return <NewsFormsPage onNavigate={setActiveTab} />;
-    }
-    
-    // Handle dynamic newsletter routes
-    if (activeTab.startsWith('newsletter-edit-')) {
-      const newsletterId = activeTab.replace('newsletter-edit-', '');
-      return <NewsletterBuilderPage newsletterId={newsletterId} onNavigate={setActiveTab} />;
-    }
-    
-    switch (activeTab) {
-      case 'dashboard':
-        // Show different dashboards based on profile type
-        if (profileType === 'vezetoi') {
-          return <ManagerDashboard />;
-        } else if (profileType === 'pedagogus') {
-          return <TeacherDashboard onTabChange={setActiveTab} />;
-        }
-        return <Dashboard />;
-      case 'calendar':
-        return <CalendarPage />;
-      case 'chat':
-        return <ChatPage />;
-      case 'upload':
-        return <InvoiceUpload />;
-      case 'invoices':
-        return <InvoiceList />;
-      case 'documents':
-        return <DocumentsPage />;
-      case 'payroll':
-        return <PayrollCosts />;
-      case 'family-relationships':
-        return <FamilyRelationshipsPage />;
-      case 'news-forms':
-        return <NewsFormsPage onNavigate={setActiveTab} />;
-      case 'news-forms-new':
-        return <FormBuilderPage onNavigate={setActiveTab} />;
-      case 'newsletter-builder':
-        return <NewsletterBuilderPage onNavigate={setActiveTab} />;
-      case 'jelenleti':
-        return <JelenletiPage />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <Dashboard />;
-    }
-  };
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-2 border-foreground-subtle border-t-primary mx-auto mb-4"></div>
-          <p className="text-foreground-muted text-sm sm:text-base">Betöltés...</p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (!user) {
-    return <AuthPage />;
+  // Public routes for forms and newsletters
+  if (window.location.pathname.startsWith('/form/') || window.location.pathname.startsWith('/newsletter/')) {
+    return (
+      <Routes>
+        <Route path="/form/:formId" element={<PublicFormPage />} />
+        <Route path="/newsletter/:newsletterId" element={<PublicNewsletterPage />} />
+      </Routes>
+    );
   }
 
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
+    );
+  }
+
+  const getDashboardComponent = () => {
+    const profileType = user?.user_metadata?.profile_type;
+    
+    if (profileType === 'vezetoi') {
+      return <ManagerDashboard />;
+    } else if (profileType === 'pedagogus') {
+      return <TeacherDashboard />;
+    }
+    return <Dashboard />;
+  };
+
   return (
-    <div className="min-h-screen bg-surface flex">
-      <Sidebar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
-      <main className={`flex-1 transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'
-      } pt-14 sm:pt-16 lg:pt-0 overflow-x-hidden`}>
-        <div className="min-h-screen bg-surface">
-          {renderActiveComponent()}
-        </div>
-      </main>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      
+      <div className="flex-1 lg:ml-64">
+        <Routes>
+          {/* Dashboard Routes */}
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                {getDashboardComponent()}
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* General Routes */}
+          <Route 
+            path="/calendar" 
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/chat" 
+            element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/documents" 
+            element={
+              <ProtectedRoute>
+                <DocumentsPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Admin/Management Routes */}
+          <Route 
+            path="/upload" 
+            element={
+              <ProtectedRoute allowedRoles={['adminisztracio', 'vezetoi', 'haz_vezeto']}>
+                <InvoiceUpload />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/invoices" 
+            element={
+              <ProtectedRoute allowedRoles={['adminisztracio', 'vezetoi', 'haz_vezeto']}>
+                <InvoiceList />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/payroll" 
+            element={
+              <ProtectedRoute allowedRoles={['vezetoi']}>
+                <PayrollCosts />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Attendance Route */}
+          <Route 
+            path="/attendance" 
+            element={
+              <ProtectedRoute allowedRoles={['pedagogus', 'adminisztracio', 'vezetoi', 'haz_vezeto']}>
+                <JelenletiPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Family Relationships Route */}
+          <Route 
+            path="/family-relationships" 
+            element={
+              <ProtectedRoute allowedRoles={['haz_vezeto']}>
+                <FamilyRelationshipsPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* News & Forms Routes */}
+          <Route 
+            path="/news-forms" 
+            element={
+              <ProtectedRoute>
+                <NewsFormsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/news-forms/new" 
+            element={
+              <ProtectedRoute>
+                <FormBuilderPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/news-forms/edit/:formId" 
+            element={
+              <ProtectedRoute>
+                <FormBuilderPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/newsletters/new" 
+            element={
+              <ProtectedRoute>
+                <NewsletterBuilderPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/newsletters/edit/:newsletterId" 
+            element={
+              <ProtectedRoute>
+                <NewsletterBuilderPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Settings & Profile Routes */}
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+      
+      <NotificationContainer notifications={[]} onRemove={() => {}} />
     </div>
   );
 };

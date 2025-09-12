@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText, Mail } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,13 +15,10 @@ import { Form, CampusType, FormComponent } from '../../types/form-types';
 import { toast } from 'sonner';
 import { NewsletterPage } from './NewsletterPage';
 
-interface NewsFormsPageProps {
-  onNavigate: (tab: string) => void;
-}
-
 type ViewType = 'forms' | 'newsletters';
 
-export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
+export const NewsFormsPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,7 +124,7 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
             <p className="text-muted-foreground text-lg">Manage your forms and newsletters with ease</p>
           </div>
           <Button 
-            onClick={() => onNavigate(isFormsView ? 'news-forms-new' : 'newsletter-builder')} 
+            onClick={() => navigate(isFormsView ? '/news-forms/new' : '/newsletters/new')} 
             size="lg" 
             className="shadow-sm hover:shadow-md transition-shadow"
           >
@@ -169,7 +167,7 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
 
         {/* Content Area */}
         {isNewslettersView ? (
-          <NewsletterPage onNavigate={onNavigate} showHeader={false} />
+          <NewsletterPage showHeader={false} />
         ) : (
           <>
             {/* Clean Filters */}
@@ -216,7 +214,7 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                   description="Create your first form to get started with our intuitive form builder"
                   action={{
                     label: "Create First Form",
-                    onClick: () => onNavigate('news-forms-new')
+                    onClick: () => navigate('/news-forms/new')
                   }}
                 />
               </div>
@@ -247,11 +245,11 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                               <Eye className="h-4 w-4 mr-3" />
                               Preview Form
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)} className="hover:bg-gray-100">
+                            <DropdownMenuItem onClick={() => navigate(`/news-forms/edit/${form.id}`)} className="hover:bg-gray-100">
                               <Edit className="h-4 w-4 mr-3" />
                               Edit Form
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onNavigate(`news-forms-submissions-${form.id}`)} className="hover:bg-gray-100">
+                            <DropdownMenuItem onClick={() => navigate(`/news-forms/submissions/${form.id}`)} className="hover:bg-gray-100">
                               <Users className="h-4 w-4 mr-3" />
                               View Submissions
                             </DropdownMenuItem>

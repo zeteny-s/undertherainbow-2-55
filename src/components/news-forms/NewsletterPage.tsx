@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Calendar, Mail, Edit, Eye, RefreshCw, Trash2, Search, Menu } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -13,11 +14,11 @@ import { useNotifications } from '../../hooks/useNotifications';
 import type { Newsletter } from '../../types/newsletter-types';
 
 interface NewsletterPageProps {
-  onNavigate: (view: string, id?: string) => void;
   showHeader?: boolean;
 }
 
-export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPageProps) => {
+export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
+  const navigate = useNavigate();
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,7 +119,7 @@ export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPage
                 </p>
               </div>
               <Button 
-                onClick={() => onNavigate('newsletter-builder')}
+                onClick={() => navigate('/newsletters/new')}
                 size="lg"
                 className="shadow-sm hover:shadow-md transition-shadow"
               >
@@ -174,7 +175,7 @@ export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPage
               description="Create your first AI-powered newsletter to get started"
               action={{
                 label: 'Create Newsletter',
-                onClick: () => onNavigate('newsletter-builder')
+                onClick: () => navigate('/newsletters/new')
               }}
             />
           </div>
@@ -205,7 +206,7 @@ export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPage
                           <Eye className="h-4 w-4 mr-3" />
                           Preview
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onNavigate('newsletter-builder', newsletter.id)} className="hover:bg-gray-100">
+                        <DropdownMenuItem onClick={() => navigate(`/newsletters/edit/${newsletter.id}`)} className="hover:bg-gray-100">
                           <Edit className="h-4 w-4 mr-3" />
                           Edit
                         </DropdownMenuItem>

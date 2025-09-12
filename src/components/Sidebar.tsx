@@ -1,337 +1,203 @@
 import React, { useState } from 'react';
-import { BarChart3, Upload, FileText, LogOut, ChevronRight, ChevronLeft, Settings, Menu, X, DollarSign, Calendar, MessageCircle, Users, Heart, Newspaper } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { LogOut, Menu, X, Calendar, MessageCircle, FileText, Upload, List, Calculator, Users, ClipboardList, Home, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
+import { Button } from './ui/button';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface SidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
   isOpen: boolean;
   onToggle: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const { user, signOut } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
+    navigate('/auth');
   };
 
-  const handleTabChange = (tab: string) => {
-    onTabChange(tab);
-    // Auto-close sidebar on mobile after selection
+  const handleNavigation = (path: string) => {
+    navigate(path);
     if (window.innerWidth < 1024) {
       onToggle();
     }
   };
 
-  const profileType = user?.user_metadata?.profile_type;
-
-  // Check if today is weekend (Saturday = 6, Sunday = 0)
   const isWeekend = () => {
     const today = new Date();
     const day = today.getDay();
-    return day === 0 || day === 6; // Sunday or Saturday
+    return day === 0 || day === 6;
   };
 
-  // Menu items based on profile type
   const getMenuItems = () => {
+    const profileType = user?.user_metadata?.profile_type;
+    
     const commonItems = [
-      {
-        id: 'dashboard',
-        label: t('nav.overview'),
-        icon: BarChart3,
-      },
-      {
-        id: 'calendar',
-        label: t('nav.calendar'),
-        icon: Calendar,
-      },
-      {
-        id: 'chat',
-        label: t('nav.chat'),
-        icon: MessageCircle,
-      },
-      {
-        id: 'documents',
-        label: t('nav.documents'),
-        icon: FileText,
-      },
+      { id: 'dashboard', label: t('nav.dashboard'), icon: Home, path: '/' },
+      { id: 'calendar', label: t('nav.calendar'), icon: Calendar, path: '/calendar' },
+      { id: 'chat', label: t('nav.chat'), icon: MessageCircle, path: '/chat' },
+      { id: 'documents', label: t('nav.documents'), icon: FileText, path: '/documents' },
+      { id: 'news-forms', label: t('nav.forms'), icon: ClipboardList, path: '/news-forms' },
     ];
 
-    const jelenletiItem = !isWeekend() ? {
-      id: 'jelenleti',
-      label: t('nav.attendance'),
-      icon: Users,
-    } : null;
+    const roleSpecificItems = [];
 
-    switch (profileType) {
-      case 'adminisztracio':
-        return [
-          ...commonItems,
-          {
-            id: 'news-forms',
-            label: 'News & Forms',
-            icon: Newspaper,
-          },
-          {
-            id: 'upload',
-            label: t('nav.registrar'),
-            icon: Upload,
-          },
-          {
-            id: 'invoices',
-            label: t('nav.invoices'),
-            icon: FileText,
-          },
-          ...(jelenletiItem ? [jelenletiItem] : []),
-        ];
-      
-      case 'pedagogus':
-        return [
-          ...commonItems,
-          ...(jelenletiItem ? [jelenletiItem] : []),
-        ];
-      
-      case 'haz_vezeto':
-        return [
-          ...commonItems,
-          {
-            id: 'family-relationships',
-            label: t('nav.familyRelationships'),
-            icon: Heart,
-          },
-          {
-            id: 'upload',
-            label: t('nav.registrar'),
-            icon: Upload,
-          },
-          {
-            id: 'invoices',
-            label: t('nav.invoices'),
-            icon: FileText,
-          },
-          ...(jelenletiItem ? [jelenletiItem] : []),
-        ];
-      
-      case 'vezetoi':
-        return [
-          ...commonItems,
-          {
-            id: 'news-forms',
-            label: 'News & Forms',
-            icon: Newspaper,
-          },
-          {
-            id: 'upload',
-            label: t('nav.registrar'),
-            icon: Upload,
-          },
-          {
-            id: 'invoices',
-            label: t('nav.invoices'),
-            icon: FileText,
-          },
-          {
-            id: 'payroll',
-            label: t('nav.payroll'),
-            icon: DollarSign,
-          },
-        ];
-      
-      default:
-        return commonItems;
+    if (profileType === 'adminisztracio' || profileType === 'vezetoi' || profileType === 'haz_vezeto') {
+      roleSpecificItems.push(
+        { id: 'upload', label: t('nav.upload'), icon: Upload, path: '/upload' },
+        { id: 'invoices', label: t('nav.invoices'), icon: List, path: '/invoices' }
+      );
     }
+
+    if (profileType === 'vezetoi') {
+      roleSpecificItems.push(
+        { id: 'payroll', label: t('nav.payroll'), icon: Calculator, path: '/payroll' }
+      );
+    }
+
+    if (profileType === 'pedagogus' || profileType === 'adminisztracio' || profileType === 'vezetoi' || profileType === 'haz_vezeto') {
+      roleSpecificItems.push(
+        { id: 'attendance', label: t('nav.attendance'), icon: Users, path: '/attendance' }
+      );
+    }
+
+    if (profileType === 'haz_vezeto') {
+      roleSpecificItems.push(
+        { id: 'family-relationships', label: t('nav.familyRelationships'), icon: Users, path: '/family-relationships' }
+      );
+    }
+
+    return [...commonItems, ...roleSpecificItems];
   };
 
-  const menuItems = [
-    ...getMenuItems(),
-    {
-      id: 'settings',
-      label: t('nav.settings'),
-      icon: Settings,
-    },
-  ];
-
-  // Get user initials for profile picture
-  const getUserInitials = (email: string, name?: string) => {
-    if (name) {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    }
-    return email.split('@')[0].slice(0, 2).toUpperCase();
+  const getUserInitials = () => {
+    const name = user?.user_metadata?.name || user?.email || '';
+    return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
   };
 
-  const userInitials = getUserInitials(user?.email || '', user?.user_metadata?.name);
-  const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || t('dashboard.greeting.user');
+  const menuItems = getMenuItems();
 
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 sm:h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-3 sm:px-4">
-        <button
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onToggle}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2"
         >
-          <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
-        </button>
-        
-       
-        
-        <button
+          <Menu className="h-6 w-6" />
+        </Button>
+        <div 
+          className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer"
           onClick={() => setShowProfileModal(true)}
-          className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-sm"
         >
-          {userInitials}
-        </button>
+          {getUserInitials()}
+        </div>
       </div>
 
-      {/* Mobile overlay */}
+      {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={onToggle}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200/80 z-50 transition-all duration-300 ease-in-out ${
-        isOpen ? 'w-64 sm:w-72' : 'w-20 lg:w-20'
-      } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        
-        {/* Mobile close button */}
-        <div className="lg:hidden absolute top-3 sm:top-4 right-3 sm:right-4">
-          <button
-            onClick={onToggle}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-          </button>
-        </div>
-
-        {/* Toggle button - desktop only */}
-        <div className="hidden lg:block absolute -right-4 top-1/2 -translate-y-1/2 z-10">
-          <button
-            onClick={onToggle}
-            className="w-8 h-8 bg-white border border-gray-200 rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center group hover:scale-105"
-          >
-            {isOpen ? (
-              <ChevronLeft className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-600 group-hover:text-gray-800" />
-            )}
-          </button>
-        </div>
-
-        {/* Header with profile picture */}
-        <div className="h-14 sm:h-16 flex items-center justify-center border-b border-gray-100 mt-0 lg:mt-0">
-          <div className={`flex items-center space-x-3 ${isOpen ? 'px-3 sm:px-4' : ''}`}>
-            <button
+      <div className={`
+        fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-50
+        transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        w-64 lg:w-64
+      `}>
+        {/* User Info */}
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center space-x-3">
+            <div 
+              className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-medium cursor-pointer"
               onClick={() => setShowProfileModal(true)}
-              className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              title={t('nav.openProfile')}
             >
-              {userInitials}
-            </button>
-            {isOpen && (
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-900 truncate">
-                  {displayName}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {user?.email}
-                </p>
-              </div>
-            )}
+              {getUserInitials()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user?.user_metadata?.name || user?.email}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {user?.email}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 sm:px-4 py-4 sm:py-6">
-          <div className="space-y-1 sm:space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              
-              return (
-                <div key={item.id} className="relative">
-                  <button
-                    onClick={() => handleTabChange(item.id)}
-                    className={`w-full flex items-center px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-xl font-medium text-sm transition-all duration-200 group relative ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                  >
-                    {/* Active indicator */}
-                    {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 sm:h-8 bg-blue-600 rounded-r-full"></div>
-                    )}
-                    
-                    <div className={`flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 ${isOpen ? 'mr-3 sm:mr-4' : 'mx-auto'}`}>
-                      <Icon className={`h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
-                        isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
-                      }`} />
-                    </div>
-                    
-                    {isOpen && (
-                      <span className={`transition-all duration-300 truncate ${
-                        isActive ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'
-                      }`}>
-                        {item.label}
-                      </span>
-                    )}
-                  </button>
-                  
-                  {/* Tooltip for collapsed state - desktop only */}
-                  {!isOpen && (
-                    <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                      {item.label}
-                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        {/* Navigation Links */}
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const IconComponent = item.icon;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavigation(item.path)}
+                className={`
+                  w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
+                  ${isActive 
+                    ? 'bg-primary text-white' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }
+                `}
+                title={item.label}
+              >
+                <IconComponent className={`h-5 w-5 mr-3 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
 
-        {/* Logout section */}
-        <div className="border-t border-gray-100 p-3 sm:p-4">
-          {/* Logout button */}
-          <div className="relative group">
-            <button
-              onClick={handleSignOut}
-              className={`w-full flex items-center px-3 sm:px-4 py-2.5 sm:py-3 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 ${
-                !isOpen ? 'justify-center' : ''
-              }`}
-            >
-              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-              {isOpen && (
-                <span className="ml-3 sm:ml-4 text-sm font-medium">
-                  {t('nav.logout')}
-                </span>
-              )}
-            </button>
-            
-            {/* Tooltip for collapsed state - desktop only */}
-            {!isOpen && (
-              <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                {t('nav.logout')}
-                <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-              </div>
-            )}
-          </div>
+        {/* Settings and Logout */}
+        <div className="border-t border-gray-100 p-4 space-y-2">
+          <button
+            onClick={() => handleNavigation('/settings')}
+            className={`
+              w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
+              ${location.pathname === '/settings'
+                ? 'bg-primary text-white' 
+                : 'text-gray-700 hover:bg-gray-100'
+              }
+            `}
+          >
+            <Settings className={`h-5 w-5 mr-3 ${location.pathname === '/settings' ? 'text-white' : 'text-gray-500'}`} />
+            <span>{t('nav.settings')}</span>
+          </button>
+          
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <LogOut className="h-5 w-5 mr-3 text-gray-500" />
+            <span>{t('auth.signOut')}</span>
+          </button>
         </div>
       </div>
 
       {/* Profile Modal */}
-      <ProfileModal 
-        isOpen={showProfileModal} 
-        onClose={() => setShowProfileModal(false)} 
-      />
+      {showProfileModal && (
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+        />
+      )}
     </>
   );
 };
