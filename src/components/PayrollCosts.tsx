@@ -696,36 +696,37 @@ export const PayrollCosts: React.FC = () => {
       addNotification('error', 'Hiba történt a dokumentumok letöltése során');
     }
   };
-  return <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+  return <div className="w-full min-h-screen bg-surface">
+    <div className="w-full max-w-none mx-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Header */}
       <div className="mb-4 sm:mb-6 lg:mb-8">
-        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center">
-          <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-green-600" />
-          Bérköltségek és Járulékok
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2 flex items-center">
+          <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 sm:mr-3 text-success flex-shrink-0" />
+          <span className="min-w-0 truncate">Bérköltségek és Járulékok</span>
         </h2>
-        <p className="text-gray-600 text-sm sm:text-base">
+        <p className="text-foreground-muted text-sm sm:text-base">
           Töltsd fel a havi bérköltségeket. A rendszer automatikusan felismeri az adatokat és hozzárendeli a munkaszámokat.
         </p>
       </div>
 
       {/* Organization Selection Section */}
-      {step === 'organization' && <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
-            Szervezet kiválasztása
+      {step === 'organization' && <div className="bg-surface-elevated rounded-xl shadow-sm border border-border p-4 sm:p-6 lg:p-8">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4 flex items-center">
+            <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary flex-shrink-0" />
+            <span className="min-w-0 truncate">Szervezet kiválasztása</span>
           </h3>
           
-          <p className="text-gray-600 mb-6">
+          <p className="text-foreground-muted mb-4 sm:mb-6 text-sm sm:text-base">
             Válaszd ki, melyik szervezet bérköltségeit szeretnéd feltölteni:
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
             <button onClick={() => {
           setSelectedOrganization('alapitvany');
           setStep('upload');
-        }} className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-              <h4 className="font-semibold text-gray-900 mb-2">Feketerigó Alapítvány</h4>
-              <p className="text-sm text-gray-600">
+        }} className="p-4 sm:p-6 border-2 border-border rounded-lg hover:border-primary hover:bg-surface-hover transition-all text-left w-full">
+              <h4 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Feketerigó Alapítvány</h4>
+              <p className="text-xs sm:text-sm text-foreground-muted">
                 Alapítványi bérköltségek feltöltése
               </p>
             </button>
@@ -733,9 +734,9 @@ export const PayrollCosts: React.FC = () => {
             <button onClick={() => {
           setSelectedOrganization('ovoda');
           setStep('upload');
-        }} className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-              <h4 className="font-semibold text-gray-900 mb-2">Feketerigó Alapítványi Óvoda</h4>
-              <p className="text-sm text-gray-600">
+        }} className="p-4 sm:p-6 border-2 border-border rounded-lg hover:border-primary hover:bg-surface-hover transition-all text-left w-full">
+              <h4 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Feketerigó Alapítványi Óvoda</h4>
+              <p className="text-xs sm:text-sm text-foreground-muted">
                 Óvodai bérköltségek feltöltése
               </p>
             </button>
@@ -743,13 +744,13 @@ export const PayrollCosts: React.FC = () => {
         </div>}
 
       {/* Upload Section - Only show when no file is uploaded */}
-      {step === 'upload' && <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Upload className="h-5 w-5 mr-2 text-blue-600" />
-            Bérköltség dokumentum feltöltése
+      {step === 'upload' && <div className="bg-surface-elevated rounded-xl shadow-sm border border-border p-4 sm:p-6 lg:p-8">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4 flex items-center">
+            <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary flex-shrink-0" />
+            <span className="min-w-0 truncate">Bérköltség dokumentum feltöltése</span>
           </h3>
           
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+          <div className="border-2 border-dashed border-border rounded-lg p-4 sm:p-6 lg:p-8 text-center hover:border-border-hover transition-colors">
             <FileImage className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <div className="space-y-2">
               <label htmlFor="payroll-upload" className="cursor-pointer">
@@ -772,24 +773,24 @@ export const PayrollCosts: React.FC = () => {
             </div>
           </div>
           
-          <div className="mt-6 flex justify-start">
+          <div className="mt-4 sm:mt-6 flex justify-start">
             <button onClick={() => {
           setStep('organization');
           setSelectedOrganization('');
-        }} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+        }} className="px-3 sm:px-4 py-2 text-foreground-muted bg-surface rounded-lg hover:bg-surface-hover transition-colors text-sm sm:text-base">
               Vissza a szervezet kiválasztáshoz
             </button>
           </div>
         </div>}
 
       {/* Preview Section */}
-      {step === 'preview' && uploadedPayrollFile && <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
-            Bérköltség dokumentum előnézet és kinyert adatok
+      {step === 'preview' && uploadedPayrollFile && <div className="bg-surface-elevated rounded-xl shadow-sm border border-border p-4 sm:p-6 lg:p-8">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4 flex items-center">
+            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-success flex-shrink-0" />
+            <span className="min-w-0 truncate">Bérköltség dokumentum előnézet és kinyert adatok</span>
           </h3>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
             {/* Document Preview */}
             <div>
               <div className="border border-gray-200 rounded-lg overflow-hidden h-[600px]">
@@ -1084,13 +1085,14 @@ export const PayrollCosts: React.FC = () => {
         </div>}
 
       {/* Monthly Summary History */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Calendar className="h-5 w-5 mr-2 text-blue-600" />
-          Havi bérköltség összesítők
+      <div className="bg-surface-elevated rounded-xl shadow-sm border border-border p-4 sm:p-6 lg:p-8">
+        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4 flex items-center">
+          <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary flex-shrink-0" />
+          <span className="min-w-0 truncate">Havi bérköltség összesítők</span>
         </h3>
         
-        <div className="overflow-x-auto">
+        {/* This table can scroll horizontally as requested */}
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-surface">
           {payrollSummaries.length === 0 ? <div className="text-center py-8">
               <p className="text-gray-500">Még nincsenek mentett bérköltség összesítők.</p>
             </div> : <table className="min-w-full divide-y divide-gray-200">
@@ -1191,30 +1193,31 @@ export const PayrollCosts: React.FC = () => {
       </div>
 
       {/* Monthly Records Detail Modal */}
-      {viewingRecords.length > 0 && <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-             <div className="p-6 border-b border-gray-200">
-               <div className="flex justify-between items-center">
-                 <div>
-                   <h3 className="text-lg font-semibold text-gray-900">
+      {viewingRecords.length > 0 && <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-surface-elevated rounded-xl shadow-lg w-full max-w-7xl max-h-[95vh] overflow-y-auto border border-border">
+             <div className="p-3 sm:p-4 lg:p-6 border-b border-border">
+               <div className="flex justify-between items-start gap-3">
+                 <div className="min-w-0 flex-1">
+                   <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                      Bérköltség részletek - {viewingMonth}
                    </h3>
-                   <p className="text-sm text-gray-600 mt-1">
+                   <p className="text-xs sm:text-sm text-foreground-muted mt-1">
                      {viewingRecords[0]?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : viewingRecords[0]?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : viewingRecords[0]?.organization || 'Ismeretlen szervezet'} - {viewingRecords.length} rekord
                    </p>
                  </div>
                 <button onClick={() => {
               setViewingRecords([]);
               setViewingMonth('');
-            }} className="text-gray-400 hover:text-gray-600">
-                  <X className="h-6 w-6" />
+            }} className="text-foreground-muted hover:text-foreground flex-shrink-0 p-1">
+                  <X className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               </div>
             </div>
             
-            <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="p-3 sm:p-4 lg:p-6">
+            {/* This table can scroll horizontally as requested for payroll records */}
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-surface">
+              <table className="min-w-full divide-y divide-border">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1299,8 +1302,9 @@ export const PayrollCosts: React.FC = () => {
                     <h4 className="text-lg font-semibold text-gray-900 mb-4">
                       Havi összesítő - {currentSummary?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : currentSummary?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : currentSummary?.organization || 'Ismeretlen szervezet'}
                     </h4>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow-sm">
+                    {/* This summary table can also scroll horizontally */}
+                    <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-surface">
+                      <table className="min-w-full divide-y divide-border bg-surface-elevated rounded-lg shadow-sm">
                         <thead className="bg-gray-100">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1552,5 +1556,7 @@ export const PayrollCosts: React.FC = () => {
               </div>
             </div>
           </div>}
-      </div>;
+      </div>
+    </div>
+  );
 };
