@@ -253,15 +253,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onTabChange 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+      <div className="w-full min-h-screen bg-surface flex items-center justify-center p-3 sm:p-4">
         <LoadingSpinner size="lg" text="Adatok betöltése..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <div className="w-full min-h-screen bg-surface p-3 sm:p-4 lg:p-6 xl:p-8">
+      <div className="w-full max-w-none mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
         {/* Header */}
         <div className="animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">

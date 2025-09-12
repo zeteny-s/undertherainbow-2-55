@@ -90,7 +90,8 @@ export const Settings: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div className="w-full min-h-screen bg-surface">
+      <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
       {/* Notifications */}
       <div className="fixed bottom-4 right-4 z-50 space-y-3 w-80 max-w-[calc(100vw-2rem)]">
         {notifications.map((notification) => (
@@ -613,6 +614,7 @@ export const Settings: React.FC = () => {
       )}
 
       {activeTab === 'backup' && <BackupManager />}
+      </div>
     </div>
   );
 };

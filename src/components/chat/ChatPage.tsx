@@ -210,7 +210,7 @@ export const ChatPage: React.FC = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>;
   }
-  return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex mobile-no-overflow">
+  return <div className="w-full min-h-screen bg-gradient-to-br from-surface-subtle to-surface flex mobile-no-overflow">
       {/* Sidebar */}
       <div className={`${sidebarOpen ? (isMobile ? 'w-72' : 'w-80') : 'w-0'} transition-all duration-300 ease-in-out bg-white border-r border-gray-200 flex flex-col ${isMobile ? 'fixed inset-y-0 left-0 z-50 shadow-xl' : 'relative'}`}>
         {sidebarOpen && <>

@@ -239,42 +239,43 @@ export const DocumentsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dokumentumok</h1>
-          <p className="text-foreground-muted mt-1">Dokumentumok kezelése és szervezése</p>
+    <div className="w-full min-h-screen bg-surface">
+      <div className="w-full max-w-none mx-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">Dokumentumok</h1>
+            <p className="text-foreground-muted text-sm sm:text-base">Dokumentumok kezelése és szervezése</p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <label className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border border-border rounded-lg cursor-pointer hover:bg-surface-hover transition-colors text-sm font-medium">
+              <Upload className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+              <span className="text-foreground">Feltöltés</span>
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const f = Array.from(e.target.files || []);
+                  uploadFiles(f);
+                  e.currentTarget.value = '';
+                }}
+              />
+            </label>
+            <button
+              className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
+              onClick={() => setShowScanner(true)}
+            >
+              <FileText className="w-4 h-4 flex-shrink-0" />
+              <span>Szkennelés</span>
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <label className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg cursor-pointer hover:bg-surface-hover transition-colors">
-            <Upload className="w-4 h-4 text-foreground-muted" />
-            <span className="text-sm font-medium text-foreground">Feltöltés</span>
-            <input
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const f = Array.from(e.target.files || []);
-                uploadFiles(f);
-                e.currentTarget.value = '';
-              }}
-            />
-          </label>
-          <button
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
-            onClick={() => setShowScanner(true)}
-          >
-            <FileText className="w-4 h-4" />
-            <span className="text-sm font-medium">Szkennelés</span>
-          </button>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
         {/* Sidebar */}
-        <aside className="lg:col-span-3">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+        <aside className="xl:col-span-3">
+          <div className="bg-surface-elevated border border-border rounded-xl p-3 sm:p-4 lg:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Folder className="w-5 h-5 text-gray-600" />
               <h3 className="font-semibold text-gray-900">Mappák</h3>
@@ -350,8 +351,8 @@ export const DocumentsPage: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <section className="lg:col-span-9">
-          <div className="bg-white rounded-xl border border-gray-200">
+        <section className="xl:col-span-9">
+          <div className="bg-surface-elevated rounded-xl border border-border">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -616,6 +617,7 @@ export const DocumentsPage: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

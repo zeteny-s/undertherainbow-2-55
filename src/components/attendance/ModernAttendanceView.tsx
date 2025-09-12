@@ -118,8 +118,8 @@ export const ModernAttendanceView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div className="w-full min-h-screen bg-surface">
+      <div className="w-full max-w-none mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
         {/* Header Section */}
         <div className="mb-8 sm:mb-12">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
