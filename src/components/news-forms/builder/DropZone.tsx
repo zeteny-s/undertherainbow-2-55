@@ -29,7 +29,7 @@ export const DropZone = ({ components, onComponentSelect, onComponentDelete }: D
           <div
             ref={setNodeRef}
             className={`min-h-full space-y-4 ${
-              isOver ? 'bg-primary/5 border-2 border-dashed border-primary rounded-lg' : ''
+              isOver ? 'bg-muted border-2 border-dashed border-primary rounded-lg' : ''
             }`}
           >
             {components.length === 0 ? (

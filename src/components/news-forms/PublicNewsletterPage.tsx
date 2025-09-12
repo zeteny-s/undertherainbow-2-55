@@ -68,7 +68,7 @@ export const PublicNewsletterPage = ({ newsletterId }: PublicNewsletterPageProps
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner />
       </div>
     );
@@ -76,7 +76,7 @@ export const PublicNewsletterPage = ({ newsletterId }: PublicNewsletterPageProps
 
   if (!newsletter) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Hírlevél nem található</h1>
           <p className="text-gray-600">A keresett hírlevél nem létezik vagy nem elérhető.</p>
@@ -107,7 +107,7 @@ export const PublicNewsletterPage = ({ newsletterId }: PublicNewsletterPageProps
   const processedHtml = newsletter.generated_html ? injectFormButtons(newsletter.generated_html) : '';
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10">
+    <div className="min-h-screen relative overflow-hidden bg-background">
       {/* Background decorations */}
       <div className="absolute inset-0 pointer-events-none">
         <img src={decoration1} alt="" className="absolute top-10 left-10 w-16 h-16 opacity-20 animate-float" />

@@ -144,8 +144,8 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
               onClick={() => setActiveView('forms')}
               className={`flex items-center gap-3 px-8 py-3 transition-all duration-200 ${
                 isFormsView 
-                  ? 'shadow-sm bg-primary text-primary-foreground hover:bg-primary/90' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'shadow-sm bg-primary text-primary-foreground hover:bg-primary' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >
               <FileText className="h-5 w-5" />
@@ -157,8 +157,8 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
               onClick={() => setActiveView('newsletters' as ViewType)}
               className={`flex items-center gap-3 px-8 py-3 transition-all duration-200 ${
                 isNewslettersView 
-                  ? 'shadow-sm bg-primary text-primary-foreground hover:bg-primary/90' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'shadow-sm bg-primary text-primary-foreground hover:bg-primary' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >
               <Mail className="h-5 w-5" />
@@ -173,19 +173,19 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
         ) : (
           <>
             {/* Clean Filters */}
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-card/50 p-6 rounded-xl border shadow-sm">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-card p-6 rounded-xl border shadow-sm">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
                   placeholder="Search forms..."
                   value={searchQuery}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 text-base bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow"
+                  className="pl-12 h-12 text-base bg-background border-0 shadow-sm focus:shadow-md transition-shadow"
                 />
               </div>
               <div className="flex gap-3">
                 <Select value={campusFilter} onValueChange={(value: string) => setCampusFilter(value as CampusType | 'all')}>
-                  <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
+                  <SelectTrigger className="w-48 h-12 bg-background border-0 shadow-sm">
                     <SelectValue placeholder="All Campuses" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border shadow-lg">
@@ -196,7 +196,7 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                   </SelectContent>
                 </Select>
                 <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as 'date' | 'title')}>
-                  <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
+                  <SelectTrigger className="w-48 h-12 bg-background border-0 shadow-sm">
                     <SelectValue placeholder="Sort by Date" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border shadow-lg">
@@ -223,7 +223,7 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {filteredForms.map((form) => (
-                  <Card key={form.id} className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-0 shadow-md bg-card/80 backdrop-blur-sm">
+                  <Card key={form.id} className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-0 shadow-md bg-card">
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex-1 min-w-0">

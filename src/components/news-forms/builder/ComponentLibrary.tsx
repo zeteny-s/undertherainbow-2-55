@@ -118,7 +118,7 @@ function DraggableComponent({ item }: { item: ComponentLibraryItem }) {
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-md">
+          <div className="p-2 bg-muted rounded-md">
             <IconComponent className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1">

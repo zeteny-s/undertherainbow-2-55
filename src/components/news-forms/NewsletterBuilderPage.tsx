@@ -312,7 +312,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
             <Button 
               variant="ghost" 
               onClick={() => onNavigate('newsletters')}
-              className="hover:bg-muted/70 px-3"
+              className="hover:bg-muted px-3"
             >
               <ArrowLeft className="h-5 w-5 mr-2" />
               Back to Newsletters
@@ -353,7 +353,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
           {/* Left Panel - Configuration */}
           <div className="xl:col-span-1 space-y-6">
             {/* Basic Info */}
-            <Card className="border-0 shadow-md bg-card/50 backdrop-blur-sm">
+            <Card className="border-0 shadow-md bg-card">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-semibold">Basic Information</CardTitle>
                 <CardDescription className="text-base">Essential newsletter details</CardDescription>
@@ -366,7 +366,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Enter newsletter title..."
-                    className="h-12 bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow"
+                    className="h-12 bg-background border-0 shadow-sm focus:shadow-md transition-shadow"
                   />
                 </div>
                 <div className="space-y-2">
@@ -376,16 +376,16 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief description of the newsletter..."
-                    className="h-12 bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow"
+                    className="h-12 bg-background border-0 shadow-sm focus:shadow-md transition-shadow"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="campus" className="text-sm font-medium">Campus</Label>
                   <Select value={campus} onValueChange={(value: CampusType) => setCampus(value)}>
-                    <SelectTrigger className="h-12 bg-background/80 border-0 shadow-sm">
+                    <SelectTrigger className="h-12 bg-background border-0 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-0 shadow-lg">
+                    <SelectContent className="bg-background border shadow-lg">
                       <SelectItem value="Feketerigó">Feketerigó</SelectItem>
                       <SelectItem value="Torockó">Torockó</SelectItem>
                       <SelectItem value="Levél">Levél</SelectItem>
@@ -396,7 +396,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
             </Card>
 
             {/* Form Selection */}
-            <Card className="border-0 shadow-md bg-card/50 backdrop-blur-sm">
+            <Card className="border-0 shadow-md bg-card">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
@@ -404,10 +404,10 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                     <CardDescription className="text-base">Choose forms to include in the newsletter</CardDescription>
                   </div>
                   <Select value={campusFilter} onValueChange={setCampusFilter}>
-                    <SelectTrigger className="w-32 h-10 bg-background/80 border-0 shadow-sm">
+                    <SelectTrigger className="w-32 h-10 bg-background border-0 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-0 shadow-lg">
+                    <SelectContent className="bg-background border shadow-lg">
                       <SelectItem value="all">All</SelectItem>
                       <SelectItem value="Feketerigó">Feketerigó</SelectItem>
                       <SelectItem value="Torockó">Torockó</SelectItem>
@@ -419,7 +419,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
               <CardContent>
                 <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
                   {filteredForms.map((form) => (
-                    <div key={form.id} className="flex items-start space-x-3 p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-colors">
+                    <div key={form.id} className="flex items-start space-x-3 p-3 rounded-lg bg-background hover:bg-muted transition-colors">
                       <Checkbox
                         id={form.id}
                         checked={selectedFormIds.includes(form.id)}
@@ -495,7 +495,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
             </Card>
 
             {/* Content Guidelines */}
-            <Card className="border-0 shadow-md bg-card/50 backdrop-blur-sm">
+            <Card className="border-0 shadow-md bg-card">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-semibold">Content Guidelines</CardTitle>
                 <CardDescription className="text-base">Provide instructions for AI content generation</CardDescription>
@@ -506,7 +506,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                   onChange={(e) => setContentGuidelines(e.target.value)}
                   placeholder="Example: Create a friendly, family-oriented newsletter that showcases new programs and upcoming events..."
                   rows={6}
-                  className="bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow resize-none"
+                  className="bg-background border-0 shadow-sm focus:shadow-md transition-shadow resize-none"
                 />
                 <Button 
                   onClick={handleGenerateContent}

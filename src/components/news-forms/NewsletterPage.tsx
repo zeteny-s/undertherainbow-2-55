@@ -130,19 +130,19 @@ export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPage
         )}
 
         {/* Clean Filters */}
-        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-card/50 p-6 rounded-xl border shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-card p-6 rounded-xl border shadow-sm">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <Input
               placeholder="Search newsletters..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 text-base bg-background/80 border-0 shadow-sm focus:shadow-md transition-shadow"
+              className="pl-12 h-12 text-base bg-background border-0 shadow-sm focus:shadow-md transition-shadow"
             />
           </div>
           <div className="flex gap-3">
             <Select value={campusFilter} onValueChange={setCampusFilter}>
-              <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
+              <SelectTrigger className="w-48 h-12 bg-background border-0 shadow-sm">
                 <SelectValue placeholder="All Campuses" />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg">
@@ -154,7 +154,7 @@ export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPage
             </Select>
 
             <Select value={sortBy} onValueChange={(value: 'date' | 'title') => setSortBy(value)}>
-              <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
+              <SelectTrigger className="w-48 h-12 bg-background border-0 shadow-sm">
                 <SelectValue placeholder="Sort by Date" />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg">
@@ -181,7 +181,7 @@ export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPage
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             {filteredNewsletters.map((newsletter) => (
-              <Card key={newsletter.id} className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-0 shadow-md bg-card/80 backdrop-blur-sm">
+              <Card key={newsletter.id} className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-0 shadow-md bg-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
