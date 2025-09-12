@@ -188,20 +188,20 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                   <SelectTrigger className="w-48 h-12 bg-background border-0 shadow-sm">
                     <SelectValue placeholder="All Campuses" />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border shadow-lg">
-                    <SelectItem value="all">All Campuses</SelectItem>
-                    <SelectItem value="Feketerigó">Feketerigó</SelectItem>
-                    <SelectItem value="Torockó">Torockó</SelectItem>
-                    <SelectItem value="Levél">Levél</SelectItem>
+                  <SelectContent className="bg-white border shadow-lg z-50">
+                    <SelectItem value="all" className="hover:bg-gray-100">All Campuses</SelectItem>
+                    <SelectItem value="Feketerigó" className="hover:bg-gray-100">Feketerigó</SelectItem>
+                    <SelectItem value="Torockó" className="hover:bg-gray-100">Torockó</SelectItem>
+                    <SelectItem value="Levél" className="hover:bg-gray-100">Levél</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as 'date' | 'title')}>
                   <SelectTrigger className="w-48 h-12 bg-background border-0 shadow-sm">
                     <SelectValue placeholder="Sort by Date" />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border shadow-lg">
-                    <SelectItem value="date">Sort by Date</SelectItem>
-                    <SelectItem value="title">Sort by Title</SelectItem>
+                  <SelectContent className="bg-white border shadow-lg z-50">
+                    <SelectItem value="date" className="hover:bg-gray-100">Sort by Date</SelectItem>
+                    <SelectItem value="title" className="hover:bg-gray-100">Sort by Title</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -242,26 +242,26 @@ export const NewsFormsPage = ({ onNavigate }: NewsFormsPageProps) => {
                               <Menu className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg">
-                            <DropdownMenuItem onClick={() => window.open(`/form/${form.id}`, '_blank')}>
+                          <DropdownMenuContent align="end" className="w-48 bg-white border shadow-lg z-50">
+                            <DropdownMenuItem onClick={() => window.open(`/form/${form.id}`, '_blank')} className="hover:bg-gray-100">
                               <Eye className="h-4 w-4 mr-3" />
                               Preview Form
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)}>
+                            <DropdownMenuItem onClick={() => onNavigate(`news-forms-edit-${form.id}`)} className="hover:bg-gray-100">
                               <Edit className="h-4 w-4 mr-3" />
                               Edit Form
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onNavigate(`news-forms-submissions-${form.id}`)}>
+                            <DropdownMenuItem onClick={() => onNavigate(`news-forms-submissions-${form.id}`)} className="hover:bg-gray-100">
                               <Users className="h-4 w-4 mr-3" />
                               View Submissions
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicate(form)}>
+                            <DropdownMenuItem onClick={() => handleDuplicate(form)} className="hover:bg-gray-100">
                               <Copy className="h-4 w-4 mr-3" />
                               Duplicate
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDelete(form.id)}
-                              className="text-destructive focus:text-destructive"
+                              className="text-destructive focus:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4 mr-3" />
                               Delete

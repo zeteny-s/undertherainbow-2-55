@@ -416,10 +416,10 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                     <SelectTrigger className="h-12 bg-background border-0 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-background border shadow-lg">
-                      <SelectItem value="Feketerigó">Feketerigó</SelectItem>
-                      <SelectItem value="Torockó">Torockó</SelectItem>
-                      <SelectItem value="Levél">Levél</SelectItem>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="Feketerigó" className="hover:bg-gray-100">Feketerigó</SelectItem>
+                      <SelectItem value="Torockó" className="hover:bg-gray-100">Torockó</SelectItem>
+                      <SelectItem value="Levél" className="hover:bg-gray-100">Levél</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -438,11 +438,11 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                     <SelectTrigger className="w-32 h-10 bg-background border-0 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-background border shadow-lg">
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="Feketerigó">Feketerigó</SelectItem>
-                      <SelectItem value="Torockó">Torockó</SelectItem>
-                      <SelectItem value="Levél">Levél</SelectItem>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      <SelectItem value="all" className="hover:bg-gray-100">All</SelectItem>
+                      <SelectItem value="Feketerigó" className="hover:bg-gray-100">Feketerigó</SelectItem>
+                      <SelectItem value="Torockó" className="hover:bg-gray-100">Torockó</SelectItem>
+                      <SelectItem value="Levél" className="hover:bg-gray-100">Levél</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
