@@ -58,7 +58,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
       setAvailableForms(data || []);
     } catch (error) {
       console.error('Error fetching forms:', error);
-      addNotification('error', 'Hiba az űrlapok betöltése során');
+      addNotification('error', 'Error loading forms');
     }
   };
 
@@ -103,7 +103,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
 
     } catch (error) {
       console.error('Error fetching newsletter:', error);
-      addNotification('error', 'Hiba a hírlevél betöltése során');
+      addNotification('error', 'Error loading newsletter');
     } finally {
       setLoading(false);
     }
@@ -176,23 +176,54 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
         }
       }
 
-      addNotification('success', 'Hírlevél sikeresen mentve');
+      addNotification('success', 'Newsletter saved successfully');
     } catch (error) {
       console.error('Error saving newsletter:', error);
-      addNotification('error', 'Hiba a mentés során');
+      addNotification('error', 'Error saving newsletter');
     } finally {
       setSaving(false);
     }
   };
 
+  // Helper function to append forms to the newsletter HTML
+  const appendFormsToNewsletter = (html: string, forms: FormForSelection[]): string => {
+    if (!forms || forms.length === 0) return html;
+
+    const formsHtml = `
+      <div style="margin-top: 48px; padding-top: 32px; border-top: 2px solid #e5e7eb;">
+        <h2 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 32px; text-align: center;">
+          Available Forms & Programs
+        </h2>
+        ${forms.map((form, index) => `
+          <div style="margin-bottom: ${index < forms.length - 1 ? '32px' : '0'}; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
+            <h3 style="font-size: 20px; font-weight: 600; color: #3b82f6; margin-bottom: 12px;">
+              ${form.title}
+            </h3>
+            ${form.description ? `
+              <p style="color: #6b7280; margin-bottom: 16px; line-height: 1.6;">
+                ${form.description}
+              </p>
+            ` : ''}
+            <a href="/public-form/${form.id}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; transition: background-color 0.2s;">
+              Fill out this form
+            </a>
+          </div>
+          ${index < forms.length - 1 ? `<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">` : ''}
+        `).join('')}
+      </div>
+    `;
+
+    return html + formsHtml;
+  };
+
   const handleGenerateContent = async () => {
     if (!title.trim()) {
-      addNotification('error', 'Először add meg a hírlevél címét');
+      addNotification('error', 'Please enter newsletter title first');
       return;
     }
 
     if (selectedFormIds.length === 0) {
-      addNotification('error', 'Válassz ki legalább egy űrlapot');
+      addNotification('error', 'Please select at least one form');
       return;
     }
 
@@ -218,11 +249,11 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
       if (error) throw error;
       
       setGeneratedHtml(data.generatedHtml);
-      addNotification('success', 'Tartalom sikeresen generálva');
+      addNotification('success', 'Content generated successfully');
       
     } catch (error) {
       console.error('Error generating content:', error);
-      addNotification('error', 'Hiba a tartalom generálása során');
+      addNotification('error', 'Error generating content');
     } finally {
       setGenerating(false);
     }
@@ -270,11 +301,11 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
 
       const newImages = await Promise.all(uploadPromises);
       setUploadedImages(prev => [...prev, ...newImages]);
-      addNotification('success', 'Képek sikeresen feltöltve');
+      addNotification('success', 'Images uploaded successfully');
       
     } catch (error) {
       console.error('Error uploading images:', error);
-      addNotification('error', 'Hiba a képek feltöltése során');
+      addNotification('error', 'Error uploading images');
     }
   };
 
@@ -288,10 +319,10 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
       if (error) throw error;
       
       setUploadedImages(prev => prev.filter(img => img.id !== imageId));
-      addNotification('success', 'Kép eltávolítva');
+      addNotification('success', 'Image removed');
     } catch (error) {
       console.error('Error removing image:', error);
-      addNotification('error', 'Hiba a kép eltávolítása során');
+      addNotification('error', 'Error removing image');
     }
   };
 
@@ -449,8 +480,8 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
             {/* Image Upload */}
             <Card>
               <CardHeader>
-                <CardTitle>Képek</CardTitle>
-                <CardDescription>Tölts fel képeket a hírlevélhez</CardDescription>
+                <CardTitle>Images</CardTitle>
+                <CardDescription>Upload images for the newsletter</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -464,7 +495,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
                     />
                     {!newsletterId && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Először mentsd el a hírlevelelet a képek feltöltéséhez
+                        Save newsletter first to upload images
                       </p>
                     )}
                   </div>
@@ -534,19 +565,23 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
           <div>
             <Card className="h-fit">
               <CardHeader>
-                <CardTitle>Előnézet</CardTitle>
-                <CardDescription>A generált hírlevél előnézete</CardDescription>
+                <CardTitle>Preview</CardTitle>
+                <CardDescription>Preview of the generated newsletter</CardDescription>
               </CardHeader>
               <CardContent>
                 {generatedHtml ? (
                   <div 
                     className="border rounded-lg p-4 bg-white max-h-96 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: generatedHtml }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: appendFormsToNewsletter(generatedHtml, selectedFormIds.map(id => 
+                        availableForms.find(form => form.id === id)!
+                      ).filter(Boolean))
+                    }}
                   />
                 ) : (
                   <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center text-muted-foreground">
-                    <p>A generált tartalom itt fog megjelenni</p>
-                    <p className="text-sm mt-2">Töltsd ki az adatokat és klikkelj a "Tartalom generálása" gombra</p>
+                    <p>Generated content will appear here</p>
+                    <p className="text-sm mt-2">Fill in the data and click "Generate Content" button</p>
                   </div>
                 )}
               </CardContent>

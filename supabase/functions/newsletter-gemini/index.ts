@@ -83,36 +83,41 @@ serve(async (req) => {
 
     // Prepare the prompt for Gemini
     const formsInfo = requestData.selectedForms.map((form: any) => 
-      `- ${form.title}: ${form.description || 'Nincs leírás'}`
+      `- ${form.title}: ${form.description || 'No description available'}`
     ).join('\n');
 
     const imageInfo = requestData.imageUrls.length > 0 
-      ? `\n\nFeltöltött képek: ${requestData.imageUrls.length} kép elérhető a hírlevélhez.`
+      ? `\n\nUploaded images: ${requestData.imageUrls.length} images available for the newsletter.`
       : '';
 
+    const languageInstruction = requestData.contentGuidelines?.toLowerCase().includes('hungarian') || 
+                                requestData.contentGuidelines?.toLowerCase().includes('magyar') ? 
+                                'Use Hungarian language' : 'Use English language';
+
     const prompt = `
-Készíts egy professzionális, barátságos hangvételű hírlevél tartalmat HTML formátumban a következő információk alapján:
+Create a professional, friendly newsletter content in HTML format based on the following information:
 
-Cím: ${requestData.title}
-Telephely: ${requestData.campus}
-Tartalom irányelvek: ${requestData.contentGuidelines || 'Készíts egy informatív és vonzó hírlevelelet'}
+Title: ${requestData.title}
+Campus: ${requestData.campus}
+Content Guidelines: ${requestData.contentGuidelines || 'Create an informative and engaging newsletter'}
 
-Elérhető űrlapok:
+Available forms/programs:
 ${formsInfo}
 ${imageInfo}
 
-FONTOS KÖVETELMÉNYEK:
-1. A HTML tartalmat wrap-eld div tag-ekkel, de NE adj hozzá teljes HTML dokumentum struktúrát (head, body stb.)
-2. Használj inline CSS stílusokat a formázáshoz
-3. A tartalom legyen responsive és modern
-4. Használj színeket: elsődleges szín #3b82f6 (kék), másodlagos #6b7280 (szürke)
-5. NE generálj űrlap gombokat - ezeket automatikusan hozzáadjuk
-6. A tartalom legyen informatív és vonzó a szülők számára
-7. Említsd meg a telephelyet és az elérhető programokat/űrlapokat
-8. Használj magyar nyelvet
-9. A HTML legyen clean és jól strukturált
+IMPORTANT REQUIREMENTS:
+1. Wrap the HTML content in div tags, but DO NOT add full HTML document structure (head, body etc.)
+2. Use inline CSS styles for formatting
+3. Content should be responsive and modern
+4. Use colors: primary color #3b82f6 (blue), secondary #6b7280 (gray)
+5. DO NOT generate form buttons - these will be automatically added
+6. Content should be informative and engaging for parents
+7. Mention the campus and available programs/forms
+8. ${languageInstruction}
+9. HTML should be clean and well-structured
+10. Create engaging content that parents would want to read
 
-Válaszolj csak a HTML tartalommal, semmi mással.
+Respond with only the HTML content, nothing else.
     `;
 
     console.log('Sending request to Gemini API...');

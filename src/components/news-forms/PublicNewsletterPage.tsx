@@ -85,26 +85,37 @@ export const PublicNewsletterPage = ({ newsletterId }: PublicNewsletterPageProps
     );
   }
 
-  const injectFormButtons = (html: string) => {
+  const appendFormsToNewsletter = (html: string) => {
     if (!forms || forms.length === 0) return html;
 
-    const formButtonsHtml = forms.map(form => `
-      <div style="margin: 20px 0;">
-        <a href="/form/${form.id}" 
-           style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;"
-           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(0, 0, 0, 0.15)';"
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
-          ${form.title}
-        </a>
-        ${form.description ? `<p style="margin: 8px 0 0 0; color: #6b7280; font-size: 14px;">${form.description}</p>` : ''}
+    const formsHtml = `
+      <div style="margin-top: 48px; padding-top: 32px; border-top: 2px solid #e5e7eb;">
+        <h2 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 32px; text-align: center;">
+          Available Forms & Programs
+        </h2>
+        ${forms.map((form, index) => `
+          <div style="margin-bottom: ${index < forms.length - 1 ? '32px' : '0'}; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
+            <h3 style="font-size: 20px; font-weight: 600; color: #3b82f6; margin-bottom: 12px;">
+              ${form.title}
+            </h3>
+            ${form.description ? `
+              <p style="color: #6b7280; margin-bottom: 16px; line-height: 1.6;">
+                ${form.description}
+              </p>
+            ` : ''}
+            <a href="/public-form/${form.id}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; transition: background-color 0.2s;">
+              Fill out this form
+            </a>
+          </div>
+          ${index < forms.length - 1 ? `<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">` : ''}
+        `).join('')}
       </div>
-    `).join('');
+    `;
 
-    // Inject form buttons at the end of the content, before closing tags
-    return html.replace(/(<\/div>\s*<\/div>\s*)$/, `${formButtonsHtml}$1`);
+    return html + formsHtml;
   };
 
-  const processedHtml = newsletter.generated_html ? injectFormButtons(newsletter.generated_html) : '';
+  const processedHtml = newsletter.generated_html ? appendFormsToNewsletter(newsletter.generated_html) : '';
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-background">
