@@ -119,7 +119,7 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
                 </p>
               </div>
               <Button 
-                onClick={() => navigate('/newsletters/new')}
+                onClick={() => navigate('/newsletter-builder/new')}
                 size="lg"
                 className="shadow-sm hover:shadow-md transition-shadow"
               >
@@ -175,7 +175,7 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
               description="Create your first AI-powered newsletter to get started"
               action={{
                 label: 'Create Newsletter',
-                onClick: () => navigate('/newsletters/new')
+                onClick: () => navigate('/newsletter-builder/new')
               }}
             />
           </div>
@@ -206,7 +206,7 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
                           <Eye className="h-4 w-4 mr-3" />
                           Preview
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/newsletters/edit/${newsletter.id}`)} className="hover:bg-gray-100">
+                        <DropdownMenuItem onClick={() => navigate(`/newsletter-builder/${newsletter.id}`)} className="hover:bg-gray-100">
                           <Edit className="h-4 w-4 mr-3" />
                           Edit
                         </DropdownMenuItem>

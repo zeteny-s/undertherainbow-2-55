@@ -124,7 +124,7 @@ export const NewsFormsPage = () => {
             <p className="text-muted-foreground text-lg">Manage your forms and newsletters with ease</p>
           </div>
           <Button 
-            onClick={() => navigate(isFormsView ? '/news-forms/new' : '/newsletters/new')} 
+            onClick={() => navigate(isFormsView ? '/news-forms/new' : '/newsletter-builder/new')} 
             size="lg" 
             className="shadow-sm hover:shadow-md transition-shadow"
           >
