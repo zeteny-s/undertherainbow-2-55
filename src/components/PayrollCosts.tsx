@@ -696,7 +696,9 @@ export const PayrollCosts: React.FC = () => {
       addNotification('error', 'Hiba történt a dokumentumok letöltése során');
     }
   };
-  return <div className="w-full min-h-screen bg-surface">
+  
+  return (
+    <div className="w-full min-h-screen bg-surface">
     <div className="w-full max-w-none mx-auto p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
       {/* Header */}
       <div className="mb-4 sm:mb-6 lg:mb-8">
@@ -1297,8 +1299,9 @@ export const PayrollCosts: React.FC = () => {
               
               {/* Summary Table for Current Month */}
               {viewingRecords.length > 0 && (() => {
-            const currentSummary = payrollSummaries.find(s => s.year === parseInt(viewingMonth.split('.')[0]) && s.month === parseInt(viewingMonth.split('.')[1]) && s.organization === viewingRecords[0]?.organization);
-            return <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                const currentSummary = payrollSummaries.find(s => s.year === parseInt(viewingMonth.split('.')[0]) && s.month === parseInt(viewingMonth.split('.')[1]) && s.organization === viewingRecords[0]?.organization);
+                return (
+                  <div className="mt-6 bg-gray-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-gray-900 mb-4">
                       Havi összesítő - {currentSummary?.organization === 'alapitvany' ? 'Feketerigó Alapítvány' : currentSummary?.organization === 'ovoda' ? 'Feketerigó Alapítványi Óvoda' : currentSummary?.organization || 'Ismeretlen szervezet'}
                     </h4>
@@ -1464,8 +1467,9 @@ export const PayrollCosts: React.FC = () => {
                          </div>
                        </div>
                      </div>
-                   </div>;
-          })()}
+                   </div>
+                 );
+               })()}
             </div>
           </div>
           </div>}
@@ -1555,8 +1559,10 @@ export const PayrollCosts: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>}
-      </div>
-    </div>
-  );
+           </div>}
+       </div>
+     </div>
+   );
 };
+
+export default PayrollCosts;
