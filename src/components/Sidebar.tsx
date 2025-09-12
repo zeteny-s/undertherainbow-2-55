@@ -35,18 +35,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     const profileType = user?.user_metadata?.profile_type;
     
     const commonItems = [
-      { id: 'dashboard', label: t('nav.dashboard'), icon: Home, path: '/' },
+      { id: 'dashboard', label: t('nav.overview'), icon: Home, path: '/' },
       { id: 'calendar', label: t('nav.calendar'), icon: Calendar, path: '/calendar' },
       { id: 'chat', label: t('nav.chat'), icon: MessageCircle, path: '/chat' },
       { id: 'documents', label: t('nav.documents'), icon: FileText, path: '/documents' },
-      { id: 'news-forms', label: t('nav.forms'), icon: ClipboardList, path: '/news-forms' },
+      { id: 'news-forms', label: 'Hírlevelek és Űrlapok', icon: ClipboardList, path: '/news-forms' },
     ];
 
     const roleSpecificItems = [];
 
     if (profileType === 'adminisztracio' || profileType === 'vezetoi' || profileType === 'haz_vezeto') {
       roleSpecificItems.push(
-        { id: 'upload', label: t('nav.upload'), icon: Upload, path: '/upload' },
+        { id: 'upload', label: t('nav.registrar'), icon: Upload, path: '/upload' },
         { id: 'invoices', label: t('nav.invoices'), icon: List, path: '/invoices' }
       );
     }
