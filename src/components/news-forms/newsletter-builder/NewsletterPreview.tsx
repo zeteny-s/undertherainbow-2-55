@@ -1,14 +1,18 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-
 import { NewsletterComponent } from '../../../types/newsletter-builder-types';
-import { SortableNewsletterComponent } from './SortableNewsletterComponent';
 import { FormForSelection } from '../../../types/newsletter-types';
-import kindergartenLogo from '../../../assets/kindergarten-logo.png';
+import { SortableNewsletterComponent } from './SortableNewsletterComponent';
+import { Button } from '../../ui/button';
+import { ExternalLink } from 'lucide-react';
+import logo from '../../../assets/kindergarten-logo.png';
 import decoration1 from '../../../assets/decoration-1.png';
 import decoration2 from '../../../assets/decoration-2.png';
 import decoration3 from '../../../assets/decoration-3.png';
+import decoration4 from '../../../assets/decoration-4.png';
+import decoration5 from '../../../assets/decoration-5.png';
+import decoration6 from '../../../assets/decoration-6.png';
 
 interface NewsletterPreviewProps {
   components: NewsletterComponent[];
@@ -17,201 +21,184 @@ interface NewsletterPreviewProps {
   onComponentDelete: (componentId: string) => void;
 }
 
-export const NewsletterPreview: React.FC<NewsletterPreviewProps> = ({
-  components,
-  selectedForms,
-  onComponentSelect,
-  onComponentDelete
-}) => {
-  const { setNodeRef, isOver } = useDroppable({
-    id: 'newsletter-canvas'
-  });
+export const NewsletterPreview = ({ components, selectedForms, onComponentSelect, onComponentDelete }: NewsletterPreviewProps) => {
+  const { isOver, setNodeRef } = useDroppable({ id: 'newsletter-builder' });
 
   const renderComponent = (component: NewsletterComponent) => {
     switch (component.type) {
       case 'heading':
-        const HeadingTag = `h${component.content.level}` as keyof JSX.IntrinsicElements;
-        return (
-          <HeadingTag 
-            style={{ 
-              textAlign: component.content.textAlign || 'left',
-              color: component.content.color || '#1f2937',
-              fontSize: component.content.level === 1 ? '2rem' : 
-                       component.content.level === 2 ? '1.5rem' : '1.25rem',
-              fontWeight: 'bold',
-              margin: '1rem 0'
-            }}
-          >
-            {component.content.text}
-          </HeadingTag>
-        );
+        const heading = component.content;
+        return React.createElement(`h${heading.level}`, {
+          className: `font-bold mb-4 ${heading.textAlign === 'center' ? 'text-center' : heading.textAlign === 'right' ? 'text-right' : 'text-left'}`,
+          style: { color: heading.color || 'inherit' }
+        }, heading.text);
+      
       case 'text-block':
+        const textBlock = component.content;
         return (
           <div 
-            style={{
-              fontSize: component.content.fontSize || '16px',
-              fontWeight: component.content.fontWeight || 'normal',
-              textAlign: component.content.textAlign || 'left',
-              color: component.content.color || '#374151',
-              lineHeight: '1.6',
-              margin: '1rem 0'
+            className={`mb-4 ${textBlock.textAlign === 'center' ? 'text-center' : textBlock.textAlign === 'right' ? 'text-right' : 'text-left'}`}
+            style={{ 
+              fontSize: textBlock.fontSize || 'inherit',
+              fontWeight: textBlock.fontWeight || 'normal',
+              color: textBlock.color || 'inherit'
             }}
-            dangerouslySetInnerHTML={{ __html: component.content.content }}
+            dangerouslySetInnerHTML={{ __html: textBlock.content }}
           />
         );
+      
       case 'image':
+        const image = component.content;
         return (
-          <div style={{ margin: '1rem 0', textAlign: 'center' }}>
-            {component.content.url ? (
-              <img 
-                src={component.content.url} 
-                alt={component.content.alt || 'Newsletter image'}
-                style={{
-                  width: component.content.width || '100%',
-                  height: component.content.height || 'auto',
-                  maxWidth: '100%',
-                  borderRadius: '8px'
-                }}
-              />
-            ) : (
-              <div className="w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Click to add image</p>
-              </div>
-            )}
+          <div className="mb-4 text-center">
+            <img 
+              src={image.url} 
+              alt={image.alt}
+              className="max-w-full h-auto rounded-lg"
+              style={{ 
+                width: image.width || 'auto',
+                height: image.height || 'auto'
+              }}
+            />
           </div>
         );
+      
       case 'button':
+        const button = component.content;
         return (
-          <div style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+          <div className="mb-4 text-center">
             <a
-              href={component.content.url || '#'}
+              href={button.url}
+              className={`inline-block px-6 py-3 rounded-lg font-medium transition-colors ${
+                button.size === 'small' ? 'px-4 py-2 text-sm' : 
+                button.size === 'large' ? 'px-8 py-4 text-lg' : 'px-6 py-3'
+              }`}
               style={{
-                display: 'inline-block',
-                backgroundColor: component.content.backgroundColor || '#3b82f6',
-                color: component.content.textColor || '#ffffff',
-                padding: component.content.size === 'small' ? '8px 16px' :
-                        component.content.size === 'large' ? '16px 32px' : '12px 24px',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                fontWeight: '500',
-                fontSize: component.content.size === 'small' ? '14px' :
-                          component.content.size === 'large' ? '18px' : '16px'
+                backgroundColor: button.backgroundColor || '#3b82f6',
+                color: button.textColor || 'white'
               }}
             >
-              {component.content.text}
+              {button.text}
             </a>
           </div>
         );
+      
       case 'divider':
-        return (
-          <hr 
-            style={{
-              border: 'none',
-              borderTop: `${component.content.thickness || '1px'} ${component.content.style || 'solid'} ${component.content.color || '#e5e7eb'}`,
-              margin: '2rem 0'
-            }}
-          />
-        );
+        return <hr className="my-6 border-gray-300" />;
+      
       default:
-        return <div>Unknown component type</div>;
+        return null;
     }
   };
 
+  const decorationImages = [decoration1, decoration2, decoration3, decoration4, decoration5, decoration6];
+
   return (
-    <div className="h-full bg-white overflow-y-auto">
-      {/* Newsletter Template */}
+    <div className="h-full overflow-y-auto bg-white relative z-20" style={{
+      background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                   radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                   radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                   radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                   radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                   radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+    }}>
+      {/* Background decorative images */}
+      {decorationImages.map((img, index) => {
+        const positions = [
+          { top: '8%', left: '5%', transform: 'rotate(-15deg)', width: '120px' },
+          { top: '15%', right: '8%', transform: 'rotate(25deg)', width: '90px' },
+          { top: '35%', left: '12%', transform: 'rotate(45deg)', width: '80px' },
+          { top: '55%', right: '15%', transform: 'rotate(-30deg)', width: '110px' },
+          { top: '75%', left: '20%', transform: 'rotate(60deg)', width: '70px' },
+          { top: '12%', left: '35%', transform: 'rotate(-45deg)', width: '130px' }
+        ];
+        const pos = positions[index % positions.length];
+        return (
+          <img
+            key={index}
+            src={img}
+            alt=""
+            className="absolute opacity-20 pointer-events-none z-0"
+            style={{
+              position: 'absolute',
+              top: pos.top,
+              left: pos.left,
+              right: pos.right,
+              transform: pos.transform,
+              width: pos.width,
+              opacity: 0.2
+            }}
+          />
+        );
+      })}
+
       <div 
         ref={setNodeRef}
-        className={`max-w-2xl mx-auto bg-white shadow-lg ${isOver ? 'bg-blue-50' : ''}`}
-        style={{ minHeight: '800px' }}
+        className={`relative z-30 max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center ${
+          isOver ? 'bg-muted' : ''
+        }`}
       >
-        {/* Header with decorations and logo */}
-        <div className="relative bg-gradient-to-r from-blue-50 to-green-50 p-8">
-          <img 
-            src={decoration1} 
-            alt="" 
-            className="absolute top-4 left-4 w-16 h-16 opacity-20"
-          />
-          <img 
-            src={decoration2} 
-            alt="" 
-            className="absolute top-4 right-4 w-16 h-16 opacity-20"
-          />
-          <div className="text-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg z-40 border border-gray-200">
+          {/* Logo */}
+          <div className="text-center mb-8 relative z-50">
             <img 
-              src={kindergartenLogo} 
-              alt="Kindergarten Logo" 
-              className="mx-auto h-20 mb-4"
+              src={logo} 
+              alt="Under the Rainbow Kindergarten and Nursery" 
+              className="max-w-full h-auto mx-auto mb-6"
+              style={{ maxWidth: '300px' }}
             />
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Newsletter</h1>
           </div>
-          <img 
-            src={decoration3} 
-            alt="" 
-            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-20 h-8 opacity-20"
-          />
-        </div>
 
-        {/* Content Area - Droppable */}
-        <div className="p-8">
-          {components.length === 0 ? (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center bg-gray-50">
-              <p className="text-gray-500 text-lg">Drag components here to build your newsletter</p>
-              <p className="text-gray-400 text-sm mt-2">Start with a heading or text block</p>
-            </div>
-          ) : (
-            <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
+          {/* Newsletter Content */}
+          <div className="space-y-6 relative z-50">
+            {components.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl bg-background relative z-50">
+                <p className="text-lg font-medium mb-2">Drop newsletter components here</p>
+                <p className="text-sm">Drag components from the left sidebar to build your newsletter</p>
+              </div>
+            ) : (
+              <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-4 relative z-50">
+                  {components.map((component) => (
+                    <div key={component.id} className="relative z-50 bg-white">
+                      <SortableNewsletterComponent
+                        component={component}
+                        onSelect={() => onComponentSelect(component)}
+                        onDelete={() => onComponentDelete(component.id)}
+                      >
+                        {renderComponent(component)}
+                      </SortableNewsletterComponent>
+                    </div>
+                  ))}
+                </div>
+              </SortableContext>
+            )}
+          </div>
+
+          {/* Selected Forms Section */}
+          {selectedForms && selectedForms.length > 0 && (
+            <div className="border-t pt-6 mt-8 relative z-50">
+              <h3 className="text-lg font-semibold text-center mb-4">Forms & Programs</h3>
               <div className="space-y-4">
-                {components.map((component) => (
-                  <SortableNewsletterComponent
-                    key={component.id}
-                    component={component}
-                    onSelect={onComponentSelect}
-                    onDelete={onComponentDelete}
-                  >
-                    {renderComponent(component)}
-                  </SortableNewsletterComponent>
+                {selectedForms.map((form) => (
+                  <div key={form.id} className="bg-muted/30 rounded-lg p-4 border">
+                    <h4 className="font-medium text-sm mb-1">{form.title}</h4>
+                    {form.description && (
+                      <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{form.description}</p>
+                    )}
+                    <Button 
+                      size="sm" 
+                      className="text-xs h-8"
+                      onClick={() => window.open(`/news-forms/public/${form.id}`, '_blank')}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Open Form
+                    </Button>
+                  </div>
                 ))}
               </div>
-            </SortableContext>
-          )}
-        </div>
-
-        {/* Selected Forms Section - Always at bottom */}
-        {selectedForms.length > 0 && (
-          <div className="border-t-2 border-gray-200 bg-gray-50 p-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">
-              Available Forms & Programs
-            </h2>
-            <div className="space-y-6">
-              {selectedForms.map((form) => (
-                <div 
-                  key={form.id} 
-                  className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm"
-                >
-                  <h3 className="text-lg font-semibold text-blue-600 mb-3">
-                    {form.title}
-                  </h3>
-                  {form.description && (
-                    <p className="text-gray-600 mb-4 line-height-relaxed">
-                      {form.description}
-                    </p>
-                  )}
-                  <button 
-                    className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-medium"
-                    onClick={() => window.open(`/form/${form.id}`, '_blank')}
-                  >
-                    Fill out this form
-                  </button>
-                </div>
-              ))}
             </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="bg-gray-100 p-6 text-center text-gray-600 text-sm">
-          <p>© {new Date().getFullYear()} Kindergarten Newsletter</p>
+          )}
         </div>
       </div>
     </div>

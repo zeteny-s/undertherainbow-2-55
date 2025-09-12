@@ -3,6 +3,7 @@ import { Save, ArrowLeft, Bot, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { FormSelectionModal } from './newsletter-builder/FormSelectionModal';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -43,12 +44,15 @@ export const NewsletterDragBuilderPage = () => {
   const [selectedComponent, setSelectedComponent] = useState<NewsletterComponent | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<NewsletterComponent | null>(null);
 
+  const [showFormSelection, setShowFormSelection] = useState(false);
+
   const isNewNewsletter = newsletterId === 'new' || !newsletterId;
 
   useEffect(() => {
     fetchAvailableForms();
     if (isNewNewsletter) {
       setLoading(false);
+      setShowFormSelection(true); // Show form selection modal for new newsletters
     } else {
       fetchNewsletter();
     }
@@ -285,6 +289,14 @@ export const NewsletterDragBuilderPage = () => {
     setSelectedComponent(null);
   };
 
+  const handleFormSelectionConfirm = (forms: FormForSelection[]) => {
+    setNewsletterState(prev => ({
+      ...prev,
+      selectedFormIds: forms.map(f => f.id)
+    }));
+    setShowFormSelection(false);
+  };
+
   const handleFormToggle = (formId: string, checked: boolean) => {
     setNewsletterState(prev => ({
       ...prev,
@@ -503,6 +515,14 @@ export const NewsletterDragBuilderPage = () => {
           </Card>
         )}
       </DragOverlay>
+
+      {/* Form Selection Modal */}
+      <FormSelectionModal
+        isOpen={showFormSelection}
+        onClose={() => setShowFormSelection(false)}
+        onConfirm={handleFormSelectionConfirm}
+        campus={newsletterState.campus}
+      />
     </DndContext>
   );
 };
