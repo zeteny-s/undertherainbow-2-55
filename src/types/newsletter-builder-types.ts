@@ -1,0 +1,62 @@
+import { CampusType } from './form-types';
+
+export interface NewsletterComponent {
+  id: string;
+  type: NewsletterComponentType;
+  content: any;
+  position: number;
+}
+
+export type NewsletterComponentType = 
+  | 'text-block'
+  | 'image' 
+  | 'heading'
+  | 'divider'
+  | 'button'
+  | 'form-section';
+
+export interface NewsletterBuilderState {
+  id?: string;
+  title: string;
+  description?: string;
+  campus: CampusType;
+  components: NewsletterComponent[];
+  selectedFormIds: string[];
+}
+
+export interface NewsletterTextBlock {
+  content: string;
+  fontSize?: string;
+  fontWeight?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  color?: string;
+}
+
+export interface NewsletterImage {
+  url: string;
+  alt: string;
+  width?: string;
+  height?: string;
+}
+
+export interface NewsletterHeading {
+  text: string;
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  textAlign?: 'left' | 'center' | 'right';
+  color?: string;
+}
+
+export interface NewsletterButton {
+  text: string;
+  url: string;
+  backgroundColor?: string;
+  textColor?: string;
+  size?: 'small' | 'medium' | 'large';
+}
+
+export interface AIMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}

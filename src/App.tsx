@@ -19,6 +19,7 @@ import { FamilyRelationshipsPage } from './components/family-relationships/Famil
 import { NewsFormsPage } from './components/news-forms/NewsFormsPage';
 import { FormBuilderPage } from './components/news-forms/FormBuilderPage';
 import { NewsletterBuilderPage } from './components/news-forms/NewsletterBuilderPage';
+import { NewsletterDragBuilderPage } from './components/news-forms/NewsletterDragBuilderPage';
 import { PublicFormPage } from './components/news-forms/PublicFormPage';
 import { PublicNewsletterPage } from './components/news-forms/PublicNewsletterPage';
 import { Settings } from './components/Settings';
@@ -193,6 +194,22 @@ const AppContent = () => {
             element={
               <ProtectedRoute>
                 <NewsletterBuilderPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/newsletter-builder/new" 
+            element={
+              <ProtectedRoute>
+                <NewsletterDragBuilderPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/newsletter-builder/:newsletterId" 
+            element={
+              <ProtectedRoute>
+                <NewsletterDragBuilderPage />
               </ProtectedRoute>
             } 
           />
