@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Menu, Calendar, MessageCircle, FileText, Upload, List, Calculator, Users, ClipboardList, Home, Settings } from 'lucide-react';
+import { LogOut, Menu, Calendar, MessageCircle, FileText, Upload, List, Calculator, Users, ClipboardList, Home, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 import { Button } from './ui/button';
@@ -99,15 +99,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         </div>
       </div>
 
-      {/* Desktop Sidebar Toggle */}
-      <div className="hidden lg:block fixed top-4 left-4 z-50">
+      {/* Desktop Sidebar Border Toggle - positioned on sidebar border */}
+      <div className={`
+        hidden lg:block fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-300
+        ${isOpen ? 'left-64' : 'left-0'}
+      `}>
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggle}
-          className="p-2 bg-white shadow-md hover:shadow-lg"
+          className="p-2 bg-white shadow-lg hover:shadow-xl border border-border rounded-r-lg rounded-l-none h-12 w-8 flex items-center justify-center"
         >
-          <Menu className="h-5 w-5" />
+          {isOpen ? (
+            <ChevronLeft className="h-4 w-4 text-foreground-muted" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-foreground-muted" />
+          )}
         </Button>
       </div>
 
