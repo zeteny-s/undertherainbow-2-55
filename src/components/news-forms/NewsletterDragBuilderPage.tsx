@@ -31,6 +31,7 @@ export const NewsletterDragBuilderPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
   const [newsletterState, setNewsletterState] = useState<NewsletterBuilderState>({
     title: 'Untitled Newsletter',
@@ -57,6 +58,23 @@ export const NewsletterDragBuilderPage = () => {
       fetchNewsletter();
     }
   }, [newsletterId, isNewNewsletter]);
+
+  // Auto-save functionality
+  useEffect(() => {
+    if (!newsletterState.title && newsletterState.components.length === 0) return;
+    
+    const autoSave = async () => {
+      try {
+        await handleSave(true); // Pass true to indicate auto-save
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      }
+    };
+
+    const timer = setTimeout(autoSave, 2000); // Auto-save after 2 seconds of inactivity
+    return () => clearTimeout(timer);
+  }, [newsletterState]);
 
   const fetchAvailableForms = async () => {
     try {
@@ -126,9 +144,14 @@ export const NewsletterDragBuilderPage = () => {
     }
   };
 
-  const handleSave = async () => {
-    if (!newsletterState.title.trim() || !user?.id) {
+  const handleSave = async (isAutoSave = false) => {
+    if (!newsletterState.title.trim() && !isAutoSave) {
       toast.error('Newsletter title is required');
+      return;
+    }
+    
+    if (!user?.id) {
+      toast.error('User not authenticated');
       return;
     }
 
@@ -136,13 +159,15 @@ export const NewsletterDragBuilderPage = () => {
     try {
       // Convert components to HTML for storage
       const generatedHtml = generateHtmlFromComponents();
+      const status = isAutoSave ? 'draft' : 'published';
       
       const newsletterData = {
-        title: newsletterState.title,
+        title: newsletterState.title || 'Untitled Newsletter',
         description: newsletterState.description || null,
         campus: newsletterState.campus,
         content_guidelines: null,
         generated_html: generatedHtml,
+        status: status,
         created_by: user.id,
       };
 
@@ -159,8 +184,10 @@ export const NewsletterDragBuilderPage = () => {
         currentNewsletterId = data.id;
         setNewsletterState(prev => ({ ...prev, id: data.id }));
         
-        // Update URL without navigation
-        window.history.replaceState(null, '', `/newsletter-builder/${data.id}`);
+        // Update URL without navigation only if not auto-saving
+        if (!isAutoSave) {
+          window.history.replaceState(null, '', `/newsletter-builder/${data.id}`);
+        }
       } else {
         const { error } = await supabase
           .from('newsletters')
@@ -170,8 +197,8 @@ export const NewsletterDragBuilderPage = () => {
         if (error) throw error;
       }
 
-      if (currentNewsletterId) {
-        // Update selected forms
+      if (currentNewsletterId && !isAutoSave) {
+        // Update selected forms only on manual save
         await supabase
           .from('newsletter_forms')
           .delete()
@@ -191,10 +218,14 @@ export const NewsletterDragBuilderPage = () => {
         }
       }
 
-      toast.success('Newsletter saved successfully!');
+      if (!isAutoSave) {
+        toast.success('Newsletter published successfully!');
+      }
     } catch (error) {
       console.error('Error saving newsletter:', error);
-      toast.error('Failed to save newsletter');
+      if (!isAutoSave) {
+        toast.error('Failed to save newsletter');
+      }
     } finally {
       setSaving(false);
     }
@@ -450,14 +481,22 @@ export const NewsletterDragBuilderPage = () => {
               </SheetContent>
             </Sheet>
             
-            <Button 
-              onClick={handleSave} 
-              disabled={saving}
-              className="flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              {lastSaved && (
+                <span className="text-sm text-muted-foreground">
+                  Last saved: {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+              <Button 
+                onClick={() => handleSave(false)} 
+                disabled={saving}
+                className="flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {saving ? 'Publishing...' : 'Publish Newsletter'}
+              </Button>
+            </div>
           </div>
         </div>
 

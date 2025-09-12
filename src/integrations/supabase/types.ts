@@ -1420,6 +1420,7 @@ export type Database = {
           description: string | null
           generated_html: string | null
           id: string
+          status: string
           title: string
           updated_at: string
         }
@@ -1431,6 +1432,7 @@ export type Database = {
           description?: string | null
           generated_html?: string | null
           id?: string
+          status?: string
           title: string
           updated_at?: string
         }
@@ -1442,6 +1444,7 @@ export type Database = {
           description?: string | null
           generated_html?: string | null
           id?: string
+          status?: string
           title?: string
           updated_at?: string
         }

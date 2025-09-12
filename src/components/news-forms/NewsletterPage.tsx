@@ -39,7 +39,7 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNewsletters(data || []);
+      setNewsletters((data || []) as Newsletter[]);
     } catch (error) {
       console.error('Error fetching newsletters:', error);
       addNotification('error', 'Error fetching newsletters');
@@ -241,14 +241,14 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
                   </div>
                   <div className="flex justify-between items-center">
                     <Badge 
-                      variant={newsletter.generated_html ? 'default' : 'secondary'}
+                      variant={newsletter.status === 'published' ? 'default' : 'secondary'}
                       className={`font-medium ${
-                        newsletter.generated_html 
+                        newsletter.status === 'published' 
                           ? 'bg-green-100 text-green-800 hover:bg-green-100' 
                           : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
                       }`}
                     >
-                      {newsletter.generated_html ? 'Published' : 'Draft'}
+                      {newsletter.status === 'published' ? 'Published' : 'Draft'}
                     </Badge>
                   </div>
                 </CardContent>

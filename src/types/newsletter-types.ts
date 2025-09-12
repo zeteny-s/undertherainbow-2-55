@@ -7,6 +7,7 @@ export interface Newsletter {
   campus: CampusType;
   content_guidelines?: string | null;
   generated_html?: string | null;
+  status: 'draft' | 'published';
   created_by: string;
   created_at: string;
   updated_at: string;

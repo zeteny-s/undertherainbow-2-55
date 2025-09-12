@@ -41,7 +41,7 @@ export const PublicNewsletterPage = ({ newsletterId }: PublicNewsletterPageProps
         .single();
 
       if (newsletterError) throw newsletterError;
-      setNewsletter(newsletterData);
+      setNewsletter(newsletterData as Newsletter);
 
       // Fetch associated forms
       const { data: formData, error: formError } = await supabase
