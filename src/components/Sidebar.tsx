@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Menu, X, Calendar, MessageCircle, FileText, Upload, List, Calculator, Users, ClipboardList, Home, Settings } from 'lucide-react';
+import { LogOut, Menu, Calendar, MessageCircle, FileText, Upload, List, Calculator, Users, ClipboardList, Home, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileModal } from './ProfileModal';
 import { Button } from './ui/button';
@@ -30,11 +30,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     }
   };
 
-  const isWeekend = () => {
-    const today = new Date();
-    const day = today.getDay();
-    return day === 0 || day === 6;
-  };
 
   const getMenuItems = () => {
     const profileType = user?.user_metadata?.profile_type;
@@ -79,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
 
   const getUserInitials = () => {
     const name = user?.user_metadata?.name || user?.email || '';
-    return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
+    return name.split(' ').map((word: string) => word.charAt(0)).join('').toUpperCase().slice(0, 2);
   };
 
   const menuItems = getMenuItems();

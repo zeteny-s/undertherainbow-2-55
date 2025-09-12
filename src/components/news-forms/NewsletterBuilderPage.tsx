@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Eye, X, Loader2, RefreshCw } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -14,12 +15,9 @@ import { useNotifications } from '../../hooks/useNotifications';
 import type { FormForSelection, NewsletterImage } from '../../types/newsletter-types';
 import type { CampusType } from '../../types/form-types';
 
-interface NewsletterBuilderPageProps {
-  newsletterId?: string;
-  onNavigate: (view: string) => void;
-}
-
-export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBuilderPageProps) => {
+export const NewsletterBuilderPage = () => {
+  const { newsletterId } = useParams<{ newsletterId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(false);
@@ -342,7 +340,7 @@ export const NewsletterBuilderPage = ({ newsletterId, onNavigate }: NewsletterBu
           <div className="flex items-center gap-6">
             <Button 
               variant="ghost" 
-              onClick={() => onNavigate('newsletters')}
+              onClick={() => navigate('/news-forms')}
               className="hover:bg-muted px-3"
             >
               <ArrowLeft className="h-5 w-5 mr-2" />

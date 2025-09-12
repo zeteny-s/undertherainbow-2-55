@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, ArrowLeft, Settings, Eye } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { supabase } from '../../integrations/supabase/client';
@@ -18,12 +19,9 @@ import { LivePreview } from './builder/LivePreview';
 import { Form, FormComponent, CampusType, FormStatus } from '../../types/form-types';
 import { toast } from 'sonner';
 
-interface FormBuilderPageProps {
-  formId?: string;
-  onNavigate: (tab: string) => void;
-}
-
-export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) => {
+export const FormBuilderPage = () => {
+  const { formId } = useParams<{ formId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -97,7 +95,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
     } catch (error) {
       console.error('Error fetching form:', error);
       toast.error('Failed to load form');
-      onNavigate('news-forms');
+      navigate('/news-forms');
     } finally {
       setLoading(false);
     }
@@ -133,7 +131,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
           form_components: (data.form_components as unknown as FormComponent[]) || []
         };
         setForm(savedForm);
-        onNavigate('news-forms');
+        navigate('/news-forms');
       } else {
         const { error } = await supabase
           .from('forms')
@@ -213,7 +211,7 @@ export const FormBuilderPage = ({ formId, onNavigate }: FormBuilderPageProps) =>
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => onNavigate('news-forms')}
+              onClick={() => navigate('/news-forms')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Forms
