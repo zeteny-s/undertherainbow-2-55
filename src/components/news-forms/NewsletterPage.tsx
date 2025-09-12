@@ -14,9 +14,10 @@ import type { Newsletter } from '../../types/newsletter-types';
 
 interface NewsletterPageProps {
   onNavigate: (view: string, id?: string) => void;
+  showHeader?: boolean;
 }
 
-export const NewsletterPage = ({ onNavigate }: NewsletterPageProps) => {
+export const NewsletterPage = ({ onNavigate, showHeader = true }: NewsletterPageProps) => {
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,25 +105,29 @@ export const NewsletterPage = ({ onNavigate }: NewsletterPageProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-8 space-y-8">
-        {/* Clean Header */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-light tracking-tight text-foreground">Newsletters</h1>
-            <p className="text-muted-foreground text-lg">
-              Create and manage AI-powered newsletters
-            </p>
-          </div>
-          <Button 
-            onClick={() => onNavigate('newsletter-builder')}
-            size="lg"
-            className="shadow-sm hover:shadow-md transition-shadow"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Create Newsletter
-          </Button>
-        </div>
+    <div className={showHeader ? "min-h-screen bg-background" : ""}>
+      <div className={showHeader ? "max-w-7xl mx-auto p-8 space-y-8" : "space-y-8"}>
+        {showHeader && (
+          <>
+            {/* Clean Header */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <h1 className="text-4xl font-light tracking-tight text-foreground">Newsletters</h1>
+                <p className="text-muted-foreground text-lg">
+                  Create and manage AI-powered newsletters
+                </p>
+              </div>
+              <Button 
+                onClick={() => onNavigate('newsletter-builder')}
+                size="lg"
+                className="shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Create Newsletter
+              </Button>
+            </div>
+          </>
+        )}
 
         {/* Clean Filters */}
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-card/50 p-6 rounded-xl border shadow-sm">
@@ -140,7 +145,7 @@ export const NewsletterPage = ({ onNavigate }: NewsletterPageProps) => {
               <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
                 <SelectValue placeholder="All Campuses" />
               </SelectTrigger>
-              <SelectContent className="border-0 shadow-lg">
+              <SelectContent className="bg-background border shadow-lg">
                 <SelectItem value="all">All Campuses</SelectItem>
                 <SelectItem value="Feketerigó">Feketerigó</SelectItem>
                 <SelectItem value="Torockó">Torockó</SelectItem>
@@ -152,7 +157,7 @@ export const NewsletterPage = ({ onNavigate }: NewsletterPageProps) => {
               <SelectTrigger className="w-48 h-12 bg-background/80 border-0 shadow-sm">
                 <SelectValue placeholder="Sort by Date" />
               </SelectTrigger>
-              <SelectContent className="border-0 shadow-lg">
+              <SelectContent className="bg-background border shadow-lg">
                 <SelectItem value="date">Sort by Date</SelectItem>
                 <SelectItem value="title">Sort by Title</SelectItem>
               </SelectContent>
@@ -195,7 +200,7 @@ export const NewsletterPage = ({ onNavigate }: NewsletterPageProps) => {
                           <Menu className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 shadow-lg">
+                      <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg">
                         <DropdownMenuItem onClick={() => window.open(`/newsletter/${newsletter.id}`, '_blank')}>
                           <Eye className="h-4 w-4 mr-3" />
                           Preview
