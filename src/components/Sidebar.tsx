@@ -99,6 +99,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         </div>
       </div>
 
+      {/* Desktop Sidebar Toggle */}
+      <div className="hidden lg:block fixed top-4 left-4 z-50">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onToggle}
+          className="p-2 bg-white shadow-md hover:shadow-lg"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
+
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
@@ -178,10 +190,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
           >
-            <LogOut className="h-5 w-5 mr-3 text-gray-500" />
-            <span>{t('auth.signOut')}</span>
+            <LogOut className="h-5 w-5 mr-3 text-red-500" />
+            <span>{t('nav.logout')}</span>
           </button>
         </div>
       </div>
