@@ -23,6 +23,7 @@ import { NewsletterComponent, NewsletterBuilderState } from '../../types/newslet
 import { FormForSelection } from '../../types/newsletter-types';
 import { CampusType } from '../../types/form-types';
 import { toast } from 'sonner';
+import { formatDateTime } from '../../utils/formatters';
 export const NewsletterDragBuilderPage = () => {
   const {
     newsletterId
@@ -404,7 +405,11 @@ export const NewsletterDragBuilderPage = () => {
             
             
             <div className="flex items-center gap-2">
-              {lastSaved}
+              {lastSaved && (
+                <span className="text-sm text-muted-foreground">
+                  Last saved: {formatDateTime(lastSaved.toISOString())}
+                </span>
+              )}
               <Button onClick={() => handleSave(false)} disabled={saving} className="flex items-center gap-2">
                 <Save className="h-4 w-4" />
                 {saving ? 'Publishing...' : 'Publish Newsletter'}
