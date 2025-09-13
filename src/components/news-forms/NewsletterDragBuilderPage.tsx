@@ -41,23 +41,28 @@ export const NewsletterDragBuilderPage = () => {
     selectedFormIds: []
   });
   
+  // Track the current newsletter ID separately from URL params
+  const [currentNewsletterId, setCurrentNewsletterId] = useState<string | null>(
+    newsletterId && newsletterId !== 'new' ? newsletterId : null
+  );
+  
   const [availableForms, setAvailableForms] = useState<FormForSelection[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<NewsletterComponent | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<NewsletterComponent | null>(null);
 
   const [showFormSelection, setShowFormSelection] = useState(false);
 
-  const isNewNewsletter = newsletterId === 'new' || !newsletterId;
+  const isNewNewsletter = !currentNewsletterId;
 
   useEffect(() => {
     fetchAvailableForms();
-    if (isNewNewsletter) {
+    if (newsletterId && newsletterId !== 'new') {
+      fetchNewsletter();
+    } else {
       setLoading(false);
       setShowFormSelection(true); // Show form selection modal for new newsletters
-    } else {
-      fetchNewsletter();
     }
-  }, [newsletterId, isNewNewsletter]);
+  }, [newsletterId]);
 
   // Auto-save functionality with debouncing
   useEffect(() => {
@@ -93,7 +98,7 @@ export const NewsletterDragBuilderPage = () => {
   };
 
   const fetchNewsletter = async () => {
-    if (!newsletterId || isNewNewsletter) return;
+    if (!newsletterId || newsletterId === 'new') return;
 
     try {
       setLoading(true);
@@ -105,6 +110,9 @@ export const NewsletterDragBuilderPage = () => {
         .single();
 
       if (newsletterError) throw newsletterError;
+
+      // Set the current newsletter ID
+      setCurrentNewsletterId(newsletterData.id);
 
       // Parse existing content to components if needed
       let components: NewsletterComponent[] = [];
@@ -171,7 +179,7 @@ export const NewsletterDragBuilderPage = () => {
         created_by: user.id,
       };
 
-      let currentNewsletterId = newsletterId;
+      let savedNewsletterId = currentNewsletterId;
 
       if (isNewNewsletter) {
         const { data, error } = await supabase
@@ -181,32 +189,31 @@ export const NewsletterDragBuilderPage = () => {
           .single();
 
         if (error) throw error;
-        currentNewsletterId = data.id;
+        savedNewsletterId = data.id;
+        setCurrentNewsletterId(data.id); // Update the tracked ID
         setNewsletterState(prev => ({ ...prev, id: data.id }));
         
-        // Update URL without navigation only if not auto-saving
-        if (!isAutoSave) {
-          window.history.replaceState(null, '', `/newsletter-builder/${data.id}`);
-        }
-      } else {
+        // Update URL for both auto-save and manual save
+        window.history.replaceState(null, '', `/newsletter-builder/${data.id}`);
+      } else if (savedNewsletterId) {
         const { error } = await supabase
           .from('newsletters')
           .update(newsletterData)
-          .eq('id', newsletterId);
+          .eq('id', savedNewsletterId);
 
         if (error) throw error;
       }
 
-      if (currentNewsletterId && !isAutoSave) {
+      if (savedNewsletterId && !isAutoSave) {
         // Update selected forms only on manual save
         await supabase
           .from('newsletter_forms')
           .delete()
-          .eq('newsletter_id', currentNewsletterId);
+          .eq('newsletter_id', savedNewsletterId);
 
         if (newsletterState.selectedFormIds.length > 0) {
           const formInserts = newsletterState.selectedFormIds.map(formId => ({
-            newsletter_id: currentNewsletterId,
+            newsletter_id: savedNewsletterId,
             form_id: formId
           }));
 

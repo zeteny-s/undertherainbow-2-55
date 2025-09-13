@@ -52,18 +52,33 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
     if (!confirm('Biztos, hogy törölni szeretnéd ezt a hírlevelelet?')) return;
 
     try {
+      // Delete related records first
+      await supabase
+        .from('newsletter_forms')
+        .delete()
+        .eq('newsletter_id', newsletterId);
+
+      await supabase
+        .from('newsletter_images')
+        .delete()
+        .eq('newsletter_id', newsletterId);
+
+      // Then delete the newsletter
       const { error } = await supabase
         .from('newsletters')
         .delete()
         .eq('id', newsletterId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
       
       addNotification('success', 'Hírlevél sikeresen törölve');
       fetchNewsletters();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting newsletter:', error);
-      addNotification('error', 'Hiba a hírlevél törlése során');
+      addNotification('error', `Hiba a hírlevél törlése során: ${error?.message || 'Ismeretlen hiba'}`);
     }
   };
 
