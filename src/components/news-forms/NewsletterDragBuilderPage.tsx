@@ -23,16 +23,20 @@ import { NewsletterComponent, NewsletterBuilderState } from '../../types/newslet
 import { FormForSelection } from '../../types/newsletter-types';
 import { CampusType } from '../../types/form-types';
 import { toast } from 'sonner';
-
 export const NewsletterDragBuilderPage = () => {
-  const { newsletterId } = useParams<{ newsletterId: string }>();
+  const {
+    newsletterId
+  } = useParams<{
+    newsletterId: string;
+  }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  
   const [newsletterState, setNewsletterState] = useState<NewsletterBuilderState>({
     title: 'Untitled Newsletter',
     description: '',
@@ -40,20 +44,14 @@ export const NewsletterDragBuilderPage = () => {
     components: [],
     selectedFormIds: []
   });
-  
+
   // Track the current newsletter ID separately from URL params
-  const [currentNewsletterId, setCurrentNewsletterId] = useState<string | null>(
-    newsletterId && newsletterId !== 'new' ? newsletterId : null
-  );
-  
+  const [currentNewsletterId, setCurrentNewsletterId] = useState<string | null>(newsletterId && newsletterId !== 'new' ? newsletterId : null);
   const [availableForms, setAvailableForms] = useState<FormForSelection[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<NewsletterComponent | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<NewsletterComponent | null>(null);
-
   const [showFormSelection, setShowFormSelection] = useState(false);
-
   const isNewNewsletter = !currentNewsletterId;
-
   useEffect(() => {
     fetchAvailableForms();
     if (newsletterId && newsletterId !== 'new') {
@@ -67,7 +65,6 @@ export const NewsletterDragBuilderPage = () => {
   // Auto-save functionality with debouncing
   useEffect(() => {
     if (!newsletterState.title && newsletterState.components.length === 0) return;
-    
     const autoSave = async () => {
       try {
         await handleSave(true); // Pass true to indicate auto-save
@@ -76,19 +73,17 @@ export const NewsletterDragBuilderPage = () => {
         console.error('Auto-save failed:', error);
       }
     };
-
     const timer = setTimeout(autoSave, 5000); // Auto-save after 5 seconds of inactivity
     return () => clearTimeout(timer);
   }, [newsletterState.title, newsletterState.description, newsletterState.campus, newsletterState.selectedFormIds, newsletterState.components.length]);
-
   const fetchAvailableForms = async () => {
     try {
-      const { data, error } = await supabase
-        .from('forms')
-        .select('id, title, description, campus, created_at')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('forms').select('id, title, description, campus, created_at').eq('status', 'active').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
       setAvailableForms(data || []);
     } catch (error) {
@@ -96,19 +91,14 @@ export const NewsletterDragBuilderPage = () => {
       toast.error('Error loading forms');
     }
   };
-
   const fetchNewsletter = async () => {
     if (!newsletterId || newsletterId === 'new') return;
-
     try {
       setLoading(true);
-      
-      const { data: newsletterData, error: newsletterError } = await supabase
-        .from('newsletters')
-        .select('*')
-        .eq('id', newsletterId)
-        .single();
-
+      const {
+        data: newsletterData,
+        error: newsletterError
+      } = await supabase.from('newsletters').select('*').eq('id', newsletterId).single();
       if (newsletterError) throw newsletterError;
 
       // Set the current newsletter ID
@@ -120,7 +110,6 @@ export const NewsletterDragBuilderPage = () => {
         // For now, show empty - in future, parse HTML to components
         components = [];
       }
-
       setNewsletterState({
         id: newsletterData.id,
         title: newsletterData.title,
@@ -131,18 +120,15 @@ export const NewsletterDragBuilderPage = () => {
       });
 
       // Fetch selected forms
-      const { data: formData, error: formError } = await supabase
-        .from('newsletter_forms')
-        .select('form_id')
-        .eq('newsletter_id', newsletterId);
-
+      const {
+        data: formData,
+        error: formError
+      } = await supabase.from('newsletter_forms').select('form_id').eq('newsletter_id', newsletterId);
       if (formError) throw formError;
-      
       setNewsletterState(prev => ({
         ...prev,
         selectedFormIds: formData.map(f => f.form_id)
       }));
-
     } catch (error) {
       console.error('Error fetching newsletter:', error);
       toast.error('Failed to load newsletter');
@@ -151,24 +137,21 @@ export const NewsletterDragBuilderPage = () => {
       setLoading(false);
     }
   };
-
   const handleSave = async (isAutoSave = false) => {
     if (!newsletterState.title.trim() && !isAutoSave) {
       toast.error('Newsletter title is required');
       return;
     }
-    
     if (!user?.id) {
       toast.error('User not authenticated');
       return;
     }
-
     setSaving(true);
     try {
       // Convert components to HTML for storage
       const generatedHtml = generateHtmlFromComponents();
       const status = 'published'; // Always save as published like forms
-      
+
       const newsletterData = {
         title: newsletterState.title || 'Untitled Newsletter',
         description: newsletterState.description || null,
@@ -176,55 +159,44 @@ export const NewsletterDragBuilderPage = () => {
         content_guidelines: null,
         generated_html: generatedHtml,
         status: status,
-        created_by: user.id,
+        created_by: user.id
       };
-
       let savedNewsletterId = currentNewsletterId;
-
       if (isNewNewsletter) {
-        const { data, error } = await supabase
-          .from('newsletters')
-          .insert(newsletterData)
-          .select()
-          .single();
-
+        const {
+          data,
+          error
+        } = await supabase.from('newsletters').insert(newsletterData).select().single();
         if (error) throw error;
         savedNewsletterId = data.id;
         setCurrentNewsletterId(data.id); // Update the tracked ID
-        setNewsletterState(prev => ({ ...prev, id: data.id }));
-        
+        setNewsletterState(prev => ({
+          ...prev,
+          id: data.id
+        }));
+
         // Update URL for both auto-save and manual save
         window.history.replaceState(null, '', `/newsletter-builder/${data.id}`);
       } else if (savedNewsletterId) {
-        const { error } = await supabase
-          .from('newsletters')
-          .update(newsletterData)
-          .eq('id', savedNewsletterId);
-
+        const {
+          error
+        } = await supabase.from('newsletters').update(newsletterData).eq('id', savedNewsletterId);
         if (error) throw error;
       }
-
       if (savedNewsletterId && !isAutoSave) {
         // Update selected forms only on manual save
-        await supabase
-          .from('newsletter_forms')
-          .delete()
-          .eq('newsletter_id', savedNewsletterId);
-
+        await supabase.from('newsletter_forms').delete().eq('newsletter_id', savedNewsletterId);
         if (newsletterState.selectedFormIds.length > 0) {
           const formInserts = newsletterState.selectedFormIds.map(formId => ({
             newsletter_id: savedNewsletterId,
             form_id: formId
           }));
-
-          const { error } = await supabase
-            .from('newsletter_forms')
-            .insert(formInserts);
-
+          const {
+            error
+          } = await supabase.from('newsletter_forms').insert(formInserts);
           if (error) throw error;
         }
       }
-
       if (!isAutoSave) {
         toast.success('Newsletter published successfully!');
       }
@@ -237,7 +209,6 @@ export const NewsletterDragBuilderPage = () => {
       setSaving(false);
     }
   };
-
   const generateHtmlFromComponents = (): string => {
     // Convert components to HTML - this is a simplified version
     const componentsHtml = newsletterState.components.map(component => {
@@ -256,7 +227,6 @@ export const NewsletterDragBuilderPage = () => {
           return '';
       }
     }).join('\n');
-
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <div style="text-align: center; padding: 20px; background: linear-gradient(to right, #f0f9ff, #f0fdf4);">
@@ -269,19 +239,20 @@ export const NewsletterDragBuilderPage = () => {
       </div>
     `;
   };
-
   const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
+    const {
+      active
+    } = event;
     const component = newsletterState.components.find(c => c.id === active.id);
     setDraggedComponent(component || null);
   };
-
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const {
+      active,
+      over
+    } = event;
     setDraggedComponent(null);
-
     if (!over) return;
-
     if (active.data.current?.type === 'library-item') {
       // Adding new component from library
       const newComponent: NewsletterComponent = {
@@ -290,7 +261,6 @@ export const NewsletterDragBuilderPage = () => {
         content: active.data.current.defaultConfig,
         position: newsletterState.components.length
       };
-      
       setNewsletterState(prev => ({
         ...prev,
         components: [...prev.components, newComponent]
@@ -308,17 +278,13 @@ export const NewsletterDragBuilderPage = () => {
       });
     }
   };
-
   const handleComponentUpdate = (updatedComponent: NewsletterComponent) => {
     setNewsletterState(prev => ({
       ...prev,
-      components: prev.components.map(c => 
-        c.id === updatedComponent.id ? updatedComponent : c
-      )
+      components: prev.components.map(c => c.id === updatedComponent.id ? updatedComponent : c)
     }));
     setSelectedComponent(updatedComponent);
   };
-
   const handleComponentDelete = (componentId: string) => {
     setNewsletterState(prev => ({
       ...prev,
@@ -326,7 +292,6 @@ export const NewsletterDragBuilderPage = () => {
     }));
     setSelectedComponent(null);
   };
-
   const handleFormSelectionConfirm = (forms: FormForSelection[]) => {
     setNewsletterState(prev => ({
       ...prev,
@@ -334,35 +299,22 @@ export const NewsletterDragBuilderPage = () => {
     }));
     setShowFormSelection(false);
   };
-
   const handleFormToggle = (formId: string, checked: boolean) => {
     setNewsletterState(prev => ({
       ...prev,
-      selectedFormIds: checked 
-        ? [...prev.selectedFormIds, formId]
-        : prev.selectedFormIds.filter(id => id !== formId)
+      selectedFormIds: checked ? [...prev.selectedFormIds, formId] : prev.selectedFormIds.filter(id => id !== formId)
     }));
   };
-
-  const selectedForms = availableForms.filter(form => 
-    newsletterState.selectedFormIds.includes(form.id)
-  );
-
+  const selectedForms = availableForms.filter(form => newsletterState.selectedFormIds.includes(form.id));
   if (loading) {
     return <LoadingSpinner />;
   }
-
-  return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+  return <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="h-screen flex flex-col bg-white">
         {/* Header */}
         <div className="border-b px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/news-forms')}
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate('/news-forms')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Newsletters
             </Button>
@@ -377,27 +329,15 @@ export const NewsletterDragBuilderPage = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAIChat(true)}
-              className="flex items-center gap-2"
-            >
+            <Button variant="outline" size="sm" onClick={() => setShowAIChat(true)} className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
               Ask AI
             </Button>
             
-            {newsletterState.id && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(`/newsletter/${newsletterState.id}`, '_blank')}
-                className="flex items-center gap-2"
-              >
+            {newsletterState.id && <Button variant="outline" size="sm" onClick={() => window.open(`/newsletter/${newsletterState.id}`, '_blank')} className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 Preview
-              </Button>
-            )}
+              </Button>}
             
             <Sheet>
               <SheetTrigger asChild>
@@ -412,37 +352,24 @@ export const NewsletterDragBuilderPage = () => {
                 <div className="space-y-6 py-6">
                   <div className="space-y-2">
                     <Label htmlFor="title">Newsletter Title *</Label>
-                    <Input
-                      id="title"
-                      value={newsletterState.title}
-                      onChange={(e) => setNewsletterState(prev => ({
-                        ...prev,
-                        title: e.target.value
-                      }))}
-                      placeholder="Enter newsletter title"
-                    />
+                    <Input id="title" value={newsletterState.title} onChange={e => setNewsletterState(prev => ({
+                    ...prev,
+                    title: e.target.value
+                  }))} placeholder="Enter newsletter title" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={newsletterState.description}
-                      onChange={(e) => setNewsletterState(prev => ({
-                        ...prev,
-                        description: e.target.value
-                      }))}
-                      placeholder="Enter newsletter description"
-                    />
+                    <Textarea id="description" value={newsletterState.description} onChange={e => setNewsletterState(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))} placeholder="Enter newsletter description" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="campus">Campus *</Label>
-                    <Select 
-                      value={newsletterState.campus} 
-                      onValueChange={(value: CampusType) => setNewsletterState(prev => ({
-                        ...prev,
-                        campus: value
-                      }))}
-                    >
+                    <Select value={newsletterState.campus} onValueChange={(value: CampusType) => setNewsletterState(prev => ({
+                    ...prev,
+                    campus: value
+                  }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -458,30 +385,17 @@ export const NewsletterDragBuilderPage = () => {
                   <div className="space-y-2">
                     <Label>Select Forms to Include</Label>
                     <div className="space-y-3 max-h-60 overflow-y-auto border rounded-md p-3">
-                      {availableForms
-                        .filter(form => form.campus === newsletterState.campus)
-                        .map((form) => (
-                          <div key={form.id} className="flex items-start space-x-3">
-                            <Checkbox
-                              id={`form-${form.id}`}
-                              checked={newsletterState.selectedFormIds.includes(form.id)}
-                              onCheckedChange={(checked) => handleFormToggle(form.id, checked as boolean)}
-                            />
+                      {availableForms.filter(form => form.campus === newsletterState.campus).map(form => <div key={form.id} className="flex items-start space-x-3">
+                            <Checkbox id={`form-${form.id}`} checked={newsletterState.selectedFormIds.includes(form.id)} onCheckedChange={checked => handleFormToggle(form.id, checked as boolean)} />
                             <div className="flex-1">
-                              <Label 
-                                htmlFor={`form-${form.id}`} 
-                                className="text-sm font-medium cursor-pointer"
-                              >
+                              <Label htmlFor={`form-${form.id}`} className="text-sm font-medium cursor-pointer">
                                 {form.title}
                               </Label>
-                              {form.description && (
-                                <p className="text-xs text-muted-foreground mt-1">
+                              {form.description && <p className="text-xs text-muted-foreground mt-1">
                                   {form.description}
-                                </p>
-                              )}
+                                </p>}
                             </div>
-                          </div>
-                        ))}
+                          </div>)}
                     </div>
                   </div>
                 </div>
@@ -490,16 +404,8 @@ export const NewsletterDragBuilderPage = () => {
             
             
             <div className="flex items-center gap-2">
-              {lastSaved && (
-                <span className="text-sm text-muted-foreground">
-                  Last saved: {lastSaved.toLocaleTimeString()}
-                </span>
-              )}
-              <Button 
-                onClick={() => handleSave(false)} 
-                disabled={saving}
-                className="flex items-center gap-2"
-              >
+              {lastSaved}
+              <Button onClick={() => handleSave(false)} disabled={saving} className="flex items-center gap-2">
                 <Save className="h-4 w-4" />
                 {saving ? 'Publishing...' : 'Publish Newsletter'}
               </Button>
@@ -516,59 +422,35 @@ export const NewsletterDragBuilderPage = () => {
 
           {/* Newsletter Preview */}
           <div className="flex-1 relative">
-            <NewsletterPreview 
-              components={newsletterState.components}
-              selectedForms={selectedForms}
-              onComponentSelect={setSelectedComponent}
-              onComponentDelete={handleComponentDelete}
-            />
+            <NewsletterPreview components={newsletterState.components} selectedForms={selectedForms} onComponentSelect={setSelectedComponent} onComponentDelete={handleComponentDelete} />
           </div>
 
           {/* Component Editor */}
-          {selectedComponent && (
-            <div className="w-80 border-l bg-white">
-              <NewsletterComponentEditor
-                component={selectedComponent}
-                onUpdate={handleComponentUpdate}
-                onClose={() => setSelectedComponent(null)}
-              />
-            </div>
-          )}
+          {selectedComponent && <div className="w-80 border-l bg-white">
+              <NewsletterComponentEditor component={selectedComponent} onUpdate={handleComponentUpdate} onClose={() => setSelectedComponent(null)} />
+            </div>}
 
           {/* AI Chat */}
-          {showAIChat && (
-            <div className="w-96 border-l bg-white">
-              <AIChat
-                onClose={() => setShowAIChat(false)}
-                context={{
-                  title: newsletterState.title,
-                  campus: newsletterState.campus,
-                  selectedForms
-                }}
-              />
-            </div>
-          )}
+          {showAIChat && <div className="w-96 border-l bg-white">
+              <AIChat onClose={() => setShowAIChat(false)} context={{
+            title: newsletterState.title,
+            campus: newsletterState.campus,
+            selectedForms
+          }} />
+            </div>}
         </div>
       </div>
 
       {/* Drag Overlay */}
       <DragOverlay>
-        {draggedComponent && (
-          <Card className="w-64 opacity-90">
+        {draggedComponent && <Card className="w-64 opacity-90">
             <CardContent className="p-4">
               <p className="font-medium">{draggedComponent.type}</p>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </DragOverlay>
 
       {/* Form Selection Modal */}
-      <FormSelectionModal
-        isOpen={showFormSelection}
-        onClose={() => setShowFormSelection(false)}
-        onConfirm={handleFormSelectionConfirm}
-        campus={newsletterState.campus}
-      />
-    </DndContext>
-  );
+      <FormSelectionModal isOpen={showFormSelection} onClose={() => setShowFormSelection(false)} onConfirm={handleFormSelectionConfirm} campus={newsletterState.campus} />
+    </DndContext>;
 };
