@@ -59,7 +59,7 @@ export const NewsletterDragBuilderPage = () => {
     }
   }, [newsletterId, isNewNewsletter]);
 
-  // Auto-save functionality
+  // Auto-save functionality with debouncing
   useEffect(() => {
     if (!newsletterState.title && newsletterState.components.length === 0) return;
     
@@ -72,9 +72,9 @@ export const NewsletterDragBuilderPage = () => {
       }
     };
 
-    const timer = setTimeout(autoSave, 2000); // Auto-save after 2 seconds of inactivity
+    const timer = setTimeout(autoSave, 5000); // Auto-save after 5 seconds of inactivity
     return () => clearTimeout(timer);
-  }, [newsletterState]);
+  }, [newsletterState.title, newsletterState.description, newsletterState.campus, newsletterState.selectedFormIds, newsletterState.components.length]);
 
   const fetchAvailableForms = async () => {
     try {
@@ -159,7 +159,7 @@ export const NewsletterDragBuilderPage = () => {
     try {
       // Convert components to HTML for storage
       const generatedHtml = generateHtmlFromComponents();
-      const status = isAutoSave ? 'draft' : 'published';
+      const status = 'published'; // Always save as published like forms
       
       const newsletterData = {
         title: newsletterState.title || 'Untitled Newsletter',
