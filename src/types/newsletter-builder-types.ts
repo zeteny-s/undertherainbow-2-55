@@ -54,6 +54,12 @@ export interface NewsletterButton {
   size?: 'small' | 'medium' | 'large';
 }
 
+export interface NewsletterDivider {
+  style?: 'solid' | 'dashed' | 'dotted';
+  color?: string;
+  thickness?: string;
+}
+
 export interface AIMessage {
   id: string;
   role: 'user' | 'assistant';

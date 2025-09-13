@@ -325,30 +325,92 @@ export const NewsletterDragBuilderPage = () => {
   };
 
   const generateHtmlFromComponents = (): string => {
-    // Convert components to HTML - this is a simplified version
-    const componentsHtml = newsletterState.components.map(component => {
-      switch (component.type) {
-        case 'heading':
-          return `<h${component.content.level} style="color: ${component.content.color}; text-align: ${component.content.textAlign};">${component.content.text}</h${component.content.level}>`;
-        case 'text-block':
-          return `<div style="font-size: ${component.content.fontSize}; color: ${component.content.color}; text-align: ${component.content.textAlign};">${component.content.content}</div>`;
-        case 'image':
-          return `<img src="${component.content.url}" alt="${component.content.alt}" style="width: ${component.content.width};" />`;
-        case 'button':
-          return `<a href="${component.content.url}" style="display: inline-block; background-color: ${component.content.backgroundColor}; color: ${component.content.textColor}; padding: 12px 24px; text-decoration: none; border-radius: 4px;">${component.content.text}</a>`;
-        case 'divider':
-          return `<hr style="border: ${component.content.thickness} ${component.content.style} ${component.content.color};" />`;
-        default:
-          return '';
-      }
-    }).join('\n');
-    return `
-      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <div style="text-align: center; padding: 20px; background: linear-gradient(to right, #f0f9ff, #f0fdf4);">
-          <h1 style="color: #1f2937; margin-bottom: 10px;">${newsletterState.title}</h1>
-          ${newsletterState.description ? `<p style="color: #6b7280;">${newsletterState.description}</p>` : ''}
+    // Create newsletter header with proper styling
+    const header = `
+      <div style="text-align: center; margin-bottom: 40px; padding: 30px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border-radius: 15px 15px 0 0;">
+        <img src="${window.location.origin}/src/assets/kindergarten-logo.png" alt="Kindergarten Logo" style="max-width: 200px; height: auto; margin-bottom: 20px;" />
+        <h1 style="margin: 0; font-size: 2rem; font-weight: bold;">${newsletterState.title}</h1>
+        ${newsletterState.description ? `<p style="margin: 10px 0 0 0; font-size: 1.1rem; opacity: 0.9;">${newsletterState.description}</p>` : ''}
+        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+          ${newsletterState.campus} • ${new Date().toLocaleDateString('hu-HU')}
         </div>
-        <div style="padding: 20px;">
+      </div>
+    `;
+
+    // Convert components to HTML with proper styling to match preview
+    const componentsHtml = newsletterState.components
+      .sort((a, b) => a.position - b.position)
+      .map(component => {
+        switch (component.type) {
+          case 'heading':
+            const heading = component.content;
+            return `<h${heading.level} style="
+              font-weight: bold; 
+              margin: 20px 0 15px 0; 
+              text-align: ${heading.textAlign || 'left'}; 
+              color: ${heading.color || '#1f2937'};
+              font-size: ${heading.level === 1 ? '2rem' : heading.level === 2 ? '1.5rem' : '1.25rem'};
+            ">${heading.text}</h${heading.level}>`;
+          
+          case 'text-block':
+            const textBlock = component.content;
+            return `<div style="
+              margin-bottom: 15px; 
+              text-align: ${textBlock.textAlign || 'left'};
+              font-size: ${textBlock.fontSize || '16px'};
+              font-weight: ${textBlock.fontWeight || 'normal'};
+              color: ${textBlock.color || '#374151'};
+              line-height: 1.7;
+            ">${textBlock.content}</div>`;
+          
+          case 'image':
+            const image = component.content;
+            return `<div style="margin-bottom: 20px; text-align: center;">
+              <img src="${image.url}" alt="${image.alt}" style="
+                max-width: 100%; 
+                height: auto; 
+                border-radius: 8px;
+                ${image.width ? `width: ${image.width};` : ''}
+                ${image.height ? `height: ${image.height};` : ''}
+              " />
+            </div>`;
+          
+          case 'button':
+            const button = component.content;
+            const buttonSize = button.size === 'small' ? 'padding: 8px 16px; font-size: 14px;' : 
+                             button.size === 'large' ? 'padding: 16px 32px; font-size: 18px;' : 
+                             'padding: 12px 24px; font-size: 16px;';
+            return `<div style="margin-bottom: 20px; text-align: center;">
+              <a href="${button.url}" style="
+                display: inline-block;
+                ${buttonSize}
+                border-radius: 8px;
+                font-weight: 600;
+                text-decoration: none;
+                transition: all 0.2s;
+                background-color: ${button.backgroundColor || '#3b82f6'};
+                color: ${button.textColor || '#ffffff'};
+              ">${button.text}</a>
+            </div>`;
+          
+          case 'divider':
+            const divider = component.content;
+            return `<hr style="
+              margin: 30px 0; 
+              border: none; 
+              border-top: ${divider.thickness || '1px'} ${divider.style || 'solid'} ${divider.color || '#e5e7eb'};
+            " />`;
+          
+          default:
+            return '';
+        }
+      })
+      .join('');
+
+    return `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        ${header}
+        <div style="padding: 30px;">
           ${componentsHtml}
         </div>
       </div>

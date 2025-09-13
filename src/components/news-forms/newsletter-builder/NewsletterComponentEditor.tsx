@@ -5,7 +5,7 @@ import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import { RichTextEditor } from '../builder/RichTextEditor';
+import { AdvancedRichTextEditor } from '../builder/AdvancedRichTextEditor';
 import { NewsletterComponent } from '../../../types/newsletter-builder-types';
 
 interface NewsletterComponentEditorProps {
@@ -96,9 +96,9 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
           <div className="space-y-4">
             <div>
               <Label htmlFor="text-content">Content</Label>
-              <RichTextEditor
+              <AdvancedRichTextEditor
                 value={editedComponent.content.content}
-                onChange={(value) => updateContent('content', value)}
+                onChange={(value: string) => updateContent('content', value)}
                 placeholder="Enter your text content"
               />
             </div>
