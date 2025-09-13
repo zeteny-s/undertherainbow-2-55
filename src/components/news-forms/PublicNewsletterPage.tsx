@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import type { Newsletter } from '../../types/newsletter-types';
@@ -12,11 +13,8 @@ import decoration5 from '../../assets/decoration-5.png';
 import decoration6 from '../../assets/decoration-6.png';
 import kindergartenLogo from '../../assets/kindergarten-logo.png';
 
-interface PublicNewsletterPageProps {
-  newsletterId?: string;
-}
-
-export const PublicNewsletterPage = ({ newsletterId }: PublicNewsletterPageProps) => {
+export const PublicNewsletterPage = () => {
+  const { newsletterId } = useParams<{ newsletterId: string }>();
   const [newsletter, setNewsletter] = useState<Newsletter | null>(null);
   const [loading, setLoading] = useState(true);
   const [forms, setForms] = useState<any[]>([]);
@@ -38,9 +36,16 @@ export const PublicNewsletterPage = ({ newsletterId }: PublicNewsletterPageProps
         .from('newsletters')
         .select('*')
         .eq('id', newsletterId)
-        .single();
+        .maybeSingle();
 
       if (newsletterError) throw newsletterError;
+      
+      if (!newsletterData) {
+        setNewsletter(null);
+        setLoading(false);
+        return;
+      }
+      
       setNewsletter(newsletterData as Newsletter);
 
       // Fetch associated forms

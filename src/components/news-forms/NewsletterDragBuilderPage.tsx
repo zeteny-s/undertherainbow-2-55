@@ -108,8 +108,7 @@ export const NewsletterDragBuilderPage = () => {
       // Parse existing content to components if needed
       let components: NewsletterComponent[] = [];
       if (newsletterData.generated_html) {
-        // For now, show empty - in future, parse HTML to components
-        components = [];
+        components = parseHtmlToComponents(newsletterData.generated_html);
       }
       setNewsletterState({
         id: newsletterData.id,
@@ -210,6 +209,121 @@ export const NewsletterDragBuilderPage = () => {
       setSaving(false);
     }
   };
+
+  const parseHtmlToComponents = (html: string): NewsletterComponent[] => {
+    const components: NewsletterComponent[] = [];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Find the content area
+    const contentDiv = doc.querySelector('div[style*="padding: 20px"]');
+    if (!contentDiv) return components;
+    
+    // Parse child elements to components
+    Array.from(contentDiv.children).forEach((element, index) => {
+      const tagName = element.tagName.toLowerCase();
+      
+      if (tagName.startsWith('h')) {
+        const level = parseInt(tagName.charAt(1)) as 1 | 2 | 3 | 4 | 5 | 6;
+        if (level >= 1 && level <= 6) {
+          const style = element.getAttribute('style') || '';
+          const colorMatch = style.match(/color:\s*([^;]+)/);
+          const alignMatch = style.match(/text-align:\s*([^;]+)/);
+          
+          components.push({
+            id: `component-${Date.now()}-${index}`,
+            type: 'heading',
+            content: {
+              text: element.textContent || '',
+              level,
+              color: colorMatch ? colorMatch[1].trim() : '#000000',
+              textAlign: alignMatch ? alignMatch[1].trim() as 'left' | 'center' | 'right' : 'left'
+            },
+            position: index
+          });
+        }
+      } else if (tagName === 'div') {
+        const style = element.getAttribute('style') || '';
+        const colorMatch = style.match(/color:\s*([^;]+)/);
+        const sizeMatch = style.match(/font-size:\s*([^;]+)/);
+        const alignMatch = style.match(/text-align:\s*([^;]+)/);
+        
+        components.push({
+          id: `component-${Date.now()}-${index}`,
+          type: 'text-block',
+          content: {
+            content: element.innerHTML || '',
+            fontSize: sizeMatch ? sizeMatch[1].trim() : '16px',
+            color: colorMatch ? colorMatch[1].trim() : '#000000',
+            textAlign: alignMatch ? alignMatch[1].trim() as 'left' | 'center' | 'right' : 'left'
+          },
+          position: index
+        });
+      } else if (tagName === 'img') {
+        const src = element.getAttribute('src') || '';
+        const alt = element.getAttribute('alt') || '';
+        const style = element.getAttribute('style') || '';
+        const widthMatch = style.match(/width:\s*([^;]+)/);
+        
+        components.push({
+          id: `component-${Date.now()}-${index}`,
+          type: 'image',
+          content: {
+            url: src,
+            alt,
+            width: widthMatch ? widthMatch[1].trim() : '100%'
+          },
+          position: index
+        });
+      } else if (tagName === 'a') {
+        const href = element.getAttribute('href') || '';
+        const style = element.getAttribute('style') || '';
+        const bgColorMatch = style.match(/background-color:\s*([^;]+)/);
+        const textColorMatch = style.match(/color:\s*([^;]+)/);
+        
+        components.push({
+          id: `component-${Date.now()}-${index}`,
+          type: 'button',
+          content: {
+            text: element.textContent || '',
+            url: href,
+            backgroundColor: bgColorMatch ? bgColorMatch[1].trim() : '#3b82f6',
+            textColor: textColorMatch ? textColorMatch[1].trim() : '#ffffff'
+          },
+          position: index
+        });
+      } else if (tagName === 'hr') {
+        const style = element.getAttribute('style') || '';
+        const borderMatch = style.match(/border:\s*([^;]+)/);
+        let thickness = '1px';
+        let borderStyle = 'solid';
+        let color = '#000000';
+        
+        if (borderMatch) {
+          const parts = borderMatch[1].trim().split(' ');
+          if (parts.length >= 3) {
+            thickness = parts[0];
+            borderStyle = parts[1];
+            color = parts[2];
+          }
+        }
+        
+        components.push({
+          id: `component-${Date.now()}-${index}`,
+          type: 'divider',
+          content: {
+            thickness,
+            style: borderStyle as 'solid' | 'dashed' | 'dotted',
+            color
+          },
+          position: index
+        });
+      }
+    });
+    
+    return components;
+  };
+
   const generateHtmlFromComponents = (): string => {
     // Convert components to HTML - this is a simplified version
     const componentsHtml = newsletterState.components.map(component => {

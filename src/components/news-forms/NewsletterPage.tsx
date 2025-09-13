@@ -254,18 +254,6 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
                       {newsletter.campus}
                     </Badge>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <Badge 
-                      variant={newsletter.status === 'published' ? 'default' : 'secondary'}
-                      className={`font-medium ${
-                        newsletter.status === 'published' 
-                          ? 'bg-green-100 text-green-800 hover:bg-green-100' 
-                          : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
-                      }`}
-                    >
-                      {newsletter.status === 'published' ? 'Published' : 'Draft'}
-                    </Badge>
-                  </div>
                 </CardContent>
               </Card>
             ))}
