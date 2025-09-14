@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mail, Send, Eye, Link2, FileText, Newspaper } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -6,8 +6,8 @@ import { useNotifications } from '../../hooks/useNotifications';
 interface EmailCampaignModalProps {
   isOpen: boolean;
   onClose: () => void;
-  recipients: string[];
-  selectedFamilies: number;
+  recipients?: string[];
+  selectedFamilies?: number;
   prefilledNewsletter?: {
     id: string;
     title: string;
@@ -23,12 +23,59 @@ interface EmailCampaignModalProps {
 export const EmailCampaignModal: React.FC<EmailCampaignModalProps> = ({
   isOpen,
   onClose,
-  recipients,
-  selectedFamilies,
+  recipients: propRecipients,
+  selectedFamilies: propSelectedFamilies,
   prefilledNewsletter,
   prefilledForm
 }) => {
   const { addNotification } = useNotifications();
+  const [recipients, setRecipients] = useState<string[]>(propRecipients || []);
+  const [selectedFamilies, setSelectedFamilies] = useState(propSelectedFamilies || 0);
+  const [targetOption, setTargetOption] = useState<'all' | 'campus' | 'custom'>('all');
+  const [selectedCampus, setSelectedCampus] = useState<string>('all');
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  
+  // Load contacts when target option changes
+  useEffect(() => {
+    if (isOpen && targetOption !== 'custom') {
+      loadContacts();
+    }
+  }, [isOpen, targetOption, selectedCampus]);
+
+  const loadContacts = async () => {
+    setLoadingContacts(true);
+    try {
+      let query = supabase
+        .from('family_contacts')
+        .select('mother_email, father_email, additional_emails, campus');
+
+      if (targetOption === 'campus' && selectedCampus !== 'all') {
+        query = query.eq('campus', selectedCampus);
+      }
+
+      const { data: contacts, error } = await query;
+
+      if (error) throw error;
+
+      // Collect all unique emails
+      const allEmails: string[] = [];
+      contacts?.forEach((contact: any) => {
+        if (contact.mother_email) allEmails.push(contact.mother_email);
+        if (contact.father_email) allEmails.push(contact.father_email);
+        if (contact.additional_emails) allEmails.push(...contact.additional_emails);
+      });
+
+      const uniqueEmails = [...new Set(allEmails)];
+      setRecipients(uniqueEmails);
+      setSelectedFamilies(contacts?.length || 0);
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      addNotification('error', 'Failed to load family contacts');
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
   const [emailData, setEmailData] = useState({
     subject: prefilledNewsletter 
       ? `New Newsletter: ${prefilledNewsletter.title}` 
@@ -152,9 +199,66 @@ export const EmailCampaignModal: React.FC<EmailCampaignModalProps> = ({
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4">
               <h3 className="text-lg font-medium mb-4">Campaign Details</h3>
+              
+              {/* Target Selection */}
+              <div className="space-y-4 mb-6">
+                <label className="block text-sm font-medium">Send to</label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="all"
+                      checked={targetOption === 'all'}
+                      onChange={() => setTargetOption('all')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <label htmlFor="all" className="text-sm">All families</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="campus"
+                      checked={targetOption === 'campus'}
+                      onChange={() => setTargetOption('campus')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <label htmlFor="campus" className="text-sm">Specific campus</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="custom"
+                      checked={targetOption === 'custom'}
+                      onChange={() => setTargetOption('custom')}
+                      className="w-4 h-4 text-primary"
+                    />
+                    <label htmlFor="custom" className="text-sm">Use pre-selected recipients</label>
+                  </div>
+                </div>
+                
+                {targetOption === 'campus' && (
+                  <div className="ml-6">
+                    <select
+                      value={selectedCampus}
+                      onChange={(e) => setSelectedCampus(e.target.value)}
+                      className="w-full border rounded-lg px-3 py-2"
+                    >
+                      <option value="all">All Campuses</option>
+                      <option value="Feketerigó">Feketerigó</option>
+                      <option value="Torockó">Torockó</option>
+                      <option value="Levél">Levél</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-2 text-sm text-gray-600 mb-4">
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{selectedFamilies} families</span>
-                <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">{recipients.length} emails</span>
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  {loadingContacts ? 'Loading...' : `${selectedFamilies} families`}
+                </span>
+                <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                  {loadingContacts ? 'Loading...' : `${recipients.length} emails`}
+                </span>
               </div>
 
               <div className="space-y-4">

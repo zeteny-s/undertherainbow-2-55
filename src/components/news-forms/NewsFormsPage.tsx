@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Form, CampusType, FormComponent } from '../../types/form-types';
 import { toast } from 'sonner';
 import { NewsletterPage } from './NewsletterPage';
+import { EmailFormButton } from './EmailFormButton';
 
 type ViewType = 'forms' | 'newsletters';
 
@@ -256,6 +257,13 @@ export const NewsFormsPage = () => {
                             <DropdownMenuItem onClick={() => handleDuplicate(form)} className="hover:bg-gray-100">
                               <Copy className="h-4 w-4 mr-3" />
                               Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="hover:bg-gray-100 p-0">
+                              <EmailFormButton
+                                formId={form.id}
+                                formTitle={form.title}
+                                className="w-full justify-start px-2 py-1.5 text-sm border-0 bg-transparent hover:bg-gray-100"
+                              />
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDelete(form.id)}

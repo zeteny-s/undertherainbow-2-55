@@ -18,6 +18,7 @@ import { ComponentEditor } from './builder/ComponentEditor';
 import { LivePreview } from './builder/LivePreview';
 import { Form, FormComponent, CampusType, FormStatus } from '../../types/form-types';
 import { toast } from 'sonner';
+import { EmailFormButton } from './EmailFormButton';
 
 export const FormBuilderPage = () => {
   const { formId } = useParams<{ formId: string }>();
@@ -231,15 +232,22 @@ export const FormBuilderPage = () => {
           </div>
           <div className="flex items-center gap-2">
             {!isNewForm && form.id && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(`/form/${form.id}`, '_blank')}
-                className="flex items-center gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                Preview & Test
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/form/${form.id}`, '_blank')}
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Preview & Test
+                </Button>
+                <EmailFormButton
+                  formId={form.id}
+                  formTitle={form.title}
+                  className="flex items-center gap-2"
+                />
+              </>
             )}
             <Sheet>
               <SheetTrigger asChild>

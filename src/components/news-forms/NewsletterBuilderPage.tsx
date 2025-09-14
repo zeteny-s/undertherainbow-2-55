@@ -14,6 +14,7 @@ import { Checkbox } from '../ui/checkbox';
 import { useNotifications } from '../../hooks/useNotifications';
 import type { FormForSelection, NewsletterImage } from '../../types/newsletter-types';
 import type { CampusType } from '../../types/form-types';
+import { EmailNewsletterButton } from './EmailNewsletterButton';
 
 export const NewsletterBuilderPage = () => {
   const { newsletterId } = useParams<{ newsletterId: string }>();
@@ -360,14 +361,23 @@ export const NewsletterBuilderPage = () => {
           </div>
           <div className="flex gap-3">
             {generatedHtml && (
-              <Button 
-                variant="outline" 
-                onClick={() => window.open(`/newsletter/${newsletterId}`, '_blank')}
-                className="shadow-sm hover:shadow-md transition-shadow"
-              >
-                <Eye className="h-5 w-5 mr-2" />
-                Preview
-              </Button>
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open(`/newsletter/${newsletterId}`, '_blank')}
+                  className="shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <Eye className="h-5 w-5 mr-2" />
+                  Preview
+                </Button>
+                {newsletterId && (
+                  <EmailNewsletterButton
+                    newsletterId={newsletterId}
+                    newsletterTitle={title}
+                    className="shadow-sm hover:shadow-md transition-shadow"
+                  />
+                )}
+              </>
             )}
             <Button 
               onClick={handleSave} 

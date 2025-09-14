@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useNotifications } from '../../hooks/useNotifications';
 import type { Newsletter } from '../../types/newsletter-types';
+import { EmailNewsletterButton } from './EmailNewsletterButton';
 
 interface NewsletterPageProps {
   showHeader?: boolean;
@@ -228,6 +229,13 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
                         <DropdownMenuItem onClick={() => handleRegenerateContent(newsletter.id)} className="hover:bg-gray-100">
                           <RefreshCw className="h-4 w-4 mr-3" />
                           Regenerate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="hover:bg-gray-100 p-0">
+                          <EmailNewsletterButton
+                            newsletterId={newsletter.id}
+                            newsletterTitle={newsletter.title}
+                            className="w-full justify-start px-2 py-1.5 text-sm border-0 bg-transparent hover:bg-gray-100"
+                          />
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleDelete(newsletter.id)}
