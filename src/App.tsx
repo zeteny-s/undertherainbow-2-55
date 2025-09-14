@@ -1,3 +1,4 @@
+import { EmailCampaignPage } from './components/email-campaigns/EmailCampaignPage';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
@@ -213,6 +214,16 @@ const AppContent = () => {
                     element={
                       <ProtectedRoute>
                         <NewsletterDragBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Email Campaign Route */}
+                  <Route 
+                    path="/email-campaign" 
+                    element={
+                      <ProtectedRoute>
+                        <EmailCampaignPage />
                       </ProtectedRoute>
                     } 
                   />
