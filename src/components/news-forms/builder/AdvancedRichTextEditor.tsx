@@ -48,19 +48,21 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
       let content = '';
       
       if (htmlData) {
-        // Minimal cleaning - preserve as much formatting as possible
-        content = htmlData
-          .replace(/<script[^>]*>.*?<\/script>/gi, '')
-          .replace(/<style[^>]*>.*?<\/style>/gi, '')
-          .replace(/<link[^>]*>/gi, '')
-          .replace(/onclick\s*=\s*"[^"]*"/gi, '')
-          .replace(/javascript:/gi, '');
-          
-        // Keep all style attributes - don't filter them
-        // This preserves original font sizes, colors, spacing, etc.
+        // Very minimal cleaning - preserve ALL formatting like Google Docs
+        content = htmlData;
         
-        // Only remove dangerous tags, keep everything else
-        content = content.replace(/<\/?(?:script|style|iframe|object|embed|form|input|textarea|select|button|meta|head|html|body|title)[^>]*>/gi, '');
+        // Only remove potentially dangerous scripts and styles, but keep everything else
+        content = content.replace(/<script[^>]*>.*?<\/script>/gis, '');
+        content = content.replace(/<style[^>]*>.*?<\/style>/gis, '');
+        content = content.replace(/<link[^>]*>/gi, '');
+        content = content.replace(/javascript:/gi, '');
+        content = content.replace(/on\w+\s*=\s*"[^"]*"/gi, ''); // Remove event handlers
+        
+        // Remove only the document structure tags but keep ALL content and formatting tags
+        content = content.replace(/<\/?(?:html|head|body|title|meta)[^>]*>/gi, '');
+        
+        // Clean up any document-level styles that might interfere
+        content = content.replace(/<!--.*?-->/gs, ''); // Remove comments
         
       } else if (textData) {
         // For plain text, preserve line breaks and convert to HTML
@@ -68,14 +70,14 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
-          .replace(/\n\n/g, '</p><p>')
+          .replace(/\n\n+/g, '</p><p>')
           .replace(/\n/g, '<br>')
           .replace(/\r\n/g, '<br>')
           .replace(/\r/g, '<br>');
         content = '<p>' + content + '</p>';
       }
       
-      // Insert the content using execCommand to maintain undo history
+      // Insert the content directly using execCommand to maintain undo history
       if (content) {
         document.execCommand('insertHTML', false, content);
         handleInput();
