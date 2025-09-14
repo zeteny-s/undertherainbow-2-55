@@ -166,7 +166,7 @@ export const PublicNewsletterPage = () => {
                       <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{form.description}</p>
                     )}
                     <a 
-                      href={`/news-forms/public/${form.id}`}
+                      href={`/form/${form.id}`}
                       className="inline-flex items-center gap-1 text-xs h-8 px-3 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"
