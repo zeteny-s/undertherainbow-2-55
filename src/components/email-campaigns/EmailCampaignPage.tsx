@@ -30,6 +30,8 @@ export const EmailCampaignPage = () => {
   const [selectedCampus, setSelectedCampus] = useState<string>('all');
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [sending, setSending] = useState(false);
+  const [allFamilies, setAllFamilies] = useState<any[]>([]);
+  const [selectedFamilyIds, setSelectedFamilyIds] = useState<string[]>([]);
 
   const [emailData, setEmailData] = useState({
     subject: newsletterTitle 
@@ -62,7 +64,7 @@ export const EmailCampaignPage = () => {
     try {
       let query = supabase
         .from('family_contacts')
-        .select('mother_email, father_email, additional_emails, campus');
+        .select('id, child_name, group_name, mother_email, father_email, additional_emails, campus');
 
       if (targetOption === 'campus' && selectedCampus !== 'all') {
         query = query.eq('campus', selectedCampus);
@@ -72,23 +74,57 @@ export const EmailCampaignPage = () => {
 
       if (error) throw error;
 
-      // Collect all unique emails
-      const allEmails: string[] = [];
-      contacts?.forEach((contact: any) => {
-        if (contact.mother_email) allEmails.push(contact.mother_email);
-        if (contact.father_email) allEmails.push(contact.father_email);
-        if (contact.additional_emails) allEmails.push(...contact.additional_emails);
-      });
+      setAllFamilies(contacts || []);
 
-      const uniqueEmails = [...new Set(allEmails)];
-      setRecipients(uniqueEmails);
-      setSelectedFamilies(contacts?.length || 0);
+      if (targetOption === 'custom') {
+        // For custom, don't auto-select all
+        setRecipients([]);
+        setSelectedFamilies(0);
+      } else {
+        // Collect all unique emails
+        const allEmails: string[] = [];
+        contacts?.forEach((contact: any) => {
+          if (contact.mother_email) allEmails.push(contact.mother_email);
+          if (contact.father_email) allEmails.push(contact.father_email);
+          if (contact.additional_emails) allEmails.push(...contact.additional_emails);
+        });
+
+        const uniqueEmails = [...new Set(allEmails)];
+        setRecipients(uniqueEmails);
+        setSelectedFamilies(contacts?.length || 0);
+      }
     } catch (error) {
       console.error('Error fetching contacts:', error);
       addNotification('error', 'Failed to load family contacts');
     } finally {
       setLoadingContacts(false);
     }
+  };
+
+  const handleFamilySelection = (familyId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedFamilyIds(prev => [...prev, familyId]);
+    } else {
+      setSelectedFamilyIds(prev => prev.filter(id => id !== familyId));
+    }
+    
+    // Update recipients based on selected families
+    const selectedFamilies = allFamilies.filter(family => 
+      checked 
+        ? [...selectedFamilyIds, familyId].includes(family.id)
+        : selectedFamilyIds.filter(id => id !== familyId).includes(family.id)
+    );
+    
+    const allEmails: string[] = [];
+    selectedFamilies.forEach((contact: any) => {
+      if (contact.mother_email) allEmails.push(contact.mother_email);
+      if (contact.father_email) allEmails.push(contact.father_email);
+      if (contact.additional_emails) allEmails.push(...contact.additional_emails);
+    });
+    
+    const uniqueEmails = [...new Set(allEmails)];
+    setRecipients(uniqueEmails);
+    setSelectedFamilies(selectedFamilies.length);
   };
 
   const generateEmailHTML = () => {
@@ -105,7 +141,8 @@ export const EmailCampaignPage = () => {
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #f0f0f0; }
-          .logo { color: #6366f1; font-size: 24px; font-weight: bold; }
+          .logo { font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; }
+          .logo img { height: 60px; width: auto; }
           .content { padding: 30px 0; }
           .button { display: inline-block; padding: 12px 24px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 20px 0; }
           .button:hover { background-color: #5855eb; }
@@ -115,7 +152,10 @@ export const EmailCampaignPage = () => {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">🌈 Under the Rainbow Kindergarten</div>
+            <div class="logo">
+              <img src="${window.location.origin}/assets/utr-logo.png" alt="Under the Rainbow" />
+              Under the Rainbow Kindergarten
+            </div>
           </div>
           <div class="content">
             ${emailData.content.split('\n').map(line => {
@@ -276,6 +316,29 @@ export const EmailCampaignPage = () => {
                         <SelectItem value="Levél">Levél</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+
+                {targetOption === 'custom' && (
+                  <div className="ml-6 space-y-3">
+                    <h4 className="font-medium">Select Families:</h4>
+                    <div className="max-h-64 overflow-y-auto space-y-2 border rounded-lg p-3">
+                      {allFamilies.map((family) => (
+                        <div key={family.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={family.id}
+                            checked={selectedFamilyIds.includes(family.id)}
+                            onChange={(e) => handleFamilySelection(family.id, e.target.checked)}
+                            className="w-4 h-4 text-primary"
+                          />
+                          <label htmlFor={family.id} className="text-sm flex-1">
+                            <span className="font-medium">{family.child_name}</span>
+                            <span className="text-gray-500 ml-2">({family.group_name}, {family.campus})</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
