@@ -131,8 +131,8 @@ export const PublicNewsletterPage = () => {
         );
       })}
 
-      <div className="relative z-30 max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center">
-        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg z-40 border border-gray-200">
+      <div className="relative z-30 max-w-4xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-3xl z-40 border border-gray-200">
           {/* Logo */}
           <div className="text-center mb-8 relative z-50">
             <img 

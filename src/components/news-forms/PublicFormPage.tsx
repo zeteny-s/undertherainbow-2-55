@@ -224,7 +224,7 @@ export const PublicFormPage = () => {
       <img src={decoration1} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[85%] left-[8%] rotate-[40deg] w-[105px] md:w-[70px]" />
 
       {/* Main container */}
-      <div className="relative z-10 max-w-[600px] mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center md:px-2.5">
+      <div className="relative z-10 max-w-4xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center md:px-2.5 md:max-w-[600px]">
         <div className="text-center bg-white rounded-[30px] shadow-2xl p-16 relative w-full md:p-10">
           {/* Logo */}
           <div className="flex justify-center mb-8">

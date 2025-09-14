@@ -41,25 +41,50 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const text = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
+    const htmlData = e.clipboardData.getData('text/html');
+    const textData = e.clipboardData.getData('text/plain');
+    
+    let content = htmlData || textData;
     
     if (editorRef.current) {
-      // Insert the pasted content while preserving formatting
+      if (htmlData) {
+        // Clean HTML while preserving important formatting
+        content = content
+          .replace(/<script[^>]*>.*?<\/script>/gi, '')
+          .replace(/<style[^>]*>.*?<\/style>/gi, '')
+          .replace(/<link[^>]*>/gi, '')
+          .replace(/style\s*=\s*"[^"]*"/gi, '')
+          .replace(/class\s*=\s*"[^"]*"/gi, '')
+          .replace(/id\s*=\s*"[^"]*"/gi, '')
+          .replace(/&nbsp;/gi, ' ');
+          
+        // Preserve essential tags and structure
+        const allowedTags = /<\/?(?:p|br|ul|ol|li|strong|b|em|i|h[1-6]|table|tr|td|th)(?:\s[^>]*)?>/gi;
+        content = content.replace(/<[^>]*>/g, (match) => {
+          return allowedTags.test(match) ? match : '';
+        });
+      }
+      
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         range.deleteContents();
         
         const div = document.createElement('div');
-        div.innerHTML = text;
+        div.innerHTML = content;
         
-        // Clean up any unwanted styles but keep lists and basic formatting
         const fragment = document.createDocumentFragment();
         Array.from(div.childNodes).forEach(node => {
           fragment.appendChild(node.cloneNode(true));
         });
         
         range.insertNode(fragment);
+        
+        // Move cursor to end of inserted content
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
         handleInput();
       }
     }
@@ -353,8 +378,18 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
           padding-left: 25px;
         }
 
+        .rich-text-editor ul {
+          list-style-type: disc;
+        }
+
+        .rich-text-editor ol {
+          list-style-type: decimal;
+        }
+
         .rich-text-editor li {
           margin: 5px 0;
+          display: list-item;
+          list-style-position: outside;
         }
 
         .rich-text-editor table {
@@ -387,6 +422,16 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
         .rich-text-editor h6 {
           margin: 12px 0 8px 0;
           font-weight: bold;
+        }
+
+        .rich-text-editor strong,
+        .rich-text-editor b {
+          font-weight: bold;
+        }
+
+        .rich-text-editor em,
+        .rich-text-editor i {
+          font-style: italic;
         }
       `}</style>
     </div>

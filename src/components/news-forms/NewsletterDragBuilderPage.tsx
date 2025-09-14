@@ -325,19 +325,7 @@ export const NewsletterDragBuilderPage = () => {
   };
 
   const generateHtmlFromComponents = (): string => {
-    // Create newsletter header with proper styling
-    const header = `
-      <div style="text-align: center; margin-bottom: 40px; padding: 30px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border-radius: 15px 15px 0 0;">
-        <img src="${window.location.origin}/src/assets/kindergarten-logo.png" alt="Kindergarten Logo" style="max-width: 200px; height: auto; margin-bottom: 20px;" />
-        <h1 style="margin: 0; font-size: 2rem; font-weight: bold;">${newsletterState.title}</h1>
-        ${newsletterState.description ? `<p style="margin: 10px 0 0 0; font-size: 1.1rem; opacity: 0.9;">${newsletterState.description}</p>` : ''}
-        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
-          ${newsletterState.campus} • ${new Date().toLocaleDateString('hu-HU')}
-        </div>
-      </div>
-    `;
-
-    // Convert components to HTML with proper styling to match preview
+    // Convert components to HTML with proper styling and list support
     const componentsHtml = newsletterState.components
       .sort((a, b) => a.position - b.position)
       .map(component => {
@@ -354,14 +342,38 @@ export const NewsletterDragBuilderPage = () => {
           
           case 'text-block':
             const textBlock = component.content;
-            return `<div style="
-              margin-bottom: 15px; 
-              text-align: ${textBlock.textAlign || 'left'};
-              font-size: ${textBlock.fontSize || '16px'};
-              font-weight: ${textBlock.fontWeight || 'normal'};
-              color: ${textBlock.color || '#374151'};
-              line-height: 1.7;
-            ">${textBlock.content}</div>`;
+            return `
+              <div style="
+                margin-bottom: 15px; 
+                text-align: ${textBlock.textAlign || 'left'};
+                font-size: ${textBlock.fontSize || '16px'};
+                font-weight: ${textBlock.fontWeight || 'normal'};
+                color: ${textBlock.color || '#374151'};
+                line-height: 1.7;
+              ">
+                ${textBlock.content}
+              </div>
+              <style>
+                ul { 
+                  list-style-type: disc !important; 
+                  margin: 16px 0 !important; 
+                  padding-left: 20px !important; 
+                }
+                ol { 
+                  list-style-type: decimal !important; 
+                  margin: 16px 0 !important; 
+                  padding-left: 20px !important; 
+                }
+                li { 
+                  margin: 4px 0 !important; 
+                  display: list-item !important;
+                  list-style-position: outside !important;
+                }
+                p { margin: 8px 0 !important; }
+                strong, b { font-weight: 600 !important; }
+                em, i { font-style: italic !important; }
+              </style>
+            `;
           
           case 'image':
             const image = component.content;
@@ -407,14 +419,8 @@ export const NewsletterDragBuilderPage = () => {
       })
       .join('');
 
-    return `
-      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-        ${header}
-        <div style="padding: 30px;">
-          ${componentsHtml}
-        </div>
-      </div>
-    `;
+    // Return only the components without any header wrapper
+    return componentsHtml;
   };
   const handleDragStart = (event: DragStartEvent) => {
     const {
