@@ -18,6 +18,7 @@ import { JelenletiPage } from './components/JelenletiPage';
 import { FamilyRelationshipsPage } from './components/family-relationships/FamilyRelationshipsPage';
 import { NewsFormsPage } from './components/news-forms/NewsFormsPage';
 import { FormBuilderPage } from './components/news-forms/FormBuilderPage';
+import { FormSubmissionsPage } from './components/news-forms/FormSubmissionsPage';
 import { NewsletterBuilderPage } from './components/news-forms/NewsletterBuilderPage';
 import { NewsletterDragBuilderPage } from './components/news-forms/NewsletterDragBuilderPage';
 import { PublicFormPage } from './components/news-forms/PublicFormPage';
@@ -172,6 +173,14 @@ const AppContent = () => {
                     element={
                       <ProtectedRoute>
                         <FormBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/news-forms/submissions/:formId" 
+                    element={
+                      <ProtectedRoute>
+                        <FormSubmissionsPage />
                       </ProtectedRoute>
                     } 
                   />
