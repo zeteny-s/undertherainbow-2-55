@@ -40,10 +40,10 @@ export const EmailCampaignPage = () => {
       ? `New Form Available: ${formTitle}`
       : '',
     content: newsletterTitle
-      ? `Dear families,\n\nWe're excited to share our latest newsletter with you!\n\nClick the button below to read it:\n\n[NEWSLETTER_LINK]\n\nBest regards,\nUnder the Rainbow Kindergarten Team`
+      ? `Dear families,\n\nWe're excited to share our latest newsletter with you!\n\nClick the button below to read it:\n\n[NEWSLETTER_LINK]\n\nBest regards,\nThe Team`
       : formTitle
-      ? `Dear families,\n\nWe have a new form available for you to fill out.\n\nClick the button below to access the form:\n\n[FORM_LINK]\n\nBest regards,\nUnder the Rainbow Kindergarten Team`
-      : 'Dear families,\n\n\n\nBest regards,\nUnder the Rainbow Kindergarten Team',
+      ? `Dear families,\n\nWe have a new form available for you to fill out.\n\nClick the button below to access the form:\n\n[FORM_LINK]\n\nBest regards,\nThe Team`
+      : 'Dear families,\n\n\n\nBest regards,\nThe Team',
     buttonText: newsletterTitle ? 'Read Newsletter' : formTitle ? 'Fill Form' : '',
     buttonUrl: newsletterTitle 
       ? `${window.location.origin}/newsletter/${newsletterId}` 
@@ -140,9 +140,9 @@ export const EmailCampaignPage = () => {
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #f0f0f0; }
-          .logo { font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; }
-          .logo img { height: 60px; width: auto; }
+          .header { text-align: center; padding: 30px 0; border-bottom: 2px solid #f0f0f0; }
+          .logo { display: flex; align-items: center; justify-content: center; }
+          .logo img { height: 100px; width: auto; }
           .content { padding: 30px 0; }
           .button { display: inline-block; padding: 12px 24px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 20px 0; }
           .button:hover { background-color: #5855eb; }
@@ -153,8 +153,7 @@ export const EmailCampaignPage = () => {
         <div class="container">
           <div class="header">
             <div class="logo">
-              <img src="${window.location.origin}/assets/utr-logo.png" alt="Under the Rainbow" />
-              Under the Rainbow Kindergarten
+              <img src="${window.location.origin}/assets/utr-logo.png" alt="Logo" />
             </div>
           </div>
           <div class="content">
@@ -174,8 +173,7 @@ export const EmailCampaignPage = () => {
             ` : ''}
           </div>
           <div class="footer">
-            <p>Under the Rainbow Kindergarten<br>
-            Budapest, Hungary<br>
+            <p>Budapest, Hungary<br>
             <a href="mailto:info@undertherainbow.hu">info@undertherainbow.hu</a></p>
           </div>
         </div>
