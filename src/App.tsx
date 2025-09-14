@@ -38,25 +38,6 @@ const AppContent = () => {
     );
   }
 
-  // Public routes for forms and newsletters
-  if (window.location.pathname.startsWith('/form/') || window.location.pathname.startsWith('/newsletter/')) {
-    return (
-      <Routes>
-        <Route path="/form/:formId" element={<PublicFormPage />} />
-        <Route path="/newsletter/:newsletterId" element={<PublicNewsletterPage />} />
-      </Routes>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Routes>
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes>
-    );
-  }
-
   const getDashboardComponent = () => {
     const profileType = user?.user_metadata?.profile_type;
     
@@ -69,176 +50,193 @@ const AppContent = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+    <Routes>
+      {/* Public routes - always accessible */}
+      <Route path="/form/:formId" element={<PublicFormPage />} />
+      <Route path="/newsletter/:newsletterId" element={<PublicNewsletterPage />} />
       
-      <div className="flex-1 lg:ml-64 pt-16 lg:pt-0">
-        <Routes>
-          {/* Dashboard Routes */}
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                {getDashboardComponent()}
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* General Routes */}
-          <Route 
-            path="/calendar" 
-            element={
-              <ProtectedRoute>
-                <CalendarPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/chat" 
-            element={
-              <ProtectedRoute>
-                <ChatPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/documents" 
-            element={
-              <ProtectedRoute>
-                <DocumentsPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Admin/Management Routes */}
-          <Route 
-            path="/upload" 
-            element={
-              <ProtectedRoute allowedRoles={['adminisztracio', 'vezetoi', 'haz_vezeto']}>
-                <InvoiceUpload />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/invoices" 
-            element={
-              <ProtectedRoute allowedRoles={['adminisztracio', 'vezetoi', 'haz_vezeto']}>
-                <InvoiceList />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/payroll" 
-            element={
-              <ProtectedRoute allowedRoles={['vezetoi']}>
-                <PayrollCosts />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Attendance Route */}
-          <Route 
-            path="/attendance" 
-            element={
-              <ProtectedRoute allowedRoles={['pedagogus', 'adminisztracio', 'vezetoi', 'haz_vezeto']}>
-                <JelenletiPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Family Relationships Route */}
-          <Route 
-            path="/family-relationships" 
-            element={
-              <ProtectedRoute allowedRoles={['haz_vezeto']}>
-                <FamilyRelationshipsPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* News & Forms Routes */}
-          <Route 
-            path="/news-forms" 
-            element={
-              <ProtectedRoute>
-                <NewsFormsPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/news-forms/new" 
-            element={
-              <ProtectedRoute>
-                <FormBuilderPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/news-forms/edit/:formId" 
-            element={
-              <ProtectedRoute>
-                <FormBuilderPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/newsletters/new" 
-            element={
-              <ProtectedRoute>
-                <NewsletterBuilderPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/newsletters/edit/:newsletterId" 
-            element={
-              <ProtectedRoute>
-                <NewsletterBuilderPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/newsletter-builder/new" 
-            element={
-              <ProtectedRoute>
-                <NewsletterDragBuilderPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/newsletter-builder/:newsletterId" 
-            element={
-              <ProtectedRoute>
-                <NewsletterDragBuilderPage />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Settings & Profile Routes */}
-          <Route 
-            path="/settings" 
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+      {/* Auth route */}
+      <Route path="/auth" element={<AuthPage />} />
       
-      <NotificationContainer notifications={[]} onRemove={() => {}} />
-    </div>
+      {/* All other routes require authentication */}
+      <Route 
+        path="*" 
+        element={
+          !user ? <Navigate to="/auth" replace /> : (
+            <div className="flex min-h-screen bg-background">
+              <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+              
+              <div className="flex-1 lg:ml-64 pt-16 lg:pt-0">
+                <Routes>
+                  {/* Dashboard Routes */}
+                  <Route 
+                    path="/" 
+                    element={
+                      <ProtectedRoute>
+                        {getDashboardComponent()}
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* General Routes */}
+                  <Route 
+                    path="/calendar" 
+                    element={
+                      <ProtectedRoute>
+                        <CalendarPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/chat" 
+                    element={
+                      <ProtectedRoute>
+                        <ChatPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/documents" 
+                    element={
+                      <ProtectedRoute>
+                        <DocumentsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Admin/Management Routes */}
+                  <Route 
+                    path="/upload" 
+                    element={
+                      <ProtectedRoute allowedRoles={['adminisztracio', 'vezetoi', 'haz_vezeto']}>
+                        <InvoiceUpload />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/invoices" 
+                    element={
+                      <ProtectedRoute allowedRoles={['adminisztracio', 'vezetoi', 'haz_vezeto']}>
+                        <InvoiceList />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/payroll" 
+                    element={
+                      <ProtectedRoute allowedRoles={['vezetoi']}>
+                        <PayrollCosts />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Attendance Route */}
+                  <Route 
+                    path="/attendance" 
+                    element={
+                      <ProtectedRoute allowedRoles={['pedagogus', 'adminisztracio', 'vezetoi', 'haz_vezeto']}>
+                        <JelenletiPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Family Relationships Route */}
+                  <Route 
+                    path="/family-relationships" 
+                    element={
+                      <ProtectedRoute allowedRoles={['haz_vezeto']}>
+                        <FamilyRelationshipsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* News & Forms Routes */}
+                  <Route 
+                    path="/news-forms" 
+                    element={
+                      <ProtectedRoute>
+                        <NewsFormsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/news-forms/new" 
+                    element={
+                      <ProtectedRoute>
+                        <FormBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/news-forms/edit/:formId" 
+                    element={
+                      <ProtectedRoute>
+                        <FormBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/newsletters/new" 
+                    element={
+                      <ProtectedRoute>
+                        <NewsletterBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/newsletters/edit/:newsletterId" 
+                    element={
+                      <ProtectedRoute>
+                        <NewsletterBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/newsletter-builder/new" 
+                    element={
+                      <ProtectedRoute>
+                        <NewsletterDragBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/newsletter-builder/:newsletterId" 
+                    element={
+                      <ProtectedRoute>
+                        <NewsletterDragBuilderPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Settings & Profile Routes */}
+                  <Route 
+                    path="/settings" 
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Catch all route */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </div>
+              
+              <NotificationContainer notifications={[]} onRemove={() => {}} />
+            </div>
+          )
+        } 
+      />
+    </Routes>
   );
 };
 
