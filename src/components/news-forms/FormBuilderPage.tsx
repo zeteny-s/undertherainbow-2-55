@@ -44,6 +44,8 @@ export const FormBuilderPage = () => {
         created_by: user?.id || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        capacity: null,
+        unlimited_capacity: false,
       });
       setLoading(false);
     } else {
@@ -115,6 +117,8 @@ export const FormBuilderPage = () => {
         campus: form.campus,
         status: 'active' as FormStatus,
         form_components: components as any,
+        capacity: form.capacity,
+        unlimited_capacity: form.unlimited_capacity || false,
         created_by: user.id,
       };
 
@@ -284,6 +288,47 @@ export const FormBuilderPage = () => {
                         <SelectItem value="Levél" className="bg-white hover:bg-gray-100 text-gray-900">Levél</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-gray-900 font-medium">Capacity Settings</Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="radio"
+                          id="unlimited"
+                          checked={form.unlimited_capacity || false}
+                          onChange={() => setForm(prev => prev ? {...prev, unlimited_capacity: true, capacity: null} : null)}
+                          className="w-4 h-4 text-primary"
+                        />
+                        <Label htmlFor="unlimited" className="text-gray-900">Unlimited capacity</Label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="radio"
+                          id="limited"
+                          checked={!form.unlimited_capacity}
+                          onChange={() => setForm(prev => prev ? {...prev, unlimited_capacity: false} : null)}
+                          className="w-4 h-4 text-primary"
+                        />
+                        <Label htmlFor="limited" className="text-gray-900">Limited capacity</Label>
+                      </div>
+                      {!form.unlimited_capacity && (
+                        <div className="ml-7 space-y-2">
+                          <Label htmlFor="capacity" className="text-gray-900 text-sm">Maximum number of participants</Label>
+                          <Input
+                            id="capacity"
+                            type="number"
+                            min="1"
+                            value={form.capacity || ''}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                              setForm(prev => prev ? {...prev, capacity: e.target.value ? parseInt(e.target.value) : null} : null)
+                            }
+                            placeholder="Enter maximum participants"
+                            className="bg-white border-2 border-gray-300 text-gray-900"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </SheetContent>

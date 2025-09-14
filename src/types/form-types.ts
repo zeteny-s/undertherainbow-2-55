@@ -38,6 +38,8 @@ export interface Form {
   created_by: string;
   created_at: string;
   updated_at: string;
+  capacity?: number | null;
+  unlimited_capacity?: boolean | null;
 }
 
 export interface FormSubmission {
@@ -46,6 +48,7 @@ export interface FormSubmission {
   submission_data: Record<string, any>;
   submitted_at: string;
   ip_address?: string;
+  family_name?: string;
 }
 
 export interface ComponentLibraryItem {

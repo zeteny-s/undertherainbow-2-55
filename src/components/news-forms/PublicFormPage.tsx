@@ -6,6 +6,8 @@ import { LoadingSpinner } from '../common/LoadingSpinner';
 import { Button } from '../ui/button';
 import { Form, FormComponent } from '../../types/form-types';
 import { FormRenderer } from './components/FormRenderer';
+import { CapacityDisplay } from './components/CapacityDisplay';
+import { SubmissionAnimation } from './components/SubmissionAnimation';
 import { toast } from 'sonner';
 import kindergartenLogo from '../../assets/kindergarten-logo.png';
 import decoration1 from '../../assets/decoration-1.png';
@@ -22,6 +24,7 @@ export const PublicFormPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [familyName, setFamilyName] = useState('');
 
   useEffect(() => {
     fetchForm();
@@ -55,10 +58,31 @@ export const PublicFormPage = () => {
     }
   };
 
+  // Check if form is full
+  const checkFormCapacity = async () => {
+    if (!form || form.unlimited_capacity) return false;
+    if (!form.capacity) return false;
+
+    const { count, error } = await supabase
+      .from('form_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('form_id', form.id);
+
+    if (error) {
+      console.error('Error checking capacity:', error);
+      return false;
+    }
+
+    return (count || 0) >= form.capacity;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!form) return;
+    if (!form || !familyName.trim()) {
+      toast.error('Please enter your family name');
+      return;
+    }
 
     // Validate required fields
     const requiredFields = form.form_components
@@ -74,6 +98,13 @@ export const PublicFormPage = () => {
       return;
     }
 
+    // Check capacity before submitting
+    const isFull = await checkFormCapacity();
+    if (isFull) {
+      toast.error('Sorry, this form has reached its capacity limit');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const { error } = await supabase
@@ -81,16 +112,20 @@ export const PublicFormPage = () => {
         .insert({
           form_id: form.id,
           submission_data: formData,
+          family_name: familyName.trim(),
           ip_address: await getClientIP()
         });
 
       if (error) throw error;
       
       setSubmitted(true);
-      toast.success('Form submitted successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
-      toast.error('Error submitting form');
+      if (error.message?.includes('capacity')) {
+        toast.error('Sorry, this form has reached its capacity limit');
+      } else {
+        toast.error('Error submitting form');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -235,6 +270,9 @@ export const PublicFormPage = () => {
             />
           </div>
           
+          {/* Capacity Display */}
+          {form && <CapacityDisplay form={form} />}
+          
           {/* Form Title */}
           <h1 className="text-2xl font-bold mb-2 text-gray-900">{form.title}</h1>
           {form.description && (
@@ -243,6 +281,25 @@ export const PublicFormPage = () => {
           
           {/* Form Fields */}
           <form onSubmit={handleSubmit} className="space-y-6 text-left">
+            {/* Family Name Field */}
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <label htmlFor="family-name" className="block text-sm font-semibold text-gray-900 mb-2">
+                Family Name *
+              </label>
+              <input
+                type="text"
+                id="family-name"
+                value={familyName}
+                onChange={(e) => setFamilyName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter your family name"
+                required
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                This will be displayed in the participant list
+              </p>
+            </div>
+
             <FormRenderer
               components={form.form_components}
               values={formData}
@@ -252,7 +309,7 @@ export const PublicFormPage = () => {
             <div className="pt-6">
               <Button 
                 type="submit" 
-                disabled={submitting}
+                disabled={submitting || !familyName.trim()}
                 className="w-full flex items-center justify-center gap-2"
                 size="lg"
               >
@@ -262,6 +319,11 @@ export const PublicFormPage = () => {
             </div>
           </form>
         </div>
+        
+        <SubmissionAnimation
+          isSubmitting={submitting}
+          isSubmitted={submitted}
+        />
       </div>
     </div>
   );

@@ -939,6 +939,7 @@ export type Database = {
       }
       form_submissions: {
         Row: {
+          family_name: string | null
           form_id: string
           id: string
           ip_address: string | null
@@ -946,6 +947,7 @@ export type Database = {
           submitted_at: string
         }
         Insert: {
+          family_name?: string | null
           form_id: string
           id?: string
           ip_address?: string | null
@@ -953,6 +955,7 @@ export type Database = {
           submitted_at?: string
         }
         Update: {
+          family_name?: string | null
           form_id?: string
           id?: string
           ip_address?: string | null
@@ -972,6 +975,7 @@ export type Database = {
       forms: {
         Row: {
           campus: Database["public"]["Enums"]["campus_type"]
+          capacity: number | null
           created_at: string
           created_by: string
           description: string | null
@@ -979,10 +983,12 @@ export type Database = {
           id: string
           status: Database["public"]["Enums"]["form_status"]
           title: string
+          unlimited_capacity: boolean | null
           updated_at: string
         }
         Insert: {
           campus: Database["public"]["Enums"]["campus_type"]
+          capacity?: number | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -990,10 +996,12 @@ export type Database = {
           id?: string
           status?: Database["public"]["Enums"]["form_status"]
           title: string
+          unlimited_capacity?: boolean | null
           updated_at?: string
         }
         Update: {
           campus?: Database["public"]["Enums"]["campus_type"]
+          capacity?: number | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -1001,6 +1009,7 @@ export type Database = {
           id?: string
           status?: Database["public"]["Enums"]["form_status"]
           title?: string
+          unlimited_capacity?: boolean | null
           updated_at?: string
         }
         Relationships: []
@@ -2424,6 +2433,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_form_submission_count: {
+        Args: { form_id_param: string }
+        Returns: number
+      }
       is_current_user_admin_or_manager: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -2434,6 +2447,10 @@ export type Database = {
       }
       is_current_user_manager: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_form_full: {
+        Args: { form_id_param: string }
         Returns: boolean
       }
       log_backup_execution: {
