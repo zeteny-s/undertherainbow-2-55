@@ -881,6 +881,45 @@ export type Database = {
         }
         Relationships: []
       }
+      family_contacts: {
+        Row: {
+          additional_emails: string[] | null
+          campus: string
+          child_name: string
+          created_at: string
+          father_email: string | null
+          group_name: string
+          id: string
+          mother_email: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          additional_emails?: string[] | null
+          campus: string
+          child_name: string
+          created_at?: string
+          father_email?: string | null
+          group_name: string
+          id?: string
+          mother_email?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          additional_emails?: string[] | null
+          campus?: string
+          child_name?: string
+          created_at?: string
+          father_email?: string | null
+          group_name?: string
+          id?: string
+          mother_email?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       family_interactions: {
         Row: {
           category: string
