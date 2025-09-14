@@ -1414,6 +1414,7 @@ export type Database = {
       newsletters: {
         Row: {
           campus: Database["public"]["Enums"]["campus_type"]
+          components: Json | null
           content_guidelines: string | null
           created_at: string
           created_by: string
@@ -1426,6 +1427,7 @@ export type Database = {
         }
         Insert: {
           campus: Database["public"]["Enums"]["campus_type"]
+          components?: Json | null
           content_guidelines?: string | null
           created_at?: string
           created_by: string
@@ -1438,6 +1440,7 @@ export type Database = {
         }
         Update: {
           campus?: Database["public"]["Enums"]["campus_type"]
+          components?: Json | null
           content_guidelines?: string | null
           created_at?: string
           created_by?: string

@@ -145,7 +145,7 @@ export const PublicNewsletterPage = () => {
 
           {/* Newsletter Content */}
           <div className="space-y-6 relative z-50">
-            {newsletter.generated_html ? (
+            {newsletter.generated_html && newsletter.generated_html.trim() !== '' && !newsletter.generated_html.includes('Add your content here...') ? (
               <div dangerouslySetInnerHTML={{ __html: newsletter.generated_html }} />
             ) : (
               <div className="text-center py-12 text-gray-500">

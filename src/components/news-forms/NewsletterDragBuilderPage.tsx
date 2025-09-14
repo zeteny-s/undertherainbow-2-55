@@ -65,7 +65,9 @@ export const NewsletterDragBuilderPage = () => {
 
   // Auto-save functionality with debouncing
   useEffect(() => {
-    if (!newsletterState.title && newsletterState.components.length === 0) return;
+    // Only auto-save if we have a title or components, and we have a newsletter ID (not new)
+    if ((!newsletterState.title.trim() && newsletterState.components.length === 0) || !currentNewsletterId) return;
+    
     const autoSave = async () => {
       try {
         await handleSave(true); // Pass true to indicate auto-save
@@ -76,7 +78,7 @@ export const NewsletterDragBuilderPage = () => {
     };
     const timer = setTimeout(autoSave, 3000); // Auto-save after 3 seconds of inactivity
     return () => clearTimeout(timer);
-  }, [newsletterState.title, newsletterState.description, newsletterState.campus, newsletterState.selectedFormIds, newsletterState.components]);
+  }, [newsletterState.title, newsletterState.description, newsletterState.campus, newsletterState.selectedFormIds, newsletterState.components, currentNewsletterId]);
   const fetchAvailableForms = async () => {
     try {
       const {
@@ -105,11 +107,14 @@ export const NewsletterDragBuilderPage = () => {
       // Set the current newsletter ID
       setCurrentNewsletterId(newsletterData.id);
 
-      // Parse existing content to components if needed
+      // Load components from JSON if available, fallback to parsing HTML
       let components: NewsletterComponent[] = [];
-      if (newsletterData.generated_html) {
+      if (newsletterData.components && Array.isArray(newsletterData.components)) {
+        components = newsletterData.components as any as NewsletterComponent[];
+      } else if (newsletterData.generated_html) {
         components = parseHtmlToComponents(newsletterData.generated_html);
       }
+      
       setNewsletterState({
         id: newsletterData.id,
         title: newsletterData.title,
@@ -159,6 +164,7 @@ export const NewsletterDragBuilderPage = () => {
         campus: newsletterState.campus,
         content_guidelines: null,
         generated_html: generatedHtml,
+        components: newsletterState.components as any, // Store components as JSON
         status: status,
         created_by: user.id
       };
