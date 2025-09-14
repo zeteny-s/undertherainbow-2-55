@@ -74,9 +74,9 @@ export const NewsletterDragBuilderPage = () => {
         console.error('Auto-save failed:', error);
       }
     };
-    const timer = setTimeout(autoSave, 5000); // Auto-save after 5 seconds of inactivity
+    const timer = setTimeout(autoSave, 3000); // Auto-save after 3 seconds of inactivity
     return () => clearTimeout(timer);
-  }, [newsletterState.title, newsletterState.description, newsletterState.campus, newsletterState.selectedFormIds, newsletterState.components.length]);
+  }, [newsletterState.title, newsletterState.description, newsletterState.campus, newsletterState.selectedFormIds, newsletterState.components]);
   const fetchAvailableForms = async () => {
     try {
       const {
@@ -150,6 +150,7 @@ export const NewsletterDragBuilderPage = () => {
     try {
       // Convert components to HTML for storage
       const generatedHtml = generateHtmlFromComponents();
+      console.log('Saving newsletter with HTML length:', generatedHtml.length, 'Components count:', newsletterState.components.length);
       const status = 'published'; // Always save as published like forms
 
       const newsletterData = {
@@ -326,6 +327,21 @@ export const NewsletterDragBuilderPage = () => {
 
   const generateHtmlFromComponents = (): string => {
     // Convert components to HTML with proper styling and list support
+    if (newsletterState.components.length === 0) {
+      return `
+        <div style="
+          margin-bottom: 15px; 
+          text-align: left;
+          font-size: 16px;
+          font-weight: normal;
+          color: #374151;
+          line-height: 1.7;
+        ">
+          Add your content here...
+        </div>
+      `;
+    }
+
     const componentsHtml = newsletterState.components
       .sort((a, b) => a.position - b.position)
       .map(component => {
