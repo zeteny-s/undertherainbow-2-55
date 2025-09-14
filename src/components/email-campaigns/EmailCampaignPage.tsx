@@ -217,7 +217,7 @@ export const EmailCampaignPage = () => {
       } else {
         addNotification('error', data.message || 'Failed to send email campaign.');
       }
-      navigate(-1);
+      navigate('/news-forms');
     } catch (error: any) {
       console.error('Error sending email:', error);
       addNotification('error', error.message || 'Failed to send email campaign.');
@@ -249,7 +249,7 @@ export const EmailCampaignPage = () => {
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/news-forms')}
               className="hover:bg-muted"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
