@@ -90,175 +90,99 @@ export const PublicNewsletterPage = () => {
     );
   }
 
-  const appendFormsToNewsletter = (html: string) => {
-    if (!forms || forms.length === 0) return html;
-
-    const formsHtml = `
-      <div style="margin-top: 48px; padding-top: 32px; border-top: 2px solid #e5e7eb;">
-        <h2 style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 32px; text-align: center;">
-          Available Forms & Programs
-        </h2>
-        ${forms.map((form, index) => `
-          <div style="margin-bottom: ${index < forms.length - 1 ? '32px' : '0'}; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
-            <h3 style="font-size: 20px; font-weight: 600; color: #3b82f6; margin-bottom: 12px;">
-              ${form.title}
-            </h3>
-            ${form.description ? `
-              <p style="color: #6b7280; margin-bottom: 16px; line-height: 1.6;">
-                ${form.description}
-              </p>
-            ` : ''}
-            <a href="/public-form/${form.id}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; transition: background-color 0.2s;">
-              Fill out this form
-            </a>
-          </div>
-          ${index < forms.length - 1 ? `<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">` : ''}
-        `).join('')}
-      </div>
-    `;
-
-    return html + formsHtml;
-  };
-
-  const processedHtml = newsletter.generated_html ? appendFormsToNewsletter(newsletter.generated_html) : '';
+  const decorationImages = [decoration1, decoration2, decoration3, decoration4, decoration5, decoration6];
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-background">
-      {/* Background decorations */}
-      <div className="absolute inset-0 pointer-events-none">
-        <img src={decoration1} alt="" className="absolute top-10 left-10 w-16 h-16 opacity-20 animate-float" />
-        <img src={decoration2} alt="" className="absolute top-20 right-20 w-20 h-20 opacity-15 animate-float-delayed" />
-        <img src={decoration3} alt="" className="absolute bottom-32 left-16 w-14 h-14 opacity-25 animate-float" />
-        <img src={decoration4} alt="" className="absolute bottom-20 right-12 w-18 h-18 opacity-20 animate-float-delayed" />
-        <img src={decoration5} alt="" className="absolute top-1/2 left-8 w-12 h-12 opacity-15 animate-float" />
-        <img src={decoration6} alt="" className="absolute top-1/3 right-6 w-16 h-16 opacity-20 animate-float-delayed" />
-      </div>
+    <div className="h-full overflow-y-auto bg-white relative z-20" style={{
+      background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                   radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                   radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                   radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                   radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                   radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+    }}>
+      {/* Background decorative images */}
+      {decorationImages.map((img, index) => {
+        const positions = [
+          { top: '8%', left: '5%', transform: 'rotate(-15deg)', width: '120px' },
+          { top: '15%', right: '8%', transform: 'rotate(25deg)', width: '90px' },
+          { top: '35%', left: '12%', transform: 'rotate(45deg)', width: '80px' },
+          { top: '55%', right: '15%', transform: 'rotate(-30deg)', width: '110px' },
+          { top: '75%', left: '20%', transform: 'rotate(60deg)', width: '70px' },
+          { top: '12%', left: '35%', transform: 'rotate(-45deg)', width: '130px' }
+        ];
+        const pos = positions[index % positions.length];
+        return (
+          <img
+            key={index}
+            src={img}
+            alt=""
+            className="absolute opacity-20 pointer-events-none z-0"
+            style={{
+              position: 'absolute',
+              top: pos.top,
+              left: pos.left,
+              right: pos.right,
+              transform: pos.transform,
+              width: pos.width,
+              opacity: 0.2
+            }}
+          />
+        );
+      })}
 
-      {/* Main content */}
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header with logo */}
-          <div className="text-center mb-8">
+      <div className="relative z-30 max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center">
+        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg z-40 border border-gray-200">
+          {/* Logo */}
+          <div className="text-center mb-8 relative z-50">
             <img 
               src={kindergartenLogo} 
-              alt="Kindergarten Logo" 
-              className="mx-auto mb-6 h-24 w-auto"
+              alt="Under the Rainbow Kindergarten and Nursery" 
+              className="max-w-full h-auto mx-auto mb-6"
+              style={{ maxWidth: '300px' }}
             />
           </div>
 
-          {/* Newsletter card */}
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            {/* Newsletter header */}
-            <div className="bg-gradient-to-r from-primary to-primary-foreground text-white p-8 text-center">
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">{newsletter.title}</h1>
-              {newsletter.description && (
-                <p className="text-lg opacity-90">{newsletter.description}</p>
-              )}
-              <div className="mt-4 text-sm opacity-75">
-                {newsletter.campus} • {new Date(newsletter.created_at).toLocaleDateString('hu-HU')}
+          {/* Newsletter Content */}
+          <div className="space-y-6 relative z-50">
+            {newsletter.generated_html ? (
+              <div dangerouslySetInnerHTML={{ __html: newsletter.generated_html }} />
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <p>A hírlevél tartalma még nem került generálásra.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Selected Forms Section */}
+          {forms && forms.length > 0 && (
+            <div className="border-t pt-6 mt-8 relative z-50">
+              <h3 className="text-lg font-semibold text-center mb-4">Forms & Programs</h3>
+              <div className="space-y-4">
+                {forms.map((form) => (
+                  <div key={form.id} className="bg-muted/30 rounded-lg p-4 border">
+                    <h4 className="font-medium text-sm mb-1">{form.title}</h4>
+                    {form.description && (
+                      <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{form.description}</p>
+                    )}
+                    <a 
+                      href={`/news-forms/public/${form.id}`}
+                      className="inline-flex items-center gap-1 text-xs h-8 px-3 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      Open Form
+                    </a>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Newsletter content */}
-            <div className="p-8">
-              {processedHtml ? (
-                <div 
-                  className="prose prose-lg max-w-none newsletter-content"
-                  dangerouslySetInnerHTML={{ __html: processedHtml }}
-                />
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <p>A hírlevél tartalma még nem került generálásra.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center mt-8 text-gray-600">
-            <p className="text-sm">
-              © {new Date().getFullYear()} Kindergarten. Minden jog fenntartva.
-            </p>
-          </div>
+          )}
         </div>
       </div>
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(5deg); }
-        }
-        
-        @keyframes float-delayed {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-15px) rotate(-5deg); }
-        }
-        
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        .animate-float-delayed {
-          animation: float-delayed 8s ease-in-out infinite;
-          animation-delay: 2s;
-        }
-
-        .newsletter-content h1,
-        .newsletter-content h2,
-        .newsletter-content h3 {
-          color: #1f2937;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-        }
-
-        .newsletter-content h1 {
-          font-size: 2rem;
-          font-weight: 700;
-        }
-
-        .newsletter-content h2 {
-          font-size: 1.5rem;
-          font-weight: 600;
-        }
-
-        .newsletter-content h3 {
-          font-size: 1.25rem;
-          font-weight: 600;
-        }
-
-        .newsletter-content p {
-          margin-bottom: 1rem;
-          line-height: 1.7;
-          color: #374151;
-        }
-
-        .newsletter-content ul,
-        .newsletter-content ol {
-          margin: 1rem 0;
-          padding-left: 2rem;
-          color: #374151;
-        }
-
-        .newsletter-content li {
-          margin-bottom: 0.5rem;
-        }
-
-        .newsletter-content a {
-          color: #3b82f6;
-          text-decoration: underline;
-        }
-
-        .newsletter-content a:hover {
-          color: #1d4ed8;
-        }
-
-        .newsletter-content img {
-          max-width: 100%;
-          height: auto;
-          border-radius: 8px;
-          margin: 1rem 0;
-        }
-      `}</style>
     </div>
   );
 };
