@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import type { Newsletter } from '../../types/newsletter-types';
@@ -165,8 +165,8 @@ export const PublicNewsletterPage = () => {
                     {form.description && (
                       <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{form.description}</p>
                     )}
-                    <a 
-                      href={`/form/${form.id}`}
+                    <Link 
+                      to={`/form/${form.id}`}
                       className="inline-flex items-center gap-1 text-xs h-8 px-3 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -175,7 +175,7 @@ export const PublicNewsletterPage = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                       Open Form
-                    </a>
+                    </Link>
                   </div>
                 ))}
               </div>
