@@ -138,166 +138,45 @@ export const EmailCampaignPage = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${emailData.subject}</title>
         <style>
-          body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
-            line-height: 1.6; 
-            color: #2d3748; 
-            margin: 0; 
-            padding: 0; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          }
-          .email-wrapper { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            padding: 40px 20px; 
-            min-height: 100vh;
-          }
-          .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: #ffffff; 
-            border-radius: 20px; 
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-          }
-          .header { 
-            text-align: center; 
-            padding: 40px 20px 30px; 
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            position: relative;
-          }
-          .header::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            right: 0;
-            height: 20px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            clip-path: ellipse(100% 100% at 50% 0%);
-          }
-          .logo-container { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            margin-bottom: 10px;
-          }
-          .logo { 
-            height: 80px; 
-            width: auto;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-          }
-          .content { 
-            padding: 50px 40px 40px; 
-            background: #ffffff;
-          }
-          .content p {
-            font-size: 16px;
-            line-height: 1.8;
-            margin-bottom: 20px;
-            color: #4a5568;
-          }
-          .content p:first-child {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2d3748;
-          }
-          .button-container {
-            text-align: center;
-            margin: 40px 0;
-          }
-          .button { 
-            display: inline-block; 
-            padding: 16px 32px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white !important; 
-            text-decoration: none; 
-            border-radius: 50px; 
-            font-weight: 600;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-            transition: all 0.3s ease;
-          }
-          .button:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-          }
-          .footer { 
-            text-align: center; 
-            padding: 30px 40px; 
-            background: #f7fafc;
-            border-top: 1px solid #e2e8f0;
-          }
-          .footer p {
-            color: #718096; 
-            font-size: 14px;
-            margin: 8px 0;
-            line-height: 1.5;
-          }
-          .footer a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-          }
-          .footer a:hover {
-            text-decoration: underline;
-          }
-          .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-            margin: 30px 0;
-          }
-          .highlight-box {
-            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
-            padding: 25px;
-            border-radius: 15px;
-            margin: 30px 0;
-            text-align: center;
-            border-left: 4px solid #fdcb6e;
-          }
-          @media only screen and (max-width: 600px) {
-            .email-wrapper { padding: 20px 10px; }
-            .container { border-radius: 10px; }
-            .content { padding: 30px 20px; }
-            .header { padding: 30px 20px 20px; }
-            .footer { padding: 20px; }
-            .button { padding: 14px 28px; font-size: 15px; }
-          }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #f0f0f0; }
+          .logo { font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; }
+          .logo img { height: 60px; width: auto; }
+          .content { padding: 30px 0; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 20px 0; }
+          .button:hover { background-color: #5855eb; }
+          .footer { text-align: center; padding: 20px 0; border-top: 1px solid #f0f0f0; color: #666; font-size: 14px; }
         </style>
       </head>
       <body>
-        <div class="email-wrapper">
-          <div class="container">
-            <div class="header">
-              <div class="logo-container">
-                <img src="${window.location.origin}/assets/utr-logo.png" alt="Under the Rainbow" class="logo" />
+        <div class="container">
+          <div class="header">
+            <div class="logo">
+              <img src="${window.location.origin}/assets/utr-logo.png" alt="Under the Rainbow" />
+              Under the Rainbow Kindergarten
+            </div>
+          </div>
+          <div class="content">
+            ${emailData.content.split('\n').map(line => {
+              if (line.trim() === '[NEWSLETTER_LINK]' && newsletterTitle) {
+                return `<div style="text-align: center;"><a href="${emailData.buttonUrl}" class="button">${emailData.buttonText || 'Read Newsletter'}</a></div>`;
+              }
+              if (line.trim() === '[FORM_LINK]' && formTitle) {
+                return `<div style="text-align: center;"><a href="${emailData.buttonUrl}" class="button">${emailData.buttonText || 'Fill Form'}</a></div>`;
+              }
+              return `<p>${line}</p>`;
+            }).join('')}
+            ${hasButton && !newsletterTitle && !formTitle ? `
+              <div style="text-align: center;">
+                <a href="${emailData.buttonUrl}" class="button">${emailData.buttonText}</a>
               </div>
-            </div>
-            <div class="content">
-              ${emailData.content.split('\n').map(line => {
-                if (line.trim() === '[NEWSLETTER_LINK]' && newsletterTitle) {
-                  return `<div class="button-container"><a href="${emailData.buttonUrl}" class="button">${emailData.buttonText || 'Read Newsletter'}</a></div>`;
-                }
-                if (line.trim() === '[FORM_LINK]' && formTitle) {
-                  return `<div class="button-container"><a href="${emailData.buttonUrl}" class="button">${emailData.buttonText || 'Fill Form'}</a></div>`;
-                }
-                if (line.trim() === '') {
-                  return '<div class="divider"></div>';
-                }
-                return `<p>${line}</p>`;
-              }).join('')}
-              ${hasButton && !newsletterTitle && !formTitle ? `
-                <div class="button-container">
-                  <a href="${emailData.buttonUrl}" class="button">${emailData.buttonText}</a>
-                </div>
-              ` : ''}
-            </div>
-            <div class="footer">
-              <p><strong>Under the Rainbow Kindergarten and Nursery</strong></p>
-              <p>Budapest, Hungary</p>
-              <p><a href="mailto:info@undertherainbow.hu">info@undertherainbow.hu</a></p>
-            </div>
+            ` : ''}
+          </div>
+          <div class="footer">
+            <p>Under the Rainbow Kindergarten<br>
+            Budapest, Hungary<br>
+            <a href="mailto:info@undertherainbow.hu">info@undertherainbow.hu</a></p>
           </div>
         </div>
       </body>
