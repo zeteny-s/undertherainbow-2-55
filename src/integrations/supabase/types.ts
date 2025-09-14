@@ -845,6 +845,45 @@ export type Database = {
           },
         ]
       }
+      email_campaigns: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          recipient_count: number
+          recipients: string[]
+          sent_at: string
+          sent_by: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          recipient_count?: number
+          recipients?: string[]
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          recipient_count?: number
+          recipients?: string[]
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       families: {
         Row: {
           child_age: number | null

@@ -197,18 +197,28 @@ export const EmailCampaignPage = () => {
 
     setSending(true);
     try {
-      const { error } = await supabase.functions.invoke('send-gmail', {
+      // Get the current user's auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('send-gmail', {
         body: {
           to: recipients,
           subject: emailData.subject,
           htmlContent: generateEmailHTML(),
           fromName: 'Under the Rainbow Kindergarten'
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
         }
       });
 
       if (error) throw error;
 
-      addNotification('success', `Email campaign sent to ${recipients.length} recipients!`);
+      if (data.success) {
+        addNotification('success', `Email campaign sent successfully! ${data.sent} sent, ${data.failed || 0} failed.`);
+      } else {
+        addNotification('error', data.message || 'Failed to send email campaign.');
+      }
       navigate(-1);
     } catch (error: any) {
       console.error('Error sending email:', error);
