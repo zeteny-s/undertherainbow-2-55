@@ -37,11 +37,10 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         const textBlock = component.content;
         return (
           <div 
-            className={`mb-4 ${textBlock.textAlign === 'center' ? 'text-center' : textBlock.textAlign === 'right' ? 'text-right' : 'text-left'}`}
+            className="mb-4"
             style={{ 
-              fontSize: textBlock.fontSize || 'inherit',
-              fontWeight: textBlock.fontWeight || 'normal',
-              color: textBlock.color || 'inherit'
+              // Only apply alignment, let the pasted HTML preserve its own formatting
+              textAlign: textBlock.textAlign || 'left'
             }}
             dangerouslySetInnerHTML={{ __html: textBlock.content }}
           />

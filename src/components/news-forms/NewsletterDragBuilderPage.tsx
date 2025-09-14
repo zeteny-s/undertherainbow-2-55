@@ -362,9 +362,6 @@ export const NewsletterDragBuilderPage = () => {
               <div style="
                 margin-bottom: 15px; 
                 text-align: ${textBlock.textAlign || 'left'};
-                font-size: ${textBlock.fontSize || '16px'};
-                font-weight: ${textBlock.fontWeight || 'normal'};
-                color: ${textBlock.color || '#374151'};
                 line-height: 1.7;
               ">
                 ${textBlock.content}
