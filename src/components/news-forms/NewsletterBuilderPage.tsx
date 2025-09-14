@@ -274,7 +274,10 @@ export const NewsletterBuilderPage = () => {
 
         const { error: uploadError } = await supabase.storage
           .from('newsletters')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (uploadError) throw uploadError;
 

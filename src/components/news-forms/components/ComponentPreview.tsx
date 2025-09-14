@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
@@ -5,8 +6,10 @@ import { Checkbox } from '../../ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Button } from '../../ui/button';
-import { Upload } from 'lucide-react';
+import { Upload, X, FileIcon } from 'lucide-react';
 import { FormComponent } from '../../../types/form-types';
+import { supabase } from '../../../integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ComponentPreviewProps {
   component: FormComponent;
@@ -115,20 +118,7 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
       );
 
     case 'file-upload':
-      return (
-        <div className="space-y-2">
-          <Label className={labelClasses}>{component.label}</Label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-            <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-600 mb-2">
-              {component.placeholder || 'Click to upload or drag and drop'}
-            </p>
-            <Button variant="outline" size="sm">
-              Choose File
-            </Button>
-          </div>
-        </div>
-      );
+      return <FileUploadComponent component={component} value={value} onChange={onChange} />;
 
     case 'text-block':
       return (
@@ -164,4 +154,128 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
         </div>
       );
   }
+};
+
+// File Upload Component
+const FileUploadComponent = ({ component, value, onChange }: ComponentPreviewProps) => {
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>(
+    Array.isArray(value) ? value : (value ? [value] : [])
+  );
+
+  const fieldStyle = component.properties?.bold ? 'font-bold' : '';
+  const textSize = component.properties?.textSize || 'text-base';
+  const fontFamily = component.properties?.fontFamily || 'font-sans';
+  const textAlign = component.properties?.textAlign || 'text-left';
+  const labelClasses = `${fieldStyle} ${textSize} ${fontFamily} ${textAlign}`;
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `public/${fileName}`;
+
+        // Use form-images bucket for form uploads
+        const { data, error: uploadError } = await supabase.storage
+          .from('form-images')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('form-images')
+          .getPublicUrl(filePath);
+
+        return {
+          name: file.name,
+          url: publicUrl,
+          size: file.size,
+          type: file.type,
+          path: data.path
+        };
+      });
+
+      const newFiles = await Promise.all(uploadPromises);
+      const updatedFiles = [...uploadedFiles, ...newFiles];
+      setUploadedFiles(updatedFiles);
+      onChange?.(updatedFiles);
+      toast.success('Files uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast.error('Error uploading files');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    const updatedFiles = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(updatedFiles);
+    onChange?.(updatedFiles);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label className={labelClasses}>{component.label}</Label>
+      
+      {/* Upload Area */}
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+        <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+        <p className="text-sm text-gray-600 mb-2">
+          {component.placeholder || 'Click to upload or drag and drop'}
+        </p>
+        <div className="relative">
+          <Button variant="outline" size="sm" disabled={uploading}>
+            {uploading ? 'Uploading...' : 'Choose Files'}
+          </Button>
+          <input
+            type="file"
+            multiple
+            accept={component.properties?.acceptedTypes || 'image/*,application/pdf'}
+            onChange={handleFileUpload}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            disabled={uploading}
+          />
+        </div>
+        {component.properties?.acceptedTypes && (
+          <p className="text-xs text-gray-500 mt-1">
+            Accepted types: {component.properties.acceptedTypes}
+          </p>
+        )}
+      </div>
+
+      {/* Uploaded Files List */}
+      {uploadedFiles.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Uploaded Files:</Label>
+          {uploadedFiles.map((file, index) => (
+            <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-gray-50">
+              <FileIcon className="h-4 w-4 text-gray-500" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                {file.size && (
+                  <p className="text-xs text-gray-500">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveFile(index)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
