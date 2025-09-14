@@ -48,61 +48,36 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
       let content = '';
       
       if (htmlData) {
-        // Clean HTML while preserving formatting
+        // Minimal cleaning - preserve as much formatting as possible
         content = htmlData
           .replace(/<script[^>]*>.*?<\/script>/gi, '')
           .replace(/<style[^>]*>.*?<\/style>/gi, '')
           .replace(/<link[^>]*>/gi, '')
-          .replace(/class\s*=\s*"[^"]*"/gi, '')
-          .replace(/id\s*=\s*"[^"]*"/gi, '')
           .replace(/onclick\s*=\s*"[^"]*"/gi, '')
           .replace(/javascript:/gi, '');
           
-        // Keep important style attributes for formatting
-        const allowedStyleProps = ['font-family', 'font-size', 'font-weight', 'color', 'text-align', 'line-height', 'margin', 'padding'];
-        content = content.replace(/style\s*=\s*"([^"]*)"/gi, (_, styles: string) => {
-          const filteredStyles = styles.split(';')
-            .filter((style: string) => {
-              const prop = style.trim().split(':')[0]?.trim().toLowerCase();
-              return allowedStyleProps.includes(prop);
-            })
-            .join(';');
-          return filteredStyles ? `style="${filteredStyles}"` : '';
-        });
-          
-        // Allow more formatting tags while preserving structure
-        const allowedTags = /<\/?(?:p|br|div|span|ul|ol|li|strong|b|em|i|u|h[1-6]|table|tr|td|th|font)(?:\s[^>]*)?>/gi;
-        content = content.replace(/<[^>]*>/g, (match) => {
-          return allowedTags.test(match) ? match : '';
-        });
+        // Keep all style attributes - don't filter them
+        // This preserves original font sizes, colors, spacing, etc.
+        
+        // Only remove dangerous tags, keep everything else
+        content = content.replace(/<\/?(?:script|style|iframe|object|embed|form|input|textarea|select|button|meta|head|html|body|title)[^>]*>/gi, '');
+        
       } else if (textData) {
-        // For plain text, preserve line breaks
+        // For plain text, preserve line breaks and convert to HTML
         content = textData
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n\n/g, '</p><p>')
           .replace(/\n/g, '<br>')
           .replace(/\r\n/g, '<br>')
           .replace(/\r/g, '<br>');
+        content = '<p>' + content + '</p>';
       }
       
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        
-        const div = document.createElement('div');
-        div.innerHTML = content;
-        
-        const fragment = document.createDocumentFragment();
-        Array.from(div.childNodes).forEach(node => {
-          fragment.appendChild(node.cloneNode(true));
-        });
-        
-        range.insertNode(fragment);
-        
-        // Move cursor to end of inserted content
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
+      // Insert the content using execCommand to maintain undo history
+      if (content) {
+        document.execCommand('insertHTML', false, content);
         handleInput();
       }
     }
@@ -430,6 +405,7 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
 
         .rich-text-editor p {
           margin: 8px 0;
+          line-height: 1.4;
         }
 
         .rich-text-editor h1,
@@ -440,7 +416,15 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
         .rich-text-editor h6 {
           margin: 12px 0 8px 0;
           font-weight: bold;
+          line-height: 1.2;
         }
+
+        .rich-text-editor h1 { font-size: 2em; }
+        .rich-text-editor h2 { font-size: 1.5em; }
+        .rich-text-editor h3 { font-size: 1.17em; }
+        .rich-text-editor h4 { font-size: 1em; }
+        .rich-text-editor h5 { font-size: 0.83em; }
+        .rich-text-editor h6 { font-size: 0.67em; }
 
         .rich-text-editor strong,
         .rich-text-editor b {
@@ -450,6 +434,51 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
         .rich-text-editor em,
         .rich-text-editor i {
           font-style: italic;
+        }
+
+        .rich-text-editor u {
+          text-decoration: underline;
+        }
+
+        .rich-text-editor a {
+          color: #0066cc;
+          text-decoration: underline;
+        }
+
+        .rich-text-editor a:hover {
+          color: #0056b3;
+        }
+
+        /* Preserve white space and line breaks */
+        .rich-text-editor {
+          white-space: pre-wrap;
+          word-wrap: break-word;
+        }
+
+        /* Better spacing for nested lists */
+        .rich-text-editor ul ul,
+        .rich-text-editor ol ol,
+        .rich-text-editor ul ol,
+        .rich-text-editor ol ul {
+          margin: 0;
+          padding-left: 20px;
+        }
+
+        /* Preserve font styles from pasted content */
+        .rich-text-editor [style*="font-family"],
+        .rich-text-editor [style*="font-size"],
+        .rich-text-editor [style*="color"],
+        .rich-text-editor [style*="font-weight"] {
+          /* Let inline styles take precedence */
+        }
+
+        /* Better spacing for different content blocks */
+        .rich-text-editor div {
+          margin: 4px 0;
+        }
+
+        .rich-text-editor span {
+          /* Preserve inline formatting */
         }
       `}</style>
     </div>
