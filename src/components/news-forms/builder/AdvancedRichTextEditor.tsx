@@ -44,25 +44,43 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
     const htmlData = e.clipboardData.getData('text/html');
     const textData = e.clipboardData.getData('text/plain');
     
-    let content = htmlData || textData;
-    
     if (editorRef.current) {
+      let content = '';
+      
       if (htmlData) {
-        // Clean HTML while preserving important formatting
-        content = content
+        // Clean HTML while preserving formatting
+        content = htmlData
           .replace(/<script[^>]*>.*?<\/script>/gi, '')
           .replace(/<style[^>]*>.*?<\/style>/gi, '')
           .replace(/<link[^>]*>/gi, '')
-          .replace(/style\s*=\s*"[^"]*"/gi, '')
           .replace(/class\s*=\s*"[^"]*"/gi, '')
           .replace(/id\s*=\s*"[^"]*"/gi, '')
-          .replace(/&nbsp;/gi, ' ');
+          .replace(/onclick\s*=\s*"[^"]*"/gi, '')
+          .replace(/javascript:/gi, '');
           
-        // Preserve essential tags and structure
-        const allowedTags = /<\/?(?:p|br|ul|ol|li|strong|b|em|i|h[1-6]|table|tr|td|th)(?:\s[^>]*)?>/gi;
+        // Keep important style attributes for formatting
+        const allowedStyleProps = ['font-family', 'font-size', 'font-weight', 'color', 'text-align', 'line-height', 'margin', 'padding'];
+        content = content.replace(/style\s*=\s*"([^"]*)"/gi, (_, styles: string) => {
+          const filteredStyles = styles.split(';')
+            .filter((style: string) => {
+              const prop = style.trim().split(':')[0]?.trim().toLowerCase();
+              return allowedStyleProps.includes(prop);
+            })
+            .join(';');
+          return filteredStyles ? `style="${filteredStyles}"` : '';
+        });
+          
+        // Allow more formatting tags while preserving structure
+        const allowedTags = /<\/?(?:p|br|div|span|ul|ol|li|strong|b|em|i|u|h[1-6]|table|tr|td|th|font)(?:\s[^>]*)?>/gi;
         content = content.replace(/<[^>]*>/g, (match) => {
           return allowedTags.test(match) ? match : '';
         });
+      } else if (textData) {
+        // For plain text, preserve line breaks
+        content = textData
+          .replace(/\n/g, '<br>')
+          .replace(/\r\n/g, '<br>')
+          .replace(/\r/g, '<br>');
       }
       
       const selection = window.getSelection();
