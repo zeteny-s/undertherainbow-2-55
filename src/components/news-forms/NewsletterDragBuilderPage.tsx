@@ -23,7 +23,6 @@ import { NewsletterComponent, NewsletterBuilderState } from '../../types/newslet
 import { FormForSelection } from '../../types/newsletter-types';
 import { CampusType } from '../../types/form-types';
 import { toast } from 'sonner';
-import { formatDateTime } from '../../utils/formatters';
 export const NewsletterDragBuilderPage = () => {
   const {
     newsletterId
@@ -37,7 +36,6 @@ export const NewsletterDragBuilderPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [newsletterState, setNewsletterState] = useState<NewsletterBuilderState>({
     title: 'Untitled Newsletter',
     description: '',
@@ -71,7 +69,6 @@ export const NewsletterDragBuilderPage = () => {
     const autoSave = async () => {
       try {
         await handleSave(true); // Pass true to indicate auto-save
-        setLastSaved(new Date());
       } catch (error) {
         console.error('Auto-save failed:', error);
       }
@@ -606,11 +603,6 @@ export const NewsletterDragBuilderPage = () => {
             
             
             <div className="flex items-center gap-2">
-              {lastSaved && (
-                <span className="text-sm text-muted-foreground">
-                  Last saved: {formatDateTime(lastSaved.toISOString())}
-                </span>
-              )}
               <Button onClick={() => handleSave(false)} disabled={saving} className="flex items-center gap-2">
                 <Save className="h-4 w-4" />
                 {saving ? 'Publishing...' : 'Publish Newsletter'}
