@@ -126,52 +126,106 @@ serve(async (req) => {
 });
 
 async function getGoogleAccessToken(): Promise<string> {
-  const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
-  const googleCalendarCredentials = Deno.env.get('GOOGLE_CALENDAR_API');
+  const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT');
   
-  console.log('Google Calendar credentials check:', {
-    hasRefreshToken: !!refreshToken,
-    hasCalendarCredentials: !!googleCalendarCredentials
+  console.log('Google Service Account check:', {
+    hasServiceAccount: !!serviceAccountKey
   });
   
-  if (!refreshToken) {
-    throw new Error('GOOGLE_REFRESH_TOKEN not configured. Please add it in Supabase Edge Function Secrets.');
-  }
-  
-  if (!googleCalendarCredentials) {
-    throw new Error('GOOGLE_CALENDAR_API credentials not configured. Please add it in Supabase Edge Function Secrets.');
+  if (!serviceAccountKey) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT not configured. Please add it in Supabase Edge Function Secrets.');
   }
 
-  let credentials;
+  let serviceAccount;
   try {
-    // Try to parse as JSON first
-    credentials = JSON.parse(googleCalendarCredentials);
-    if (!credentials.client_id || !credentials.client_secret) {
-      throw new Error('Missing client_id or client_secret in GOOGLE_CALENDAR JSON');
+    serviceAccount = JSON.parse(serviceAccountKey);
+    if (!serviceAccount.private_key || !serviceAccount.client_email) {
+      throw new Error('Missing private_key or client_email in service account JSON');
     }
   } catch (error) {
-    console.error('Error parsing GOOGLE_CALENDAR credentials:', error);
-    throw new Error('GOOGLE_CALENDAR_API must contain valid JSON with client_id and client_secret. Example: {"client_id": "your_id", "client_secret": "your_secret"}');
+    console.error('Error parsing service account credentials:', error);
+    throw new Error('GOOGLE_SERVICE_ACCOUNT must contain valid service account JSON');
   }
   
+  // Create JWT assertion
+  const jwt = await createJWT(serviceAccount);
+  
+  // Exchange JWT for access token
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: credentials.client_id,
-      client_secret: credentials.client_secret,
-      refresh_token: refreshToken,
-      grant_type: 'refresh_token',
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt,
     }),
   });
 
   const data = await response.json();
   
   if (!response.ok) {
-    throw new Error(`Failed to get access token: ${data.error}`);
+    console.error('Token exchange error:', data);
+    throw new Error(`Failed to get access token: ${data.error || data.error_description}`);
   }
 
   return data.access_token;
+}
+
+async function createJWT(serviceAccount: any): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  
+  const header = {
+    alg: 'RS256',
+    typ: 'JWT',
+  };
+  
+  const payload = {
+    iss: serviceAccount.client_email,
+    scope: 'https://www.googleapis.com/auth/calendar',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600, // 1 hour
+    iat: now,
+  };
+  
+  const encoder = new TextEncoder();
+  const headerB64 = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const payloadB64 = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  
+  const unsignedToken = `${headerB64}.${payloadB64}`;
+  
+  // Import private key
+  const privateKey = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToArrayBuffer(serviceAccount.private_key),
+    {
+      name: 'RSASSA-PKCS1-v1_5',
+      hash: 'SHA-256',
+    },
+    false,
+    ['sign']
+  );
+  
+  // Sign the token
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    privateKey,
+    encoder.encode(unsignedToken)
+  );
+  
+  const signatureB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  
+  return `${unsignedToken}.${signatureB64}`;
+}
+
+function pemToArrayBuffer(pem: string): ArrayBuffer {
+  const b64Lines = pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, '');
+  const b64Prefix = b64Lines;
+  const binaryString = atob(b64Prefix);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
 
 async function createGoogleCalendar(
