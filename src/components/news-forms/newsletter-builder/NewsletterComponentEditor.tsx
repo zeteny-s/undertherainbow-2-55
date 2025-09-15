@@ -7,15 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { AdvancedRichTextEditor } from '../builder/AdvancedRichTextEditor';
 import { NewsletterComponent } from '../../../types/newsletter-builder-types';
+import { FormForSelection } from '../../../types/newsletter-types';
 
 interface NewsletterComponentEditorProps {
   component: NewsletterComponent;
+  selectedForms: FormForSelection[];
   onUpdate: (component: NewsletterComponent) => void;
   onClose: () => void;
 }
 
 export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps> = ({
   component,
+  selectedForms,
   onUpdate,
   onClose
 }) => {
@@ -225,13 +228,24 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
               />
             </div>
             <div>
-              <Label htmlFor="form-button-id">Form ID</Label>
-              <Input
-                id="form-button-id"
-                value={editedComponent.content.formId}
-                onChange={(e) => updateContent('formId', e.target.value)}
-                placeholder="Enter form ID to link to"
-              />
+              <Label htmlFor="form-button-form">Select Form</Label>
+              <Select value={editedComponent.content.formId} onValueChange={(value) => updateContent('formId', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a form" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedForms.map((form) => (
+                    <SelectItem key={form.id} value={form.id}>
+                      {form.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedForms.length === 0 && (
+                <p className="text-sm text-gray-500 mt-1">
+                  No forms selected. Please add forms to your newsletter first.
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="form-button-style">Button Style</Label>

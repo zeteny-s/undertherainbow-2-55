@@ -633,7 +633,12 @@ export const NewsletterDragBuilderPage = () => {
 
           {/* Component Editor */}
           {selectedComponent && <div className="w-80 border-l bg-white">
-              <NewsletterComponentEditor component={selectedComponent} onUpdate={handleComponentUpdate} onClose={() => setSelectedComponent(null)} />
+              <NewsletterComponentEditor 
+                component={selectedComponent} 
+                selectedForms={selectedForms}
+                onUpdate={handleComponentUpdate} 
+                onClose={() => setSelectedComponent(null)} 
+              />
             </div>}
 
           {/* AI Chat */}
