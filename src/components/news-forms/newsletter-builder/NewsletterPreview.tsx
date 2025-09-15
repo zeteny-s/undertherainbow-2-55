@@ -24,6 +24,8 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
   const { isOver, setNodeRef } = useDroppable({ id: 'newsletter-builder' });
 
   console.log('NewsletterPreview rendering:', { components: components.length, selectedForms: selectedForms.length });
+  console.log('Components:', components);
+  console.log('Selected forms:', selectedForms);
 
   const renderComponent = (component: NewsletterComponent) => {
     console.log('Rendering component:', component.type, component.content);
@@ -150,7 +152,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
               }}
             >
               <h3 className={`font-semibold text-xl mb-3 ${textAlignment}`}>
-                {formSection.title || 'Additional Infos&Sign Up Forms'}
+                {formSection.title || 'Additional Infos & Sign Up Forms'}
               </h3>
               {formSection.description && (
                 <p className={`text-sm mb-4 opacity-80 ${textAlignment}`}>{formSection.description}</p>

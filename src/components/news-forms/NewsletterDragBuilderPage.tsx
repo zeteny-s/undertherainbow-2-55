@@ -91,11 +91,20 @@ export const NewsletterDragBuilderPage = () => {
 
       // Load components from JSON if available, fallback to parsing HTML
       let components: NewsletterComponent[] = [];
+      console.log('Newsletter data:', newsletterData);
+      console.log('Available components:', newsletterData.components);
+      console.log('Generated HTML length:', newsletterData.generated_html?.length);
+      
       if (newsletterData.components && Array.isArray(newsletterData.components)) {
         components = newsletterData.components as any as NewsletterComponent[];
+        console.log('Loaded components from JSON:', components);
       } else if (newsletterData.generated_html) {
+        console.log('Parsing HTML to components...');
         components = parseHtmlToComponents(newsletterData.generated_html);
+        console.log('Parsed components from HTML:', components);
       }
+      
+      console.log('Final components to render:', components);
       
       setNewsletterState({
         id: newsletterData.id,
