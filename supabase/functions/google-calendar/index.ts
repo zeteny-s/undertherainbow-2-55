@@ -41,6 +41,12 @@ interface CalendarRequest {
 }
 
 serve(async (req) => {
+  console.log('Google Calendar function called:', {
+    method: req.method,
+    url: req.url,
+    hasAuth: !!req.headers.get('Authorization')
+  });
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -55,11 +61,16 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const { data: { user } } = await supabaseClient.auth.getUser(token);
 
+    console.log('User authentication:', { hasUser: !!user, userId: user?.id });
+
     if (!user) {
       throw new Error('Unauthorized');
     }
 
-    const { action, calendarData, eventData, pdfContent }: CalendarRequest = await req.json();
+    const requestBody = await req.json();
+    console.log('Request body:', requestBody);
+    
+    const { action, calendarData, eventData, pdfContent } = requestBody;
     
     const accessToken = await getGoogleAccessToken();
     
@@ -88,8 +99,24 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in google-calendar function:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      action: req.method,
+      authHeader: !!req.headers.get('Authorization')
+    });
+    
+    let errorMessage = error.message;
+    if (error.message.includes('credentials not configured') || error.message.includes('GOOGLE_')) {
+      errorMessage = `Google API setup issue: ${error.message}. Please check your Supabase Edge Function Secrets.`;
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: error.message,
+        timestamp: new Date().toISOString()
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -100,19 +127,31 @@ serve(async (req) => {
 
 async function getGoogleAccessToken(): Promise<string> {
   const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
-  const googleSheetApi = Deno.env.get('GOOGLE_SHEET_API');
+  const googleCalendarCredentials = Deno.env.get('GOOGLE_CALENDAR');
   
-  if (!refreshToken || !googleSheetApi) {
-    throw new Error('Google credentials not configured');
+  console.log('Google Calendar credentials check:', {
+    hasRefreshToken: !!refreshToken,
+    hasCalendarCredentials: !!googleCalendarCredentials
+  });
+  
+  if (!refreshToken) {
+    throw new Error('GOOGLE_REFRESH_TOKEN not configured. Please add it in Supabase Edge Function Secrets.');
+  }
+  
+  if (!googleCalendarCredentials) {
+    throw new Error('GOOGLE_CALENDAR credentials not configured. Please add it in Supabase Edge Function Secrets.');
   }
 
   let credentials;
   try {
     // Try to parse as JSON first
-    credentials = JSON.parse(googleSheetApi);
+    credentials = JSON.parse(googleCalendarCredentials);
+    if (!credentials.client_id || !credentials.client_secret) {
+      throw new Error('Missing client_id or client_secret in GOOGLE_CALENDAR JSON');
+    }
   } catch (error) {
-    // If not JSON, assume it's a plain API key and we need to use OAuth client credentials
-    throw new Error('GOOGLE_SHEET_API must contain JSON with client_id and client_secret');
+    console.error('Error parsing GOOGLE_CALENDAR credentials:', error);
+    throw new Error('GOOGLE_CALENDAR must contain valid JSON with client_id and client_secret. Example: {"client_id": "your_id", "client_secret": "your_secret"}');
   }
   
   const response = await fetch('https://oauth2.googleapis.com/token', {
