@@ -223,24 +223,48 @@ export const GoogleCalendarsPage = () => {
 
   return (
     <div className="space-y-8">
+      {/* Header Section */}
+      <div className="text-center space-y-4">
+        <h1 className="text-3xl font-bold">Google Calendar Management</h1>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Create and manage Google Calendars, add events, and upload PDF schedules to automatically extract calendar events.
+        </p>
+      </div>
+
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-4 justify-center">
         <Button
           onClick={() => setShowCreateForm(true)}
           className="flex items-center gap-2"
+          size="lg"
         >
-          <Plus className="h-4 w-4" />
-          Create Google Calendar
+          <Plus className="h-5 w-5" />
+          Create New Calendar
         </Button>
         <Button
           onClick={() => setShowEventForm(true)}
           variant="outline"
           disabled={calendars.length === 0}
           className="flex items-center gap-2"
+          size="lg"
         >
-          <Calendar className="h-4 w-4" />
-          Add Event
+          <Calendar className="h-5 w-5" />
+          Add Single Event
         </Button>
+        {calendars.length > 0 && (
+          <Button
+            onClick={() => {
+              const pdfSection = document.getElementById('pdf-upload-section');
+              pdfSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            variant="secondary"
+            className="flex items-center gap-2"
+            size="lg"
+          >
+            <Clock className="h-5 w-5" />
+            Upload PDF Schedule
+          </Button>
+        )}
       </div>
 
       {/* Create Calendar Form */}
@@ -290,11 +314,17 @@ export const GoogleCalendarsPage = () => {
 
       {/* PDF Upload Section */}
       {calendars.length > 0 && (
-        <Card className="border-2 border-secondary/20">
+        <Card id="pdf-upload-section" className="border-2 border-accent/30 bg-accent/5">
           <CardHeader>
-            <CardTitle>Upload PDF Calendar</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-accent" />
+              Upload PDF Calendar Schedule
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Upload a PDF schedule and our AI will automatically extract events and add them to your selected Google Calendar.
+            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <Select
               value={selectedCalendar}
               onValueChange={setSelectedCalendar}
@@ -311,19 +341,36 @@ export const GoogleCalendarsPage = () => {
               </SelectContent>
             </Select>
             
-            <div className="space-y-2">
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              />
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:transition-colors"
+                  id="pdf-upload"
+                />
+                <div className="mt-2 text-sm text-muted-foreground">
+                  {pdfFile ? `Selected: ${pdfFile.name}` : 'Choose a PDF file with your calendar schedule'}
+                </div>
+              </div>
               <Button 
                 onClick={processPdfCalendar} 
                 disabled={!pdfFile || !selectedCalendar || isProcessingPdf}
                 className="w-full"
+                size="lg"
               >
-                {isProcessingPdf ? 'Processing...' : 'Extract Events from PDF'}
+                {isProcessingPdf ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Processing PDF...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Extract Events from PDF
+                  </>
+                )}
               </Button>
             </div>
 
@@ -355,9 +402,15 @@ export const GoogleCalendarsPage = () => {
 
       {/* Add Event Form */}
       {showEventForm && (
-        <Card className="border-2 border-secondary/20">
+        <Card className="border-2 border-primary/30 bg-primary/5">
           <CardHeader>
-            <CardTitle>Add Event to Calendar</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Create Calendar Event
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Add a single event or create recurring events (classes, meetings, etc.) to your Google Calendar.
+            </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddEvent} className="space-y-4">
@@ -426,41 +479,54 @@ export const GoogleCalendarsPage = () => {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={eventForm.recurring}
-                  onChange={(e) => setEventForm({ ...eventForm, recurring: e.target.checked })}
-                  className="rounded"
-                />
-                <label className="text-sm">Recurring Event</label>
-              </div>
-
-              {eventForm.recurring && (
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-sm font-medium">Repeat</label>
-                    <Select value={eventForm.recurringType} onValueChange={(value) => setEventForm({ ...eventForm, recurringType: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">End Date</label>
-                    <Input
-                      type="date"
-                      value={eventForm.recurringEnd}
-                      onChange={(e) => setEventForm({ ...eventForm, recurringEnd: e.target.value })}
-                    />
-                  </div>
+              {/* Recurring Event Section */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={eventForm.recurring}
+                    onChange={(e) => setEventForm({ ...eventForm, recurring: e.target.checked })}
+                    className="rounded w-4 h-4"
+                    id="recurring-checkbox"
+                  />
+                  <label htmlFor="recurring-checkbox" className="text-sm font-medium cursor-pointer">
+                    Make this a recurring event (for classes, weekly meetings, etc.)
+                  </label>
                 </div>
-              )}
+
+                {eventForm.recurring && (
+                  <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium block mb-2">Repeat Frequency</label>
+                        <Select value={eventForm.recurringType} onValueChange={(value) => setEventForm({ ...eventForm, recurringType: value })}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="daily">Every Day</SelectItem>
+                            <SelectItem value="weekly">Every Week (Same Day)</SelectItem>
+                            <SelectItem value="monthly">Every Month (Same Date)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium block mb-2">Recurrence End Date</label>
+                        <Input
+                          type="date"
+                          value={eventForm.recurringEnd}
+                          onChange={(e) => setEventForm({ ...eventForm, recurringEnd: e.target.value })}
+                          placeholder="When should it stop repeating?"
+                        />
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded">
+                      <strong>Tip:</strong> Use recurring events for regular classes, weekly meetings, or semester-long schedules.
+                      The event will repeat {eventForm.recurringType} until {eventForm.recurringEnd || 'you specify an end date'}.
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="flex gap-2">
                 <Button type="submit" disabled={loading || !selectedCalendar}>
