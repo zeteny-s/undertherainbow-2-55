@@ -1,5 +1,5 @@
 import React from 'react';
-import { Type, Image, Minus, MousePointer, Heading1, Calendar, FileText } from 'lucide-react';
+import { Type, Image, Minus, MousePointer, Heading1, Calendar, FileText, Link } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { Card, CardContent } from '../../ui/card';
 import { NewsletterComponentType } from '../../../types/newsletter-builder-types';
@@ -61,6 +61,20 @@ const componentLibrary: ComponentLibraryItem[] = [
       backgroundColor: '#3b82f6',
       textColor: '#ffffff',
       size: 'medium'
+    }
+  },
+  {
+    type: 'form-button',
+    name: 'Form Button',
+    icon: Link,
+    description: 'Add button linking to a specific form',
+    defaultConfig: {
+      text: 'Sign Up Now',
+      formId: '',
+      backgroundColor: '#3b82f6',
+      textColor: '#ffffff',
+      size: 'medium',
+      buttonStyle: 'primary'
     }
   },
   {

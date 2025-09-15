@@ -13,6 +13,7 @@ export type NewsletterComponentType =
   | 'heading'
   | 'divider'
   | 'button'
+  | 'form-button'
   | 'form-section'
   | 'calendar-button';
 
@@ -53,6 +54,15 @@ export interface NewsletterButton {
   backgroundColor?: string;
   textColor?: string;
   size?: 'small' | 'medium' | 'large';
+}
+
+export interface NewsletterFormButton {
+  text: string;
+  formId: string;
+  backgroundColor?: string;
+  textColor?: string;
+  size?: 'small' | 'medium' | 'large';
+  buttonStyle?: 'primary' | 'secondary' | 'outline';
 }
 
 export interface NewsletterDivider {

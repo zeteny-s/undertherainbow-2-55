@@ -212,6 +212,74 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
           </div>
         );
 
+      case 'form-button':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="form-button-text">Button Text</Label>
+              <Input
+                id="form-button-text"
+                value={editedComponent.content.text}
+                onChange={(e) => updateContent('text', e.target.value)}
+                placeholder="e.g., Sign Up Now"
+              />
+            </div>
+            <div>
+              <Label htmlFor="form-button-id">Form ID</Label>
+              <Input
+                id="form-button-id"
+                value={editedComponent.content.formId}
+                onChange={(e) => updateContent('formId', e.target.value)}
+                placeholder="Enter form ID to link to"
+              />
+            </div>
+            <div>
+              <Label htmlFor="form-button-style">Button Style</Label>
+              <Select value={editedComponent.content.buttonStyle || 'primary'} onValueChange={(value) => updateContent('buttonStyle', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="primary">Primary</SelectItem>
+                  <SelectItem value="secondary">Secondary</SelectItem>
+                  <SelectItem value="outline">Outline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="form-button-bg">Background Color</Label>
+              <Input
+                id="form-button-bg"
+                type="color"
+                value={editedComponent.content.backgroundColor}
+                onChange={(e) => updateContent('backgroundColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="form-button-text-color">Text Color</Label>
+              <Input
+                id="form-button-text-color"
+                type="color"
+                value={editedComponent.content.textColor}
+                onChange={(e) => updateContent('textColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="form-button-size">Size</Label>
+              <Select value={editedComponent.content.size} onValueChange={(value) => updateContent('size', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
       case 'divider':
         return (
           <div className="space-y-4">

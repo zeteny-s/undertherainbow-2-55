@@ -81,6 +81,41 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
           </div>
         );
       
+      case 'form-button':
+        const formButton = component.content;
+        return (
+          <div className="mb-4 text-center">
+            <a
+              href={`/news-forms/public/${formButton.formId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md ${
+                formButton.size === 'small' ? 'px-4 py-2 text-sm' : 
+                formButton.size === 'large' ? 'px-8 py-4 text-lg' : 'px-6 py-3'
+              } ${
+                formButton.buttonStyle === 'outline' 
+                  ? 'border-2 bg-transparent hover:bg-opacity-10' 
+                  : formButton.buttonStyle === 'secondary'
+                  ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  : 'hover:opacity-90'
+              }`}
+              style={{
+                backgroundColor: formButton.buttonStyle === 'outline' ? 'transparent' : 
+                                formButton.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                formButton.backgroundColor || '#3b82f6',
+                color: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3b82f6') :
+                       formButton.buttonStyle === 'secondary' ? '#1f2937' :
+                       formButton.textColor || '#ffffff',
+                borderColor: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3b82f6') : 'transparent',
+                borderWidth: formButton.buttonStyle === 'outline' ? '2px' : '0'
+              }}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {formButton.text || 'Sign Up Now'}
+            </a>
+          </div>
+        );
+      
       case 'divider':
         return <hr className="my-6 border-gray-300" />;
       
