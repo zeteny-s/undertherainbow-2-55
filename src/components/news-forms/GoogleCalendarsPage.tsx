@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { toast } from 'sonner';
-
 interface GoogleCalendar {
   id: string;
   title: string;
@@ -21,9 +20,10 @@ interface GoogleCalendar {
   share_link: string;
   campus: string;
   created_at: string;
-  calendar_events_google?: { count: number }[];
+  calendar_events_google?: {
+    count: number;
+  }[];
 }
-
 interface CalendarEvent {
   title: string;
   description?: string;
@@ -35,9 +35,10 @@ interface CalendarEvent {
   recurringType?: string;
   recurringEnd?: string;
 }
-
 export const GoogleCalendarsPage = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -54,7 +55,6 @@ export const GoogleCalendarsPage = () => {
     description: '',
     campus: 'Feketerigó' as const
   });
-
   const [eventForm, setEventForm] = useState<CalendarEvent>({
     title: '',
     description: '',
@@ -66,17 +66,19 @@ export const GoogleCalendarsPage = () => {
     recurringType: 'weekly',
     recurringEnd: ''
   });
-
   useEffect(() => {
     fetchCalendars();
   }, []);
-
   const fetchCalendars = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('google-calendar', {
-        body: { action: 'list_calendars' }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('google-calendar', {
+        body: {
+          action: 'list_calendars'
+        }
       });
-
       if (error) throw error;
       setCalendars(data.calendars || []);
     } catch (error) {
@@ -86,24 +88,27 @@ export const GoogleCalendarsPage = () => {
       setLoading(false);
     }
   };
-
   const handleCreateCalendar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
-
     setIsCreatingCalendar(true);
     try {
-      const { error } = await supabase.functions.invoke('google-calendar', {
+      const {
+        error
+      } = await supabase.functions.invoke('google-calendar', {
         body: {
           action: 'create_calendar',
           calendarData: calendarForm
         }
       });
-
       if (error) throw error;
       toast.success('Google Calendar created successfully! Share link is available.');
       setShowCreateForm(false);
-      setCalendarForm({ title: '', description: '', campus: 'Feketerigó' });
+      setCalendarForm({
+        title: '',
+        description: '',
+        campus: 'Feketerigó'
+      });
       fetchCalendars();
     } catch (error: any) {
       console.error('Error creating calendar:', error);
@@ -112,14 +117,14 @@ export const GoogleCalendarsPage = () => {
       setIsCreatingCalendar(false);
     }
   };
-
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCalendar) return;
-
     try {
       setLoading(true);
-      const { error } = await supabase.functions.invoke('google-calendar', {
+      const {
+        error
+      } = await supabase.functions.invoke('google-calendar', {
         body: {
           action: 'add_event',
           eventData: {
@@ -128,7 +133,6 @@ export const GoogleCalendarsPage = () => {
           }
         }
       });
-
       if (error) throw error;
       toast.success('Event added to Google Calendar!');
       setShowEventForm(false);
@@ -151,26 +155,24 @@ export const GoogleCalendarsPage = () => {
       setLoading(false);
     }
   };
-
   const processPdfCalendar = async () => {
     if (!pdfFile || !selectedCalendar) return;
-
     setIsProcessingPdf(true);
     try {
       const reader = new FileReader();
       reader.onload = async () => {
         const base64Content = (reader.result as string).split(',')[1];
-        
-        const { data, error } = await supabase.functions.invoke('google-calendar', {
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('google-calendar', {
           body: {
             action: 'parse_pdf_calendar',
             pdfContent: base64Content,
             calendarId: selectedCalendar
           }
         });
-
         if (error) throw error;
-        
         setExtractedEvents(data.extractedEvents || []);
         toast.success('PDF processed! Review events before adding to calendar.');
       };
@@ -182,10 +184,8 @@ export const GoogleCalendarsPage = () => {
       setIsProcessingPdf(false);
     }
   };
-
   const addParsedEventsToCalendar = async () => {
     if (!selectedCalendar || extractedEvents.length === 0) return;
-
     try {
       setLoading(true);
       for (const event of extractedEvents) {
@@ -199,7 +199,6 @@ export const GoogleCalendarsPage = () => {
           }
         });
       }
-      
       setExtractedEvents([]);
       setPdfFile(null);
       toast.success(`${extractedEvents.length} events added to Google Calendar!`);
@@ -211,85 +210,57 @@ export const GoogleCalendarsPage = () => {
       setLoading(false);
     }
   };
-
   const copyShareLink = (shareLink: string) => {
     navigator.clipboard.writeText(shareLink);
     toast.success('Share link copied to clipboard!');
   };
-
   if (loading && calendars.length === 0) {
     return <LoadingSpinner />;
   }
-
-  return (
-    <div className="space-y-8">
+  return <div className="space-y-8">
       {/* Header Section */}
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold">Google Calendar Management</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Create and manage Google Calendars, add events, and upload PDF schedules to automatically extract calendar events.
-        </p>
-      </div>
+      
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4 justify-center">
-        <Button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2"
-          size="lg"
-        >
+        <Button onClick={() => setShowCreateForm(true)} className="flex items-center gap-2" size="lg">
           <Plus className="h-5 w-5" />
           Create New Calendar
         </Button>
-        <Button
-          onClick={() => setShowEventForm(true)}
-          variant="outline"
-          disabled={calendars.length === 0}
-          className="flex items-center gap-2"
-          size="lg"
-        >
+        <Button onClick={() => setShowEventForm(true)} variant="outline" disabled={calendars.length === 0} className="flex items-center gap-2" size="lg">
           <Calendar className="h-5 w-5" />
           Add Single Event
         </Button>
-        {calendars.length > 0 && (
-          <Button
-            onClick={() => {
-              const pdfSection = document.getElementById('pdf-upload-section');
-              pdfSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            variant="secondary"
-            className="flex items-center gap-2"
-            size="lg"
-          >
+        {calendars.length > 0 && <Button onClick={() => {
+        const pdfSection = document.getElementById('pdf-upload-section');
+        pdfSection?.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }} variant="secondary" className="flex items-center gap-2" size="lg">
             <Clock className="h-5 w-5" />
             Upload PDF Schedule
-          </Button>
-        )}
+          </Button>}
       </div>
 
       {/* Create Calendar Form */}
-      {showCreateForm && (
-        <Card className="border-2 border-primary/20">
+      {showCreateForm && <Card className="border-2 border-primary/20">
           <CardHeader>
             <CardTitle>Create New Google Calendar</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateCalendar} className="space-y-4">
-              <Input
-                placeholder="Calendar Title"
-                value={calendarForm.title}
-                onChange={(e) => setCalendarForm({ ...calendarForm, title: e.target.value })}
-                required
-              />
-              <Textarea
-                placeholder="Calendar Description (optional)"
-                value={calendarForm.description}
-                onChange={(e) => setCalendarForm({ ...calendarForm, description: e.target.value })}
-              />
-              <Select
-                value={calendarForm.campus}
-                onValueChange={(value) => setCalendarForm({ ...calendarForm, campus: value as any })}
-              >
+              <Input placeholder="Calendar Title" value={calendarForm.title} onChange={e => setCalendarForm({
+            ...calendarForm,
+            title: e.target.value
+          })} required />
+              <Textarea placeholder="Calendar Description (optional)" value={calendarForm.description} onChange={e => setCalendarForm({
+            ...calendarForm,
+            description: e.target.value
+          })} />
+              <Select value={calendarForm.campus} onValueChange={value => setCalendarForm({
+            ...calendarForm,
+            campus: value as any
+          })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -309,12 +280,10 @@ export const GoogleCalendarsPage = () => {
               </div>
             </form>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* PDF Upload Section */}
-      {calendars.length > 0 && (
-        <Card id="pdf-upload-section" className="border-2 border-accent/30 bg-accent/5">
+      {calendars.length > 0 && <Card id="pdf-upload-section" className="border-2 border-accent/30 bg-accent/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-accent" />
@@ -325,57 +294,36 @@ export const GoogleCalendarsPage = () => {
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Select
-              value={selectedCalendar}
-              onValueChange={setSelectedCalendar}
-            >
+            <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
               <SelectTrigger>
                 <SelectValue placeholder="Select calendar to add events to" />
               </SelectTrigger>
               <SelectContent>
-                {calendars.map((calendar) => (
-                  <SelectItem key={calendar.id} value={calendar.id}>
+                {calendars.map(calendar => <SelectItem key={calendar.id} value={calendar.id}>
                     {calendar.title}
-                  </SelectItem>
-                ))}
+                  </SelectItem>)}
               </SelectContent>
             </Select>
             
             <div className="space-y-4">
               <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:transition-colors"
-                  id="pdf-upload"
-                />
+                <input type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files?.[0] || null)} className="block w-full text-sm text-muted-foreground file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:transition-colors" id="pdf-upload" />
                 <div className="mt-2 text-sm text-muted-foreground">
                   {pdfFile ? `Selected: ${pdfFile.name}` : 'Choose a PDF file with your calendar schedule'}
                 </div>
               </div>
-              <Button 
-                onClick={processPdfCalendar} 
-                disabled={!pdfFile || !selectedCalendar || isProcessingPdf}
-                className="w-full"
-                size="lg"
-              >
-                {isProcessingPdf ? (
-                  <>
+              <Button onClick={processPdfCalendar} disabled={!pdfFile || !selectedCalendar || isProcessingPdf} className="w-full" size="lg">
+                {isProcessingPdf ? <>
                     <Clock className="h-4 w-4 mr-2 animate-spin" />
                     Processing PDF...
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <Calendar className="h-4 w-4 mr-2" />
                     Extract Events from PDF
-                  </>
-                )}
+                  </>}
               </Button>
             </div>
 
-            {extractedEvents.length > 0 && (
-              <div className="space-y-4">
+            {extractedEvents.length > 0 && <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Extracted Events ({extractedEvents.length})</h3>
                   <Button onClick={addParsedEventsToCalendar} disabled={!selectedCalendar || loading}>
@@ -383,26 +331,21 @@ export const GoogleCalendarsPage = () => {
                   </Button>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {extractedEvents.map((event, index) => (
-                    <div key={index} className="p-3 border rounded-lg">
+                  {extractedEvents.map((event, index) => <div key={index} className="p-3 border rounded-lg">
                       <h4 className="font-medium">{event.title}</h4>
                       <p className="text-sm text-muted-foreground">
                         {new Date(event.startTime).toLocaleString()} - {new Date(event.endTime).toLocaleString()}
                       </p>
                       {event.teacher && <p className="text-sm">Teacher: {event.teacher}</p>}
                       {event.description && <p className="text-sm text-muted-foreground">{event.description}</p>}
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
-              </div>
-            )}
+              </div>}
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Add Event Form */}
-      {showEventForm && (
-        <Card className="border-2 border-primary/30 bg-primary/5">
+      {showEventForm && <Card className="border-2 border-primary/30 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
@@ -414,59 +357,43 @@ export const GoogleCalendarsPage = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddEvent} className="space-y-4">
-              <Select
-                value={selectedCalendar}
-                onValueChange={setSelectedCalendar}
-                required
-              >
+              <Select value={selectedCalendar} onValueChange={setSelectedCalendar} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Calendar" />
                 </SelectTrigger>
                 <SelectContent>
-                  {calendars.map((calendar) => (
-                    <SelectItem key={calendar.id} value={calendar.id}>
+                  {calendars.map(calendar => <SelectItem key={calendar.id} value={calendar.id}>
                       {calendar.title}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
-              <Input
-                placeholder="Event Title"
-                value={eventForm.title}
-                onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-                required
-              />
-              <Textarea
-                placeholder="Event Description (optional)"
-                value={eventForm.description}
-                onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
-              />
+              <Input placeholder="Event Title" value={eventForm.title} onChange={e => setEventForm({
+            ...eventForm,
+            title: e.target.value
+          })} required />
+              <Textarea placeholder="Event Description (optional)" value={eventForm.description} onChange={e => setEventForm({
+            ...eventForm,
+            description: e.target.value
+          })} />
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  type="datetime-local"
-                  placeholder="Start Time"
-                  value={eventForm.startTime}
-                  onChange={(e) => setEventForm({ ...eventForm, startTime: e.target.value })}
-                  required
-                />
-                <Input
-                  type="datetime-local"
-                  placeholder="End Time"
-                  value={eventForm.endTime}
-                  onChange={(e) => setEventForm({ ...eventForm, endTime: e.target.value })}
-                  required
-                />
+                <Input type="datetime-local" placeholder="Start Time" value={eventForm.startTime} onChange={e => setEventForm({
+              ...eventForm,
+              startTime: e.target.value
+            })} required />
+                <Input type="datetime-local" placeholder="End Time" value={eventForm.endTime} onChange={e => setEventForm({
+              ...eventForm,
+              endTime: e.target.value
+            })} required />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  placeholder="Teacher (optional)"
-                  value={eventForm.teacher}
-                  onChange={(e) => setEventForm({ ...eventForm, teacher: e.target.value })}
-                />
-                <Select
-                  value={eventForm.eventType}
-                  onValueChange={(value) => setEventForm({ ...eventForm, eventType: value })}
-                >
+                <Input placeholder="Teacher (optional)" value={eventForm.teacher} onChange={e => setEventForm({
+              ...eventForm,
+              teacher: e.target.value
+            })} />
+                <Select value={eventForm.eventType} onValueChange={value => setEventForm({
+              ...eventForm,
+              eventType: value
+            })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -482,24 +409,23 @@ export const GoogleCalendarsPage = () => {
               {/* Recurring Event Section */}
               <div className="border rounded-lg p-4 space-y-4">
                 <div className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={eventForm.recurring}
-                    onChange={(e) => setEventForm({ ...eventForm, recurring: e.target.checked })}
-                    className="rounded w-4 h-4"
-                    id="recurring-checkbox"
-                  />
+                  <input type="checkbox" checked={eventForm.recurring} onChange={e => setEventForm({
+                ...eventForm,
+                recurring: e.target.checked
+              })} className="rounded w-4 h-4" id="recurring-checkbox" />
                   <label htmlFor="recurring-checkbox" className="text-sm font-medium cursor-pointer">
                     Make this a recurring event (for classes, weekly meetings, etc.)
                   </label>
                 </div>
 
-                {eventForm.recurring && (
-                  <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
+                {eventForm.recurring && <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium block mb-2">Repeat Frequency</label>
-                        <Select value={eventForm.recurringType} onValueChange={(value) => setEventForm({ ...eventForm, recurringType: value })}>
+                        <Select value={eventForm.recurringType} onValueChange={value => setEventForm({
+                    ...eventForm,
+                    recurringType: value
+                  })}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -512,20 +438,17 @@ export const GoogleCalendarsPage = () => {
                       </div>
                       <div>
                         <label className="text-sm font-medium block mb-2">Recurrence End Date</label>
-                        <Input
-                          type="date"
-                          value={eventForm.recurringEnd}
-                          onChange={(e) => setEventForm({ ...eventForm, recurringEnd: e.target.value })}
-                          placeholder="When should it stop repeating?"
-                        />
+                        <Input type="date" value={eventForm.recurringEnd} onChange={e => setEventForm({
+                    ...eventForm,
+                    recurringEnd: e.target.value
+                  })} placeholder="When should it stop repeating?" />
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded">
                       <strong>Tip:</strong> Use recurring events for regular classes, weekly meetings, or semester-long schedules.
                       The event will repeat {eventForm.recurringType} until {eventForm.recurringEnd || 'you specify an end date'}.
                     </div>
-                  </div>
-                )}
+                  </div>}
               </div>
 
               <div className="flex gap-2">
@@ -538,37 +461,25 @@ export const GoogleCalendarsPage = () => {
               </div>
             </form>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Calendars Grid */}
-      {calendars.length === 0 ? (
-        <div className="flex items-center justify-center py-20">
-          <EmptyState 
-            icon={Calendar}
-            title="No Google Calendars Found"
-            description="Create your first Google Calendar to get started with event management"
-            action={{
-              label: "Create First Calendar",
-              onClick: () => setShowCreateForm(true)
-            }}
-          />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {calendars.map((calendar) => (
-            <Card key={calendar.id} className="group hover:shadow-lg transition-all duration-200">
+      {calendars.length === 0 ? <div className="flex items-center justify-center py-20">
+          <EmptyState icon={Calendar} title="No Google Calendars Found" description="Create your first Google Calendar to get started with event management" action={{
+        label: "Create First Calendar",
+        onClick: () => setShowCreateForm(true)
+      }} />
+        </div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {calendars.map(calendar => <Card key={calendar.id} className="group hover:shadow-lg transition-all duration-200">
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-lg font-semibold line-clamp-2">
                       {calendar.title}
                     </CardTitle>
-                    {calendar.description && (
-                      <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
+                    {calendar.description && <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
                         {calendar.description}
-                      </p>
-                    )}
+                      </p>}
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -607,28 +518,16 @@ export const GoogleCalendarsPage = () => {
                     </span>
                   </div>
                   <div className="mt-2 flex gap-2">
-                    <a 
-                      href={calendar.share_link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
-                    >
+                    <a href={calendar.share_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
                       View Calendar <ExternalLink className="h-3 w-3" />
                     </a>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyShareLink(calendar.share_link)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => copyShareLink(calendar.share_link)}>
                       Copy Link
                     </Button>
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+            </Card>)}
+        </div>}
+    </div>;
 };
