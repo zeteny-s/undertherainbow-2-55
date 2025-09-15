@@ -145,8 +145,11 @@ export const NewsletterDragBuilderPage = () => {
     setSaving(true);
     try {
       // Convert components to HTML for storage
+      // Ensure components are properly sorted by position before saving
+      const sortedComponents = [...newsletterState.components].sort((a, b) => a.position - b.position);
+      
       const generatedHtml = generateHtmlFromComponents();
-      console.log('Saving newsletter with HTML length:', generatedHtml.length, 'Components count:', newsletterState.components.length);
+      console.log('Saving newsletter with HTML length:', generatedHtml.length, 'Components count:', sortedComponents.length);
       const status = 'published'; // Always save as published like forms
 
       const newsletterData = {
@@ -155,7 +158,7 @@ export const NewsletterDragBuilderPage = () => {
         campus: newsletterState.campus,
         content_guidelines: null,
         generated_html: generatedHtml,
-        components: newsletterState.components as any, // Store components as JSON
+        components: sortedComponents as any, // Store properly sorted components as JSON
         status: status,
         created_by: user.id
       };

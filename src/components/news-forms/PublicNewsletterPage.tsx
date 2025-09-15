@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import type { Newsletter } from '../../types/newsletter-types';
+import type { NewsletterComponent } from '../../types/newsletter-builder-types';
+import { ExternalLink } from 'lucide-react';
 
 // Import decorative assets
 import decoration1 from '../../assets/decoration-1.png';
@@ -18,6 +20,7 @@ export const PublicNewsletterPage = () => {
   const [newsletter, setNewsletter] = useState<Newsletter | null>(null);
   const [loading, setLoading] = useState(true);
   const [forms, setForms] = useState<any[]>([]);
+  const [components, setComponents] = useState<NewsletterComponent[]>([]);
 
   useEffect(() => {
     if (newsletterId) {
@@ -47,6 +50,13 @@ export const PublicNewsletterPage = () => {
       }
       
       setNewsletter(newsletterData as Newsletter);
+
+      // Parse components from JSON if available
+      if (newsletterData.components && Array.isArray(newsletterData.components)) {
+        const sortedComponents = (newsletterData.components as unknown as NewsletterComponent[])
+          .sort((a, b) => a.position - b.position);
+        setComponents(sortedComponents);
+      }
 
       // Fetch associated forms
       const { data: formData, error: formError } = await supabase
@@ -91,6 +101,197 @@ export const PublicNewsletterPage = () => {
   }
 
   const decorationImages = [decoration1, decoration2, decoration3, decoration4, decoration5, decoration6];
+
+  const renderComponent = (component: NewsletterComponent) => {
+    switch (component.type) {
+      case 'heading':
+        const heading = component.content;
+        return React.createElement(`h${heading.level}`, {
+          className: `font-bold mb-4 ${heading.textAlign === 'center' ? 'text-center' : heading.textAlign === 'right' ? 'text-right' : 'text-left'}`,
+          style: { color: heading.color || 'inherit' }
+        }, heading.text);
+      
+      case 'text-block':
+        const textBlock = component.content;
+        return (
+          <div 
+            className="mb-4"
+            style={{ 
+              textAlign: textBlock.textAlign || 'left'
+            }}
+            dangerouslySetInnerHTML={{ __html: textBlock.content }}
+          />
+        );
+      
+      case 'image':
+        const image = component.content;
+        return (
+          <div className="mb-4 text-center">
+            <img 
+              src={image.url} 
+              alt={image.alt}
+              className="max-w-full h-auto rounded-lg"
+              style={{ 
+                width: image.width || 'auto',
+                height: image.height || 'auto'
+              }}
+            />
+          </div>
+        );
+      
+      case 'button':
+        const button = component.content;
+        return (
+          <div className="mb-4 text-center">
+            <a
+              href={button.url}
+              className={`inline-block px-6 py-3 rounded-lg font-medium transition-colors ${
+                button.size === 'small' ? 'px-4 py-2 text-sm' : 
+                button.size === 'large' ? 'px-8 py-4 text-lg' : 'px-6 py-3'
+              }`}
+              style={{
+                backgroundColor: button.backgroundColor || '#3b82f6',
+                color: button.textColor || 'white'
+              }}
+            >
+              {button.text}
+            </a>
+          </div>
+        );
+      
+      case 'form-button':
+        const formButton = component.content;
+        if (!formButton.formId) {
+          return null;
+        }
+        return (
+          <div className="mb-4 text-center">
+            <Link
+              to={`/news-forms/public/${formButton.formId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md ${
+                formButton.size === 'small' ? 'px-4 py-2 text-sm' : 
+                formButton.size === 'large' ? 'px-8 py-4 text-lg' : 'px-6 py-3'
+              } ${
+                formButton.buttonStyle === 'outline' 
+                  ? 'border-2 bg-transparent hover:bg-opacity-10' 
+                  : formButton.buttonStyle === 'secondary'
+                  ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  : 'hover:opacity-90'
+              }`}
+              style={{
+                backgroundColor: formButton.buttonStyle === 'outline' ? 'transparent' : 
+                                formButton.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                formButton.backgroundColor || '#3b82f6',
+                color: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3b82f6') :
+                       formButton.buttonStyle === 'secondary' ? '#1f2937' :
+                       formButton.textColor || '#ffffff',
+                borderColor: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3b82f6') : 'transparent',
+                borderWidth: formButton.buttonStyle === 'outline' ? '2px' : '0'
+              }}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {formButton.text || 'Sign Up Now'}
+            </Link>
+          </div>
+        );
+      
+      case 'divider':
+        return <hr className="my-6 border-gray-300" />;
+      
+      case 'form-section':
+        const formSection = component.content;
+        const buttonAlignment = formSection.buttonPosition === 'center' ? 'justify-center' : 
+                               formSection.buttonPosition === 'right' ? 'justify-end' : 'justify-start';
+        const textAlignment = formSection.textAlign === 'center' ? 'text-center' : 
+                             formSection.textAlign === 'right' ? 'text-right' : 'text-left';
+        
+        return (
+          <div className="mb-8">
+            <hr className="my-8 border-gray-300" />
+            <div 
+              className={`mb-6 ${textAlignment}`}
+              style={{
+                color: formSection.textColor || '#1f2937',
+                padding: formSection.padding || '20px'
+              }}
+            >
+              <h3 className={`font-semibold text-xl mb-3 ${textAlignment}`}>
+                {formSection.title || 'Additional Infos & Sign Up Forms'}
+              </h3>
+              {formSection.description && (
+                <p className={`text-sm mb-4 opacity-80 ${textAlignment}`}>{formSection.description}</p>
+              )}
+              {formSection.customMessage && (
+                <p className={`text-sm mb-6 italic ${textAlignment}`}>{formSection.customMessage}</p>
+              )}
+              
+              <div className="space-y-4">
+                {forms && forms.length > 0 ? (
+                  forms.map((form) => (
+                    <div 
+                      key={form.id} 
+                      className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+                      style={{
+                        backgroundColor: formSection.backgroundColor || '#ffffff',
+                        borderRadius: formSection.borderRadius || '8px'
+                      }}
+                    >
+                      <div className={textAlignment}>
+                        <h4 className={`font-semibold text-base mb-2 ${textAlignment}`} style={{ color: formSection.textColor || '#1f2937' }}>
+                          {form.title}
+                        </h4>
+                        {formSection.showDescription !== false && form.description && (
+                          <p className={`text-sm opacity-70 mb-3 leading-relaxed ${textAlignment}`} style={{ color: formSection.textColor || '#1f2937' }}>
+                            {form.description}
+                          </p>
+                        )}
+                        <div className={`flex ${buttonAlignment} mt-4`}>
+                          <Link
+                            to={`/news-forms/public/${form.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center px-4 py-2 rounded font-medium text-sm transition-all duration-200 hover:shadow-md ${
+                              formSection.buttonStyle === 'outline' 
+                                ? 'border-2 bg-transparent hover:bg-opacity-10' 
+                                : formSection.buttonStyle === 'secondary'
+                                ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                : 'hover:opacity-90'
+                            }`}
+                            style={{
+                              backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
+                                              formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                              formSection.buttonBackgroundColor || '#3b82f6',
+                              color: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') :
+                                     formSection.buttonStyle === 'secondary' ? '#1f2937' :
+                                     formSection.buttonTextColor || '#ffffff',
+                              borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
+                              borderWidth: formSection.buttonStyle === 'outline' ? '2px' : '0',
+                              borderRadius: formSection.borderRadius || '8px'
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            {formSection.buttonText || 'Open Form'}
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50">
+                    <p className="text-sm text-gray-500 font-medium">No forms available</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="h-full overflow-y-auto bg-white relative z-20" style={{
@@ -145,7 +346,15 @@ export const PublicNewsletterPage = () => {
 
           {/* Newsletter Content */}
           <div className="space-y-6 relative z-50">
-            {newsletter.generated_html && newsletter.generated_html.trim() !== '' && !newsletter.generated_html.includes('Add your content here...') ? (
+            {components && components.length > 0 ? (
+              <div className="space-y-4">
+                {components.map((component) => (
+                  <div key={component.id}>
+                    {renderComponent(component)}
+                  </div>
+                ))}
+              </div>
+            ) : newsletter.generated_html && newsletter.generated_html.trim() !== '' && !newsletter.generated_html.includes('Add your content here...') ? (
               <div dangerouslySetInnerHTML={{ __html: newsletter.generated_html }} />
             ) : (
               <div className="text-center py-12 text-gray-500">
@@ -153,34 +362,6 @@ export const PublicNewsletterPage = () => {
               </div>
             )}
           </div>
-
-          {/* Selected Forms Section */}
-          {forms && forms.length > 0 && (
-            <div className="border-t pt-6 mt-8 relative z-50">
-              <h3 className="text-lg font-semibold text-center mb-4">Forms & Programs</h3>
-              <div className="space-y-4">
-                {forms.map((form) => (
-                  <div key={form.id} className="bg-muted/30 rounded-lg p-4 border">
-                    <h4 className="font-medium text-sm mb-1">{form.title}</h4>
-                    {form.description && (
-                      <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{form.description}</p>
-                    )}
-                    <Link 
-                      to={`/form/${form.id}`}
-                      className="inline-flex items-center gap-1 text-xs h-8 px-3 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      Open Form
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
