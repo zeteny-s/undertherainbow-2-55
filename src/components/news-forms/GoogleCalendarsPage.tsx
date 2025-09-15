@@ -227,81 +227,135 @@ export const GoogleCalendarsPage = () => {
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold">Google Calendar Management</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Create and manage Google Calendars, add events, and upload PDF schedules to automatically extract calendar events.
+          Create calendars, schedule classes and events, or upload PDF schedules for automatic processing.
         </p>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4 justify-center">
-        <Button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2"
-          size="lg"
+      {/* Main Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Create Class Calendar */}
+        <Card 
+          className="border-2 border-blue-500/20 hover:border-blue-500/40 transition-colors cursor-pointer" 
+          onClick={() => {
+            setCalendarForm({ ...calendarForm, title: 'Class Schedule - ' });
+            setShowCreateForm(true);
+          }}
         >
-          <Plus className="h-5 w-5" />
-          Create New Calendar
-        </Button>
-        <Button
-          onClick={() => setShowEventForm(true)}
-          variant="outline"
-          disabled={calendars.length === 0}
-          className="flex items-center gap-2"
-          size="lg"
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="h-8 w-8 text-blue-500" />
+            </div>
+            <CardTitle className="text-blue-700">Create Class Calendar</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Set up a calendar for regular classes with recurring schedules
+            </p>
+          </CardHeader>
+        </Card>
+
+        {/* Create Event Calendar */}
+        <Card 
+          className="border-2 border-green-500/20 hover:border-green-500/40 transition-colors cursor-pointer"
+          onClick={() => {
+            setCalendarForm({ ...calendarForm, title: 'Events - ' });
+            setShowCreateForm(true);
+          }}
         >
-          <Calendar className="h-5 w-5" />
-          Add Single Event
-        </Button>
-        {calendars.length > 0 && (
-          <Button
-            onClick={() => {
-              const pdfSection = document.getElementById('pdf-upload-section');
-              pdfSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            variant="secondary"
-            className="flex items-center gap-2"
-            size="lg"
-          >
-            <Clock className="h-5 w-5" />
-            Upload PDF Schedule
-          </Button>
-        )}
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Plus className="h-8 w-8 text-green-500" />
+            </div>
+            <CardTitle className="text-green-700">Create Event Calendar</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Create a calendar for special events, meetings, and activities
+            </p>
+          </CardHeader>
+        </Card>
+
+        {/* Upload PDF Schedule */}
+        <Card 
+          className="border-2 border-purple-500/20 hover:border-purple-500/40 transition-colors cursor-pointer"
+          onClick={() => {
+            const pdfSection = document.getElementById('pdf-upload-section');
+            pdfSection?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        >
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Clock className="h-8 w-8 text-purple-500" />
+            </div>
+            <CardTitle className="text-purple-700">Upload PDF Schedule</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Upload a PDF and automatically extract events to your calendar
+            </p>
+          </CardHeader>
+        </Card>
       </div>
+
+      {/* Quick Actions */}
+      {calendars.length > 0 && (
+        <div className="flex justify-center gap-4">
+          <Button
+            onClick={() => setShowEventForm(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Single Event
+          </Button>
+        </div>
+      )}
 
       {/* Create Calendar Form */}
       {showCreateForm && (
-        <Card className="border-2 border-primary/20">
+        <Card className="border-2 border-blue-500/30 bg-blue-50/30">
           <CardHeader>
-            <CardTitle>Create New Google Calendar</CardTitle>
+            <CardTitle className="text-blue-700">Create New Google Calendar</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              This will create a new Google Calendar that you can share publicly or privately
+            </p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateCalendar} className="space-y-4">
-              <Input
-                placeholder="Calendar Title"
-                value={calendarForm.title}
-                onChange={(e) => setCalendarForm({ ...calendarForm, title: e.target.value })}
-                required
-              />
-              <Textarea
-                placeholder="Calendar Description (optional)"
-                value={calendarForm.description}
-                onChange={(e) => setCalendarForm({ ...calendarForm, description: e.target.value })}
-              />
-              <Select
-                value={calendarForm.campus}
-                onValueChange={(value) => setCalendarForm({ ...calendarForm, campus: value as any })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Feketerigó">Feketerigó</SelectItem>
-                  <SelectItem value="Torockó">Torockó</SelectItem>
-                  <SelectItem value="Levél">Levél</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={isCreatingCalendar}>
-                  {isCreatingCalendar ? 'Creating...' : 'Create Google Calendar'}
+            <form onSubmit={handleCreateCalendar} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Calendar Name</label>
+                <Input
+                  placeholder="e.g., 'Math Classes Fall 2024' or 'School Events'"
+                  value={calendarForm.title}
+                  onChange={(e) => setCalendarForm({ ...calendarForm, title: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description (Optional)</label>
+                <Textarea
+                  placeholder="Describe what this calendar will be used for..."
+                  value={calendarForm.description}
+                  onChange={(e) => setCalendarForm({ ...calendarForm, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Campus Location</label>
+                <Select
+                  value={calendarForm.campus}
+                  onValueChange={(value) => setCalendarForm({ ...calendarForm, campus: value as any })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Feketerigó">Feketerigó Campus</SelectItem>
+                    <SelectItem value="Torockó">Torockó Campus</SelectItem>
+                    <SelectItem value="Levél">Levél Campus</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex gap-3">
+                <Button type="submit" disabled={isCreatingCalendar} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  {isCreatingCalendar ? 'Creating Calendar...' : 'Create Google Calendar'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
                   Cancel
@@ -313,92 +367,117 @@ export const GoogleCalendarsPage = () => {
       )}
 
       {/* PDF Upload Section */}
-      {calendars.length > 0 && (
-        <Card id="pdf-upload-section" className="border-2 border-accent/30 bg-accent/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-accent" />
-              Upload PDF Calendar Schedule
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Upload a PDF schedule and our AI will automatically extract events and add them to your selected Google Calendar.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Select
-              value={selectedCalendar}
-              onValueChange={setSelectedCalendar}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select calendar to add events to" />
-              </SelectTrigger>
-              <SelectContent>
-                {calendars.map((calendar) => (
-                  <SelectItem key={calendar.id} value={calendar.id}>
-                    {calendar.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:transition-colors"
-                  id="pdf-upload"
-                />
-                <div className="mt-2 text-sm text-muted-foreground">
-                  {pdfFile ? `Selected: ${pdfFile.name}` : 'Choose a PDF file with your calendar schedule'}
-                </div>
-              </div>
-              <Button 
-                onClick={processPdfCalendar} 
-                disabled={!pdfFile || !selectedCalendar || isProcessingPdf}
-                className="w-full"
-                size="lg"
-              >
-                {isProcessingPdf ? (
-                  <>
-                    <Clock className="h-4 w-4 mr-2 animate-spin" />
-                    Processing PDF...
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Extract Events from PDF
-                  </>
-                )}
-              </Button>
+      <Card id="pdf-upload-section" className="border-2 border-purple-500/20 bg-purple-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-700">
+            <Clock className="h-6 w-6" />
+            Upload PDF Schedule
+          </CardTitle>
+          <p className="text-muted-foreground">
+            Upload a PDF schedule and our AI will automatically extract events and add them to your selected Google Calendar.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {calendars.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Create a calendar first to upload PDF schedules</p>
             </div>
-
-            {extractedEvents.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Extracted Events ({extractedEvents.length})</h3>
-                  <Button onClick={addParsedEventsToCalendar} disabled={!selectedCalendar || loading}>
-                    {loading ? 'Adding...' : 'Add All to Calendar'}
-                  </Button>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {extractedEvents.map((event, index) => (
-                    <div key={index} className="p-3 border rounded-lg">
-                      <h4 className="font-medium">{event.title}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(event.startTime).toLocaleString()} - {new Date(event.endTime).toLocaleString()}
-                      </p>
-                      {event.teacher && <p className="text-sm">Teacher: {event.teacher}</p>}
-                      {event.description && <p className="text-sm text-muted-foreground">{event.description}</p>}
-                    </div>
-                  ))}
-                </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Target Calendar</label>
+                <Select
+                  value={selectedCalendar}
+                  onValueChange={setSelectedCalendar}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose which calendar to add events to" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {calendars.map((calendar) => (
+                      <SelectItem key={calendar.id} value={calendar.id}>
+                        {calendar.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              
+              <div className="space-y-4">
+                <label className="text-sm font-medium">Upload PDF File</label>
+                <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center bg-white hover:bg-purple-50/50 transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                    className="block w-full text-sm text-gray-600 file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:transition-colors"
+                    id="pdf-upload"
+                  />
+                  <div className="mt-4">
+                    {pdfFile ? (
+                      <div className="text-green-600 font-medium">✓ {pdfFile.name}</div>
+                    ) : (
+                      <div className="text-muted-foreground">
+                        <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="font-medium">Drag & drop your PDF or click to browse</p>
+                        <p className="text-sm">Supports class schedules, event listings, and timetables</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button 
+                  onClick={processPdfCalendar} 
+                  disabled={!pdfFile || !selectedCalendar || isProcessingPdf}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  size="lg"
+                >
+                  {isProcessingPdf ? (
+                    <>
+                      <Clock className="h-5 w-5 mr-2 animate-spin" />
+                      Processing PDF with AI...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="h-5 w-5 mr-2" />
+                      Extract Events from PDF
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {extractedEvents.length > 0 && (
+                <div className="space-y-4 mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-green-800">
+                      ✓ Extracted {extractedEvents.length} Events
+                    </h3>
+                    <Button 
+                      onClick={addParsedEventsToCalendar} 
+                      disabled={!selectedCalendar || loading}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {loading ? 'Adding Events...' : 'Add All to Calendar'}
+                    </Button>
+                  </div>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {extractedEvents.map((event, index) => (
+                      <div key={index} className="p-3 bg-white border border-green-200 rounded-lg">
+                        <h4 className="font-medium text-green-800">{event.title}</h4>
+                        <p className="text-sm text-green-600">
+                          {new Date(event.startTime).toLocaleString()} - {new Date(event.endTime).toLocaleString()}
+                        </p>
+                        {event.teacher && <p className="text-sm text-gray-600">Teacher: {event.teacher}</p>}
+                        {event.description && <p className="text-sm text-gray-500">{event.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Add Event Form */}
       {showEventForm && (
