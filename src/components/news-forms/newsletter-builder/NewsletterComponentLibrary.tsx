@@ -80,7 +80,7 @@ const componentLibrary: ComponentLibraryItem[] = [
     icon: FileText,
     description: 'Add customizable forms section',
     defaultConfig: {
-      title: 'Forms & Programs',
+      title: 'Additional Infos&Sign Up Forms',
       description: '',
       buttonText: 'Open Form',
       buttonPosition: 'left',

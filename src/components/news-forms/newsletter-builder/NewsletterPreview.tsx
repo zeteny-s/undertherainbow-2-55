@@ -103,7 +103,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
               }}
             >
               <h3 className="font-semibold text-lg mb-2 text-center">
-                {formSection.title || 'Forms & Programs'}
+                {formSection.title || 'Additional Infos&Sign Up Forms'}
               </h3>
               {formSection.description && (
                 <p className="text-center text-sm mb-4 opacity-80">{formSection.description}</p>
