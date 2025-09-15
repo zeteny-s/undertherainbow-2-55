@@ -83,8 +83,10 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
       
       case 'form-button':
         const formButton = component.content;
+        console.log('Rendering form-button:', formButton); // Debug log
         return (
-          <div className="mb-4 text-center">
+          <div className="mb-4 text-center bg-red-100 p-2 border-2 border-red-500">
+            <p className="text-red-700 text-xs mb-2">DEBUG: Form Button Component</p>
             <a
               href={`/news-forms/public/${formButton.formId}`}
               target="_blank"
