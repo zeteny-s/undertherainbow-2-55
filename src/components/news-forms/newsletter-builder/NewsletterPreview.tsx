@@ -4,7 +4,6 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { NewsletterComponent } from '../../../types/newsletter-builder-types';
 import { FormForSelection } from '../../../types/newsletter-types';
 import { SortableNewsletterComponent } from './SortableNewsletterComponent';
-import { Button } from '../../ui/button';
 import { ExternalLink } from 'lucide-react';
 import logo from '../../../assets/kindergarten-logo.png';
 import decoration1 from '../../../assets/decoration-1.png';
@@ -110,66 +109,48 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
               <p className="text-center text-sm mb-4 italic">{formSection.customMessage}</p>
             )}
             
-            {/* Placeholder for forms */}
+            {/* Render actual selected forms */}
             <div className="space-y-3">
-              <div className="bg-white/50 rounded p-3 border border-white/20">
-                <h4 className="font-medium text-sm mb-1">Sample Form 1</h4>
-                {formSection.showDescription !== false && (
-                  <p className="text-xs opacity-70 mb-2">This is a sample form description</p>
-                )}
-                <div className={`flex ${buttonAlignment}`}>
-                  <button
-                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                      formSection.buttonStyle === 'outline' 
-                        ? 'border border-current bg-transparent' 
-                        : formSection.buttonStyle === 'secondary'
-                        ? 'bg-gray-200 text-gray-800'
-                        : ''
-                    }`}
-                    style={{
-                      backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
-                                      formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
-                                      formSection.buttonBackgroundColor || '#3b82f6',
-                      color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
-                             formSection.buttonStyle === 'secondary' ? '#1f2937' :
-                             formSection.buttonTextColor || '#ffffff',
-                      borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
-                      borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0'
-                    }}
-                  >
-                    {formSection.buttonText || 'Open Form'}
-                  </button>
+              {selectedForms && selectedForms.length > 0 ? (
+                selectedForms.map((form) => (
+                  <div key={form.id} className="bg-white/50 rounded p-3 border border-white/20">
+                    <h4 className="font-medium text-sm mb-1">{form.title}</h4>
+                    {formSection.showDescription !== false && form.description && (
+                      <p className="text-xs opacity-70 mb-2 line-clamp-2">{form.description}</p>
+                    )}
+                    <div className={`flex ${buttonAlignment}`}>
+                      <button
+                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                          formSection.buttonStyle === 'outline' 
+                            ? 'border border-current bg-transparent' 
+                            : formSection.buttonStyle === 'secondary'
+                            ? 'bg-gray-200 text-gray-800'
+                            : ''
+                        }`}
+                        style={{
+                          backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
+                                          formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                          formSection.buttonBackgroundColor || '#3b82f6',
+                          color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
+                                 formSection.buttonStyle === 'secondary' ? '#1f2937' :
+                                 formSection.buttonTextColor || '#ffffff',
+                          borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
+                          borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0',
+                          borderRadius: formSection.borderRadius || '8px'
+                        }}
+                        onClick={() => window.open(`/news-forms/public/${form.id}`, '_blank')}
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1 inline" />
+                        {formSection.buttonText || 'Open Form'}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-white/50 rounded p-3 border border-white/20 text-center">
+                  <p className="text-xs opacity-70">No forms selected yet. Add forms from the form selection.</p>
                 </div>
-              </div>
-              <div className="bg-white/50 rounded p-3 border border-white/20">
-                <h4 className="font-medium text-sm mb-1">Sample Form 2</h4>
-                {formSection.showDescription !== false && (
-                  <p className="text-xs opacity-70 mb-2">Another sample form description</p>
-                )}
-                <div className={`flex ${buttonAlignment}`}>
-                  <button
-                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                      formSection.buttonStyle === 'outline' 
-                        ? 'border border-current bg-transparent' 
-                        : formSection.buttonStyle === 'secondary'
-                        ? 'bg-gray-200 text-gray-800'
-                        : ''
-                    }`}
-                    style={{
-                      backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
-                                      formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
-                                      formSection.buttonBackgroundColor || '#3b82f6',
-                      color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
-                             formSection.buttonStyle === 'secondary' ? '#1f2937' :
-                             formSection.buttonTextColor || '#ffffff',
-                      borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
-                      borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0'
-                    }}
-                  >
-                    {formSection.buttonText || 'Open Form'}
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         );
@@ -263,30 +244,6 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
             )}
           </div>
 
-          {/* Selected Forms Section */}
-          {selectedForms && selectedForms.length > 0 && (
-            <div className="border-t pt-6 mt-8 relative z-50">
-              <h3 className="text-lg font-semibold text-center mb-4">Forms & Programs</h3>
-              <div className="space-y-4">
-                {selectedForms.map((form) => (
-                  <div key={form.id} className="bg-muted/30 rounded-lg p-4 border">
-                    <h4 className="font-medium text-sm mb-1">{form.title}</h4>
-                    {form.description && (
-                      <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{form.description}</p>
-                    )}
-                    <Button 
-                      size="sm" 
-                      className="text-xs h-8"
-                      onClick={() => window.open(`/news-forms/public/${form.id}`, '_blank')}
-                    >
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Open Form
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
