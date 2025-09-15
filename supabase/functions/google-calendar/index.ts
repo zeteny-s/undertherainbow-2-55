@@ -407,7 +407,6 @@ async function listUserCalendars(supabaseClient: any, userId: string) {
       *,
       calendar_events_google(count)
     `)
-    .eq('created_by', userId)
     .order('created_at', { ascending: false });
 
   if (error) {
