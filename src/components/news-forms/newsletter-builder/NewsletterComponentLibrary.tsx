@@ -1,5 +1,5 @@
 import React from 'react';
-import { Type, Image, Minus, MousePointer, Heading1 } from 'lucide-react';
+import { Type, Image, Minus, MousePointer, Heading1, Calendar } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { Card, CardContent } from '../../ui/card';
 import { NewsletterComponentType } from '../../../types/newsletter-builder-types';
@@ -72,6 +72,17 @@ const componentLibrary: ComponentLibraryItem[] = [
       style: 'solid',
       color: '#e5e7eb',
       thickness: '1px'
+    }
+  },
+  {
+    type: 'calendar-button',
+    name: 'Calendar Button',
+    icon: Calendar,
+    description: 'Add Google Calendar button',
+    defaultConfig: {
+      buttonText: 'Add to my calendar',
+      selectedCalendarId: '',
+      variant: 'default'
     }
   }
 ];

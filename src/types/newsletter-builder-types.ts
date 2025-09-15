@@ -13,7 +13,8 @@ export type NewsletterComponentType =
   | 'heading'
   | 'divider'
   | 'button'
-  | 'form-section';
+  | 'form-section'
+  | 'calendar-button';
 
 export interface NewsletterBuilderState {
   id?: string;

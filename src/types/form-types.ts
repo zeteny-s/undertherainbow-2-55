@@ -20,7 +20,8 @@ export type ComponentType =
   | 'radio'
   | 'file-upload'
   | 'text-block'
-  | 'divider';
+  | 'divider'
+  | 'calendar-button';
 
 export interface ValidationRule {
   type: 'required' | 'email' | 'minLength' | 'maxLength';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Type, AlignLeft, ChevronDown, CheckSquare, Circle, Upload, Minus } from 'lucide-react';
+import { Search, Type, AlignLeft, ChevronDown, CheckSquare, Circle, Upload, Minus, Calendar } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { Input } from '../../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
@@ -81,6 +81,19 @@ const componentLibrary: ComponentLibraryItem[] = [
     icon: 'Minus',
     description: 'Visual separator element',
     defaultConfig: {}
+  },
+  {
+    type: 'calendar-button',
+    name: 'Calendar Button',
+    icon: 'Calendar',
+    description: 'Add to Google Calendar button',
+    defaultConfig: {
+      properties: { 
+        buttonText: 'Add to my calendar', 
+        selectedCalendarId: '', 
+        variant: 'default' 
+      }
+    }
   }
 ];
 
@@ -91,7 +104,8 @@ const iconMap = {
   CheckSquare,
   Circle,
   Upload,
-  Minus
+  Minus,
+  Calendar
 };
 
 function DraggableComponent({ item }: { item: ComponentLibraryItem }) {

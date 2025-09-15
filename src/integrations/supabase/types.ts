@@ -232,6 +232,53 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events_google: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          description: string | null
+          end_time: string
+          event_type: string | null
+          id: string
+          start_time: string
+          teacher: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          description?: string | null
+          end_time: string
+          event_type?: string | null
+          id?: string
+          start_time: string
+          teacher?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          event_type?: string | null
+          id?: string
+          start_time?: string
+          teacher?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_google_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "google_calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -1088,6 +1135,42 @@ export type Database = {
           status?: Database["public"]["Enums"]["form_status"]
           title?: string
           unlimited_capacity?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      google_calendars: {
+        Row: {
+          campus: Database["public"]["Enums"]["campus_type"]
+          created_at: string
+          created_by: string
+          description: string | null
+          google_calendar_id: string
+          id: string
+          share_link: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campus: Database["public"]["Enums"]["campus_type"]
+          created_at?: string
+          created_by: string
+          description?: string | null
+          google_calendar_id: string
+          id?: string
+          share_link: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campus?: Database["public"]["Enums"]["campus_type"]
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          google_calendar_id?: string
+          id?: string
+          share_link?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []

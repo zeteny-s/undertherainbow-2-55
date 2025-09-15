@@ -10,6 +10,7 @@ import { Upload, X, FileIcon } from 'lucide-react';
 import { FormComponent } from '../../../types/form-types';
 import { supabase } from '../../../integrations/supabase/client';
 import { toast } from 'sonner';
+import { CalendarButton } from './CalendarButton';
 
 interface ComponentPreviewProps {
   component: FormComponent;
@@ -141,6 +142,19 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
               <span className="bg-white px-4 text-sm text-gray-500">{component.label}</span>
             </div>
           )}
+        </div>
+      );
+
+    case 'calendar-button':
+      return (
+        <div className="space-y-2">
+          <CalendarButton
+            selectedCalendarId={component.properties?.selectedCalendarId || ''}
+            buttonText={component.properties?.buttonText || 'Add to my calendar'}
+            variant={component.properties?.variant || 'default'}
+            className="w-full"
+            isEditing={false}
+          />
         </div>
       );
 

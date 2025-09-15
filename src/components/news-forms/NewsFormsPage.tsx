@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText, Mail } from 'lucide-react';
+import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText, Mail, Calendar } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -15,8 +15,9 @@ import { Form, CampusType, FormComponent } from '../../types/form-types';
 import { toast } from 'sonner';
 import { NewsletterPage } from './NewsletterPage';
 import { EmailFormButton } from './EmailFormButton';
+import { GoogleCalendarsPage } from './GoogleCalendarsPage';
 
-type ViewType = 'forms' | 'newsletters';
+type ViewType = 'forms' | 'newsletters' | 'calendars';
 
 export const NewsFormsPage = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export const NewsFormsPage = () => {
 
   const isNewslettersView = activeView === 'newsletters';
   const isFormsView = activeView === 'forms';
+  const isCalendarsView = activeView === 'calendars';
 
   useEffect(() => {
     fetchForms();
@@ -125,12 +127,18 @@ export const NewsFormsPage = () => {
             <p className="text-muted-foreground text-lg">Manage your forms and newsletters with ease</p>
           </div>
           <Button 
-            onClick={() => navigate(isFormsView ? '/news-forms/new' : '/newsletter-builder/new')} 
+            onClick={() => navigate(
+              isFormsView ? '/news-forms/new' : 
+              isNewslettersView ? '/newsletter-builder/new' : 
+              '/calendars/new'
+            )} 
             size="lg" 
             className="shadow-sm hover:shadow-md transition-shadow"
           >
             <Plus className="h-5 w-5 mr-2" />
-            {isFormsView ? 'Create New Form' : 'Create Newsletter'}
+            {isFormsView ? 'Create New Form' : 
+             isNewslettersView ? 'Create Newsletter' : 
+             'Create Calendar'}
           </Button>
         </div>
 
@@ -163,12 +171,27 @@ export const NewsFormsPage = () => {
               <Mail className="h-5 w-5" />
               <span className="font-medium">Newsletters</span>
             </Button>
+            <Button
+              variant={isCalendarsView ? 'default' : 'ghost'}
+              size="lg"
+              onClick={() => setActiveView('calendars' as ViewType)}
+              className={`flex items-center gap-3 px-8 py-3 transition-all duration-200 ${
+                isCalendarsView 
+                  ? 'shadow-sm bg-primary text-primary-foreground hover:bg-primary' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <Calendar className="h-5 w-5" />
+              <span className="font-medium">Google Calendars</span>
+            </Button>
           </div>
         </div>
 
         {/* Content Area */}
         {isNewslettersView ? (
           <NewsletterPage showHeader={false} />
+        ) : isCalendarsView ? (
+          <GoogleCalendarsPage />
         ) : (
           <>
             {/* Clean Filters */}
