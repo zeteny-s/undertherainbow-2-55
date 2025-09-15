@@ -127,7 +127,7 @@ serve(async (req) => {
 
 async function getGoogleAccessToken(): Promise<string> {
   const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
-  const googleCalendarCredentials = Deno.env.get('GOOGLE_CALENDAR');
+  const googleCalendarCredentials = Deno.env.get('GOOGLE_CALENDAR_API');
   
   console.log('Google Calendar credentials check:', {
     hasRefreshToken: !!refreshToken,
@@ -139,7 +139,7 @@ async function getGoogleAccessToken(): Promise<string> {
   }
   
   if (!googleCalendarCredentials) {
-    throw new Error('GOOGLE_CALENDAR credentials not configured. Please add it in Supabase Edge Function Secrets.');
+    throw new Error('GOOGLE_CALENDAR_API credentials not configured. Please add it in Supabase Edge Function Secrets.');
   }
 
   let credentials;
@@ -151,7 +151,7 @@ async function getGoogleAccessToken(): Promise<string> {
     }
   } catch (error) {
     console.error('Error parsing GOOGLE_CALENDAR credentials:', error);
-    throw new Error('GOOGLE_CALENDAR must contain valid JSON with client_id and client_secret. Example: {"client_id": "your_id", "client_secret": "your_secret"}');
+    throw new Error('GOOGLE_CALENDAR_API must contain valid JSON with client_id and client_secret. Example: {"client_id": "your_id", "client_secret": "your_secret"}');
   }
   
   const response = await fetch('https://oauth2.googleapis.com/token', {
