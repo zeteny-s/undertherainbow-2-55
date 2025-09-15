@@ -23,7 +23,10 @@ interface NewsletterPreviewProps {
 export const NewsletterPreview = ({ components, selectedForms, onComponentSelect, onComponentDelete }: NewsletterPreviewProps) => {
   const { isOver, setNodeRef } = useDroppable({ id: 'newsletter-builder' });
 
+  console.log('NewsletterPreview rendering:', { components: components.length, selectedForms: selectedForms.length });
+
   const renderComponent = (component: NewsletterComponent) => {
+    console.log('Rendering component:', component.type, component.content);
     switch (component.type) {
       case 'heading':
         const heading = component.content;
@@ -267,13 +270,13 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
 
       <div 
         ref={setNodeRef}
-        className={`relative z-30 max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center ${
+        className={`relative max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center ${
           isOver ? 'bg-muted' : ''
         }`}
       >
-        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg z-40 border border-gray-200">
+        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg border border-gray-200">
           {/* Logo */}
-          <div className="text-center mb-8 relative z-50">
+          <div className="text-center mb-8">
             <img 
               src={logo} 
               alt="Under the Rainbow Kindergarten and Nursery" 
@@ -283,17 +286,17 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
           </div>
 
           {/* Newsletter Content */}
-          <div className="space-y-6 relative z-50">
+          <div className="space-y-6">
             {components.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl bg-background relative z-50">
+              <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl bg-background">
                 <p className="text-lg font-medium mb-2">Drop newsletter components here</p>
                 <p className="text-sm">Drag components from the left sidebar to build your newsletter</p>
               </div>
             ) : (
               <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-4 relative z-50">
+                <div className="space-y-4">
                   {components.map((component) => (
-                    <div key={component.id} className="relative z-50 bg-white">
+                    <div key={component.id} className="relative">
                       <SortableNewsletterComponent
                         component={component}
                         onSelect={() => onComponentSelect(component)}

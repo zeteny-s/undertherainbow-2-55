@@ -65,7 +65,7 @@ export const SortableNewsletterComponent: React.FC<SortableNewsletterComponentPr
       </div>
 
       {/* Component content */}
-      <div className="pointer-events-none">
+      <div className="relative">
         {children}
       </div>
     </div>
