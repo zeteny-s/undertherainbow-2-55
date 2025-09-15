@@ -61,6 +61,22 @@ export interface NewsletterDivider {
   thickness?: string;
 }
 
+export interface NewsletterFormSection {
+  title?: string;
+  description?: string;
+  buttonText?: string;
+  buttonPosition?: 'left' | 'center' | 'right';
+  buttonStyle?: 'primary' | 'secondary' | 'outline';
+  backgroundColor?: string;
+  textColor?: string;
+  buttonBackgroundColor?: string;
+  buttonTextColor?: string;
+  borderRadius?: string;
+  padding?: string;
+  showDescription?: boolean;
+  customMessage?: string;
+}
+
 export interface AIMessage {
   id: string;
   role: 'user' | 'assistant';

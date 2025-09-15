@@ -85,6 +85,95 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
       case 'divider':
         return <hr className="my-6 border-gray-300" />;
       
+      case 'form-section':
+        const formSection = component.content;
+        const buttonAlignment = formSection.buttonPosition === 'center' ? 'justify-center' : 
+                               formSection.buttonPosition === 'right' ? 'justify-end' : 'justify-start';
+        
+        return (
+          <div 
+            className="mb-6 rounded-lg border"
+            style={{
+              backgroundColor: formSection.backgroundColor || '#f8f9fa',
+              color: formSection.textColor || '#1f2937',
+              borderRadius: formSection.borderRadius || '8px',
+              padding: formSection.padding || '16px'
+            }}
+          >
+            <h3 className="font-semibold text-lg mb-2 text-center">
+              {formSection.title || 'Forms & Programs'}
+            </h3>
+            {formSection.description && (
+              <p className="text-center text-sm mb-4 opacity-80">{formSection.description}</p>
+            )}
+            {formSection.customMessage && (
+              <p className="text-center text-sm mb-4 italic">{formSection.customMessage}</p>
+            )}
+            
+            {/* Placeholder for forms */}
+            <div className="space-y-3">
+              <div className="bg-white/50 rounded p-3 border border-white/20">
+                <h4 className="font-medium text-sm mb-1">Sample Form 1</h4>
+                {formSection.showDescription !== false && (
+                  <p className="text-xs opacity-70 mb-2">This is a sample form description</p>
+                )}
+                <div className={`flex ${buttonAlignment}`}>
+                  <button
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      formSection.buttonStyle === 'outline' 
+                        ? 'border border-current bg-transparent' 
+                        : formSection.buttonStyle === 'secondary'
+                        ? 'bg-gray-200 text-gray-800'
+                        : ''
+                    }`}
+                    style={{
+                      backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
+                                      formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                      formSection.buttonBackgroundColor || '#3b82f6',
+                      color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
+                             formSection.buttonStyle === 'secondary' ? '#1f2937' :
+                             formSection.buttonTextColor || '#ffffff',
+                      borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
+                      borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0'
+                    }}
+                  >
+                    {formSection.buttonText || 'Open Form'}
+                  </button>
+                </div>
+              </div>
+              <div className="bg-white/50 rounded p-3 border border-white/20">
+                <h4 className="font-medium text-sm mb-1">Sample Form 2</h4>
+                {formSection.showDescription !== false && (
+                  <p className="text-xs opacity-70 mb-2">Another sample form description</p>
+                )}
+                <div className={`flex ${buttonAlignment}`}>
+                  <button
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      formSection.buttonStyle === 'outline' 
+                        ? 'border border-current bg-transparent' 
+                        : formSection.buttonStyle === 'secondary'
+                        ? 'bg-gray-200 text-gray-800'
+                        : ''
+                    }`}
+                    style={{
+                      backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
+                                      formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                      formSection.buttonBackgroundColor || '#3b82f6',
+                      color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
+                             formSection.buttonStyle === 'secondary' ? '#1f2937' :
+                             formSection.buttonTextColor || '#ffffff',
+                      borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
+                      borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0'
+                    }}
+                  >
+                    {formSection.buttonText || 'Open Form'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      
       default:
         return null;
     }

@@ -253,6 +253,148 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
           </div>
         );
 
+      case 'form-section':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="form-title">Title</Label>
+              <Input
+                id="form-title"
+                value={editedComponent.content.title || 'Forms & Programs'}
+                onChange={(e) => updateContent('title', e.target.value)}
+                placeholder="Section title"
+              />
+            </div>
+            <div>
+              <Label htmlFor="form-description">Description</Label>
+              <Input
+                id="form-description"
+                value={editedComponent.content.description || ''}
+                onChange={(e) => updateContent('description', e.target.value)}
+                placeholder="Optional description"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="show-description"
+                checked={editedComponent.content.showDescription !== false}
+                onChange={(e) => updateContent('showDescription', e.target.checked)}
+              />
+              <Label htmlFor="show-description">Show form descriptions</Label>
+            </div>
+            <div>
+              <Label htmlFor="button-text">Button Text</Label>
+              <Input
+                id="button-text"
+                value={editedComponent.content.buttonText || 'Open Form'}
+                onChange={(e) => updateContent('buttonText', e.target.value)}
+                placeholder="Button text"
+              />
+            </div>
+            <div>
+              <Label htmlFor="button-position">Button Position</Label>
+              <Select value={editedComponent.content.buttonPosition || 'left'} onValueChange={(value) => updateContent('buttonPosition', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="button-style">Button Style</Label>
+              <Select value={editedComponent.content.buttonStyle || 'primary'} onValueChange={(value) => updateContent('buttonStyle', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="primary">Primary</SelectItem>
+                  <SelectItem value="secondary">Secondary</SelectItem>
+                  <SelectItem value="outline">Outline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="section-bg">Background Color</Label>
+              <Input
+                id="section-bg"
+                type="color"
+                value={editedComponent.content.backgroundColor || '#f8f9fa'}
+                onChange={(e) => updateContent('backgroundColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="section-text-color">Text Color</Label>
+              <Input
+                id="section-text-color"
+                type="color"
+                value={editedComponent.content.textColor || '#1f2937'}
+                onChange={(e) => updateContent('textColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="button-bg-color">Button Background Color</Label>
+              <Input
+                id="button-bg-color"
+                type="color"
+                value={editedComponent.content.buttonBackgroundColor || '#3b82f6'}
+                onChange={(e) => updateContent('buttonBackgroundColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="button-text-color">Button Text Color</Label>
+              <Input
+                id="button-text-color"
+                type="color"
+                value={editedComponent.content.buttonTextColor || '#ffffff'}
+                onChange={(e) => updateContent('buttonTextColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="border-radius">Border Radius</Label>
+              <Select value={editedComponent.content.borderRadius || '8px'} onValueChange={(value) => updateContent('borderRadius', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0px">None</SelectItem>
+                  <SelectItem value="4px">Small</SelectItem>
+                  <SelectItem value="8px">Medium</SelectItem>
+                  <SelectItem value="12px">Large</SelectItem>
+                  <SelectItem value="9999px">Rounded</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="section-padding">Padding</Label>
+              <Select value={editedComponent.content.padding || '16px'} onValueChange={(value) => updateContent('padding', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="8px">Small</SelectItem>
+                  <SelectItem value="16px">Medium</SelectItem>
+                  <SelectItem value="24px">Large</SelectItem>
+                  <SelectItem value="32px">Extra Large</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="custom-message">Custom Message</Label>
+              <Input
+                id="custom-message"
+                value={editedComponent.content.customMessage || ''}
+                onChange={(e) => updateContent('customMessage', e.target.value)}
+                placeholder="Optional custom message above forms"
+              />
+            </div>
+          </div>
+        );
+
       default:
         return <div>No editor available for this component type</div>;
     }

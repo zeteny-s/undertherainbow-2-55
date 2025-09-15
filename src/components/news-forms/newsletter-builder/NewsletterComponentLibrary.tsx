@@ -1,5 +1,5 @@
 import React from 'react';
-import { Type, Image, Minus, MousePointer, Heading1, Calendar } from 'lucide-react';
+import { Type, Image, Minus, MousePointer, Heading1, Calendar, FileText } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { Card, CardContent } from '../../ui/card';
 import { NewsletterComponentType } from '../../../types/newsletter-builder-types';
@@ -72,6 +72,27 @@ const componentLibrary: ComponentLibraryItem[] = [
       style: 'solid',
       color: '#e5e7eb',
       thickness: '1px'
+    }
+  },
+  {
+    type: 'form-section',
+    name: 'Form Section',
+    icon: FileText,
+    description: 'Add customizable forms section',
+    defaultConfig: {
+      title: 'Forms & Programs',
+      description: '',
+      buttonText: 'Open Form',
+      buttonPosition: 'left',
+      buttonStyle: 'primary',
+      backgroundColor: '#f8f9fa',
+      textColor: '#1f2937',
+      buttonBackgroundColor: '#3b82f6',
+      buttonTextColor: '#ffffff',
+      borderRadius: '8px',
+      padding: '16px',
+      showDescription: true,
+      customMessage: ''
     }
   },
   {
