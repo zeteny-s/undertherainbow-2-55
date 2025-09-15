@@ -61,21 +61,6 @@ export const NewsletterDragBuilderPage = () => {
     }
   }, [newsletterId]);
 
-  // Auto-save functionality with debouncing
-  useEffect(() => {
-    // Only auto-save if we have a title or components, and we have a newsletter ID (not new)
-    if ((!newsletterState.title.trim() && newsletterState.components.length === 0) || !currentNewsletterId) return;
-    
-    const autoSave = async () => {
-      try {
-        await handleSave(true); // Pass true to indicate auto-save
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-      }
-    };
-    const timer = setTimeout(autoSave, 3000); // Auto-save after 3 seconds of inactivity
-    return () => clearTimeout(timer);
-  }, [newsletterState.title, newsletterState.description, newsletterState.campus, newsletterState.selectedFormIds, newsletterState.components, currentNewsletterId]);
   const fetchAvailableForms = async () => {
     try {
       const {
@@ -139,8 +124,8 @@ export const NewsletterDragBuilderPage = () => {
       setLoading(false);
     }
   };
-  const handleSave = async (isAutoSave = false) => {
-    if (!newsletterState.title.trim() && !isAutoSave) {
+  const handleSave = async () => {
+    if (!newsletterState.title.trim()) {
       toast.error('Newsletter title is required');
       return;
     }
@@ -187,8 +172,8 @@ export const NewsletterDragBuilderPage = () => {
         } = await supabase.from('newsletters').update(newsletterData).eq('id', savedNewsletterId);
         if (error) throw error;
       }
-      if (savedNewsletterId && !isAutoSave) {
-        // Update selected forms only on manual save
+      if (savedNewsletterId) {
+        // Update selected forms
         await supabase.from('newsletter_forms').delete().eq('newsletter_id', savedNewsletterId);
         if (newsletterState.selectedFormIds.length > 0) {
           const formInserts = newsletterState.selectedFormIds.map(formId => ({
@@ -201,14 +186,10 @@ export const NewsletterDragBuilderPage = () => {
           if (error) throw error;
         }
       }
-      if (!isAutoSave) {
-        toast.success('Newsletter published successfully!');
-      }
+      toast.success('Newsletter saved successfully!');
     } catch (error) {
       console.error('Error saving newsletter:', error);
-      if (!isAutoSave) {
-        toast.error('Failed to save newsletter');
-      }
+      toast.error('Failed to save newsletter');
     } finally {
       setSaving(false);
     }
@@ -603,9 +584,9 @@ export const NewsletterDragBuilderPage = () => {
             
             
             <div className="flex items-center gap-2">
-              <Button onClick={() => handleSave(false)} disabled={saving} className="flex items-center gap-2">
+              <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">
                 <Save className="h-4 w-4" />
-                {saving ? 'Publishing...' : 'Publish Newsletter'}
+                {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </div>
