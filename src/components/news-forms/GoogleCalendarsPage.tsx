@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Calendar, Upload, ExternalLink, Clock } from 'lucide-react';
+import { Plus, Calendar, ExternalLink, Clock } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -31,6 +31,9 @@ interface CalendarEvent {
   endTime: string;
   teacher?: string;
   eventType?: string;
+  recurring?: boolean;
+  recurringType?: string;
+  recurringEnd?: string;
 }
 
 export const GoogleCalendarsPage = () => {
@@ -40,6 +43,10 @@ export const GoogleCalendarsPage = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEventForm, setShowEventForm] = useState(false);
   const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+  const [isCreatingCalendar, setIsCreatingCalendar] = useState(false);
+  const [isProcessingPdf, setIsProcessingPdf] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [extractedEvents, setExtractedEvents] = useState<any[]>([]);
 
   // Form states
   const [calendarForm, setCalendarForm] = useState({
@@ -54,7 +61,10 @@ export const GoogleCalendarsPage = () => {
     startTime: '',
     endTime: '',
     teacher: '',
-    eventType: 'general'
+    eventType: 'general',
+    recurring: false,
+    recurringType: 'weekly',
+    recurringEnd: ''
   });
 
   useEffect(() => {
@@ -81,8 +91,8 @@ export const GoogleCalendarsPage = () => {
     e.preventDefault();
     if (!user?.id) return;
 
+    setIsCreatingCalendar(true);
     try {
-      setLoading(true);
       const { error } = await supabase.functions.invoke('google-calendar', {
         body: {
           action: 'create_calendar',
@@ -91,7 +101,7 @@ export const GoogleCalendarsPage = () => {
       });
 
       if (error) throw error;
-      toast.success('Calendar created successfully!');
+      toast.success('Google Calendar created successfully! Share link is available.');
       setShowCreateForm(false);
       setCalendarForm({ title: '', description: '', campus: 'Feketerigó' });
       fetchCalendars();
@@ -99,7 +109,7 @@ export const GoogleCalendarsPage = () => {
       console.error('Error creating calendar:', error);
       toast.error(error.message || 'Failed to create calendar');
     } finally {
-      setLoading(false);
+      setIsCreatingCalendar(false);
     }
   };
 
@@ -120,7 +130,7 @@ export const GoogleCalendarsPage = () => {
       });
 
       if (error) throw error;
-      toast.success('Event added successfully!');
+      toast.success('Event added to Google Calendar!');
       setShowEventForm(false);
       setEventForm({
         title: '',
@@ -128,7 +138,10 @@ export const GoogleCalendarsPage = () => {
         startTime: '',
         endTime: '',
         teacher: '',
-        eventType: 'general'
+        eventType: 'general',
+        recurring: false,
+        recurringType: 'weekly',
+        recurringEnd: ''
       });
       fetchCalendars();
     } catch (error: any) {
@@ -139,31 +152,63 @@ export const GoogleCalendarsPage = () => {
     }
   };
 
-  const handlePdfUpload = async (file: File) => {
+  const processPdfCalendar = async () => {
+    if (!pdfFile || !selectedCalendar) return;
+
+    setIsProcessingPdf(true);
     try {
-      // Convert file to base64 for processing
-      const fileReader = new FileReader();
-      fileReader.onload = async () => {
-        const base64Content = fileReader.result as string;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Content = (reader.result as string).split(',')[1];
         
         const { data, error } = await supabase.functions.invoke('google-calendar', {
           body: {
             action: 'parse_pdf_calendar',
-            pdfContent: base64Content
+            pdfContent: base64Content,
+            calendarId: selectedCalendar
           }
         });
 
         if (error) throw error;
         
-        // For now, show extracted events in console (would show in modal for review)
-        console.log('Extracted events:', data.extractedEvents);
-        toast.success('PDF processed! Check console for extracted events');
+        setExtractedEvents(data.extractedEvents || []);
+        toast.success('PDF processed! Review events before adding to calendar.');
       };
-      
-      fileReader.readAsDataURL(file);
+      reader.readAsDataURL(pdfFile);
     } catch (error: any) {
       console.error('Error processing PDF:', error);
-      toast.error(error.message || 'Failed to process PDF');
+      toast.error('Failed to process PDF: ' + error.message);
+    } finally {
+      setIsProcessingPdf(false);
+    }
+  };
+
+  const addParsedEventsToCalendar = async () => {
+    if (!selectedCalendar || extractedEvents.length === 0) return;
+
+    try {
+      setLoading(true);
+      for (const event of extractedEvents) {
+        await supabase.functions.invoke('google-calendar', {
+          body: {
+            action: 'add_event',
+            eventData: {
+              ...event,
+              calendarId: selectedCalendar
+            }
+          }
+        });
+      }
+      
+      setExtractedEvents([]);
+      setPdfFile(null);
+      toast.success(`${extractedEvents.length} events added to Google Calendar!`);
+      fetchCalendars();
+    } catch (error: any) {
+      console.error('Error adding events:', error);
+      toast.error('Failed to add events: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -185,7 +230,7 @@ export const GoogleCalendarsPage = () => {
           className="flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
-          Create Calendar
+          Create Google Calendar
         </Button>
         <Button
           onClick={() => setShowEventForm(true)}
@@ -231,14 +276,79 @@ export const GoogleCalendarsPage = () => {
                 </SelectContent>
               </Select>
               <div className="flex gap-2">
-                <Button type="submit" disabled={loading}>
-                  Create Calendar
+                <Button type="submit" disabled={isCreatingCalendar}>
+                  {isCreatingCalendar ? 'Creating...' : 'Create Google Calendar'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
                   Cancel
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* PDF Upload Section */}
+      {calendars.length > 0 && (
+        <Card className="border-2 border-secondary/20">
+          <CardHeader>
+            <CardTitle>Upload PDF Calendar</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Select
+              value={selectedCalendar}
+              onValueChange={setSelectedCalendar}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select calendar to add events to" />
+              </SelectTrigger>
+              <SelectContent>
+                {calendars.map((calendar) => (
+                  <SelectItem key={calendar.id} value={calendar.id}>
+                    {calendar.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <div className="space-y-2">
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+              />
+              <Button 
+                onClick={processPdfCalendar} 
+                disabled={!pdfFile || !selectedCalendar || isProcessingPdf}
+                className="w-full"
+              >
+                {isProcessingPdf ? 'Processing...' : 'Extract Events from PDF'}
+              </Button>
+            </div>
+
+            {extractedEvents.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Extracted Events ({extractedEvents.length})</h3>
+                  <Button onClick={addParsedEventsToCalendar} disabled={!selectedCalendar || loading}>
+                    {loading ? 'Adding...' : 'Add All to Calendar'}
+                  </Button>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {extractedEvents.map((event, index) => (
+                    <div key={index} className="p-3 border rounded-lg">
+                      <h4 className="font-medium">{event.title}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(event.startTime).toLocaleString()} - {new Date(event.endTime).toLocaleString()}
+                      </p>
+                      {event.teacher && <p className="text-sm">Teacher: {event.teacher}</p>}
+                      {event.description && <p className="text-sm text-muted-foreground">{event.description}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -315,9 +425,46 @@ export const GoogleCalendarsPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={eventForm.recurring}
+                  onChange={(e) => setEventForm({ ...eventForm, recurring: e.target.checked })}
+                  className="rounded"
+                />
+                <label className="text-sm">Recurring Event</label>
+              </div>
+
+              {eventForm.recurring && (
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-sm font-medium">Repeat</label>
+                    <Select value={eventForm.recurringType} onValueChange={(value) => setEventForm({ ...eventForm, recurringType: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">End Date</label>
+                    <Input
+                      type="date"
+                      value={eventForm.recurringEnd}
+                      onChange={(e) => setEventForm({ ...eventForm, recurringEnd: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <Button type="submit" disabled={loading || !selectedCalendar}>
-                  Add Event
+                  Add to Google Calendar
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowEventForm(false)}>
                   Cancel
@@ -333,7 +480,7 @@ export const GoogleCalendarsPage = () => {
         <div className="flex items-center justify-center py-20">
           <EmptyState 
             icon={Calendar}
-            title="No Calendars Found"
+            title="No Google Calendars Found"
             description="Create your first Google Calendar to get started with event management"
             action={{
               label: "Create First Calendar",
@@ -370,22 +517,7 @@ export const GoogleCalendarsPage = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => window.open(calendar.share_link, '_blank')}>
                         <Calendar className="h-4 w-4 mr-2" />
-                        View Calendar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <label className="flex items-center cursor-pointer">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload PDF Calendar
-                          <input
-                            type="file"
-                            accept=".pdf"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handlePdfUpload(file);
-                            }}
-                          />
-                        </label>
+                        View Google Calendar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -407,6 +539,23 @@ export const GoogleCalendarsPage = () => {
                     <span className="font-medium">
                       {calendar.calendar_events_google?.[0]?.count || 0}
                     </span>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <a 
+                      href={calendar.share_link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                    >
+                      View Calendar <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyShareLink(calendar.share_link)}
+                    >
+                      Copy Link
+                    </Button>
                   </div>
                 </div>
               </CardContent>

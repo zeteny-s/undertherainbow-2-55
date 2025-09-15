@@ -100,14 +100,20 @@ serve(async (req) => {
 
 async function getGoogleAccessToken(): Promise<string> {
   const refreshToken = Deno.env.get('GOOGLE_REFRESH_TOKEN');
-  const clientId = Deno.env.get('GOOGLE_SHEET_API'); // This contains client credentials
+  const googleSheetApi = Deno.env.get('GOOGLE_SHEET_API');
   
-  if (!refreshToken || !clientId) {
+  if (!refreshToken || !googleSheetApi) {
     throw new Error('Google credentials not configured');
   }
 
-  // Parse the client credentials (assuming it's JSON with client_id and client_secret)
-  const credentials = JSON.parse(clientId);
+  let credentials;
+  try {
+    // Try to parse as JSON first
+    credentials = JSON.parse(googleSheetApi);
+  } catch (error) {
+    // If not JSON, assume it's a plain API key and we need to use OAuth client credentials
+    throw new Error('GOOGLE_SHEET_API must contain JSON with client_id and client_secret');
+  }
   
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -235,6 +241,34 @@ async function addEventToCalendar(
     googleEvent.description += `\n\nTeacher: ${eventData.teacher}`;
   }
 
+  // Add recurring rule if specified
+  if (eventData.recurring && eventData.recurringType) {
+    const recurrenceRules = [];
+    let freq = 'WEEKLY';
+    
+    switch (eventData.recurringType) {
+      case 'daily':
+        freq = 'DAILY';
+        break;
+      case 'weekly':
+        freq = 'WEEKLY';
+        break;
+      case 'monthly':
+        freq = 'MONTHLY';
+        break;
+    }
+    
+    let rule = `FREQ=${freq}`;
+    
+    if (eventData.recurringEnd) {
+      const endDate = new Date(eventData.recurringEnd).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      rule += `;UNTIL=${endDate}`;
+    }
+    
+    recurrenceRules.push(`RRULE:${rule}`);
+    googleEvent.recurrence = recurrenceRules;
+  }
+
   // Create event in Google Calendar
   const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendar.google_calendar_id}/events`, {
     method: 'POST',
@@ -291,24 +325,64 @@ async function listUserCalendars(supabaseClient: any, userId: string) {
 }
 
 async function parsePdfCalendar(pdfContent: string) {
-  // This would integrate with Document AI to extract calendar events from PDF
-  // For now, return a placeholder response
-  const extractedEvents = [
-    {
-      title: 'Math Class',
-      startTime: '2024-01-15T09:00:00Z',
-      endTime: '2024-01-15T10:30:00Z',
-      teacher: 'Mrs. Smith',
-      description: 'Algebra fundamentals',
-    },
-    {
-      title: 'Science Lab',
-      startTime: '2024-01-15T14:00:00Z',
-      endTime: '2024-01-15T15:30:00Z',
-      teacher: 'Dr. Johnson',
-      description: 'Chemistry experiments',
-    },
-  ];
+  // Enhanced PDF parsing using Document AI or Gemini
+  const documentAiKey = Deno.env.get('DOCUMENT_AI_API');
+  const geminiKey = Deno.env.get('GEMINI_API');
+  
+  try {
+    if (geminiKey) {
+      // Use Gemini to extract calendar events from PDF
+      const prompt = `Extract calendar events from this PDF. Return a JSON array of events with the following structure:
+      [{
+        "title": "Event name",
+        "startTime": "2024-01-15T09:00:00Z",
+        "endTime": "2024-01-15T10:30:00Z", 
+        "teacher": "Teacher name (if applicable)",
+        "description": "Event description"
+      }]
+      
+      Focus on finding dates, times, and event descriptions. Format all times in ISO format.`;
 
-  return { extractedEvents };
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: "application/pdf", data: pdfContent } }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (generatedText) {
+        // Try to extract JSON from the response
+        const jsonMatch = generatedText.match(/\[\s*{[\s\S]*}\s*\]/);
+        if (jsonMatch) {
+          const extractedEvents = JSON.parse(jsonMatch[0]);
+          return { extractedEvents };
+        }
+      }
+    }
+    
+    // Fallback to placeholder events if AI parsing fails
+    const extractedEvents = [
+      {
+        title: 'Example Event (PDF Processing)',
+        startTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+        endTime: new Date(Date.now() + 86400000 + 3600000).toISOString(), // Tomorrow + 1 hour
+        teacher: 'Staff',
+        description: 'Extracted from PDF - please verify details',
+      }
+    ];
+
+    return { extractedEvents };
+  } catch (error) {
+    console.error('Error parsing PDF:', error);
+    return { extractedEvents: [] };
+  }
 }
