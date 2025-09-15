@@ -87,18 +87,16 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         );
       
       case 'form-button':
-        console.log('Rendering form-button component:', component);
         const formButton = component.content;
         if (!formButton.formId) {
           return (
-            <div className="mb-4 text-center p-4 border-4 border-yellow-500 bg-yellow-100 rounded-lg" style={{ minHeight: '60px' }}>
-              <p className="text-gray-500 text-sm font-bold">Form button - Please select a form in the editor</p>
+            <div className="mb-4 text-center p-4 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg">
+              <p className="text-gray-500 text-sm">Form button - Please select a form in the editor</p>
             </div>
           );
         }
         return (
-          <div className="mb-4 text-center p-4 border-4 border-yellow-500 bg-yellow-100 rounded-lg" style={{ minHeight: '60px' }}>
-            <div className="text-xs text-gray-600 mb-2">DEBUG: form-button component</div>
+          <div className="mb-4 text-center">
             <a
               href={`/news-forms/public/${formButton.formId}`}
               target="_blank"
@@ -134,7 +132,6 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         return <hr className="my-6 border-gray-300" />;
       
       case 'form-section':
-        console.log('Rendering form-section component:', component);
         const formSection = component.content;
         const buttonAlignment = formSection.buttonPosition === 'center' ? 'justify-center' : 
                                formSection.buttonPosition === 'right' ? 'justify-end' : 'justify-start';
@@ -142,8 +139,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                              formSection.textAlign === 'right' ? 'text-right' : 'text-left';
         
         return (
-          <div className="mb-8 border-4 border-red-500 bg-red-100 p-4 rounded-lg" style={{ minHeight: '100px' }}>
-            <div className="text-xs text-red-600 mb-2 font-bold">DEBUG: form-section component</div>
+          <div className="mb-8">
             {/* Divider line */}
             <hr className="my-8 border-gray-300" />
             

@@ -36,37 +36,36 @@ export const SortableNewsletterComponent: React.FC<SortableNewsletterComponentPr
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative border-2 border-green-500 bg-green-50 rounded-lg p-2 mb-2"
+      className="group relative border border-transparent hover:border-blue-300 hover:bg-blue-50/30 rounded-lg p-2 transition-all"
     >
-      {/* Simplified controls - always visible for debugging */}
-      <div className="flex justify-between items-center mb-2 bg-gray-100 p-2 rounded">
+      {/* Drag handle and controls */}
+      <div className="absolute -left-12 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
         <button
           {...attributes}
           {...listeners}
-          className="p-1 bg-blue-500 text-white rounded cursor-grab active:cursor-grabbing"
+          className="p-2 bg-white border border-gray-200 rounded shadow-sm hover:bg-gray-50 cursor-grab active:cursor-grabbing"
         >
-          <GripVertical className="h-4 w-4" />
+          <GripVertical className="h-4 w-4 text-gray-500" />
         </button>
-        
-        <div className="flex gap-2">
-          <button
-            onClick={() => onSelect(component)}
-            className="p-1 bg-blue-500 text-white rounded"
-          >
-            <Edit3 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => onDelete(component.id)}
-            className="p-1 bg-red-500 text-white rounded"
-          >
-            <Trash2 className="h-4 w-4 text-white" />
-          </button>
-        </div>
+      </div>
+
+      <div className="absolute -right-12 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+        <button
+          onClick={() => onSelect(component)}
+          className="p-2 bg-white border border-gray-200 rounded shadow-sm hover:bg-blue-50"
+        >
+          <Edit3 className="h-4 w-4 text-blue-600" />
+        </button>
+        <button
+          onClick={() => onDelete(component.id)}
+          className="p-2 bg-white border border-gray-200 rounded shadow-sm hover:bg-red-50"
+        >
+          <Trash2 className="h-4 w-4 text-red-600" />
+        </button>
       </div>
 
       {/* Component content */}
-      <div className="relative bg-white border border-gray-300 rounded p-2">
-        <div className="text-xs text-gray-500 mb-2">Type: {component.type}</div>
+      <div className="relative">
         {children}
       </div>
     </div>
