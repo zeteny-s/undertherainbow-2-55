@@ -90,67 +90,80 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                                formSection.buttonPosition === 'right' ? 'justify-end' : 'justify-start';
         
         return (
-          <div 
-            className="mb-6 rounded-lg border"
-            style={{
-              backgroundColor: formSection.backgroundColor || '#f8f9fa',
-              color: formSection.textColor || '#1f2937',
-              borderRadius: formSection.borderRadius || '8px',
-              padding: formSection.padding || '16px'
-            }}
-          >
-            <h3 className="font-semibold text-lg mb-2 text-center">
-              {formSection.title || 'Forms & Programs'}
-            </h3>
-            {formSection.description && (
-              <p className="text-center text-sm mb-4 opacity-80">{formSection.description}</p>
-            )}
-            {formSection.customMessage && (
-              <p className="text-center text-sm mb-4 italic">{formSection.customMessage}</p>
-            )}
+          <div className="mb-6">
+            {/* Divider line */}
+            <hr className="my-6 border-gray-300" />
             
-            {/* Render actual selected forms */}
-            <div className="space-y-3">
-              {selectedForms && selectedForms.length > 0 ? (
-                selectedForms.map((form) => (
-                  <div key={form.id} className="bg-white/50 rounded p-3 border border-white/20">
-                    <h4 className="font-medium text-sm mb-1">{form.title}</h4>
-                    {formSection.showDescription !== false && form.description && (
-                      <p className="text-xs opacity-70 mb-2 line-clamp-2">{form.description}</p>
-                    )}
-                    <div className={`flex ${buttonAlignment}`}>
-                      <button
-                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                          formSection.buttonStyle === 'outline' 
-                            ? 'border border-current bg-transparent' 
-                            : formSection.buttonStyle === 'secondary'
-                            ? 'bg-gray-200 text-gray-800'
-                            : ''
-                        }`}
-                        style={{
-                          backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
-                                          formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
-                                          formSection.buttonBackgroundColor || '#3b82f6',
-                          color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
-                                 formSection.buttonStyle === 'secondary' ? '#1f2937' :
-                                 formSection.buttonTextColor || '#ffffff',
-                          borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
-                          borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0',
-                          borderRadius: formSection.borderRadius || '8px'
-                        }}
-                        onClick={() => window.open(`/news-forms/public/${form.id}`, '_blank')}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1 inline" />
-                        {formSection.buttonText || 'Open Form'}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="bg-white/50 rounded p-3 border border-white/20 text-center">
-                  <p className="text-xs opacity-70">No forms selected yet. Add forms from the form selection.</p>
-                </div>
+            {/* Form section content */}
+            <div 
+              className="mb-4"
+              style={{
+                color: formSection.textColor || '#1f2937',
+                padding: formSection.padding || '16px'
+              }}
+            >
+              <h3 className="font-semibold text-lg mb-2 text-center">
+                {formSection.title || 'Forms & Programs'}
+              </h3>
+              {formSection.description && (
+                <p className="text-center text-sm mb-4 opacity-80">{formSection.description}</p>
               )}
+              {formSection.customMessage && (
+                <p className="text-center text-sm mb-4 italic">{formSection.customMessage}</p>
+              )}
+              
+              {/* Render actual selected forms */}
+              <div className="space-y-3">
+                {selectedForms && selectedForms.length > 0 ? (
+                  selectedForms.map((form) => (
+                    <div 
+                      key={form.id} 
+                      className="p-3 border-b border-gray-200 last:border-b-0"
+                      style={{
+                        backgroundColor: formSection.backgroundColor || 'transparent',
+                        borderRadius: formSection.borderRadius || '0px'
+                      }}
+                    >
+                      <h4 className="font-medium text-sm mb-1">{form.title}</h4>
+                      {formSection.showDescription !== false && form.description && (
+                        <p className="text-xs opacity-70 mb-2 line-clamp-2">{form.description}</p>
+                      )}
+                      <div className={`flex ${buttonAlignment}`}>
+                        <a
+                          href={`/news-forms/public/${form.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex items-center px-3 py-1 rounded text-xs font-medium transition-colors ${
+                            formSection.buttonStyle === 'outline' 
+                              ? 'border border-current bg-transparent' 
+                              : formSection.buttonStyle === 'secondary'
+                              ? 'bg-gray-200 text-gray-800'
+                              : ''
+                          }`}
+                          style={{
+                            backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
+                                            formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                            formSection.buttonBackgroundColor || '#3b82f6',
+                            color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
+                                   formSection.buttonStyle === 'secondary' ? '#1f2937' :
+                                   formSection.buttonTextColor || '#ffffff',
+                            borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
+                            borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0',
+                            borderRadius: formSection.borderRadius || '8px'
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          {formSection.buttonText || 'Open Form'}
+                        </a>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 border border-gray-200 text-center bg-gray-50">
+                    <p className="text-xs opacity-70">No forms selected yet. Add forms from the form selection.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
