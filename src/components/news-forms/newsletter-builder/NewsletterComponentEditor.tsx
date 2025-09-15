@@ -392,6 +392,19 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
                 placeholder="Optional custom message above forms"
               />
             </div>
+            <div>
+              <Label htmlFor="text-align">Text Alignment</Label>
+              <Select value={editedComponent.content.textAlign || 'left'} onValueChange={(value) => updateContent('textAlign', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
 

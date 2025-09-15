@@ -88,79 +88,88 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         const formSection = component.content;
         const buttonAlignment = formSection.buttonPosition === 'center' ? 'justify-center' : 
                                formSection.buttonPosition === 'right' ? 'justify-end' : 'justify-start';
+        const textAlignment = formSection.textAlign === 'center' ? 'text-center' : 
+                             formSection.textAlign === 'right' ? 'text-right' : 'text-left';
         
         return (
-          <div className="mb-6">
+          <div className="mb-8">
             {/* Divider line */}
-            <hr className="my-6 border-gray-300" />
+            <hr className="my-8 border-gray-300" />
             
             {/* Form section content */}
             <div 
-              className="mb-4"
+              className={`mb-6 ${textAlignment}`}
               style={{
                 color: formSection.textColor || '#1f2937',
-                padding: formSection.padding || '16px'
+                padding: formSection.padding || '20px'
               }}
             >
-              <h3 className="font-semibold text-lg mb-2 text-center">
+              <h3 className={`font-semibold text-xl mb-3 ${textAlignment}`}>
                 {formSection.title || 'Additional Infos&Sign Up Forms'}
               </h3>
               {formSection.description && (
-                <p className="text-center text-sm mb-4 opacity-80">{formSection.description}</p>
+                <p className={`text-sm mb-4 opacity-80 ${textAlignment}`}>{formSection.description}</p>
               )}
               {formSection.customMessage && (
-                <p className="text-center text-sm mb-4 italic">{formSection.customMessage}</p>
+                <p className={`text-sm mb-6 italic ${textAlignment}`}>{formSection.customMessage}</p>
               )}
               
               {/* Render actual selected forms */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {selectedForms && selectedForms.length > 0 ? (
                   selectedForms.map((form) => (
                     <div 
                       key={form.id} 
-                      className="p-3 border-b border-gray-200 last:border-b-0"
+                      className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
                       style={{
-                        backgroundColor: formSection.backgroundColor || 'transparent',
-                        borderRadius: formSection.borderRadius || '0px'
+                        backgroundColor: formSection.backgroundColor || '#ffffff',
+                        borderRadius: formSection.borderRadius || '8px'
                       }}
                     >
-                      <h4 className="font-medium text-sm mb-1">{form.title}</h4>
-                      {formSection.showDescription !== false && form.description && (
-                        <p className="text-xs opacity-70 mb-2 line-clamp-2">{form.description}</p>
-                      )}
-                      <div className={`flex ${buttonAlignment}`}>
-                        <a
-                          href={`/news-forms/public/${form.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`inline-flex items-center px-3 py-1 rounded text-xs font-medium transition-colors ${
-                            formSection.buttonStyle === 'outline' 
-                              ? 'border border-current bg-transparent' 
-                              : formSection.buttonStyle === 'secondary'
-                              ? 'bg-gray-200 text-gray-800'
-                              : ''
-                          }`}
-                          style={{
-                            backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
-                                            formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
-                                            formSection.buttonBackgroundColor || '#3b82f6',
-                            color: formSection.buttonStyle === 'outline' ? (formSection.textColor || '#1f2937') :
-                                   formSection.buttonStyle === 'secondary' ? '#1f2937' :
-                                   formSection.buttonTextColor || '#ffffff',
-                            borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
-                            borderWidth: formSection.buttonStyle === 'outline' ? '1px' : '0',
-                            borderRadius: formSection.borderRadius || '8px'
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          {formSection.buttonText || 'Open Form'}
-                        </a>
+                      <div className={textAlignment}>
+                        <h4 className={`font-semibold text-base mb-2 ${textAlignment}`} style={{ color: formSection.textColor || '#1f2937' }}>
+                          {form.title}
+                        </h4>
+                        {formSection.showDescription !== false && form.description && (
+                          <p className={`text-sm opacity-70 mb-3 leading-relaxed ${textAlignment}`} style={{ color: formSection.textColor || '#1f2937' }}>
+                            {form.description}
+                          </p>
+                        )}
+                        <div className={`flex ${buttonAlignment} mt-4`}>
+                          <a
+                            href={`/news-forms/public/${form.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center px-4 py-2 rounded font-medium text-sm transition-all duration-200 hover:shadow-md ${
+                              formSection.buttonStyle === 'outline' 
+                                ? 'border-2 bg-transparent hover:bg-opacity-10' 
+                                : formSection.buttonStyle === 'secondary'
+                                ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                : 'hover:opacity-90'
+                            }`}
+                            style={{
+                              backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
+                                              formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                              formSection.buttonBackgroundColor || '#3b82f6',
+                              color: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') :
+                                     formSection.buttonStyle === 'secondary' ? '#1f2937' :
+                                     formSection.buttonTextColor || '#ffffff',
+                              borderColor: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') : 'transparent',
+                              borderWidth: formSection.buttonStyle === 'outline' ? '2px' : '0',
+                              borderRadius: formSection.borderRadius || '8px'
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            {formSection.buttonText || 'Open Form'}
+                          </a>
+                        </div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="p-3 border border-gray-200 text-center bg-gray-50">
-                    <p className="text-xs opacity-70">No forms selected yet. Add forms from the form selection.</p>
+                  <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50">
+                    <p className="text-sm text-gray-500 font-medium">No forms selected yet</p>
+                    <p className="text-xs text-gray-400 mt-1">Add forms using the form selection button in the sidebar</p>
                   </div>
                 )}
               </div>

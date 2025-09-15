@@ -75,6 +75,7 @@ export interface NewsletterFormSection {
   padding?: string;
   showDescription?: boolean;
   customMessage?: string;
+  textAlign?: 'left' | 'center' | 'right';
 }
 
 export interface AIMessage {
