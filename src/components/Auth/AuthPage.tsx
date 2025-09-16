@@ -9,7 +9,9 @@ export const AuthPage: React.FC = () => {
   useEffect(() => {
     // Check if user already has company access in this session
     const companyAccess = sessionStorage.getItem('company-access');
+    console.log('AuthPage: Checking company access in sessionStorage:', companyAccess);
     if (companyAccess === 'granted') {
+      console.log('AuthPage: Company access granted, setting hasCompanyAccess to true');
       setHasCompanyAccess(true);
     }
   }, []);
@@ -19,6 +21,7 @@ export const AuthPage: React.FC = () => {
   };
 
   const handlePasswordCorrect = () => {
+    console.log('AuthPage: handlePasswordCorrect called, setting hasCompanyAccess to true');
     setHasCompanyAccess(true);
   };
 

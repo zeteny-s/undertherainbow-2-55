@@ -16,14 +16,19 @@ export const PasswordGate: React.FC<PasswordGateProps> = ({ onPasswordCorrect })
     setLoading(true);
     setError('');
 
+    console.log('PasswordGate: Attempting password verification with:', password);
+
     // Simulate a small delay for security
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (password === 'finance2461') {
+      console.log('PasswordGate: Password correct, setting session storage');
       // Store access token in sessionStorage (expires when browser closes)
       sessionStorage.setItem('company-access', 'granted');
+      console.log('PasswordGate: Session storage set, calling onPasswordCorrect');
       onPasswordCorrect();
     } else {
+      console.log('PasswordGate: Password incorrect:', password);
       setError('Hibás jelszó. Kérjük, próbálja újra.');
       setPassword('');
     }
