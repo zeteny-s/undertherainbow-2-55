@@ -167,7 +167,7 @@ export const PublicNewsletterPage = () => {
         return (
           <div className="mb-4 text-center">
             <Link
-              to={`/news-forms/public/${formButton.formId}`}
+              to={`/form/${formButton.formId}`}
               target="_blank"
               rel="noopener noreferrer"
               className={`inline-flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md ${
@@ -249,7 +249,7 @@ export const PublicNewsletterPage = () => {
                         )}
                         <div className={`flex ${buttonAlignment} mt-4`}>
                           <Link
-                            to={`/news-forms/public/${form.id}`}
+                            to={`/form/${form.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`inline-flex items-center px-4 py-2 rounded font-medium text-sm transition-all duration-200 hover:shadow-md ${
