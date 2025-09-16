@@ -39,6 +39,15 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
       
       case 'text-block':
         const textBlock = component.content;
+        
+        // Process inline form buttons
+        const processedContent = textBlock.content.replace(
+          /<span[^>]*class="inline-form-button"[^>]*data-form-id="([^"]*)"[^>]*data-button-text="([^"]*)"[^>]*>.*?<\/span>/g,
+          (_match: string, formId: string, buttonText: string) => {
+            return `<a href="/news-forms/public/${formId}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; text-decoration: none; margin: 0 4px; cursor: pointer; border: none; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);" onmouseover="this.style.backgroundColor='#2563eb'; this.style.transform='translateY(-1px)'" onmouseout="this.style.backgroundColor='#3b82f6'; this.style.transform='translateY(0)'">${buttonText}</a>`;
+          }
+        );
+        
         return (
           <div 
             className="mb-4"
@@ -46,7 +55,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
               // Only apply alignment, let the pasted HTML preserve its own formatting
               textAlign: textBlock.textAlign || 'left'
             }}
-            dangerouslySetInnerHTML={{ __html: textBlock.content }}
+            dangerouslySetInnerHTML={{ __html: processedContent }}
           />
         );
       

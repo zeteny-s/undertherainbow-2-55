@@ -103,6 +103,7 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
                 value={editedComponent.content.content}
                 onChange={(value: string) => updateContent('content', value)}
                 placeholder="Enter your text content"
+                selectedForms={selectedForms}
               />
             </div>
             <div>
