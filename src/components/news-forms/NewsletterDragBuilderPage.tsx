@@ -23,16 +23,12 @@ import { NewsletterComponent, NewsletterBuilderState } from '../../types/newslet
 import { FormForSelection } from '../../types/newsletter-types';
 import { CampusType } from '../../types/form-types';
 import { toast } from 'sonner';
+
 export const NewsletterDragBuilderPage = () => {
-  const {
-    newsletterId
-  } = useParams<{
-    newsletterId: string;
-  }>();
+  const { newsletterId } = useParams<{ newsletterId: string }>();
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
@@ -47,11 +43,6 @@ export const NewsletterDragBuilderPage = () => {
   // Track the current newsletter ID separately from URL params
   const [currentNewsletterId, setCurrentNewsletterId] = useState<string | null>(newsletterId && newsletterId !== 'new' ? newsletterId : null);
   const [availableForms, setAvailableForms] = useState<FormForSelection[]>([]);
-export const NewsletterDragBuilderPage = () => {
-  const { newsletterId } = useParams<{ newsletterId: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  
   const [selectedComponent, setSelectedComponent] = useState<NewsletterComponent | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<NewsletterComponent | null>(null);
   const [showFormSelection, setShowFormSelection] = useState(false);
@@ -507,7 +498,8 @@ export const NewsletterDragBuilderPage = () => {
   if (loading) {
     return <LoadingSpinner />;
   }
-  return <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+  return (
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="h-screen flex flex-col bg-white">
         {/* Header */}
         <div className="border-b px-6 py-4 flex items-center justify-between">
