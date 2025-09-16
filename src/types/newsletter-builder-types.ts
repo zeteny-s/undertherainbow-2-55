@@ -5,6 +5,7 @@ export interface NewsletterComponent {
   type: NewsletterComponentType;
   content: any;
   position: number;
+  marginBottom?: string;
 }
 
 export type NewsletterComponentType = 

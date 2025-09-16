@@ -33,27 +33,36 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
       case 'heading':
         const heading = component.content;
         return React.createElement(`h${heading.level}`, {
-          className: `font-bold mb-4 ${heading.textAlign === 'center' ? 'text-center' : heading.textAlign === 'right' ? 'text-right' : 'text-left'}`,
-          style: { color: heading.color || 'inherit' }
+          className: `font-bold ${heading.textAlign === 'center' ? 'text-center' : heading.textAlign === 'right' ? 'text-right' : 'text-left'}`,
+          style: { 
+            color: heading.color || 'inherit',
+            marginBottom: component.marginBottom || '1rem'
+          }
         }, heading.text);
       
       case 'text-block':
         const textBlock = component.content;
+        const processedContent = textBlock.content.replace(
+          /<span[^>]*data-form-button="([^"]*)"[^>]*data-form-text="([^"]*)"[^>]*><\/span>/g,
+          (_match: string, formId: string, buttonText: string) => {
+            return `<a href="/news-forms/public/${formId}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; transition: all 0.2s; margin: 0 4px;" onmouseover="this.style.backgroundColor='#2563eb'" onmouseout="this.style.backgroundColor='#3b82f6'">${buttonText}</a>`;
+          }
+        );
+        
         return (
           <div 
-            className="mb-4"
             style={{ 
-              // Only apply alignment, let the pasted HTML preserve its own formatting
-              textAlign: textBlock.textAlign || 'left'
+              textAlign: textBlock.textAlign || 'left',
+              marginBottom: component.marginBottom || '1rem'
             }}
-            dangerouslySetInnerHTML={{ __html: textBlock.content }}
+            dangerouslySetInnerHTML={{ __html: processedContent }}
           />
         );
       
       case 'image':
         const image = component.content;
         return (
-          <div className="mb-4 text-center">
+          <div className="text-center" style={{ marginBottom: component.marginBottom || '1rem' }}>
             <img 
               src={image.url} 
               alt={image.alt}
@@ -69,7 +78,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
       case 'button':
         const button = component.content;
         return (
-          <div className="mb-4 text-center">
+          <div className="text-center" style={{ marginBottom: component.marginBottom || '1rem' }}>
             <a
               href={button.url}
               className={`inline-block px-6 py-3 rounded-lg font-medium transition-colors ${
@@ -96,7 +105,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
           );
         }
         return (
-          <div className="mb-4 text-center">
+          <div className="text-center" style={{ marginBottom: component.marginBottom || '1rem' }}>
             <a
               href={`/news-forms/public/${formButton.formId}`}
               target="_blank"
@@ -129,7 +138,17 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         );
       
       case 'divider':
-        return <hr className="my-6 border-gray-300" />;
+        const divider = component.content;
+        return <hr 
+          className="border-gray-300" 
+          style={{ 
+            borderStyle: divider?.style || 'solid',
+            borderColor: divider?.color || '#d1d5db',
+            borderWidth: divider?.thickness || '1px',
+            marginBottom: component.marginBottom || '1.5rem',
+            marginTop: '1.5rem'
+          }} 
+        />;
       
       case 'form-section':
         const formSection = component.content;
@@ -139,7 +158,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                              formSection.textAlign === 'right' ? 'text-right' : 'text-left';
         
         return (
-          <div className="mb-8">
+          <div style={{ marginBottom: component.marginBottom || '2rem' }}>
             {/* Divider line */}
             <hr className="my-8 border-gray-300" />
             
@@ -296,7 +315,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
               </div>
             ) : (
               <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-4">
+                <div>
                   {components.map((component) => (
                     <div key={component.id} className="relative">
                       <SortableNewsletterComponent

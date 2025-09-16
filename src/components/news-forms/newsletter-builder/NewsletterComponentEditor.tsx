@@ -54,6 +54,23 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
               />
             </div>
             <div>
+              <Label htmlFor="heading-margin">Bottom Spacing</Label>
+              <Select value={editedComponent.marginBottom || '1rem'} onValueChange={(value) => setEditedComponent(prev => ({ ...prev, marginBottom: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None (0)</SelectItem>
+                  <SelectItem value="0.5rem">Extra Small (8px)</SelectItem>
+                  <SelectItem value="1rem">Small (16px)</SelectItem>
+                  <SelectItem value="1.5rem">Medium (24px)</SelectItem>
+                  <SelectItem value="2rem">Large (32px)</SelectItem>
+                  <SelectItem value="2.5rem">Extra Large (40px)</SelectItem>
+                  <SelectItem value="3rem">XXL (48px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="heading-level">Heading Level</Label>
               <Select value={editedComponent.content.level?.toString()} onValueChange={(value) => updateContent('level', parseInt(value))}>
                 <SelectTrigger>
@@ -106,6 +123,23 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
               />
             </div>
             <div>
+              <Label htmlFor="text-margin">Bottom Spacing</Label>
+              <Select value={editedComponent.marginBottom || '1rem'} onValueChange={(value) => setEditedComponent(prev => ({ ...prev, marginBottom: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None (0)</SelectItem>
+                  <SelectItem value="0.5rem">Extra Small (8px)</SelectItem>
+                  <SelectItem value="1rem">Small (16px)</SelectItem>
+                  <SelectItem value="1.5rem">Medium (24px)</SelectItem>
+                  <SelectItem value="2rem">Large (32px)</SelectItem>
+                  <SelectItem value="2.5rem">Extra Large (40px)</SelectItem>
+                  <SelectItem value="3rem">XXL (48px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="text-size">Font Size</Label>
               <Select value={editedComponent.content.fontSize} onValueChange={(value) => updateContent('fontSize', value)}>
                 <SelectTrigger>
@@ -149,6 +183,23 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
               />
             </div>
             <div>
+              <Label htmlFor="image-margin">Bottom Spacing</Label>
+              <Select value={editedComponent.marginBottom || '1rem'} onValueChange={(value) => setEditedComponent(prev => ({ ...prev, marginBottom: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None (0)</SelectItem>
+                  <SelectItem value="0.5rem">Extra Small (8px)</SelectItem>
+                  <SelectItem value="1rem">Small (16px)</SelectItem>
+                  <SelectItem value="1.5rem">Medium (24px)</SelectItem>
+                  <SelectItem value="2rem">Large (32px)</SelectItem>
+                  <SelectItem value="2.5rem">Extra Large (40px)</SelectItem>
+                  <SelectItem value="3rem">XXL (48px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="image-alt">Alt Text</Label>
               <Input
                 id="image-alt"
@@ -180,6 +231,23 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
                 onChange={(e) => updateContent('text', e.target.value)}
                 placeholder="Enter button text"
               />
+            </div>
+            <div>
+              <Label htmlFor="button-margin">Bottom Spacing</Label>
+              <Select value={editedComponent.marginBottom || '1rem'} onValueChange={(value) => setEditedComponent(prev => ({ ...prev, marginBottom: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None (0)</SelectItem>
+                  <SelectItem value="0.5rem">Extra Small (8px)</SelectItem>
+                  <SelectItem value="1rem">Small (16px)</SelectItem>
+                  <SelectItem value="1.5rem">Medium (24px)</SelectItem>
+                  <SelectItem value="2rem">Large (32px)</SelectItem>
+                  <SelectItem value="2.5rem">Extra Large (40px)</SelectItem>
+                  <SelectItem value="3rem">XXL (48px)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="button-url">Link URL</Label>
@@ -226,6 +294,23 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
                 onChange={(e) => updateContent('text', e.target.value)}
                 placeholder="e.g., Sign Up Now"
               />
+            </div>
+            <div>
+              <Label htmlFor="form-button-margin">Bottom Spacing</Label>
+              <Select value={editedComponent.marginBottom || '1rem'} onValueChange={(value) => setEditedComponent(prev => ({ ...prev, marginBottom: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None (0)</SelectItem>
+                  <SelectItem value="0.5rem">Extra Small (8px)</SelectItem>
+                  <SelectItem value="1rem">Small (16px)</SelectItem>
+                  <SelectItem value="1.5rem">Medium (24px)</SelectItem>
+                  <SelectItem value="2rem">Large (32px)</SelectItem>
+                  <SelectItem value="2.5rem">Extra Large (40px)</SelectItem>
+                  <SelectItem value="3rem">XXL (48px)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="form-button-form">Select Form</Label>
@@ -311,6 +396,23 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
               </Select>
             </div>
             <div>
+              <Label htmlFor="divider-margin">Bottom Spacing</Label>
+              <Select value={editedComponent.marginBottom || '1.5rem'} onValueChange={(value) => setEditedComponent(prev => ({ ...prev, marginBottom: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None (0)</SelectItem>
+                  <SelectItem value="0.5rem">Extra Small (8px)</SelectItem>
+                  <SelectItem value="1rem">Small (16px)</SelectItem>
+                  <SelectItem value="1.5rem">Medium (24px)</SelectItem>
+                  <SelectItem value="2rem">Large (32px)</SelectItem>
+                  <SelectItem value="2.5rem">Extra Large (40px)</SelectItem>
+                  <SelectItem value="3rem">XXL (48px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="divider-color">Color</Label>
               <Input
                 id="divider-color"
@@ -346,6 +448,23 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
                 onChange={(e) => updateContent('title', e.target.value)}
                 placeholder="Section title"
               />
+            </div>
+            <div>
+              <Label htmlFor="form-section-margin">Bottom Spacing</Label>
+              <Select value={editedComponent.marginBottom || '2rem'} onValueChange={(value) => setEditedComponent(prev => ({ ...prev, marginBottom: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None (0)</SelectItem>
+                  <SelectItem value="0.5rem">Extra Small (8px)</SelectItem>
+                  <SelectItem value="1rem">Small (16px)</SelectItem>
+                  <SelectItem value="1.5rem">Medium (24px)</SelectItem>
+                  <SelectItem value="2rem">Large (32px)</SelectItem>
+                  <SelectItem value="2.5rem">Extra Large (40px)</SelectItem>
+                  <SelectItem value="3rem">XXL (48px)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="form-description">Description</Label>
