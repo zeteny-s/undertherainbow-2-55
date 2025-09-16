@@ -113,13 +113,20 @@ export const PublicNewsletterPage = () => {
       
       case 'text-block':
         const textBlock = component.content;
+        const processedContent = textBlock.content.replace(
+          /<span[^>]*data-form-button="([^"]*)"[^>]*data-form-text="([^"]*)"[^>]*><\/span>/g,
+          (_match: string, formId: string, buttonText: string) => {
+            return `<a href="/news-forms/public/${formId}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 500; transition: all 0.2s; margin: 0 4px;" onmouseover="this.style.backgroundColor='#2563eb'" onmouseout="this.style.backgroundColor='#3b82f6'">${buttonText}</a>`;
+          }
+        );
+        
         return (
           <div 
-            className="mb-4"
+            className="mb-4 newsletter-text-content"
             style={{ 
               textAlign: textBlock.textAlign || 'left'
             }}
-            dangerouslySetInnerHTML={{ __html: textBlock.content }}
+            dangerouslySetInnerHTML={{ __html: processedContent }}
           />
         );
       
@@ -294,14 +301,15 @@ export const PublicNewsletterPage = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-white relative z-20" style={{
-      background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
-                   radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
-                   radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
-                   radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
-                   radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
-                   radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
-    }}>
+    <>
+      <div className="h-full overflow-y-auto bg-white relative z-20" style={{
+        background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                     radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                     radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                     radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                     radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                     radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+      }}>
       {/* Background decorative images */}
       {decorationImages.map((img, index) => {
         const positions = [
@@ -365,5 +373,126 @@ export const PublicNewsletterPage = () => {
         </div>
       </div>
     </div>
+
+    <style>{`
+      /* EXACT COPY of rich text editor styles for consistent formatting */
+      .newsletter-text-content * {
+        /* Allow all inline styles to be preserved */
+      }
+
+      .newsletter-text-content ul,
+      .newsletter-text-content ol {
+        margin: 10px 0;
+        padding-left: 25px;
+      }
+
+      .newsletter-text-content ul {
+        list-style-type: disc;
+      }
+
+      .newsletter-text-content ol {
+        list-style-type: decimal;
+      }
+
+      .newsletter-text-content li {
+        margin: 5px 0;
+        display: list-item;
+        list-style-position: outside;
+      }
+
+      .newsletter-text-content table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 10px 0;
+      }
+
+      .newsletter-text-content td,
+      .newsletter-text-content th {
+        border: 1px solid #ccc;
+        padding: 8px;
+        min-width: 50px;
+      }
+
+      .newsletter-text-content th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+      }
+
+      .newsletter-text-content p {
+        margin: 8px 0;
+        line-height: 1.4;
+      }
+
+      .newsletter-text-content h1,
+      .newsletter-text-content h2,
+      .newsletter-text-content h3,
+      .newsletter-text-content h4,
+      .newsletter-text-content h5,
+      .newsletter-text-content h6 {
+        margin: 12px 0 8px 0;
+        font-weight: bold;
+        line-height: 1.2;
+      }
+
+      .newsletter-text-content h1 { font-size: 2em; }
+      .newsletter-text-content h2 { font-size: 1.5em; }
+      .newsletter-text-content h3 { font-size: 1.17em; }
+      .newsletter-text-content h4 { font-size: 1em; }
+      .newsletter-text-content h5 { font-size: 0.83em; }
+      .newsletter-text-content h6 { font-size: 0.67em; }
+
+      .newsletter-text-content strong,
+      .newsletter-text-content b {
+        font-weight: bold;
+      }
+
+      .newsletter-text-content em,
+      .newsletter-text-content i {
+        font-style: italic;
+      }
+
+      .newsletter-text-content u {
+        text-decoration: underline;
+      }
+
+      .newsletter-text-content a {
+        color: #0066cc;
+        text-decoration: underline;
+      }
+
+      .newsletter-text-content a:hover {
+        color: #0056b3;
+      }
+
+      /* Preserve white space and line breaks exactly like Google Docs */
+      .newsletter-text-content {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+      }
+
+      /* Better spacing for nested lists */
+      .newsletter-text-content ul ul,
+      .newsletter-text-content ol ol,
+      .newsletter-text-content ul ol,
+      .newsletter-text-content ol ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      /* Let pasted styles take precedence - like Google Docs */
+      .newsletter-text-content [style] {
+        /* Preserve all inline styles from pasted content */
+      }
+
+      /* Ensure no overflow while keeping exact formatting */
+      .newsletter-text-content * {
+        max-width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+    `}</style>
+    </>
   );
 };

@@ -342,9 +342,9 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
       </div>
 
       <style>{`
-        /* Newsletter text content styles - EXACT MATCH with rich text editor */
+        /* EXACT COPY of rich text editor styles - matching AdvancedRichTextEditor.tsx */
         .newsletter-text-content * {
-          /* Allow all inline styles to be preserved - same as editor */
+          /* Allow all inline styles to be preserved */
         }
 
         .newsletter-text-content ul,
