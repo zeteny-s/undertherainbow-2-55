@@ -1,36 +1,22 @@
 import { useRef, useEffect, useState } from 'react';
 import { 
-  Bold, 
-  Italic, 
-  Underline, 
-  AlignLeft, 
-  AlignCenter, 
-  AlignRight, 
-  List, 
-  ListOrdered,
-  Table,
-  Palette,
-  Plus,
-  Minus,
-  ExternalLink
+  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
+  List, ListOrdered, Table, Palette, Plus, Minus
 } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { FormForSelection } from '../../../types/newsletter-types';
 
 interface AdvancedRichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  selectedForms?: FormForSelection[];
 }
 
-export const AdvancedRichTextEditor = ({ value, onChange, placeholder, selectedForms = [] }: AdvancedRichTextEditorProps) => {
+export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: AdvancedRichTextEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [selectedFont, setSelectedFont] = useState('Arial');
   const [selectedSize, setSelectedSize] = useState('16px');
   const [textColor, setTextColor] = useState('#000000');
-  const [showFormSelector, setShowFormSelector] = useState(false);
 
   const fonts = [
     'Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Verdana', 
@@ -181,38 +167,6 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder, selectedF
 
   const decreaseFontSize = () => {
     execCommand('decreaseFontSize');
-  };
-
-  const insertFormButton = (formId: string, formTitle: string) => {
-    const buttonText = `Open ${formTitle}`;
-    const buttonHtml = `<span class="inline-form-button" data-form-id="${formId}" data-button-text="${buttonText}" style="display: inline-block; background: #3b82f6; color: white; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; text-decoration: none; margin: 0 4px; cursor: pointer; border: none;">${buttonText}</span>`;
-    
-    if (editorRef.current) {
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = buttonHtml;
-        const buttonElement = tempDiv.firstChild;
-        
-        if (buttonElement) {
-          range.insertNode(buttonElement);
-          range.setStartAfter(buttonElement);
-          range.setEndAfter(buttonElement);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
-      } else {
-        // If no selection, insert at the end
-        editorRef.current.insertAdjacentHTML('beforeend', buttonHtml);
-      }
-      
-      onChange(editorRef.current.innerHTML);
-      editorRef.current.focus();
-    }
-    setShowFormSelector(false);
   };
 
   return (
@@ -392,41 +346,6 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder, selectedF
         >
           <Table className="h-4 w-4" />
         </Button>
-
-        {selectedForms.length > 0 && (
-          <>
-            <div className="h-6 w-px bg-border mx-1" />
-            
-            <div className="relative">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowFormSelector(!showFormSelector)}
-                className="h-8 px-3"
-                title="Insert Form Button"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              
-              {showFormSelector && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]">
-                  <div className="p-2 border-b text-sm font-medium text-gray-600">Insert Form Button:</div>
-                  {selectedForms.map((form) => (
-                    <button
-                      key={form.id}
-                      type="button"
-                      onClick={() => insertFormButton(form.id, form.title)}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                    >
-                      {form.title}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
       </div>
 
       {/* Editor */}
