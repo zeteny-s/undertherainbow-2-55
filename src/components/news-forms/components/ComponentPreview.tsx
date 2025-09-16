@@ -137,11 +137,6 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
       return (
         <div className="py-4">
           <div className="border-t border-gray-200"></div>
-          {component.label && (
-            <div className="text-center -mt-3">
-              <span className="bg-white px-4 text-sm text-gray-500">{component.label}</span>
-            </div>
-          )}
         </div>
       );
 
