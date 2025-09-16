@@ -51,13 +51,14 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         
         return (
           <div 
-            className="overflow-hidden break-words"
+            className="overflow-hidden break-words newsletter-text-content"
             style={{ 
               textAlign: textBlock.textAlign || 'left',
               marginBottom: component.marginBottom || '1rem',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
-              hyphens: 'auto'
+              hyphens: 'auto',
+              whiteSpace: 'pre-wrap'
             }}
             dangerouslySetInnerHTML={{ __html: processedContent }}
           />
@@ -103,7 +104,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         const formButton = component.content;
         if (!formButton.formId) {
           return (
-            <div className="mb-4 text-center p-4 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg" style={{ marginBottom: component.marginBottom || '1rem' }}>
               <p className="text-gray-500 text-sm">Form button - Please select a form in the editor</p>
             </div>
           );
@@ -255,89 +256,221 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
   const decorationImages = [decoration1, decoration2, decoration3, decoration4, decoration5, decoration6];
 
   return (
-    <div className="h-full overflow-y-auto bg-white relative z-20" style={{
-      background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
-                   radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
-                   radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
-                   radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
-                   radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
-                   radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
-    }}>
-      {/* Background decorative images */}
-      {decorationImages.map((img, index) => {
-        const positions = [
-          { top: '8%', left: '5%', transform: 'rotate(-15deg)', width: '120px' },
-          { top: '15%', right: '8%', transform: 'rotate(25deg)', width: '90px' },
-          { top: '35%', left: '12%', transform: 'rotate(45deg)', width: '80px' },
-          { top: '55%', right: '15%', transform: 'rotate(-30deg)', width: '110px' },
-          { top: '75%', left: '20%', transform: 'rotate(60deg)', width: '70px' },
-          { top: '12%', left: '35%', transform: 'rotate(-45deg)', width: '130px' }
-        ];
-        const pos = positions[index % positions.length];
-        return (
-          <img
-            key={index}
-            src={img}
-            alt=""
-            className="absolute opacity-20 pointer-events-none z-0"
-            style={{
-              position: 'absolute',
-              top: pos.top,
-              left: pos.left,
-              right: pos.right,
-              transform: pos.transform,
-              width: pos.width,
-              opacity: 0.2
-            }}
-          />
-        );
-      })}
-
-      <div 
-        ref={setNodeRef}
-        className={`relative max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center ${
-          isOver ? 'bg-muted' : ''
-        }`}
-      >
-        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg border border-gray-200 overflow-hidden">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <img 
-              src={logo} 
-              alt="Under the Rainbow Kindergarten and Nursery" 
-              className="max-w-full h-auto mx-auto mb-6"
-              style={{ maxWidth: '300px' }}
+    <>
+      <div className="h-full overflow-y-auto bg-white relative z-20" style={{
+        background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                     radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                     radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                     radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                     radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                     radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+      }}>
+        {/* Background decorative images */}
+        {decorationImages.map((img, index) => {
+          const positions = [
+            { top: '8%', left: '5%', transform: 'rotate(-15deg)', width: '120px' },
+            { top: '15%', right: '8%', transform: 'rotate(25deg)', width: '90px' },
+            { top: '35%', left: '12%', transform: 'rotate(45deg)', width: '80px' },
+            { top: '55%', right: '15%', transform: 'rotate(-30deg)', width: '110px' },
+            { top: '75%', left: '20%', transform: 'rotate(60deg)', width: '70px' },
+            { top: '12%', left: '35%', transform: 'rotate(-45deg)', width: '130px' }
+          ];
+          const pos = positions[index % positions.length];
+          return (
+            <img
+              key={index}
+              src={img}
+              alt=""
+              className="absolute opacity-20 pointer-events-none z-0"
+              style={{
+                position: 'absolute',
+                top: pos.top,
+                left: pos.left,
+                right: pos.right,
+                transform: pos.transform,
+                width: pos.width,
+                opacity: 0.2
+              }}
             />
-          </div>
+          );
+        })}
 
-          {/* Newsletter Content */}
-          <div className="space-y-6">
-            {components.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl bg-background">
-                <p className="text-lg font-medium mb-2">Drop newsletter components here</p>
-                <p className="text-sm">Drag components from the left sidebar to build your newsletter</p>
-              </div>
-            ) : (
-              <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                <div>
-                  {components.map((component) => (
-                    <div key={component.id} className="relative">
-                      <SortableNewsletterComponent
-                        component={component}
-                        onSelect={() => onComponentSelect(component)}
-                        onDelete={() => onComponentDelete(component.id)}
-                      >
-                        {renderComponent(component)}
-                      </SortableNewsletterComponent>
-                    </div>
-                  ))}
+        <div 
+          ref={setNodeRef}
+          className={`relative max-w-2xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center ${
+            isOver ? 'bg-muted' : ''
+          }`}
+        >
+          <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg border border-gray-200 overflow-hidden">
+            {/* Logo */}
+            <div className="text-center mb-8">
+              <img 
+                src={logo} 
+                alt="Under the Rainbow Kindergarten and Nursery" 
+                className="max-w-full h-auto mx-auto mb-6"
+                style={{ maxWidth: '300px' }}
+              />
+            </div>
+
+            {/* Newsletter Content */}
+            <div>
+              {components.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl bg-background">
+                  <p className="text-lg font-medium mb-2">Drop newsletter components here</p>
+                  <p className="text-sm">Drag components from the left sidebar to build your newsletter</p>
                 </div>
-              </SortableContext>
-            )}
+              ) : (
+                <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                  <div>
+                    {components.map((component) => (
+                      <div key={component.id} className="relative">
+                        <SortableNewsletterComponent
+                          component={component}
+                          onSelect={() => onComponentSelect(component)}
+                          onDelete={() => onComponentDelete(component.id)}
+                        >
+                          {renderComponent(component)}
+                        </SortableNewsletterComponent>
+                      </div>
+                    ))}
+                  </div>
+                </SortableContext>
+              )}
+            </div>
           </div>
-
         </div>
       </div>
-    </div>
+
+      <style>{`
+        /* Newsletter text content styles - match rich text editor exactly */
+        .newsletter-text-content ul,
+        .newsletter-text-content ol {
+          margin: 10px 0;
+          padding-left: 25px;
+        }
+
+        .newsletter-text-content ul {
+          list-style-type: disc;
+        }
+
+        .newsletter-text-content ol {
+          list-style-type: decimal;
+        }
+
+        .newsletter-text-content li {
+          margin: 5px 0;
+          display: list-item;
+          list-style-position: outside;
+        }
+
+        .newsletter-text-content table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 10px 0;
+        }
+
+        .newsletter-text-content td,
+        .newsletter-text-content th {
+          border: 1px solid #ccc;
+          padding: 8px;
+          min-width: 50px;
+        }
+
+        .newsletter-text-content th {
+          background-color: #f5f5f5;
+          font-weight: bold;
+        }
+
+        .newsletter-text-content p {
+          margin: 8px 0;
+          line-height: 1.4;
+        }
+
+        .newsletter-text-content h1,
+        .newsletter-text-content h2,
+        .newsletter-text-content h3,
+        .newsletter-text-content h4,
+        .newsletter-text-content h5,
+        .newsletter-text-content h6 {
+          margin: 12px 0 8px 0;
+          font-weight: bold;
+          line-height: 1.2;
+        }
+
+        .newsletter-text-content h1 { font-size: 2em; }
+        .newsletter-text-content h2 { font-size: 1.5em; }
+        .newsletter-text-content h3 { font-size: 1.17em; }
+        .newsletter-text-content h4 { font-size: 1em; }
+        .newsletter-text-content h5 { font-size: 0.83em; }
+        .newsletter-text-content h6 { font-size: 0.67em; }
+
+        .newsletter-text-content strong,
+        .newsletter-text-content b {
+          font-weight: bold;
+        }
+
+        .newsletter-text-content em,
+        .newsletter-text-content i {
+          font-style: italic;
+        }
+
+        .newsletter-text-content u {
+          text-decoration: underline;
+        }
+
+        .newsletter-text-content a {
+          color: #0066cc;
+          text-decoration: underline;
+        }
+
+        .newsletter-text-content a:hover {
+          color: #0056b3;
+        }
+
+        /* Better spacing for nested lists */
+        .newsletter-text-content ul ul,
+        .newsletter-text-content ol ol,
+        .newsletter-text-content ul ol,
+        .newsletter-text-content ol ul {
+          margin: 0;
+          padding-left: 20px;
+        }
+
+        /* Let pasted styles take precedence - like Google Docs */
+        .newsletter-text-content [style] {
+          /* Preserve all inline styles from pasted content */
+        }
+
+        /* Preserve dividers and spacing */
+        .newsletter-text-content hr {
+          margin: 12px 0;
+        }
+
+        /* Preserve table formatting from pasted content */
+        .newsletter-text-content table[style] {
+          /* Allow pasted table styles */
+        }
+
+        .newsletter-text-content td[style],
+        .newsletter-text-content th[style] {
+          /* Allow pasted cell styles */
+        }
+
+        /* Preserve spacing and layout from pasted content */
+        .newsletter-text-content div,
+        .newsletter-text-content span {
+          /* Allow all div and span styles from pasted content */
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        
+        /* Ensure long words break to prevent overflow */
+        .newsletter-text-content * {
+          max-width: 100%;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+      `}</style>
+    </>
   );
 };
