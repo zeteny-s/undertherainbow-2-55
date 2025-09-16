@@ -48,21 +48,27 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
       let content = '';
       
       if (htmlData) {
-        // Very minimal cleaning - preserve ALL formatting like Google Docs
+        // Preserve ALL formatting like Google Docs - minimal cleaning only
         content = htmlData;
         
-        // Only remove potentially dangerous scripts and styles, but keep everything else
+        // Remove document structure but keep ALL content formatting
+        content = content.replace(/<\/?(?:html|head|body|title|meta)[^>]*>/gi, '');
+        content = content.replace(/<!--.*?-->/gs, ''); // Remove comments
+        
+        // Remove potentially dangerous content but preserve all visual formatting
         content = content.replace(/<script[^>]*>.*?<\/script>/gis, '');
-        content = content.replace(/<style[^>]*>.*?<\/style>/gis, '');
         content = content.replace(/<link[^>]*>/gi, '');
         content = content.replace(/javascript:/gi, '');
         content = content.replace(/on\w+\s*=\s*"[^"]*"/gi, ''); // Remove event handlers
         
-        // Remove only the document structure tags but keep ALL content and formatting tags
-        content = content.replace(/<\/?(?:html|head|body|title|meta)[^>]*>/gi, '');
+        // Keep ALL other tags: p, div, span, h1-h6, ul, ol, li, br, strong, em, u, s, table, tr, td, th, etc.
+        // Keep ALL style attributes for spacing, colors, fonts, margins, etc.
         
-        // Clean up any document-level styles that might interfere
-        content = content.replace(/<!--.*?-->/gs, ''); // Remove comments
+        // Extract content from body if it exists, otherwise use as-is
+        const bodyMatch = content.match(/<body[^>]*>(.*?)<\/body>/is);
+        if (bodyMatch) {
+          content = bodyMatch[1];
+        }
         
       } else if (textData) {
         // For plain text, preserve line breaks and convert to HTML
@@ -77,11 +83,25 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
         content = '<p>' + content + '</p>';
       }
       
-      // Insert the content directly using execCommand to maintain undo history
-      if (content) {
-        document.execCommand('insertHTML', false, content);
-        handleInput();
+      // Insert content preserving selection
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const fragment = range.createContextualFragment(content);
+        range.insertNode(fragment);
+        
+        // Move cursor to end of inserted content
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } else {
+        // Fallback: append to end
+        editorRef.current.innerHTML += content;
       }
+      
+      // Trigger change event
+      handleInput();
     }
   };
 
@@ -367,6 +387,11 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
           pointer-events: none;
         }
 
+        /* Preserve ALL pasted formatting - like Google Docs */
+        .rich-text-editor * {
+          /* Allow all inline styles to be preserved */
+        }
+
         .rich-text-editor ul,
         .rich-text-editor ol {
           margin: 10px 0;
@@ -451,7 +476,7 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
           color: #0056b3;
         }
 
-        /* Preserve white space and line breaks */
+        /* Preserve white space and line breaks exactly like Google Docs */
         .rich-text-editor {
           white-space: pre-wrap;
           word-wrap: break-word;
@@ -466,21 +491,30 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
           padding-left: 20px;
         }
 
-        /* Preserve font styles from pasted content */
-        .rich-text-editor [style*="font-family"],
-        .rich-text-editor [style*="font-size"],
-        .rich-text-editor [style*="color"],
-        .rich-text-editor [style*="font-weight"] {
-          /* Let inline styles take precedence */
+        /* Let pasted styles take precedence - like Google Docs */
+        .rich-text-editor [style] {
+          /* Preserve all inline styles from pasted content */
         }
 
-        /* Better spacing for different content blocks */
-        .rich-text-editor div {
-          margin: 4px 0;
+        /* Preserve dividers and spacing */
+        .rich-text-editor hr {
+          margin: 12px 0;
         }
 
+        /* Preserve table formatting from pasted content */
+        .rich-text-editor table[style] {
+          /* Allow pasted table styles */
+        }
+
+        .rich-text-editor td[style],
+        .rich-text-editor th[style] {
+          /* Allow pasted cell styles */
+        }
+
+        /* Preserve spacing and layout from pasted content */
+        .rich-text-editor div,
         .rich-text-editor span {
-          /* Preserve inline formatting */
+          /* Allow all div and span styles from pasted content */
         }
       `}</style>
     </div>
