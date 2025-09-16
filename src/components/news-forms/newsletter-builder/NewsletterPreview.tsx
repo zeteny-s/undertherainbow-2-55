@@ -342,7 +342,11 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
       </div>
 
       <style>{`
-        /* Newsletter text content styles - match rich text editor exactly */
+        /* Newsletter text content styles - EXACT MATCH with rich text editor */
+        .newsletter-text-content * {
+          /* Allow all inline styles to be preserved - same as editor */
+        }
+
         .newsletter-text-content ul,
         .newsletter-text-content ol {
           margin: 10px 0;
@@ -425,6 +429,14 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
 
         .newsletter-text-content a:hover {
           color: #0056b3;
+        }
+
+        /* Preserve white space and line breaks exactly like editor - THIS IS CRITICAL */
+        .newsletter-text-content {
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          hyphens: auto;
         }
 
         /* Better spacing for nested lists */
