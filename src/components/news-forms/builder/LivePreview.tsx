@@ -16,9 +16,10 @@ interface LivePreviewProps {
   components: FormComponent[];
   onComponentSelect?: (component: FormComponent) => void;
   onComponentDelete?: (componentId: string) => void;
+  previewMode?: boolean;
 }
 
-export const LivePreview = ({ components, onComponentSelect, onComponentDelete }: LivePreviewProps) => {
+export const LivePreview = ({ components, onComponentSelect, onComponentDelete, previewMode = false }: LivePreviewProps) => {
   const [previewData, setPreviewData] = useState<Record<string, any>>({});
   const { isOver, setNodeRef } = useDroppable({ id: 'form-builder' });
 
@@ -94,7 +95,47 @@ export const LivePreview = ({ components, onComponentSelect, onComponentDelete }
                 <p className="text-lg font-medium mb-2">Drop form components here</p>
                 <p className="text-sm">Drag components from the left sidebar to build your form</p>
               </div>
-            ) : onComponentSelect ? (
+            ) : previewMode || !onComponentSelect ? (
+              // Clean preview mode - exactly what users will see
+              <div className="space-y-6 relative z-50">
+                {/* Family Name Field - matches PublicFormPage exactly */}
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <label htmlFor="family-name" className="block text-sm font-semibold text-gray-900 mb-2">
+                    Family Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="family-name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Enter your family name"
+                    required
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    This will be displayed in the participant list
+                  </p>
+                </div>
+
+                <form className="space-y-6">
+                  <FormRenderer
+                    components={components}
+                    values={previewData}
+                    onChange={handleFieldChange}
+                  />
+                  
+                  <div className="pt-6">
+                    <button 
+                      type="button" 
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      Submit Form
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
               // Builder mode with sortable components
               <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-4 relative z-50">
@@ -109,15 +150,6 @@ export const LivePreview = ({ components, onComponentSelect, onComponentDelete }
                   ))}
                 </div>
               </SortableContext>
-            ) : (
-              // Preview mode with rendered form
-              <form className="space-y-6 relative z-50 bg-white">
-                <FormRenderer
-                  components={components}
-                  values={previewData}
-                  onChange={handleFieldChange}
-                />
-              </form>
             )}
           </div>
         </div>

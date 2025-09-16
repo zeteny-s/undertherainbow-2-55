@@ -30,6 +30,7 @@ export const FormBuilderPage = () => {
   const [components, setComponents] = useState<FormComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<FormComponent | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<FormComponent | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
 
   const isNewForm = formId === 'new' || !formId;
 
@@ -231,6 +232,15 @@ export const FormBuilderPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant={previewMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setPreviewMode(!previewMode)}
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              {previewMode ? 'Edit Mode' : 'Preview Mode'}
+            </Button>
             {!isNewForm && form.id && (
               <>
                 <Button
@@ -240,7 +250,7 @@ export const FormBuilderPage = () => {
                   className="flex items-center gap-2"
                 >
                   <Eye className="h-4 w-4" />
-                  Preview & Test
+                  Open Form
                 </Button>
                 <EmailFormButton
                   formId={form.id}
@@ -355,7 +365,7 @@ export const FormBuilderPage = () => {
         {/* Main Content */}
         <div className="flex-1 flex relative">
           {/* Component Library */}
-          <div className="w-80 border-r bg-white border-gray-200 z-10">
+          <div className={`w-80 border-r bg-white border-gray-200 z-10 transition-transform ${previewMode ? '-translate-x-full' : 'translate-x-0'}`}>
             <ComponentLibrary />
           </div>
 
@@ -363,13 +373,14 @@ export const FormBuilderPage = () => {
           <div className="flex-1 relative z-20">
             <LivePreview 
               components={components}
-              onComponentSelect={setSelectedComponent}
-              onComponentDelete={handleComponentDelete}
+              onComponentSelect={previewMode ? undefined : setSelectedComponent}
+              onComponentDelete={previewMode ? undefined : handleComponentDelete}
+              previewMode={previewMode}
             />
           </div>
 
           {/* Component Editor */}
-          {selectedComponent && (
+          {selectedComponent && !previewMode && (
             <div className="w-80 border-l bg-white border-gray-200 z-30">
               <ComponentEditor
                 component={selectedComponent}

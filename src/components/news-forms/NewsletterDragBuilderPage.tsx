@@ -47,9 +47,15 @@ export const NewsletterDragBuilderPage = () => {
   // Track the current newsletter ID separately from URL params
   const [currentNewsletterId, setCurrentNewsletterId] = useState<string | null>(newsletterId && newsletterId !== 'new' ? newsletterId : null);
   const [availableForms, setAvailableForms] = useState<FormForSelection[]>([]);
+export const NewsletterDragBuilderPage = () => {
+  const { newsletterId } = useParams<{ newsletterId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [selectedComponent, setSelectedComponent] = useState<NewsletterComponent | null>(null);
   const [draggedComponent, setDraggedComponent] = useState<NewsletterComponent | null>(null);
   const [showFormSelection, setShowFormSelection] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
   const isNewNewsletter = !currentNewsletterId;
   useEffect(() => {
     fetchAvailableForms();
@@ -526,9 +532,19 @@ export const NewsletterDragBuilderPage = () => {
               Ask AI
             </Button>
             
+            <Button
+              variant={previewMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setPreviewMode(!previewMode)}
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              {previewMode ? 'Edit Mode' : 'Preview Mode'}
+            </Button>
+            
             {newsletterState.id && <Button variant="outline" size="sm" onClick={() => window.open(`/newsletter/${newsletterState.id}`, '_blank')} className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                Preview
+                Open Newsletter
               </Button>}
             
             <Sheet>
@@ -607,17 +623,23 @@ export const NewsletterDragBuilderPage = () => {
         {/* Main Content */}
         <div className="flex-1 flex relative">
           {/* Component Library */}
-          <div className="w-80 border-r bg-white">
+          <div className={`w-80 border-r bg-white ${previewMode ? 'hidden' : 'block'}`}>
             <NewsletterComponentLibrary />
           </div>
 
           {/* Newsletter Preview */}
           <div className="flex-1 relative">
-            <NewsletterPreview components={newsletterState.components} selectedForms={selectedForms} onComponentSelect={setSelectedComponent} onComponentDelete={handleComponentDelete} />
+            <NewsletterPreview 
+              components={newsletterState.components} 
+              selectedForms={selectedForms} 
+              onComponentSelect={previewMode ? undefined : setSelectedComponent} 
+              onComponentDelete={previewMode ? undefined : handleComponentDelete}
+              previewMode={previewMode}
+            />
           </div>
 
           {/* Component Editor */}
-          {selectedComponent && <div className="w-80 border-l bg-white">
+          {selectedComponent && !previewMode && <div className="w-80 border-l bg-white">
               <NewsletterComponentEditor 
                 component={selectedComponent} 
                 selectedForms={selectedForms}
@@ -648,5 +670,6 @@ export const NewsletterDragBuilderPage = () => {
 
       {/* Form Selection Modal */}
       <FormSelectionModal isOpen={showFormSelection} onClose={() => setShowFormSelection(false)} onConfirm={handleFormSelectionConfirm} campus={newsletterState.campus} />
-    </DndContext>;
+    </DndContext>
+  );
 };

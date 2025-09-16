@@ -16,11 +16,12 @@ import decoration6 from '../../../assets/decoration-6.png';
 interface NewsletterPreviewProps {
   components: NewsletterComponent[];
   selectedForms: FormForSelection[];
-  onComponentSelect: (component: NewsletterComponent) => void;
-  onComponentDelete: (componentId: string) => void;
+  onComponentSelect?: (component: NewsletterComponent) => void;
+  onComponentDelete?: (componentId: string) => void;
+  previewMode?: boolean;
 }
 
-export const NewsletterPreview = ({ components, selectedForms, onComponentSelect, onComponentDelete }: NewsletterPreviewProps) => {
+export const NewsletterPreview = ({ components, selectedForms, onComponentSelect, onComponentDelete, previewMode = false }: NewsletterPreviewProps) => {
   const { isOver, setNodeRef } = useDroppable({ id: 'newsletter-builder' });
 
   console.log('NewsletterPreview rendering:', { components: components.length, selectedForms: selectedForms.length });
@@ -319,15 +320,25 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                   <p className="text-lg font-medium mb-2">Drop newsletter components here</p>
                   <p className="text-sm">Drag components from the left sidebar to build your newsletter</p>
                 </div>
+              ) : previewMode || !onComponentSelect ? (
+                // Clean preview mode - exactly what users will see
+                <div>
+                  {components.map((component) => (
+                    <div key={component.id}>
+                      {renderComponent(component)}
+                    </div>
+                  ))}
+                </div>
               ) : (
+                // Builder mode with sortable components
                 <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
                   <div>
                     {components.map((component) => (
                       <div key={component.id} className="relative">
                         <SortableNewsletterComponent
                           component={component}
-                          onSelect={() => onComponentSelect(component)}
-                          onDelete={() => onComponentDelete(component.id)}
+                          onSelect={() => onComponentSelect!(component)}
+                          onDelete={() => onComponentDelete!(component.id)}
                         >
                           {renderComponent(component)}
                         </SortableNewsletterComponent>
