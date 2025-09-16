@@ -480,6 +480,8 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
         .rich-text-editor {
           white-space: pre-wrap;
           word-wrap: break-word;
+          overflow-wrap: break-word;
+          hyphens: auto;
         }
 
         /* Better spacing for nested lists */
@@ -515,6 +517,15 @@ export const AdvancedRichTextEditor = ({ value, onChange, placeholder }: Advance
         .rich-text-editor div,
         .rich-text-editor span {
           /* Allow all div and span styles from pasted content */
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        
+        /* Ensure long words break to prevent overflow */
+        .rich-text-editor * {
+          max-width: 100%;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
       `}</style>
     </div>

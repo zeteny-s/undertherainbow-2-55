@@ -51,9 +51,13 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
         
         return (
           <div 
+            className="overflow-hidden break-words"
             style={{ 
               textAlign: textBlock.textAlign || 'left',
-              marginBottom: component.marginBottom || '1rem'
+              marginBottom: component.marginBottom || '1rem',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              hyphens: 'auto'
             }}
             dangerouslySetInnerHTML={{ __html: processedContent }}
           />
@@ -295,7 +299,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
           isOver ? 'bg-muted' : ''
         }`}
       >
-        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg border border-gray-200">
+        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-lg border border-gray-200 overflow-hidden">
           {/* Logo */}
           <div className="text-center mb-8">
             <img 
