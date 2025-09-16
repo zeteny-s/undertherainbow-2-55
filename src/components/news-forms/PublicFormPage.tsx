@@ -24,7 +24,6 @@ export const PublicFormPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [familyName, setFamilyName] = useState('');
 
   useEffect(() => {
     fetchForm();
@@ -79,10 +78,13 @@ export const PublicFormPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!form || !familyName.trim()) {
-      toast.error('Please enter your family name');
+    if (!form) {
+      toast.error('Form not found');
       return;
     }
+
+    // Get family name from form data (first text field) or generate a default
+    const familyNameFromForm = Object.values(formData)[0] || `Submission-${Date.now()}`;
 
     // Validate required fields
     const requiredFields = form.form_components
@@ -112,7 +114,7 @@ export const PublicFormPage = () => {
         .insert({
           form_id: form.id,
           submission_data: formData,
-          family_name: familyName.trim(),
+          family_name: String(familyNameFromForm).trim(),
           ip_address: await getClientIP()
         });
 
@@ -281,25 +283,6 @@ export const PublicFormPage = () => {
           
           {/* Form Fields */}
           <form onSubmit={handleSubmit} className="space-y-6 text-left">
-            {/* Family Name Field */}
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <label htmlFor="family-name" className="block text-sm font-semibold text-gray-900 mb-2">
-                Family Name *
-              </label>
-              <input
-                type="text"
-                id="family-name"
-                value={familyName}
-                onChange={(e) => setFamilyName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Enter your family name"
-                required
-              />
-              <p className="text-xs text-gray-600 mt-1">
-                This will be displayed in the participant list
-              </p>
-            </div>
-
             <FormRenderer
               components={form.form_components}
               values={formData}
@@ -309,7 +292,7 @@ export const PublicFormPage = () => {
             <div className="pt-6">
               <Button 
                 type="submit" 
-                disabled={submitting || !familyName.trim()}
+                disabled={submitting}
                 className="w-full flex items-center justify-center gap-2"
                 size="lg"
               >
