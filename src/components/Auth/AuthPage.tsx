@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { LoginForm } from './LoginForm';
 import { PasswordGate } from './PasswordGate';
 
 export const AuthPage: React.FC = () => {
+  const { user } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [hasCompanyAccess, setHasCompanyAccess] = useState(false);
 
@@ -15,6 +18,11 @@ export const AuthPage: React.FC = () => {
       setHasCompanyAccess(true);
     }
   }, []);
+
+  // If user is already authenticated, redirect to dashboard
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
