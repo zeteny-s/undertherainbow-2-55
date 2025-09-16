@@ -97,25 +97,7 @@ export const LivePreview = ({ components, onComponentSelect, onComponentDelete, 
               </div>
             ) : previewMode || !onComponentSelect ? (
               // Clean preview mode - exactly what users will see
-              <div className="space-y-6 relative z-50">
-                {/* Family Name Field - matches PublicFormPage exactly */}
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <label htmlFor="family-name" className="block text-sm font-semibold text-gray-900 mb-2">
-                    Family Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="family-name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Enter your family name"
-                    required
-                  />
-                  <p className="text-xs text-gray-600 mt-1">
-                    This will be displayed in the participant list
-                  </p>
-                </div>
-
-                <form className="space-y-6">
+              <form className="space-y-6 relative z-50">
                   <FormRenderer
                     components={components}
                     values={previewData}
@@ -134,7 +116,6 @@ export const LivePreview = ({ components, onComponentSelect, onComponentDelete, 
                     </button>
                   </div>
                 </form>
-              </div>
             ) : (
               // Builder mode with sortable components
               <SortableContext items={components.map(c => c.id)} strategy={verticalListSortingStrategy}>
