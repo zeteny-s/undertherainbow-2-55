@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
@@ -6,12 +6,12 @@ import { Checkbox } from '../../ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Button } from '../../ui/button';
+import { Badge } from '../../ui/badge';
 import { Upload, X, FileIcon } from 'lucide-react';
 import { FormComponent } from '../../../types/form-types';
 import { supabase } from '../../../integrations/supabase/client';
 import { toast } from 'sonner';
 import { CalendarButton } from './CalendarButton';
-import { useOptionCapacity } from '../../../hooks/useOptionCapacity';
 
 interface ComponentPreviewProps {
   component: FormComponent;
@@ -20,7 +20,16 @@ interface ComponentPreviewProps {
   formId?: string;
 }
 
+interface OptionCapacity {
+  component_id: string;
+  option_value: string;
+  max_capacity: number;
+  current_count: number;
+}
+
 export const ComponentPreview = ({ component, value, onChange, formId }: ComponentPreviewProps) => {
+  const [optionCapacities, setOptionCapacities] = useState<OptionCapacity[]>([]);
+  
   const fieldStyle = component.properties?.bold ? 'font-bold' : '';
   const textSize = component.properties?.textSize || 'text-base';
   const fontFamily = component.properties?.fontFamily || 'font-sans';
@@ -28,14 +37,39 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
   
   const labelClasses = `${fieldStyle} ${textSize} ${fontFamily} ${textAlign}`;
 
-  // Use option capacity hook for components with options and capacity limits
-  const shouldTrackCapacity = formId && component.optionCapacities && 
-    ['dropdown', 'radio', 'checkbox'].includes(component.type);
-  
-  const { optionCapacities } = useOptionCapacity(
-    formId || '', 
-    shouldTrackCapacity ? component : { ...component, optionCapacities: undefined }
-  );
+  // Fetch option capacities for components with options
+  useEffect(() => {
+    if (formId && ['dropdown', 'radio', 'checkbox'].includes(component.type)) {
+      fetchOptionCapacities();
+    }
+  }, [formId, component.id, component.type]);
+
+  const fetchOptionCapacities = async () => {
+    if (!formId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('form_option_capacity')
+        .select('*')
+        .eq('form_id', formId)
+        .eq('component_id', component.id);
+
+      if (error) throw error;
+      setOptionCapacities(data || []);
+    } catch (error) {
+      console.error('Error fetching option capacities:', error);
+    }
+  };
+
+  const getCapacityInfo = (optionValue: string) => {
+    const capacity = optionCapacities.find(cap => cap.option_value === optionValue);
+    if (!capacity) return null;
+    
+    const isFull = capacity.current_count >= capacity.max_capacity;
+    const spotsLeft = Math.max(0, capacity.max_capacity - capacity.current_count);
+    
+    return { isFull, spotsLeft, current: capacity.current_count, max: capacity.max_capacity };
+  };
 
   switch (component.type) {
     case 'text-input':
@@ -74,12 +108,12 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
               <SelectValue placeholder={component.placeholder || 'Select an option'} />
             </SelectTrigger>
             <SelectContent className="bg-white border-2 border-border shadow-lg z-[60]">
-              {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
-                const capacityInfo = optionCapacities[option];
-                const isDisabled = capacityInfo && !capacityInfo.isAvailable;
-                const capacityText = capacityInfo && capacityInfo.capacity !== null 
-                  ? ` (${capacityInfo.spotsRemaining} spots left)` 
-                  : '';
+            {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
+              const capacityInfo = getCapacityInfo(option);
+              const isDisabled = capacityInfo?.isFull;
+              const capacityText = capacityInfo 
+                ? ` (${capacityInfo.spotsLeft} spots left)` 
+                : '';
                 
                 return (
                   <SelectItem 
@@ -104,10 +138,10 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
           <Label className={labelClasses}>{component.label}</Label>
           <div className="space-y-2">
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
-              const capacityInfo = optionCapacities[option];
-              const isDisabled = capacityInfo && !capacityInfo.isAvailable;
-              const capacityText = capacityInfo && capacityInfo.capacity !== null 
-                ? ` (${capacityInfo.spotsRemaining} spots left)` 
+              const capacityInfo = getCapacityInfo(option);
+              const isDisabled = capacityInfo?.isFull;
+              const capacityText = capacityInfo 
+                ? ` (${capacityInfo.spotsLeft} spots left)` 
                 : '';
               
               return (
@@ -145,8 +179,8 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
         <div className="space-y-3">
           <Label className={labelClasses}>{component.label}</Label>
           <RadioGroup value={value} onValueChange={(newValue) => {
-            const capacityInfo = optionCapacities[newValue];
-            if (capacityInfo && !capacityInfo.isAvailable) return; // Prevent selecting disabled options
+            const capacityInfo = getCapacityInfo(newValue);
+            if (capacityInfo?.isFull) return; // Prevent selecting disabled options
             onChange?.(newValue);
           }}>
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {

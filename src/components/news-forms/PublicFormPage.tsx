@@ -75,11 +75,60 @@ export const PublicFormPage = () => {
     return (count || 0) >= form.capacity;
   };
 
+  // Check capacity limits for specific options
+  const checkOptionCapacities = async (): Promise<string[]> => {
+    if (!form) return [];
+    
+    const exceededOptions: string[] = [];
+    
+    // Get all capacity limits for this form
+    const { data: capacities, error } = await supabase
+      .from('form_option_capacity')
+      .select('*')
+      .eq('form_id', form.id);
+
+    if (error) {
+      console.error('Error checking option capacities:', error);
+      return [];
+    }
+
+    // Check each selected option against its capacity
+    for (const [componentId, value] of Object.entries(formData)) {
+      const component = form.form_components.find(c => c.id === componentId);
+      if (!component || !['dropdown', 'checkbox', 'radio'].includes(component.type)) continue;
+
+      // Handle different value types
+      const selectedOptions = Array.isArray(value) ? value : [value];
+      
+      for (const selectedOption of selectedOptions) {
+        if (!selectedOption) continue;
+        
+        const capacity = capacities?.find(c => 
+          c.component_id === componentId && c.option_value === selectedOption
+        );
+        
+        if (capacity && capacity.current_count >= capacity.max_capacity) {
+          exceededOptions.push(selectedOption);
+        }
+      }
+    }
+    
+    return exceededOptions;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!form) {
       toast.error('Form not found');
+      return;
+    }
+
+    // Check capacity limits for selected options
+    const capacityExceeded = await checkOptionCapacities();
+    if (capacityExceeded.length > 0) {
+      const optionNames = capacityExceeded.join(', ');
+      toast.error(`Sorry, the following options are now full: ${optionNames}`);
       return;
     }
 
@@ -103,41 +152,25 @@ export const PublicFormPage = () => {
 
     // Check option capacities before submitting
     for (const component of form.form_components) {
-      if (component.optionCapacities && ['dropdown', 'radio', 'checkbox'].includes(component.type)) {
+      if (['dropdown', 'radio', 'checkbox'].includes(component.type)) {
         const value = formData[component.id];
         const selectedOptions = Array.isArray(value) ? value : (value ? [value] : []);
         
         for (const selectedOption of selectedOptions) {
-          const capacity = component.optionCapacities[selectedOption];
-          if (capacity !== null && capacity !== undefined) {
-            // Count current submissions for this option
-            const { data: submissions, error } = await supabase
-              .from('form_submissions')
-              .select('submission_data')
-              .eq('form_id', form.id);
+          // Check if this option has a capacity limit
+          const { data: capacity, error } = await supabase
+            .from('form_option_capacity')
+            .select('*')
+            .eq('form_id', form.id)
+            .eq('component_id', component.id)
+            .eq('option_value', selectedOption)
+            .single();
 
-            if (error) {
-              console.error('Error checking option capacity:', error);
-              continue;
-            }
+          if (error || !capacity) continue; // No capacity limit for this option
 
-            let currentCount = 0;
-            submissions?.forEach(submission => {
-              if (!submission.submission_data) return;
-              const submissionData = submission.submission_data as Record<string, any>;
-              const componentValue = submissionData[component.id];
-              
-              if (Array.isArray(componentValue)) {
-                if (componentValue.includes(selectedOption)) currentCount++;
-              } else if (componentValue === selectedOption) {
-                currentCount++;
-              }
-            });
-
-            if (currentCount >= capacity) {
-              toast.error(`Sorry, "${selectedOption}" is now full. Please choose a different option.`);
-              return;
-            }
+          if (capacity.current_count >= capacity.max_capacity) {
+            toast.error(`Sorry, "${selectedOption}" is now full. Please choose a different option.`);
+            return;
           }
         }
       }

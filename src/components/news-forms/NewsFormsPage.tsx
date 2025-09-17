@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText, Mail, Calendar } from 'lucide-react';
+import { Plus, Search, Menu, Eye, Edit, Copy, Trash2, Users, FileText, Mail, Calendar, Settings } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { NewsletterPage } from './NewsletterPage';
 import { EmailFormButton } from './EmailFormButton';
 import { GoogleCalendarsPage } from './GoogleCalendarsPage';
+import { CapacityManager } from './CapacityManager';
 
 type ViewType = 'forms' | 'newsletters' | 'calendars';
 
@@ -28,6 +29,7 @@ export const NewsFormsPage = () => {
   const [campusFilter, setCampusFilter] = useState<CampusType | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
   const [activeView, setActiveView] = useState<ViewType>('forms');
+  const [selectedFormForCapacity, setSelectedFormForCapacity] = useState<Form | null>(null);
 
   const isNewslettersView = activeView === 'newsletters';
   const isFormsView = activeView === 'forms';
@@ -277,6 +279,10 @@ export const NewsFormsPage = () => {
                               <Users className="h-4 w-4 mr-3" />
                               View Submissions
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSelectedFormForCapacity(form)} className="hover:bg-gray-100">
+                              <Settings className="h-4 w-4 mr-3" />
+                              Manage Capacity
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDuplicate(form)} className="hover:bg-gray-100">
                               <Copy className="h-4 w-4 mr-3" />
                               Duplicate
@@ -317,6 +323,14 @@ export const NewsFormsPage = () => {
               </div>
             )}
           </>
+        )}
+        
+        {/* Capacity Manager Modal */}
+        {selectedFormForCapacity && (
+          <CapacityManager
+            form={selectedFormForCapacity}
+            onClose={() => setSelectedFormForCapacity(null)}
+          />
         )}
       </div>
     </div>
