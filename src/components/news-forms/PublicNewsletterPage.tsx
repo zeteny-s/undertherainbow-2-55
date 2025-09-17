@@ -13,6 +13,10 @@ import decoration3 from '../../assets/decoration-3.png';
 import decoration4 from '../../assets/decoration-4.png';
 import decoration5 from '../../assets/decoration-5.png';
 import decoration6 from '../../assets/decoration-6.png';
+import decorationDinosaur from '../../assets/decoration-dinosaur.png';
+import decorationRainbow from '../../assets/decoration-rainbow.png';
+import decorationHearts from '../../assets/decoration-hearts.png';
+import decorationHeartRed from '../../assets/decoration-heart-red.png';
 import kindergartenLogo from '../../assets/kindergarten-logo.png';
 
 export const PublicNewsletterPage = () => {
@@ -100,7 +104,10 @@ export const PublicNewsletterPage = () => {
     );
   }
 
-  const decorationImages = [decoration1, decoration2, decoration3, decoration4, decoration5, decoration6];
+  const decorationImages = [
+    decoration1, decoration2, decoration3, decoration4, decoration5, decoration6,
+    decorationDinosaur, decorationRainbow, decorationHearts, decorationHeartRed
+  ];
 
   const renderComponent = (component: NewsletterComponent) => {
     switch (component.type) {
@@ -310,15 +317,21 @@ export const PublicNewsletterPage = () => {
                      radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
                      radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
       }}>
-      {/* Background decorative images - hidden on mobile */}
+      {/* Background decorative images - positioned away from content card */}
       {decorationImages.map((img, index) => {
         const positions = [
-          { top: '8%', left: '5%', transform: 'rotate(-15deg)', width: '120px' },
-          { top: '15%', right: '8%', transform: 'rotate(25deg)', width: '90px' },
-          { top: '35%', left: '12%', transform: 'rotate(45deg)', width: '80px' },
-          { top: '55%', right: '15%', transform: 'rotate(-30deg)', width: '110px' },
-          { top: '75%', left: '20%', transform: 'rotate(60deg)', width: '70px' },
-          { top: '12%', left: '35%', transform: 'rotate(-45deg)', width: '130px' }
+          // Original positions - moved further to sides
+          { top: '8%', left: '2%', transform: 'rotate(-15deg)', width: '100px', zIndex: 1 },
+          { top: '15%', right: '2%', transform: 'rotate(25deg)', width: '80px', zIndex: 1 },
+          { top: '35%', left: '5%', transform: 'rotate(45deg)', width: '70px', zIndex: 1 },
+          { top: '55%', right: '5%', transform: 'rotate(-30deg)', width: '90px', zIndex: 1 },
+          { top: '75%', left: '8%', transform: 'rotate(60deg)', width: '60px', zIndex: 1 },
+          { top: '12%', left: '25%', transform: 'rotate(-45deg)', width: '110px', zIndex: 1 },
+          // New positions for additional images - more spread out
+          { top: '25%', left: '1%', transform: 'rotate(20deg)', width: '85px', zIndex: 1 },
+          { top: '40%', right: '1%', transform: 'rotate(-40deg)', width: '75px', zIndex: 1 },
+          { top: '65%', left: '3%', transform: 'rotate(35deg)', width: '65px', zIndex: 1 },
+          { top: '80%', right: '3%', transform: 'rotate(-25deg)', width: '95px', zIndex: 1 }
         ];
         const pos = positions[index % positions.length];
         return (
@@ -326,7 +339,7 @@ export const PublicNewsletterPage = () => {
             key={index}
             src={img}
             alt=""
-            className="absolute opacity-20 pointer-events-none z-0 hidden md:block"
+            className="absolute opacity-15 pointer-events-none hidden lg:block animate-pulse"
             style={{
               position: 'absolute',
               top: pos.top,
@@ -334,7 +347,8 @@ export const PublicNewsletterPage = () => {
               right: pos.right,
               transform: pos.transform,
               width: pos.width,
-              opacity: 0.2
+              opacity: 0.15,
+              zIndex: pos.zIndex
             }}
           />
         );
