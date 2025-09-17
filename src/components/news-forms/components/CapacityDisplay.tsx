@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, AlertCircle, ChevronDown, ChevronUp, MoreVertical } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { supabase } from '../../../integrations/supabase/client';
 import { Form } from '../../../types/form-types';
@@ -28,6 +28,8 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
   const [showParticipants, setShowParticipants] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+  const [optionParticipants, setOptionParticipants] = useState<Record<string, ParticipantInfo[]>>({});
 
   useEffect(() => {
     fetchCapacityData();
@@ -75,7 +77,9 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
 
       if (capacitiesError) throw capacitiesError;
 
-      // Calculate real counts for each option from submissions
+      // Calculate real counts for each option from submissions and collect participants
+      const optionParticipantsMap: Record<string, ParticipantInfo[]> = {};
+      
       const updatedCapacities = (capacities || []).map(capacity => {
         const component = form.form_components.find(c => c.id === capacity.component_id);
         if (!component) {
@@ -83,8 +87,10 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
           return capacity;
         }
 
-        // Count how many submissions have this option selected
+        // Count how many submissions have this option selected and collect participants
         let actualCount = 0;
+        const optionKey = `${capacity.component_id}-${capacity.option_value}`;
+        optionParticipantsMap[optionKey] = [];
         
         submissions?.forEach((submission, index) => {
           if (!submission.submission_data) return;
@@ -102,14 +108,26 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
             });
           }
           
+          let isSelected = false;
           if (Array.isArray(componentValue)) {
             // For checkboxes (multiple selections)
             if (componentValue.includes(capacity.option_value)) {
+              isSelected = true;
               actualCount++;
             }
           } else if (componentValue === capacity.option_value) {
             // For radio buttons and dropdowns (single selection)
+            isSelected = true;
             actualCount++;
+          }
+          
+          // Add participant to this option's list if they selected it
+          if (isSelected && submission.family_name) {
+            optionParticipantsMap[optionKey].push({
+              id: submission.id,
+              family_name: submission.family_name,
+              submitted_at: submission.submitted_at
+            });
           }
         });
 
@@ -133,6 +151,8 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
           current_count: actualCount
         };
       });
+
+      setOptionParticipants(optionParticipantsMap);
 
       setOptionCapacities(updatedCapacities);
     } catch (error) {
@@ -158,6 +178,13 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
 
   // Filter option capacities that have capacity limits
   const limitedOptions = optionCapacities.filter(cap => cap.max_capacity > 0);
+
+  const toggleDropdown = (optionKey: string) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [optionKey]: !prev[optionKey]
+    }));
+  };
 
   // Show display if there are submissions or capacity limits
   if (totalSubmissions === 0 && !hasOverallLimit && limitedOptions.length === 0) {
@@ -228,25 +255,62 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
                 const component = form.form_components.find(c => c.id === capacity.component_id);
                 const isFull = capacity.current_count >= capacity.max_capacity;
                 const spotsLeft = Math.max(0, capacity.max_capacity - capacity.current_count);
+                const optionKey = `${capacity.component_id}-${capacity.option_value}`;
+                const optionParticipantsList = optionParticipants[optionKey] || [];
+                const isDropdownOpen = openDropdowns[optionKey];
                 
                 return (
-                  <div key={`${capacity.component_id}-${capacity.option_value}`} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="text-sm text-gray-700">
-                        <strong>{capacity.option_value}</strong>
-                        {component?.label && (
-                          <span className="text-gray-500 ml-1">({component.label})</span>
+                  <div key={optionKey} className="relative">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        <span className="text-sm text-gray-700">
+                          <strong>{capacity.display_text || capacity.option_value}</strong>
+                          {component?.label && (
+                            <span className="text-gray-500 ml-1">({component.label})</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600">
+                          {isFull ? 'Full' : `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
+                        </span>
+                        <Badge variant={isFull ? "destructive" : "secondary"} className="min-w-[80px] justify-center">
+                          {capacity.current_count} / {capacity.max_capacity}
+                        </Badge>
+                        {capacity.current_count > 0 && (
+                          <div className="relative">
+                            <button 
+                              onClick={() => toggleDropdown(optionKey)}
+                              className="p-1 hover:bg-gray-100 rounded transition-colors"
+                              aria-label="Show participants"
+                            >
+                              <MoreVertical className="h-4 w-4 text-gray-500" />
+                            </button>
+                            
+                            {isDropdownOpen && (
+                              <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] max-h-[200px] overflow-y-auto">
+                                <div className="p-2 border-b border-gray-100">
+                                  <h4 className="text-sm font-medium text-gray-900">Participants</h4>
+                                </div>
+                                <div className="p-2">
+                                  {optionParticipantsList.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {optionParticipantsList.map((participant) => (
+                                        <div key={participant.id} className="text-sm text-gray-700 py-1 px-2 hover:bg-gray-50 rounded">
+                                          {participant.family_name}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm text-gray-500 py-2">No participants yet</div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-gray-600">
-                        {isFull ? 'Full' : `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
-                      </span>
-                      <Badge variant={isFull ? "destructive" : "secondary"} className="min-w-[80px] justify-center">
-                        {capacity.current_count} / {capacity.max_capacity}
-                      </Badge>
+                      </div>
                     </div>
                   </div>
                 );
