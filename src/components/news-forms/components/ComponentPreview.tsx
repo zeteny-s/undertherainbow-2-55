@@ -11,6 +11,7 @@ import { FormComponent } from '../../../types/form-types';
 import { supabase } from '../../../integrations/supabase/client';
 import { toast } from 'sonner';
 import { CalendarButton } from './CalendarButton';
+import { OptionSubmissionsDropdown } from './OptionSubmissionsDropdown';
 
 interface ComponentPreviewProps {
   component: FormComponent;
@@ -19,7 +20,7 @@ interface ComponentPreviewProps {
   formId?: string;
 }
 
-export const ComponentPreview = ({ component, value, onChange }: ComponentPreviewProps) => {
+export const ComponentPreview = ({ component, value, onChange, formId }: ComponentPreviewProps) => {
   
   const fieldStyle = component.properties?.bold ? 'font-bold' : '';
   const textSize = component.properties?.textSize || 'text-base';
@@ -78,9 +79,10 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
               <SelectItem 
                 key={index} 
                 value={option} 
-                className="bg-white hover:bg-surface text-foreground"
+                className="bg-white hover:bg-surface text-foreground flex justify-between"
               >
-                {option}
+                <span>{option}</span>
+                {formId && <OptionSubmissionsDropdown formId={formId} componentId={component.id} optionValue={option} />}
               </SelectItem>
             ))}
             </SelectContent>
@@ -112,10 +114,11 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
                 />
                 <Label 
                   htmlFor={`${component.id}-${index}`} 
-                  className="text-sm font-normal"
+                  className="text-sm font-normal flex-1"
                 >
                   {option}
                 </Label>
+                {formId && <OptionSubmissionsDropdown formId={formId} componentId={component.id} optionValue={option} />}
               </div>
             ))}
           </div>
@@ -138,10 +141,11 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
                 />
                 <Label 
                   htmlFor={`${component.id}-${index}`} 
-                  className="text-sm font-normal"
+                  className="text-sm font-normal flex-1"
                 >
                   {option}
                 </Label>
+                {formId && <OptionSubmissionsDropdown formId={formId} componentId={component.id} optionValue={option} />}
               </div>
             ))}
           </RadioGroup>
