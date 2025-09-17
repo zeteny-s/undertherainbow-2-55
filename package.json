@@ -22,7 +22,7 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.6",
-    "@supabase/supabase-js": "^2.52.1",
+    "@supabase/supabase-js": "^2.57.4",
     "@techstark/opencv-js": "^4.11.0-release.1",
     "@types/js-cookie": "^3.0.6",
     "@types/react-beautiful-dnd": "^13.1.8",

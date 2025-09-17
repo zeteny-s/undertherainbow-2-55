@@ -1062,6 +1062,39 @@ export type Database = {
           },
         ]
       }
+      form_option_capacity: {
+        Row: {
+          component_id: string
+          created_at: string
+          current_count: number
+          form_id: string
+          id: string
+          max_capacity: number
+          option_value: string
+          updated_at: string
+        }
+        Insert: {
+          component_id: string
+          created_at?: string
+          current_count?: number
+          form_id: string
+          id?: string
+          max_capacity: number
+          option_value: string
+          updated_at?: string
+        }
+        Update: {
+          component_id?: string
+          created_at?: string
+          current_count?: number
+          form_id?: string
+          id?: string
+          max_capacity?: number
+          option_value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       form_submissions: {
         Row: {
           family_name: string | null
