@@ -17,9 +17,10 @@ interface LivePreviewProps {
   onComponentSelect?: (component: FormComponent) => void;
   onComponentDelete?: (componentId: string) => void;
   previewMode?: boolean;
+  formId?: string;
 }
 
-export const LivePreview = ({ components, onComponentSelect, onComponentDelete, previewMode = false }: LivePreviewProps) => {
+export const LivePreview = ({ components, onComponentSelect, onComponentDelete, previewMode = false, formId }: LivePreviewProps) => {
   const [previewData, setPreviewData] = useState<Record<string, any>>({});
   const { isOver, setNodeRef } = useDroppable({ id: 'form-builder' });
 
@@ -102,6 +103,7 @@ export const LivePreview = ({ components, onComponentSelect, onComponentDelete, 
                     components={components}
                     values={previewData}
                     onChange={handleFieldChange}
+                    formId={formId}
                   />
                   
                   <div className="pt-6">

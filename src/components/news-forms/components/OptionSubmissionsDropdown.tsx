@@ -77,7 +77,11 @@ export const OptionSubmissionsDropdown = ({ formId, componentId, optionValue }: 
   }, [formId, componentId, optionValue]);
 
   if (submissions.length === 0) {
-    return null;
+    return (
+      <div className="text-xs text-gray-400 ml-2">
+        (0)
+      </div>
+    );
   }
 
   return (

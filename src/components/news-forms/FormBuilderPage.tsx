@@ -398,6 +398,7 @@ export const FormBuilderPage = () => {
               onComponentSelect={previewMode ? undefined : setSelectedComponent}
               onComponentDelete={previewMode ? undefined : handleComponentDelete}
               previewMode={previewMode}
+              formId={form?.id}
             />
           </div>
 
