@@ -3,6 +3,8 @@ import { X, Check } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Label } from '../../ui/label';
 import { FormForSelection } from '../../../types/newsletter-types';
 import { supabase } from '../../../integrations/supabase/client';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
@@ -14,25 +16,39 @@ interface FormSelectionModalProps {
   campus: string;
 }
 
-export const FormSelectionModal = ({ isOpen, onClose, onConfirm, campus }: FormSelectionModalProps) => {
+export const FormSelectionModal = ({ isOpen, onClose, onConfirm }: FormSelectionModalProps) => {
   const [availableForms, setAvailableForms] = useState<FormForSelection[]>([]);
   const [selectedFormIds, setSelectedFormIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCampusFilter, setSelectedCampusFilter] = useState<string>('all');
+
+  const campusOptions = [
+    { value: 'all', label: 'All Campuses' },
+    { value: 'Feketerigó', label: 'Feketerigó' },
+    { value: 'Torockó', label: 'Torockó' },
+    { value: 'Levél', label: 'Levél' }
+  ];
 
   useEffect(() => {
     if (isOpen) {
       fetchForms();
     }
-  }, [isOpen, campus]);
+  }, [isOpen, selectedCampusFilter]);
 
   const fetchForms = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('forms')
         .select('id, title, description, campuses, created_at')
-        .overlaps('campuses', [campus])
         .order('created_at', { ascending: false });
+
+      // Apply campus filter if not "all"
+      if (selectedCampusFilter !== 'all') {
+        query = query.overlaps('campuses', [selectedCampusFilter]);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setAvailableForms(data || []);
@@ -74,6 +90,22 @@ export const FormSelectionModal = ({ isOpen, onClose, onConfirm, campus }: FormS
           </Button>
         </CardHeader>
         
+        <div className="px-6 pb-4">
+          <Label htmlFor="campus-filter">Filter by Campus</Label>
+          <Select value={selectedCampusFilter} onValueChange={setSelectedCampusFilter}>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {campusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
         <CardContent className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8">
@@ -81,7 +113,7 @@ export const FormSelectionModal = ({ isOpen, onClose, onConfirm, campus }: FormS
             </div>
           ) : availableForms.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>No forms available for {campus} campus.</p>
+              <p>No forms available{selectedCampusFilter !== 'all' ? ` for ${selectedCampusFilter}` : ''}.</p>
             </div>
           ) : (
             <div className="space-y-4">
