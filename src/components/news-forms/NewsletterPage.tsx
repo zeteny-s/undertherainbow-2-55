@@ -105,6 +105,7 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
           campus: originalNewsletter.campus,
           content_guidelines: originalNewsletter.content_guidelines,
           generated_html: originalNewsletter.generated_html,
+          components: originalNewsletter.components,
           status: 'draft',
           created_by: originalNewsletter.created_by
         })
