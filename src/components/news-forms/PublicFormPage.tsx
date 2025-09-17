@@ -139,14 +139,30 @@ export const PublicFormPage = () => {
     // Validate required fields
     const requiredFields = form.form_components
       .filter((component: FormComponent) => component.required)
-      .map((component: FormComponent) => component.id);
+      .map((component: FormComponent) => ({ id: component.id, type: component.type, label: component.label }));
 
-    const missingFields = requiredFields.filter(fieldId => 
-      !formData[fieldId] || (typeof formData[fieldId] === 'string' && !formData[fieldId].trim())
-    );
+    const missingFields = requiredFields.filter(field => {
+      const value = formData[field.id];
+      
+      // Handle different field types
+      if (field.type === 'checkbox') {
+        // For checkboxes, value should be a non-empty array
+        return !Array.isArray(value) || value.length === 0;
+      } else if (field.type === 'radio' || field.type === 'dropdown') {
+        // For radio buttons and dropdowns, value should exist and not be empty
+        return !value || (typeof value === 'string' && !value.trim());
+      } else if (field.type === 'file-upload') {
+        // For file uploads, value should be an array with files or a single file
+        return !value || (Array.isArray(value) && value.length === 0);
+      } else {
+        // For text inputs and textareas, check if value exists and is not empty string
+        return !value || (typeof value === 'string' && !value.trim());
+      }
+    });
 
     if (missingFields.length > 0) {
-      toast.error('Please fill in all required fields');
+      const fieldNames = missingFields.map(f => f.label).join(', ');
+      toast.error(`Please fill in all required fields: ${fieldNames}`);
       return;
     }
 

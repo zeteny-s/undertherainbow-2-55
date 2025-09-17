@@ -75,7 +75,10 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
     case 'text-input':
       return (
         <div className="space-y-2">
-          <Label className={labelClasses}>{component.label}</Label>
+          <Label className={labelClasses}>
+            {component.label}
+            {component.required && <span className="text-red-500 ml-1">*</span>}
+          </Label>
           <Input
             placeholder={component.placeholder || 'Enter text...'}
             value={value || ''}
@@ -88,7 +91,10 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
     case 'textarea':
       return (
         <div className="space-y-2">
-          <Label className={labelClasses}>{component.label}</Label>
+          <Label className={labelClasses}>
+            {component.label}
+            {component.required && <span className="text-red-500 ml-1">*</span>}
+          </Label>
           <Textarea
             placeholder={component.placeholder || 'Enter your message...'}
             value={value || ''}
@@ -102,7 +108,10 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
     case 'dropdown':
       return (
         <div className="space-y-2">
-          <Label className={labelClasses}>{component.label}</Label>
+          <Label className={labelClasses}>
+            {component.label}
+            {component.required && <span className="text-red-500 ml-1">*</span>}
+          </Label>
           <Select value={value} onValueChange={onChange}>
             <SelectTrigger>
               <SelectValue placeholder={component.placeholder || 'Select an option'} />
@@ -135,7 +144,10 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
     case 'checkbox':
       return (
         <div className="space-y-3">
-          <Label className={labelClasses}>{component.label}</Label>
+          <Label className={labelClasses}>
+            {component.label}
+            {component.required && <span className="text-red-500 ml-1">*</span>}
+          </Label>
           <div className="space-y-2">
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
               const capacityInfo = getCapacityInfo(option);
@@ -182,7 +194,10 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
     case 'radio':
       return (
         <div className="space-y-3">
-          <Label className={labelClasses}>{component.label}</Label>
+          <Label className={labelClasses}>
+            {component.label}
+            {component.required && <span className="text-red-500 ml-1">*</span>}
+          </Label>
           <RadioGroup value={value} onValueChange={(newValue) => {
             const capacityInfo = getCapacityInfo(newValue);
             if (capacityInfo?.isFull) return; // Prevent selecting disabled options
@@ -333,7 +348,10 @@ const FileUploadComponent = ({ component, value, onChange }: ComponentPreviewPro
 
   return (
     <div className="space-y-2">
-      <Label className={labelClasses}>{component.label}</Label>
+      <Label className={labelClasses}>
+        {component.label}
+        {component.required && <span className="text-red-500 ml-1">*</span>}
+      </Label>
       
       {/* Upload Area */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
