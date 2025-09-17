@@ -178,13 +178,25 @@ export const PublicNewsletterPage = () => {
           <div className="mb-4 text-center">
             <a
               href={button.url}
-              className={`inline-block px-6 py-3 rounded-lg font-medium transition-colors ${
+              className={`inline-flex items-center rounded-lg font-medium transition-all duration-200 hover:shadow-md ${
                 button.size === 'small' ? 'px-4 py-2 text-sm' : 
                 button.size === 'large' ? 'px-8 py-4 text-lg' : 'px-6 py-3'
+              } ${
+                button.buttonStyle === 'outline' 
+                  ? 'border-2 bg-transparent hover:bg-opacity-10' 
+                  : button.buttonStyle === 'secondary'
+                  ? 'hover:bg-opacity-90'
+                  : 'hover:opacity-90'
               }`}
               style={{
-                backgroundColor: button.backgroundColor || '#3b82f6',
-                color: button.textColor || 'white'
+                backgroundColor: button.buttonStyle === 'outline' ? 'transparent' : 
+                                button.buttonStyle === 'secondary' ? '#dfefe8' :
+                                button.backgroundColor || '#3b82f6',
+                color: button.buttonStyle === 'outline' ? (button.backgroundColor || '#3b82f6') :
+                       button.buttonStyle === 'secondary' ? '#1f2937' :
+                       button.textColor || '#ffffff',
+                borderColor: button.buttonStyle === 'outline' ? (button.backgroundColor || '#3b82f6') : 'transparent',
+                borderWidth: button.buttonStyle === 'outline' ? '2px' : '0'
               }}
             >
               {button.text}

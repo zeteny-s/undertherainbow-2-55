@@ -55,6 +55,7 @@ export interface NewsletterButton {
   backgroundColor?: string;
   textColor?: string;
   size?: 'small' | 'medium' | 'large';
+  buttonStyle?: 'primary' | 'secondary' | 'outline';
 }
 
 export interface NewsletterFormButton {
