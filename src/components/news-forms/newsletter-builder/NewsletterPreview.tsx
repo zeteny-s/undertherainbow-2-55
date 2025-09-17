@@ -102,7 +102,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                                 button.buttonStyle === 'secondary' ? '#3BBFF7' :
                                 button.backgroundColor || '#3BBFF7',
                 color: button.buttonStyle === 'outline' ? (button.backgroundColor || '#3BBFF7') :
-                       button.buttonStyle === 'secondary' ? '#3BBFF7' :
+                       button.buttonStyle === 'secondary' ? '#ffffff' :
                        button.textColor || '#ffffff',
                 borderColor: button.buttonStyle === 'outline' ? (button.backgroundColor || '#3BBFF7') : 'transparent',
                 borderWidth: button.buttonStyle === 'outline' ? '2px' : '0'
@@ -143,7 +143,7 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                                 formButton.buttonStyle === 'secondary' ? '#3BBFF7' :
                                 formButton.backgroundColor || '#3BBFF7',
                 color: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3BBFF7') :
-                       formButton.buttonStyle === 'secondary' ? '#3BBFF7' :
+                       formButton.buttonStyle === 'secondary' ? '#ffffff' :
                        formButton.textColor || '#ffffff',
                 borderColor: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3BBFF7') : 'transparent',
                 borderWidth: formButton.buttonStyle === 'outline' ? '2px' : '0'
