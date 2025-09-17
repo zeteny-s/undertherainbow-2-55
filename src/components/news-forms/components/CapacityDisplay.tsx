@@ -57,7 +57,7 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
       // Fetch submissions data
       const { data: submissions, error: submissionsError } = await supabase
         .from('form_submissions')
-        .select('id, family_name, submitted_at')
+        .select('id, family_name, submitted_at, submission_data')
         .eq('form_id', form.id)
         .order('submitted_at', { ascending: false });
 
@@ -74,7 +74,51 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
 
       if (capacitiesError) throw capacitiesError;
 
-      setOptionCapacities(capacities || []);
+      // Calculate real counts for each option from submissions
+      const updatedCapacities = (capacities || []).map(capacity => {
+        const component = form.form_components.find(c => c.id === capacity.component_id);
+        if (!component) return capacity;
+
+        // Count how many submissions have this option selected
+        let actualCount = 0;
+        
+        submissions?.forEach(submission => {
+          if (!submission.submission_data) return;
+          
+          const submissionData = submission.submission_data as Record<string, any>;
+          const componentValue = submissionData[component.id];
+          
+          if (Array.isArray(componentValue)) {
+            // For checkboxes (multiple selections)
+            if (componentValue.includes(capacity.option_value)) {
+              actualCount++;
+            }
+          } else if (componentValue === capacity.option_value) {
+            // For radio buttons and dropdowns (single selection)
+            actualCount++;
+          }
+        });
+
+        // Update the database with the real count
+        supabase
+          .from('form_option_capacity')
+          .update({ current_count: actualCount })
+          .eq('form_id', form.id)
+          .eq('component_id', capacity.component_id)
+          .eq('option_value', capacity.option_value)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error updating capacity count:', error);
+            }
+          });
+
+        return {
+          ...capacity,
+          current_count: actualCount
+        };
+      });
+
+      setOptionCapacities(updatedCapacities);
     } catch (error) {
       console.error('Error fetching capacity data:', error);
     } finally {
