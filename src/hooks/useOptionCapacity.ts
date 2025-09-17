@@ -46,6 +46,30 @@ export const useOptionCapacity = (formId: string, component: FormComponent) => {
 
   const fetchOptionCounts = async () => {
     try {
+      // First, ensure capacity records exist for this component's options
+      if (component.optionCapacities) {
+        for (const [option, capacity] of Object.entries(component.optionCapacities)) {
+          if (capacity !== null) {
+            const { error: upsertError } = await supabase
+              .from('form_option_capacity')
+              .upsert({
+                form_id: formId,
+                component_id: component.id,
+                option_value: option,
+                max_capacity: capacity,
+                current_count: 0
+              }, {
+                onConflict: 'form_id,component_id,option_value'
+              });
+
+            if (upsertError) {
+              console.error('Error upserting capacity record:', upsertError);
+            }
+          }
+        }
+      }
+
+      // Fetch current counts from form submissions
       const { data: submissions, error } = await supabase
         .from('form_submissions')
         .select('submission_data')
@@ -80,6 +104,18 @@ export const useOptionCapacity = (formId: string, component: FormComponent) => {
           optionCounts[componentValue]++;
         }
       });
+
+      // Update capacity records with current counts
+      for (const [option, count] of Object.entries(optionCounts)) {
+        if (component.optionCapacities?.[option] !== undefined) {
+          await supabase
+            .from('form_option_capacity')
+            .update({ current_count: count })
+            .eq('form_id', formId)
+            .eq('component_id', component.id)
+            .eq('option_value', option);
+        }
+      }
 
       // Build capacity info
       const capacityInfo: OptionCapacityInfo = {};
