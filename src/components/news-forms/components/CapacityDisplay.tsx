@@ -3,6 +3,7 @@ import { Users, AlertCircle } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { supabase } from '../../../integrations/supabase/client';
 import { Form } from '../../../types/form-types';
+import { OptionSubmissionsDropdown } from './OptionSubmissionsDropdown';
 
 interface CapacityDisplayProps {
   form: Form;
@@ -166,13 +167,18 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
                         <span className="text-sm text-gray-600">
                           {isFull ? 'Full' : `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
                         </span>
-                        <Badge variant={isFull ? "destructive" : "secondary"} className="min-w-[80px] justify-center">
-                          {capacity.current_count} / {capacity.max_capacity}
-                        </Badge>
+                         <Badge variant={isFull ? "destructive" : "secondary"} className="min-w-[80px] justify-center">
+                           {capacity.current_count} / {capacity.max_capacity}
+                         </Badge>
                          {capacity.current_count > 0 && (
-                           <span className="text-xs text-gray-500">
-                             participants registered
-                           </span>
+                           <div className="flex items-center gap-1">
+                             <span className="text-xs text-gray-500">participants registered</span>
+                             <OptionSubmissionsDropdown 
+                               formId={form.id} 
+                               componentId={capacity.component_id} 
+                               optionValue={capacity.option_value} 
+                             />
+                           </div>
                          )}
                       </div>
                     </div>

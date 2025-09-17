@@ -373,7 +373,6 @@ export const PublicFormPage = () => {
               components={form.form_components}
               values={formData}
               onChange={handleFieldChange}
-              formId={form.id}
             />
             
             <div className="pt-6">

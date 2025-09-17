@@ -11,16 +11,14 @@ import { FormComponent } from '../../../types/form-types';
 import { supabase } from '../../../integrations/supabase/client';
 import { toast } from 'sonner';
 import { CalendarButton } from './CalendarButton';
-import { OptionSubmissionsDropdown } from './OptionSubmissionsDropdown';
 
 interface ComponentPreviewProps {
   component: FormComponent;
   value?: any;
   onChange?: (value: any) => void;
-  formId?: string;
 }
 
-export const ComponentPreview = ({ component, value, onChange, formId }: ComponentPreviewProps) => {
+export const ComponentPreview = ({ component, value, onChange }: ComponentPreviewProps) => {
   
   const fieldStyle = component.properties?.bold ? 'font-bold' : '';
   const textSize = component.properties?.textSize || 'text-base';
@@ -81,10 +79,7 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
                 value={option} 
                 className="bg-white hover:bg-surface text-foreground"
               >
-                <div className="flex justify-between items-center w-full">
-                  <span>{option}</span>
-                  {formId && <OptionSubmissionsDropdown formId={formId} componentId={component.id} optionValue={option} />}
-                </div>
+                {option}
               </SelectItem>
             ))}
             </SelectContent>
@@ -101,28 +96,25 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
           </Label>
           <div className="space-y-2">
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
-              <div key={index} className="flex items-center justify-between space-x-2">
-                <div className="flex items-center space-x-2 flex-1">
-                  <Checkbox
-                    id={`${component.id}-${index}`}
-                    checked={Array.isArray(value) && value.includes(option)}
-                    onCheckedChange={(checked) => {
-                      const currentValue = Array.isArray(value) ? value : [];
-                      if (checked) {
-                        onChange?.([...currentValue, option]);
-                      } else {
-                        onChange?.(currentValue.filter(v => v !== option));
-                      }
-                    }}
-                  />
-                  <Label 
-                    htmlFor={`${component.id}-${index}`} 
-                    className="text-sm font-normal"
-                  >
-                    {option}
-                  </Label>
-                </div>
-                {formId && <OptionSubmissionsDropdown formId={formId} componentId={component.id} optionValue={option} />}
+              <div key={index} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${component.id}-${index}`}
+                  checked={Array.isArray(value) && value.includes(option)}
+                  onCheckedChange={(checked) => {
+                    const currentValue = Array.isArray(value) ? value : [];
+                    if (checked) {
+                      onChange?.([...currentValue, option]);
+                    } else {
+                      onChange?.(currentValue.filter(v => v !== option));
+                    }
+                  }}
+                />
+                <Label 
+                  htmlFor={`${component.id}-${index}`} 
+                  className="text-sm font-normal flex-1"
+                >
+                  {option}
+                </Label>
               </div>
             ))}
           </div>
@@ -138,20 +130,17 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
           </Label>
           <RadioGroup value={value} onValueChange={onChange}>
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
-              <div key={index} className="flex items-center justify-between space-x-2">
-                <div className="flex items-center space-x-2 flex-1">
-                  <RadioGroupItem 
-                    value={option} 
-                    id={`${component.id}-${index}`}
-                  />
-                  <Label 
-                    htmlFor={`${component.id}-${index}`} 
-                    className="text-sm font-normal"
-                  >
-                    {option}
-                  </Label>
-                </div>
-                {formId && <OptionSubmissionsDropdown formId={formId} componentId={component.id} optionValue={option} />}
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem 
+                  value={option} 
+                  id={`${component.id}-${index}`}
+                />
+                <Label 
+                  htmlFor={`${component.id}-${index}`} 
+                  className="text-sm font-normal flex-1"
+                >
+                  {option}
+                </Label>
               </div>
             ))}
           </RadioGroup>
