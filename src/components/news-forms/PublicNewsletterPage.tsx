@@ -309,7 +309,8 @@ export const PublicNewsletterPage = () => {
 
   return (
     <>
-      <div className="h-full overflow-y-auto bg-white relative z-20" style={{
+      {/* Fixed background container - doesn't scroll */}
+      <div className="fixed inset-0 pointer-events-none" style={{
         background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
                      radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
                      radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
@@ -317,75 +318,80 @@ export const PublicNewsletterPage = () => {
                      radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
                      radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
       }}>
-      {/* Background decorative images - positioned away from content card */}
-      {decorationImages.map((img, index) => {
-        const positions = [
-          // Original positions - moved further to sides
-          { top: '8%', left: '2%', transform: 'rotate(-15deg)', width: '100px', zIndex: 1 },
-          { top: '15%', right: '2%', transform: 'rotate(25deg)', width: '80px', zIndex: 1 },
-          { top: '35%', left: '5%', transform: 'rotate(45deg)', width: '70px', zIndex: 1 },
-          { top: '55%', right: '5%', transform: 'rotate(-30deg)', width: '90px', zIndex: 1 },
-          { top: '75%', left: '8%', transform: 'rotate(60deg)', width: '60px', zIndex: 1 },
-          { top: '12%', left: '25%', transform: 'rotate(-45deg)', width: '110px', zIndex: 1 },
-          // New positions for additional images - more spread out
-          { top: '25%', left: '1%', transform: 'rotate(20deg)', width: '85px', zIndex: 1 },
-          { top: '40%', right: '1%', transform: 'rotate(-40deg)', width: '75px', zIndex: 1 },
-          { top: '65%', left: '3%', transform: 'rotate(35deg)', width: '65px', zIndex: 1 },
-          { top: '80%', right: '3%', transform: 'rotate(-25deg)', width: '95px', zIndex: 1 }
-        ];
-        const pos = positions[index % positions.length];
-        return (
-          <img
-            key={index}
-            src={img}
-            alt=""
-            className="absolute opacity-15 pointer-events-none hidden lg:block animate-pulse"
-            style={{
-              position: 'absolute',
-              top: pos.top,
-              left: pos.left,
-              right: pos.right,
-              transform: pos.transform,
-              width: pos.width,
-              opacity: 0.15,
-              zIndex: pos.zIndex
-            }}
-          />
-        );
-      })}
-
-      <div className="relative z-30 max-w-4xl mx-auto px-4 py-6 md:px-5 md:py-10 min-h-screen flex flex-col justify-center items-center">
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-16 relative w-full max-w-3xl z-40 border border-gray-200">
-          {/* Logo - properly centered on all devices */}
-          <div className="flex justify-center mb-6 md:mb-8 relative z-50">
-            <img 
-              src={kindergartenLogo} 
-              alt="Under the Rainbow Kindergarten and Nursery" 
-              className="w-full max-w-[250px] md:max-w-[300px] h-auto"
+        {/* Background decorative images - fixed position, won't scroll */}
+        {decorationImages.map((img, index) => {
+          const positions = [
+            // Original positions - moved further to sides
+            { top: '8%', left: '2%', transform: 'rotate(-15deg)', width: '100px', zIndex: 1 },
+            { top: '15%', right: '2%', transform: 'rotate(25deg)', width: '80px', zIndex: 1 },
+            { top: '35%', left: '5%', transform: 'rotate(45deg)', width: '70px', zIndex: 1 },
+            { top: '55%', right: '5%', transform: 'rotate(-30deg)', width: '90px', zIndex: 1 },
+            { top: '75%', left: '8%', transform: 'rotate(60deg)', width: '60px', zIndex: 1 },
+            { top: '12%', left: '25%', transform: 'rotate(-45deg)', width: '110px', zIndex: 1 },
+            // New positions for additional images - more spread out
+            { top: '25%', left: '1%', transform: 'rotate(20deg)', width: '85px', zIndex: 1 },
+            { top: '40%', right: '1%', transform: 'rotate(-40deg)', width: '75px', zIndex: 1 },
+            { top: '65%', left: '3%', transform: 'rotate(35deg)', width: '65px', zIndex: 1 },
+            { top: '80%', right: '3%', transform: 'rotate(-25deg)', width: '95px', zIndex: 1 }
+          ];
+          const pos = positions[index % positions.length];
+          return (
+            <img
+              key={index}
+              src={img}
+              alt=""
+              className="fixed opacity-15 pointer-events-none hidden lg:block animate-pulse"
+              style={{
+                position: 'fixed',
+                top: pos.top,
+                left: pos.left,
+                right: pos.right,
+                transform: pos.transform,
+                width: pos.width,
+                opacity: 0.15,
+                zIndex: pos.zIndex
+              }}
             />
-          </div>
+          );
+        })}
+      </div>
 
-          {/* Newsletter Content */}
-          <div className="space-y-6 relative z-50">
-            {components && components.length > 0 ? (
-              <div className="space-y-4">
-                {components.map((component) => (
-                  <div key={component.id}>
-                    {renderComponent(component)}
+      {/* Scrollable content area */}
+      <div className="h-full overflow-y-auto bg-transparent relative z-20">
+        <div className="relative z-30 max-w-4xl mx-auto px-4 py-6 md:px-5 md:py-10 min-h-screen flex flex-col justify-center items-center">
+          <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl relative w-full max-w-3xl z-40 border border-gray-200 max-h-[85vh] overflow-y-auto">
+            <div className="p-6 md:p-16">
+              {/* Logo - properly centered on all devices */}
+              <div className="flex justify-center mb-6 md:mb-8 relative z-50">
+                <img 
+                  src={kindergartenLogo} 
+                  alt="Under the Rainbow Kindergarten and Nursery" 
+                  className="w-full max-w-[250px] md:max-w-[300px] h-auto"
+                />
+              </div>
+
+              {/* Newsletter Content */}
+              <div className="space-y-6 relative z-50">
+                {components && components.length > 0 ? (
+                  <div className="space-y-4">
+                    {components.map((component) => (
+                      <div key={component.id}>
+                        {renderComponent(component)}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : newsletter.generated_html && newsletter.generated_html.trim() !== '' && !newsletter.generated_html.includes('Add your content here...') ? (
+                  <div dangerouslySetInnerHTML={{ __html: newsletter.generated_html }} />
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <p>A hírlevél tartalma még nem került generálásra.</p>
+                  </div>
+                )}
               </div>
-            ) : newsletter.generated_html && newsletter.generated_html.trim() !== '' && !newsletter.generated_html.includes('Add your content here...') ? (
-              <div dangerouslySetInnerHTML={{ __html: newsletter.generated_html }} />
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <p>A hírlevél tartalma még nem került generálásra.</p>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
     <style>{`
       /* EXACT COPY of rich text editor styles for consistent formatting */
