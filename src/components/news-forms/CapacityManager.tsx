@@ -98,7 +98,7 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
           if (error) throw error;
 
           setCapacities(prev => prev.map(c => 
-            c.id === existing.id ? { ...c, max_capacity: maxCapacity } : c
+            c.id === existing.id ? { ...c, max_capacity: maxCapacity, display_text: displayText || null } : c
           ));
         } else {
           const { data, error } = await supabase
