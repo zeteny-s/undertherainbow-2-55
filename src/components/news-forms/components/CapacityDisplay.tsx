@@ -163,8 +163,7 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
         {/* Option-specific capacities */}
         {limitedOptions.length > 0 && (
           <div className="border-t border-gray-200 pt-4">
-            <h4 className="text-sm font-medium text-gray-900 mb-3">Option Availability</h4>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {limitedOptions.map((capacity) => {
                 const component = form.form_components.find(c => c.id === capacity.component_id);
                 const isFull = capacity.current_count >= capacity.max_capacity;
@@ -173,14 +172,22 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
                 return (
                   <div key={`${capacity.component_id}-${capacity.option_value}`} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
                       <span className="text-sm text-gray-700">
-                        {component?.label}: <strong>{capacity.option_value}</strong>
+                        <strong>{capacity.option_value}</strong>
+                        {component?.label && (
+                          <span className="text-gray-500 ml-1">({component.label})</span>
+                        )}
                       </span>
-                      {isFull && <AlertCircle className="h-4 w-4 text-red-500" />}
                     </div>
-                    <Badge variant={isFull ? "destructive" : "secondary"}>
-                      {isFull ? 'Full' : `${spotsLeft} left`} ({capacity.current_count}/{capacity.max_capacity})
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-600">
+                        {isFull ? 'Full' : `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
+                      </span>
+                      <Badge variant={isFull ? "destructive" : "secondary"} className="min-w-[80px] justify-center">
+                        {capacity.current_count} / {capacity.max_capacity}
+                      </Badge>
+                    </div>
                   </div>
                 );
               })}
@@ -205,7 +212,7 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
           </div>
         )}
 
-        {/* Warning if form is full */}
+        {/* Warning if form is completely full */}
         {isFormFull && (
           <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
             <AlertCircle className="h-4 w-4" />
