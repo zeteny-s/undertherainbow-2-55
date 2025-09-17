@@ -281,7 +281,7 @@ export const NewsletterDragBuilderPage = () => {
           content: {
             text: element.textContent || '',
             url: href,
-            backgroundColor: bgColorMatch ? bgColorMatch[1].trim() : '#3b82f6',
+            backgroundColor: bgColorMatch ? bgColorMatch[1].trim() : '#3BBFF7',
             textColor: textColorMatch ? textColorMatch[1].trim() : '#ffffff'
           },
           position: index
@@ -406,7 +406,7 @@ export const NewsletterDragBuilderPage = () => {
                 font-weight: 600;
                 text-decoration: none;
                 transition: all 0.2s;
-                background-color: ${button.backgroundColor || '#3b82f6'};
+                background-color: ${button.backgroundColor || '#3BBFF7'};
                 color: ${button.textColor || '#ffffff'};
               ">${button.text}</a>
             </div>`;

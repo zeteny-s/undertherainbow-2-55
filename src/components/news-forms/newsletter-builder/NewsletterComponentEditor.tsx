@@ -564,7 +564,7 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
               <Input
                 id="button-bg-color"
                 type="color"
-                value={editedComponent.content.buttonBackgroundColor || '#3b82f6'}
+                value={editedComponent.content.buttonBackgroundColor || '#3BBFF7'}
                 onChange={(e) => updateContent('buttonBackgroundColor', e.target.value)}
               />
             </div>

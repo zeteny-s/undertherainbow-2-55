@@ -58,7 +58,7 @@ const componentLibrary: ComponentLibraryItem[] = [
     defaultConfig: {
       text: 'Click Here',
       url: '#',
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#3BBFF7',
       textColor: '#ffffff',
       size: 'medium',
       buttonStyle: 'primary'
@@ -72,7 +72,7 @@ const componentLibrary: ComponentLibraryItem[] = [
     defaultConfig: {
       text: 'Sign Up Now',
       formId: '',
-      backgroundColor: '#3b82f6',
+      backgroundColor: '#3BBFF7',
       textColor: '#ffffff',
       size: 'medium',
       buttonStyle: 'primary'
@@ -102,7 +102,7 @@ const componentLibrary: ComponentLibraryItem[] = [
       buttonStyle: 'primary',
       backgroundColor: '#f8f9fa',
       textColor: '#1f2937',
-      buttonBackgroundColor: '#3b82f6',
+      buttonBackgroundColor: '#3BBFF7',
       buttonTextColor: '#ffffff',
       borderRadius: '8px',
       padding: '16px',

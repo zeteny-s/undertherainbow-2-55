@@ -5,10 +5,10 @@
 /* Professional design tokens */
 :root {
   /* Primary colors */
-  --primary: 198 92% 60%;
+  --primary: 220 100% 60%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 198 92% 55%;
-  --primary-glow: 198 92% 75%;
+  --primary-hover: 220 100% 55%;
+  --primary-glow: 220 100% 75%;
   
   /* Surface colors */
   --background: 0 0% 100%;
