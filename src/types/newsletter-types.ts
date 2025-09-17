@@ -32,7 +32,7 @@ export interface FormForSelection {
   id: string;
   title: string;
   description?: string | null;
-  campus: CampusType;
+  campuses: string[];
   created_at: string;
 }
 

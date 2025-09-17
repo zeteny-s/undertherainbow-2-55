@@ -1135,7 +1135,7 @@ export type Database = {
       }
       forms: {
         Row: {
-          campus: Database["public"]["Enums"]["campus_type"]
+          campuses: string[]
           capacity: number | null
           created_at: string
           created_by: string
@@ -1148,7 +1148,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          campus: Database["public"]["Enums"]["campus_type"]
+          campuses?: string[]
           capacity?: number | null
           created_at?: string
           created_by: string
@@ -1161,7 +1161,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          campus?: Database["public"]["Enums"]["campus_type"]
+          campuses?: string[]
           capacity?: number | null
           created_at?: string
           created_by?: string
@@ -1177,7 +1177,7 @@ export type Database = {
       }
       google_calendars: {
         Row: {
-          campus: Database["public"]["Enums"]["campus_type"]
+          campuses: string[]
           created_at: string
           created_by: string
           description: string | null
@@ -1188,7 +1188,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          campus: Database["public"]["Enums"]["campus_type"]
+          campuses?: string[]
           created_at?: string
           created_by: string
           description?: string | null
@@ -1199,7 +1199,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          campus?: Database["public"]["Enums"]["campus_type"]
+          campuses?: string[]
           created_at?: string
           created_by?: string
           description?: string | null

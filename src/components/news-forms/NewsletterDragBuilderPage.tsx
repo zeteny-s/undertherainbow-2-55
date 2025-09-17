@@ -63,7 +63,7 @@ export const NewsletterDragBuilderPage = () => {
       const {
         data,
         error
-      } = await supabase.from('forms').select('id, title, description, campus, created_at').eq('status', 'active').order('created_at', {
+      } = await supabase.from('forms').select('id, title, description, campuses, created_at').eq('status', 'active').order('created_at', {
         ascending: false
       });
       if (error) throw error;
@@ -585,7 +585,7 @@ export const NewsletterDragBuilderPage = () => {
                   <div className="space-y-2">
                     <Label>Select Forms to Include</Label>
                     <div className="space-y-3 max-h-60 overflow-y-auto border rounded-md p-3">
-                      {availableForms.filter(form => form.campus === newsletterState.campus).map(form => <div key={form.id} className="flex items-start space-x-3">
+                      {availableForms.filter(form => form.campuses.includes(newsletterState.campus as any)).map(form => <div key={form.id} className="flex items-start space-x-3">
                             <Checkbox id={`form-${form.id}`} checked={newsletterState.selectedFormIds.includes(form.id)} onCheckedChange={checked => handleFormToggle(form.id, checked as boolean)} />
                             <div className="flex-1">
                               <Label htmlFor={`form-${form.id}`} className="text-sm font-medium cursor-pointer">

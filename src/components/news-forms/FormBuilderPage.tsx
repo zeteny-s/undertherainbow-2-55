@@ -10,7 +10,6 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent } from '../ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { ComponentLibrary } from './builder/ComponentLibrary';
@@ -40,7 +39,7 @@ export const FormBuilderPage = () => {
         id: '',
         title: 'Untitled Form',
         description: '',
-        campus: 'Feketerigó',
+        campuses: ['Feketerigó'],
         status: 'active' as FormStatus,
         form_components: [],
         created_by: user?.id || '',
@@ -66,7 +65,7 @@ export const FormBuilderPage = () => {
     }, 2000); // Save 2 seconds after changes
 
     return () => clearTimeout(timeoutId);
-  }, [form?.title, form?.description, form?.campus, components.length]);
+  }, [form?.title, form?.description, form?.campuses, components.length]);
 
   // Auto-save new forms when they get a title
   useEffect(() => {
@@ -92,7 +91,8 @@ export const FormBuilderPage = () => {
       if (error) throw error;
       const formData = {
         ...data,
-        form_components: (data.form_components as unknown as FormComponent[]) || []
+        form_components: (data.form_components as unknown as FormComponent[]) || [],
+        campuses: data.campuses as CampusType[]
       };
       setForm(formData);
       setComponents(formData.form_components);
@@ -116,7 +116,7 @@ export const FormBuilderPage = () => {
       const formData = {
         title: form.title,
         description: form.description,
-        campus: form.campus,
+        campuses: form.campuses,
         status: 'active' as FormStatus,
         form_components: components as any,
         capacity: form.capacity,
@@ -134,7 +134,8 @@ export const FormBuilderPage = () => {
         if (error) throw error;
         const savedForm = {
           ...data,
-          form_components: (data.form_components as unknown as FormComponent[]) || []
+          form_components: (data.form_components as unknown as FormComponent[]) || [],
+          campuses: data.campuses as CampusType[]
         };
         setForm(savedForm);
         navigate('/news-forms');
@@ -292,20 +293,41 @@ export const FormBuilderPage = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="campus" className="text-gray-900 font-medium">Campus *</Label>
-                    <Select 
-                      value={form.campus} 
-                      onValueChange={(value: string) => setForm(prev => prev ? {...prev, campus: value as CampusType} : null)}
-                    >
-                      <SelectTrigger className="bg-white border-2 border-gray-300 text-gray-900">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border-2 border-gray-300 shadow-lg z-[60]">
-                        <SelectItem value="Feketerigó" className="bg-white hover:bg-gray-100 text-gray-900">Feketerigó</SelectItem>
-                        <SelectItem value="Torockó" className="bg-white hover:bg-gray-100 text-gray-900">Torockó</SelectItem>
-                        <SelectItem value="Levél" className="bg-white hover:bg-gray-100 text-gray-900">Levél</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="campuses" className="text-gray-900 font-medium">Campuses *</Label>
+                    <div className="space-y-2">
+                      {(['Feketerigó', 'Torockó', 'Levél'] as CampusType[]).map((campus) => (
+                        <div key={campus} className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            id={`campus-${campus}`}
+                            checked={form.campuses.includes(campus)}
+                            onChange={(e) => {
+                              const isChecked = e.target.checked;
+                              setForm(prev => {
+                                if (!prev) return null;
+                                let newCampuses = [...prev.campuses];
+                                if (isChecked) {
+                                  if (!newCampuses.includes(campus)) {
+                                    newCampuses.push(campus);
+                                  }
+                                } else {
+                                  newCampuses = newCampuses.filter(c => c !== campus);
+                                }
+                                // Ensure at least one campus is selected
+                                if (newCampuses.length === 0) {
+                                  return prev; // Don't update if it would result in no campuses
+                                }
+                                return {...prev, campuses: newCampuses};
+                              });
+                            }}
+                            className="w-4 h-4 text-primary rounded border-2 border-gray-300"
+                          />
+                          <Label htmlFor={`campus-${campus}`} className="text-gray-900">
+                            {campus}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="space-y-3">
                     <Label className="text-gray-900 font-medium">Capacity Settings</Label>

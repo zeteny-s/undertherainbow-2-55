@@ -7,7 +7,7 @@ import { EmptyState } from '../common/EmptyState';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Form, FormSubmission } from '../../types/form-types';
+import { Form, FormSubmission, CampusType } from '../../types/form-types';
 import { toast } from 'sonner';
 
 export const FormSubmissionsPage = () => {
@@ -42,7 +42,8 @@ export const FormSubmissionsPage = () => {
       // Transform the data to match our Form type
       const transformedForm: Form = {
         ...formData,
-        form_components: (formData.form_components as any) || []
+        form_components: (formData.form_components as any) || [],
+        campuses: formData.campuses as CampusType[]
       };
       setForm(transformedForm);
 
@@ -178,7 +179,7 @@ export const FormSubmissionsPage = () => {
             <div className="ml-11">
               <h2 className="text-xl text-muted-foreground">{form.title}</h2>
               <div className="flex items-center gap-4 mt-2">
-                <Badge variant="secondary">{form.campus}</Badge>
+                <Badge variant="secondary">{form.campuses.join(', ')}</Badge>
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                   <User className="h-4 w-4" />
                   {submissions.length} submissions

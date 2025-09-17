@@ -30,8 +30,8 @@ export const FormSelectionModal = ({ isOpen, onClose, onConfirm, campus }: FormS
       setLoading(true);
       const { data, error } = await supabase
         .from('forms')
-        .select('id, title, description, campus, created_at')
-        .eq('campus', campus as any)
+        .select('id, title, description, campuses, created_at')
+        .overlaps('campuses', [campus])
         .order('created_at', { ascending: false });
 
       if (error) throw error;

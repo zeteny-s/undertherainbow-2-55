@@ -49,7 +49,7 @@ export const NewsletterBuilderPage = () => {
     try {
       const { data, error } = await supabase
         .from('forms')
-        .select('id, title, description, campus, created_at')
+        .select('id, title, description, campuses, created_at')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
@@ -329,7 +329,7 @@ export const NewsletterBuilderPage = () => {
   };
 
   const filteredForms = availableForms.filter(form => 
-    campusFilter === 'all' || form.campus === campusFilter
+    campusFilter === 'all' || form.campuses.includes(campusFilter)
   );
 
   if (loading) {
@@ -479,7 +479,7 @@ export const NewsletterBuilderPage = () => {
                           {form.title}
                         </Label>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {form.description} • <span className="font-medium">{form.campus}</span>
+                          {form.description} • <span className="font-medium">{form.campuses.join(', ')}</span>
                         </p>
                       </div>
                     </div>

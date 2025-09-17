@@ -4,7 +4,7 @@ import { Send } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { Button } from '../ui/button';
-import { Form, FormComponent } from '../../types/form-types';
+import { Form, FormComponent, CampusType } from '../../types/form-types';
 import { FormRenderer } from './components/FormRenderer';
 import { CapacityDisplay } from './components/CapacityDisplay';
 import { SubmissionAnimation } from './components/SubmissionAnimation';
@@ -47,7 +47,8 @@ export const PublicFormPage = () => {
 
       const formWithComponents = {
         ...data,
-        form_components: (data.form_components as unknown as FormComponent[]) || []
+        form_components: (data.form_components as unknown as FormComponent[]) || [],
+        campuses: data.campuses as CampusType[]
       };
       setForm(formWithComponents);
     } catch (error) {

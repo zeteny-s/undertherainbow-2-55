@@ -34,7 +34,7 @@ export interface Form {
   id: string;
   title: string;
   description?: string | null;
-  campus: CampusType;
+  campuses: CampusType[];
   status: FormStatus;
   form_components: FormComponent[];
   created_by: string;

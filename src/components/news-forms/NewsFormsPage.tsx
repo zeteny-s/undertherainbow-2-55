@@ -49,7 +49,8 @@ export const NewsFormsPage = () => {
       if (error) throw error;
       const formsData = (data || []).map(form => ({
         ...form,
-        form_components: (form.form_components as unknown as FormComponent[]) || []
+        form_components: (form.form_components as unknown as FormComponent[]) || [],
+        campuses: form.campuses as CampusType[]
       }));
       setForms(formsData);
     } catch (error) {
@@ -63,7 +64,7 @@ export const NewsFormsPage = () => {
   const filteredForms = forms
     .filter(form => {
       const matchesSearch = form.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCampus = campusFilter === 'all' || form.campus === campusFilter;
+      const matchesCampus = campusFilter === 'all' || form.campuses.some(campus => campus === campusFilter);
       return matchesSearch && matchesCampus;
     })
     .sort((a, b) => {
@@ -82,7 +83,7 @@ export const NewsFormsPage = () => {
         .insert({
           title: `${form.title} - Copy`,
           description: form.description,
-          campus: form.campus,
+          campuses: form.campuses,
           status: 'inactive' as const,
           form_components: form.form_components as any,
           created_by: user.id
@@ -308,7 +309,7 @@ export const NewsFormsPage = () => {
                     <CardContent className="pt-0">
                       <div className="flex items-center justify-between">
                         <Badge variant="secondary" className="font-medium">
-                          {form.campus}
+                          {form.campuses.join(', ')}
                         </Badge>
                         <span className="text-sm text-muted-foreground">
                           {new Date(form.created_at).toLocaleDateString('en-US', { 
