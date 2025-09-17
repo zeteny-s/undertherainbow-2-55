@@ -310,7 +310,7 @@ export const PublicNewsletterPage = () => {
                      radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
                      radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
       }}>
-      {/* Background decorative images */}
+      {/* Background decorative images - hidden on mobile */}
       {decorationImages.map((img, index) => {
         const positions = [
           { top: '8%', left: '5%', transform: 'rotate(-15deg)', width: '120px' },
@@ -326,7 +326,7 @@ export const PublicNewsletterPage = () => {
             key={index}
             src={img}
             alt=""
-            className="absolute opacity-20 pointer-events-none z-0"
+            className="absolute opacity-20 pointer-events-none z-0 hidden md:block"
             style={{
               position: 'absolute',
               top: pos.top,
@@ -340,15 +340,14 @@ export const PublicNewsletterPage = () => {
         );
       })}
 
-      <div className="relative z-30 max-w-4xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center">
-        <div className="bg-white rounded-3xl shadow-2xl p-16 relative w-full max-w-3xl z-40 border border-gray-200">
-          {/* Logo */}
-          <div className="text-center mb-8 relative z-50">
+      <div className="relative z-30 max-w-4xl mx-auto px-4 py-6 md:px-5 md:py-10 min-h-screen flex flex-col justify-center items-center">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl p-6 md:p-16 relative w-full max-w-3xl z-40 border border-gray-200">
+          {/* Logo - properly centered on all devices */}
+          <div className="flex justify-center mb-6 md:mb-8 relative z-50">
             <img 
               src={kindergartenLogo} 
               alt="Under the Rainbow Kindergarten and Nursery" 
-              className="max-w-full h-auto mx-auto mb-6"
-              style={{ maxWidth: '300px' }}
+              className="w-full max-w-[250px] md:max-w-[300px] h-auto"
             />
           </div>
 

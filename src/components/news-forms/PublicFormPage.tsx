@@ -321,30 +321,23 @@ export const PublicFormPage = () => {
              }} />
       </div>
 
-      {/* Background decorative images */}
-      <img src={decoration1} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[8%] left-[5%] -rotate-[15deg] w-[120px] md:w-[80px]" />
-      <img src={decoration2} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[15%] right-[8%] rotate-[25deg] w-[90px] md:w-[60px]" />
-      <img src={decoration3} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[35%] left-[12%] rotate-[45deg] w-[80px] md:w-[55px]" />
-      <img src={decoration4} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[55%] right-[15%] -rotate-[30deg] w-[110px] md:w-[75px]" />
-      <img src={decoration5} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[75%] left-[20%] rotate-[60deg] w-[70px] md:w-[50px]" />
-      <img src={decoration6} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[12%] left-[35%] -rotate-[45deg] w-[130px] md:w-[85px]" />
-      <img src={decoration1} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[65%] right-[5%] rotate-[15deg] w-[60px] md:w-[45px]" />
-      <img src={decoration2} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[30%] right-[30%] -rotate-[60deg] w-[100px] md:w-[65px]" />
-      <img src={decoration3} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[80%] right-[35%] rotate-[30deg] w-[140px] md:w-[90px]" />
-      <img src={decoration4} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[45%] left-[45%] -rotate-[20deg] w-[85px] md:w-[55px]" />
-      <img src={decoration5} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[25%] left-[70%] rotate-[50deg] w-[95px] md:w-[60px]" />
-      <img src={decoration6} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[60%] left-[60%] -rotate-[35deg] w-[75px] md:w-[50px]" />
-      <img src={decoration1} alt="" className="fixed z-[2] opacity-20 pointer-events-none top-[85%] left-[8%] rotate-[40deg] w-[105px] md:w-[70px]" />
+      {/* Background decorative images - optimized for mobile */}
+      <img src={decoration1} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[8%] left-[5%] -rotate-[15deg] w-[60px] md:w-[120px] hidden sm:block" />
+      <img src={decoration2} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[15%] right-[8%] rotate-[25deg] w-[45px] md:w-[90px] hidden sm:block" />
+      <img src={decoration3} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[35%] left-[12%] rotate-[45deg] w-[40px] md:w-[80px] hidden sm:block" />
+      <img src={decoration4} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[55%] right-[15%] -rotate-[30deg] w-[55px] md:w-[110px] hidden sm:block" />
+      <img src={decoration5} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[75%] left-[20%] rotate-[60deg] w-[35px] md:w-[70px] hidden sm:block" />
+      <img src={decoration6} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[12%] left-[35%] -rotate-[45deg] w-[65px] md:w-[130px] hidden sm:block" />
 
       {/* Main container */}
-      <div className="relative z-10 max-w-4xl mx-auto px-5 py-10 min-h-screen flex flex-col justify-center items-center md:px-2.5 md:max-w-[600px]">
-        <div className="text-center bg-white rounded-[30px] shadow-2xl p-16 relative w-full md:p-10">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 py-6 md:px-5 md:py-10 min-h-screen flex flex-col justify-center items-center">
+        <div className="text-center bg-white rounded-2xl md:rounded-[30px] shadow-2xl p-8 md:p-16 relative w-full">
+          {/* Logo - properly centered */}
+          <div className="flex justify-center mb-6 md:mb-8">
             <img 
               src={kindergartenLogo} 
               alt="Under the Rainbow Kindergarten and Nursery" 
-              className="max-w-[400px] w-full h-auto md:max-w-[300px]"
+              className="w-full max-w-[250px] md:max-w-[400px] h-auto"
             />
           </div>
           
