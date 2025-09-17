@@ -83,38 +83,8 @@ export const PublicFormPage = () => {
       return;
     }
 
-    // Get family name from form data - look for name-related fields first
-    const getFamilyNameFromForm = () => {
-      // First, try to find fields that likely contain parent/family names
-      const nameFields = form.form_components.filter(component => 
-        component.type === 'text-input' && 
-        (component.label.toLowerCase().includes('name') || 
-         component.label.toLowerCase().includes('parent') ||
-         component.label.toLowerCase().includes('family'))
-      );
-      
-      // Use the first name-related field if available
-      if (nameFields.length > 0) {
-        const nameValue = formData[nameFields[0].id];
-        if (nameValue && typeof nameValue === 'string' && nameValue.trim()) {
-          return nameValue.trim();
-        }
-      }
-      
-      // Fallback to first text field
-      const textFields = form.form_components.filter(component => component.type === 'text-input');
-      for (const field of textFields) {
-        const value = formData[field.id];
-        if (value && typeof value === 'string' && value.trim()) {
-          return value.trim();
-        }
-      }
-      
-      // Last resort: generate a default
-      return `Submission-${Date.now()}`;
-    };
-
-    const familyNameFromForm = getFamilyNameFromForm();
+    // Get family name from form data (first text field) or generate a default
+    const familyNameFromForm = Object.values(formData)[0] || `Submission-${Date.now()}`;
 
     // Validate required fields
     const requiredFields = form.form_components
