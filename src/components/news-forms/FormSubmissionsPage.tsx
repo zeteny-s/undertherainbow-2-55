@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Eye, Calendar, User, Clock } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Calendar, User, Clock, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { EmptyState } from '../common/EmptyState';
@@ -117,6 +117,27 @@ export const FormSubmissionsPage = () => {
     }
   };
 
+  const handleDeleteSubmission = async (submissionId: string) => {
+    if (!confirm('Are you sure you want to delete this submission?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('form_submissions')
+        .delete()
+        .eq('id', submissionId);
+
+      if (error) throw error;
+
+      setSubmissions(prev => prev.filter(s => s.id !== submissionId));
+      toast.success('Submission deleted successfully');
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      toast.error('Failed to delete submission');
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -211,14 +232,23 @@ export const FormSubmissionsPage = () => {
                           </span>
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedSubmission(selectedSubmission?.id === submission.id ? null : submission)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        {selectedSubmission?.id === submission.id ? 'Hide' : 'View'} Details
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedSubmission(selectedSubmission?.id === submission.id ? null : submission)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          {selectedSubmission?.id === submission.id ? 'Hide' : 'View'} Details
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteSubmission(submission.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   
