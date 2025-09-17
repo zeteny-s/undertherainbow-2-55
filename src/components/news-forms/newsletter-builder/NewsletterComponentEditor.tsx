@@ -259,12 +259,34 @@ export const NewsletterComponentEditor: React.FC<NewsletterComponentEditorProps>
               />
             </div>
             <div>
+              <Label htmlFor="button-style">Button Style</Label>
+              <Select value={editedComponent.content.buttonStyle || 'primary'} onValueChange={(value) => updateContent('buttonStyle', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="primary">Primary</SelectItem>
+                  <SelectItem value="secondary">Secondary</SelectItem>
+                  <SelectItem value="outline">Outline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="button-bg">Background Color</Label>
               <Input
                 id="button-bg"
                 type="color"
                 value={editedComponent.content.backgroundColor}
                 onChange={(e) => updateContent('backgroundColor', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="button-text-color">Text Color</Label>
+              <Input
+                id="button-text-color"
+                type="color"
+                value={editedComponent.content.textColor}
+                onChange={(e) => updateContent('textColor', e.target.value)}
               />
             </div>
             <div>

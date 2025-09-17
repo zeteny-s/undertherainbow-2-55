@@ -60,7 +60,8 @@ const componentLibrary: ComponentLibraryItem[] = [
       url: '#',
       backgroundColor: '#3b82f6',
       textColor: '#ffffff',
-      size: 'medium'
+      size: 'medium',
+      buttonStyle: 'primary'
     }
   },
   {
