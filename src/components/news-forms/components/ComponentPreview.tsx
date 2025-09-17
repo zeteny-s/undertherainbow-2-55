@@ -162,9 +162,14 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
                   />
                   <Label 
                     htmlFor={`${component.id}-${index}`} 
-                    className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''}`}
+                    className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''} flex items-center gap-2`}
                   >
-                    {option}{capacityText}
+                    <span>{option}{capacityText}</span>
+                    {capacityInfo && (
+                      <Badge variant={capacityInfo.isFull ? "destructive" : "secondary"} className="text-xs">
+                        {capacityInfo.isFull ? 'Full' : `${capacityInfo.spotsLeft} left`}
+                      </Badge>
+                    )}
                     {isDisabled && <span className="text-red-500 ml-2">(Full)</span>}
                   </Label>
                 </div>
@@ -184,10 +189,10 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
             onChange?.(newValue);
           }}>
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
-              const capacityInfo = optionCapacities[option];
-              const isDisabled = capacityInfo && !capacityInfo.isAvailable;
-              const capacityText = capacityInfo && capacityInfo.capacity !== null 
-                ? ` (${capacityInfo.spotsRemaining} spots left)` 
+              const capacityInfo = getCapacityInfo(option);
+              const isDisabled = capacityInfo?.isFull;
+              const capacityText = capacityInfo 
+                ? ` (${capacityInfo.spotsLeft} spots left)` 
                 : '';
               
               return (
@@ -199,9 +204,14 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
                   />
                   <Label 
                     htmlFor={`${component.id}-${index}`} 
-                    className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''}`}
+                    className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''} flex items-center gap-2`}
                   >
-                    {option}{capacityText}
+                    <span>{option}{capacityText}</span>
+                    {capacityInfo && (
+                      <Badge variant={capacityInfo.isFull ? "destructive" : "secondary"} className="text-xs">
+                        {capacityInfo.isFull ? 'Full' : `${capacityInfo.spotsLeft} left`}
+                      </Badge>
+                    )}
                     {isDisabled && <span className="text-red-500 ml-2">(Full)</span>}
                   </Label>
                 </div>
