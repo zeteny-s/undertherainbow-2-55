@@ -5,10 +5,10 @@
 /* Professional design tokens */
 :root {
   /* Primary colors */
-  --primary: 270 92% 60%;
+  --primary: 220 100% 60%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 270 92% 55%;
-  --primary-glow: 270 92% 75%;
+  --primary-hover: 220 100% 55%;
+  --primary-glow: 220 100% 75%;
   
   /* Surface colors */
   --background: 0 0% 100%;
@@ -35,7 +35,7 @@
   --card-foreground: 220 15% 10%;
   --popover: 0 0% 100%;
   --popover-foreground: 220 15% 10%;
-  --secondary: 153 30% 90%;
+  --secondary: 0 0% 100%;
   --secondary-foreground: 220 15% 10%;
   --muted: 220 15% 96%;
   --muted-foreground: 220 10% 40%;
@@ -77,7 +77,7 @@
   --card-foreground: 220 15% 95%;
   --popover: 220 18% 10%;
   --popover-foreground: 220 15% 95%;
-  --secondary: 153 20% 15%;
+  --secondary: 220 20% 8%;
   --secondary-foreground: 220 15% 95%;
   --muted: 220 15% 15%;
   --muted-foreground: 220 10% 70%;
