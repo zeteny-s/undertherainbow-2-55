@@ -11,20 +11,31 @@ import { FormComponent } from '../../../types/form-types';
 import { supabase } from '../../../integrations/supabase/client';
 import { toast } from 'sonner';
 import { CalendarButton } from './CalendarButton';
+import { useOptionCapacity } from '../../../hooks/useOptionCapacity';
 
 interface ComponentPreviewProps {
   component: FormComponent;
   value?: any;
   onChange?: (value: any) => void;
+  formId?: string;
 }
 
-export const ComponentPreview = ({ component, value, onChange }: ComponentPreviewProps) => {
+export const ComponentPreview = ({ component, value, onChange, formId }: ComponentPreviewProps) => {
   const fieldStyle = component.properties?.bold ? 'font-bold' : '';
   const textSize = component.properties?.textSize || 'text-base';
   const fontFamily = component.properties?.fontFamily || 'font-sans';
   const textAlign = component.properties?.textAlign || 'text-left';
   
   const labelClasses = `${fieldStyle} ${textSize} ${fontFamily} ${textAlign}`;
+
+  // Use option capacity hook for components with options and capacity limits
+  const shouldTrackCapacity = formId && component.optionCapacities && 
+    ['dropdown', 'radio', 'checkbox'].includes(component.type);
+  
+  const { optionCapacities } = useOptionCapacity(
+    formId || '', 
+    shouldTrackCapacity ? component : { ...component, optionCapacities: undefined }
+  );
 
   switch (component.type) {
     case 'text-input':
@@ -63,11 +74,25 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
               <SelectValue placeholder={component.placeholder || 'Select an option'} />
             </SelectTrigger>
             <SelectContent className="bg-white border-2 border-border shadow-lg z-[60]">
-              {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
-                <SelectItem key={index} value={option} className="bg-white hover:bg-surface text-foreground">
-                  {option}
-                </SelectItem>
-              ))}
+              {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
+                const capacityInfo = optionCapacities[option];
+                const isDisabled = capacityInfo && !capacityInfo.isAvailable;
+                const capacityText = capacityInfo && capacityInfo.capacity !== null 
+                  ? ` (${capacityInfo.spotsRemaining} spots left)` 
+                  : '';
+                
+                return (
+                  <SelectItem 
+                    key={index} 
+                    value={option} 
+                    disabled={isDisabled}
+                    className={`bg-white hover:bg-surface text-foreground ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {option}{capacityText}
+                    {isDisabled && <span className="text-red-500 ml-2">(Full)</span>}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
@@ -78,25 +103,39 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
         <div className="space-y-3">
           <Label className={labelClasses}>{component.label}</Label>
           <div className="space-y-2">
-            {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`${component.id}-${index}`}
-                  checked={Array.isArray(value) && value.includes(option)}
-                  onCheckedChange={(checked) => {
-                    const currentValue = Array.isArray(value) ? value : [];
-                    if (checked) {
-                      onChange?.([...currentValue, option]);
-                    } else {
-                      onChange?.(currentValue.filter(v => v !== option));
-                    }
-                  }}
-                />
-                <Label htmlFor={`${component.id}-${index}`} className="text-sm font-normal">
-                  {option}
-                </Label>
-              </div>
-            ))}
+            {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
+              const capacityInfo = optionCapacities[option];
+              const isDisabled = capacityInfo && !capacityInfo.isAvailable;
+              const capacityText = capacityInfo && capacityInfo.capacity !== null 
+                ? ` (${capacityInfo.spotsRemaining} spots left)` 
+                : '';
+              
+              return (
+                <div key={index} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${component.id}-${index}`}
+                    disabled={isDisabled && !(Array.isArray(value) && value.includes(option))}
+                    checked={Array.isArray(value) && value.includes(option)}
+                    onCheckedChange={(checked) => {
+                      if (isDisabled && checked) return; // Prevent checking disabled options
+                      const currentValue = Array.isArray(value) ? value : [];
+                      if (checked) {
+                        onChange?.([...currentValue, option]);
+                      } else {
+                        onChange?.(currentValue.filter(v => v !== option));
+                      }
+                    }}
+                  />
+                  <Label 
+                    htmlFor={`${component.id}-${index}`} 
+                    className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''}`}
+                  >
+                    {option}{capacityText}
+                    {isDisabled && <span className="text-red-500 ml-2">(Full)</span>}
+                  </Label>
+                </div>
+              );
+            })}
           </div>
         </div>
       );
@@ -105,15 +144,35 @@ export const ComponentPreview = ({ component, value, onChange }: ComponentPrevie
       return (
         <div className="space-y-3">
           <Label className={labelClasses}>{component.label}</Label>
-          <RadioGroup value={value} onValueChange={onChange}>
-            {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`${component.id}-${index}`} />
-                <Label htmlFor={`${component.id}-${index}`} className="text-sm font-normal">
-                  {option}
-                </Label>
-              </div>
-            ))}
+          <RadioGroup value={value} onValueChange={(newValue) => {
+            const capacityInfo = optionCapacities[newValue];
+            if (capacityInfo && !capacityInfo.isAvailable) return; // Prevent selecting disabled options
+            onChange?.(newValue);
+          }}>
+            {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
+              const capacityInfo = optionCapacities[option];
+              const isDisabled = capacityInfo && !capacityInfo.isAvailable;
+              const capacityText = capacityInfo && capacityInfo.capacity !== null 
+                ? ` (${capacityInfo.spotsRemaining} spots left)` 
+                : '';
+              
+              return (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem 
+                    value={option} 
+                    id={`${component.id}-${index}`}
+                    disabled={isDisabled}
+                  />
+                  <Label 
+                    htmlFor={`${component.id}-${index}`} 
+                    className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''}`}
+                  >
+                    {option}{capacityText}
+                    {isDisabled && <span className="text-red-500 ml-2">(Full)</span>}
+                  </Label>
+                </div>
+              );
+            })}
           </RadioGroup>
         </div>
       );

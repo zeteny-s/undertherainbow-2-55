@@ -10,6 +10,7 @@ export interface FormComponent {
   options?: string[];
   validation?: ValidationRule[];
   properties?: Record<string, any>;
+  optionCapacities?: Record<string, number | null>; // null means unlimited
 }
 
 export type ComponentType = 

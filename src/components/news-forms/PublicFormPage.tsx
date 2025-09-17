@@ -100,6 +100,48 @@ export const PublicFormPage = () => {
       return;
     }
 
+    // Check option capacities before submitting
+    for (const component of form.form_components) {
+      if (component.optionCapacities && ['dropdown', 'radio', 'checkbox'].includes(component.type)) {
+        const value = formData[component.id];
+        const selectedOptions = Array.isArray(value) ? value : (value ? [value] : []);
+        
+        for (const selectedOption of selectedOptions) {
+          const capacity = component.optionCapacities[selectedOption];
+          if (capacity !== null && capacity !== undefined) {
+            // Count current submissions for this option
+            const { data: submissions, error } = await supabase
+              .from('form_submissions')
+              .select('submission_data')
+              .eq('form_id', form.id);
+
+            if (error) {
+              console.error('Error checking option capacity:', error);
+              continue;
+            }
+
+            let currentCount = 0;
+            submissions?.forEach(submission => {
+              if (!submission.submission_data) return;
+              const submissionData = submission.submission_data as Record<string, any>;
+              const componentValue = submissionData[component.id];
+              
+              if (Array.isArray(componentValue)) {
+                if (componentValue.includes(selectedOption)) currentCount++;
+              } else if (componentValue === selectedOption) {
+                currentCount++;
+              }
+            });
+
+            if (currentCount >= capacity) {
+              toast.error(`Sorry, "${selectedOption}" is now full. Please choose a different option.`);
+              return;
+            }
+          }
+        }
+      }
+    }
+
     // Check capacity before submitting
     const isFull = await checkFormCapacity();
     if (isFull) {
@@ -287,6 +329,7 @@ export const PublicFormPage = () => {
               components={form.form_components}
               values={formData}
               onChange={handleFieldChange}
+              formId={form.id}
             />
             
             <div className="pt-6">
