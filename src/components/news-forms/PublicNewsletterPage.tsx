@@ -83,7 +83,7 @@ export const PublicNewsletterPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden public-theme-override">
         {/* Background pattern */}
         <div className="fixed inset-0 bg-white">
           <div className="absolute inset-0" 
@@ -105,7 +105,7 @@ export const PublicNewsletterPage = () => {
 
   if (!newsletter) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden public-theme-override">
         {/* Background pattern */}
         <div className="fixed inset-0 bg-white">
           <div className="absolute inset-0" 
@@ -339,7 +339,7 @@ export const PublicNewsletterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
+    <div className="min-h-screen bg-white relative overflow-hidden public-theme-override">
       {/* Background pattern */}
       <div className="fixed inset-0 bg-white">
         <div className="absolute inset-0" 

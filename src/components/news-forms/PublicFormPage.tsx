@@ -245,7 +245,7 @@ export const PublicFormPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden public-theme-override">
         {/* Background pattern */}
         <div className="fixed inset-0 bg-white">
           <div className="absolute inset-0" 
@@ -267,7 +267,7 @@ export const PublicFormPage = () => {
 
   if (!form) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden public-theme-override">
         {/* Background pattern */}
         <div className="fixed inset-0 bg-white">
           <div className="absolute inset-0" 
@@ -292,7 +292,7 @@ export const PublicFormPage = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden p-4 public-theme-override">
         {/* Background pattern */}
         <div className="fixed inset-0 bg-white">
           <div className="absolute inset-0" 
@@ -324,7 +324,7 @@ export const PublicFormPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
+    <div className="min-h-screen bg-white relative overflow-hidden public-theme-override">
       {/* Background pattern */}
       <div className="fixed inset-0 bg-white">
         <div className="absolute inset-0" 

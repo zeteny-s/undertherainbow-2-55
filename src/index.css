@@ -663,3 +663,83 @@
 .no-animations * {
   transition: none !important;
 }
+
+/* Public theme override - isolates public forms/newsletters from browser theme */
+.public-theme-override {
+  /* Force white background and standard colors regardless of browser theme */
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+.public-theme-override * {
+  /* Override all child elements to use fixed colors */
+  --tw-bg-opacity: 1;
+  --tw-text-opacity: 1;
+}
+
+.public-theme-override .bg-white {
+  background-color: #ffffff !important;
+}
+
+.public-theme-override .bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.public-theme-override .bg-gray-100 {
+  background-color: #f3f4f6 !important;
+}
+
+.public-theme-override .bg-green-100 {
+  background-color: #dcfce7 !important;
+}
+
+.public-theme-override .text-gray-900 {
+  color: #111827 !important;
+}
+
+.public-theme-override .text-gray-800 {
+  color: #1f2937 !important;
+}
+
+.public-theme-override .text-gray-700 {
+  color: #374151 !important;
+}
+
+.public-theme-override .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.public-theme-override .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.public-theme-override .text-green-600 {
+  color: #16a34a !important;
+}
+
+.public-theme-override .text-white {
+  color: #ffffff !important;
+}
+
+.public-theme-override .border-gray-200 {
+  border-color: #e5e7eb !important;
+}
+
+.public-theme-override .border-gray-300 {
+  border-color: #d1d5db !important;
+}
+
+.public-theme-override input,
+.public-theme-override textarea,
+.public-theme-override select {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+.public-theme-override input:focus,
+.public-theme-override textarea:focus,
+.public-theme-override select:focus {
+  border-color: #3b82f6 !important;
+  background-color: #ffffff !important;
+}
