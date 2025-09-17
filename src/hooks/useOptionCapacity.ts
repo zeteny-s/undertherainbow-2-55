@@ -23,14 +23,14 @@ export const useOptionCapacity = (formId: string, component: FormComponent) => {
 
     fetchOptionCounts();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates on capacity changes
     const subscription = supabase
-      .channel('form-submissions-option-tracking')
+      .channel('form-option-capacity-tracking')
       .on('postgres_changes', 
         { 
-          event: 'INSERT', 
+          event: '*', 
           schema: 'public', 
-          table: 'form_submissions',
+          table: 'form_option_capacity',
           filter: `form_id=eq.${formId}`
         }, 
         () => {
@@ -69,60 +69,22 @@ export const useOptionCapacity = (formId: string, component: FormComponent) => {
         }
       }
 
-      // Fetch current counts from form submissions
-      const { data: submissions, error } = await supabase
-        .from('form_submissions')
-        .select('submission_data')
-        .eq('form_id', formId);
+      // Fetch capacity data directly from form_option_capacity (publicly accessible)
+      const { data: capacities, error } = await supabase
+        .from('form_option_capacity')
+        .select('*')
+        .eq('form_id', formId)
+        .eq('component_id', component.id);
 
       if (error) throw error;
 
-      // Count selections for each option
-      const optionCounts: Record<string, number> = {};
-      
-      // Initialize counts
-      component.options?.forEach(option => {
-        optionCounts[option] = 0;
-      });
-
-      // Count submissions
-      submissions?.forEach(submission => {
-        if (!submission.submission_data) return;
-        
-        const submissionData = submission.submission_data as Record<string, any>;
-        const componentValue = submissionData[component.id];
-        
-        if (Array.isArray(componentValue)) {
-          // For checkboxes (multiple selections)
-          componentValue.forEach(value => {
-            if (typeof value === 'string' && optionCounts.hasOwnProperty(value)) {
-              optionCounts[value]++;
-            }
-          });
-        } else if (typeof componentValue === 'string' && optionCounts.hasOwnProperty(componentValue)) {
-          // For radio buttons and dropdowns (single selection)
-          optionCounts[componentValue]++;
-        }
-      });
-
-      // Update capacity records with current counts
-      for (const [option, count] of Object.entries(optionCounts)) {
-        if (component.optionCapacities?.[option] !== undefined) {
-          await supabase
-            .from('form_option_capacity')
-            .update({ current_count: count })
-            .eq('form_id', formId)
-            .eq('component_id', component.id)
-            .eq('option_value', option);
-        }
-      }
-
-      // Build capacity info
+      // Build capacity info using the stored capacity data
       const capacityInfo: OptionCapacityInfo = {};
       
       component.options?.forEach(option => {
         const capacity = component.optionCapacities?.[option] || null;
-        const currentCount = optionCounts[option] || 0;
+        const capacityRecord = capacities?.find(c => c.option_value === option);
+        const currentCount = capacityRecord?.current_count || 0;
         const isAvailable = capacity === null || currentCount < capacity;
         const spotsRemaining = capacity === null ? null : capacity - currentCount;
 
