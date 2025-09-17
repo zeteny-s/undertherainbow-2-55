@@ -123,12 +123,12 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                 formButton.buttonStyle === 'outline' 
                   ? 'border-2 bg-transparent hover:bg-opacity-10' 
                   : formButton.buttonStyle === 'secondary'
-                  ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  ? 'hover:bg-opacity-90'
                   : 'hover:opacity-90'
               }`}
               style={{
                 backgroundColor: formButton.buttonStyle === 'outline' ? 'transparent' : 
-                                formButton.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                formButton.buttonStyle === 'secondary' ? '#dfefe8' :
                                 formButton.backgroundColor || '#3b82f6',
                 color: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3b82f6') :
                        formButton.buttonStyle === 'secondary' ? '#1f2937' :
@@ -216,12 +216,12 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
                               formSection.buttonStyle === 'outline' 
                                 ? 'border-2 bg-transparent hover:bg-opacity-10' 
                                 : formSection.buttonStyle === 'secondary'
-                                ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                ? 'hover:bg-opacity-90'
                                 : 'hover:opacity-90'
                             }`}
                             style={{
                               backgroundColor: formSection.buttonStyle === 'outline' ? 'transparent' : 
-                                              formSection.buttonStyle === 'secondary' ? '#e5e7eb' :
+                                              formSection.buttonStyle === 'secondary' ? '#dfefe8' :
                                               formSection.buttonBackgroundColor || '#3b82f6',
                               color: formSection.buttonStyle === 'outline' ? (formSection.buttonBackgroundColor || '#3b82f6') :
                                      formSection.buttonStyle === 'secondary' ? '#1f2937' :
