@@ -44,6 +44,9 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
     }
   }, [formId, component.id, component.type]);
 
+  // Check if we should show individual capacity info (only show if there's only one capacity limit)
+  const shouldShowIndividualCapacity = optionCapacities.length <= 1;
+
   const fetchOptionCapacities = async () => {
     if (!formId) return;
     
@@ -120,7 +123,7 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
               const capacityInfo = getCapacityInfo(option);
               const isDisabled = capacityInfo?.isFull;
-              const capacityText = capacityInfo 
+              const capacityText = shouldShowIndividualCapacity && capacityInfo 
                 ? ` (${capacityInfo.spotsLeft} spots left)` 
                 : '';
                 
@@ -152,7 +155,7 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
               const capacityInfo = getCapacityInfo(option);
               const isDisabled = capacityInfo?.isFull;
-              const capacityText = capacityInfo 
+              const capacityText = shouldShowIndividualCapacity && capacityInfo 
                 ? ` (${capacityInfo.spotsLeft} spots left)` 
                 : '';
               
@@ -177,7 +180,7 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
                     className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''} flex items-center gap-2`}
                   >
                     <span>{option}{capacityText}</span>
-                    {capacityInfo && (
+                    {shouldShowIndividualCapacity && capacityInfo && (
                       <Badge variant={capacityInfo.isFull ? "destructive" : "secondary"} className="text-xs">
                         {capacityInfo.isFull ? 'Full' : `${capacityInfo.spotsLeft} left`}
                       </Badge>
@@ -206,7 +209,7 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
             {(component.options || ['Option 1', 'Option 2', 'Option 3']).map((option, index) => {
               const capacityInfo = getCapacityInfo(option);
               const isDisabled = capacityInfo?.isFull;
-              const capacityText = capacityInfo 
+              const capacityText = shouldShowIndividualCapacity && capacityInfo 
                 ? ` (${capacityInfo.spotsLeft} spots left)` 
                 : '';
               
@@ -222,7 +225,7 @@ export const ComponentPreview = ({ component, value, onChange, formId }: Compone
                     className={`text-sm font-normal ${isDisabled ? 'text-gray-400' : ''} flex items-center gap-2`}
                   >
                     <span>{option}{capacityText}</span>
-                    {capacityInfo && (
+                    {shouldShowIndividualCapacity && capacityInfo && (
                       <Badge variant={capacityInfo.isFull ? "destructive" : "secondary"} className="text-xs">
                         {capacityInfo.isFull ? 'Full' : `${capacityInfo.spotsLeft} left`}
                       </Badge>

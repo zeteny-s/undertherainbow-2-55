@@ -252,7 +252,6 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
           <div className="border-t border-gray-200 pt-4">
             <div className="space-y-3">
               {limitedOptions.map((capacity) => {
-                const component = form.form_components.find(c => c.id === capacity.component_id);
                 const isFull = capacity.current_count >= capacity.max_capacity;
                 const spotsLeft = Math.max(0, capacity.max_capacity - capacity.current_count);
                 const optionKey = `${capacity.component_id}-${capacity.option_value}`;
@@ -264,12 +263,9 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        <span className="text-sm text-gray-700">
-                          <strong>{capacity.display_text || capacity.option_value}</strong>
-                          {component?.label && (
-                            <span className="text-gray-500 ml-1">({component.label})</span>
-                          )}
-                        </span>
+                         <span className="text-sm text-gray-700">
+                           <strong>{capacity.display_text || capacity.option_value}</strong>
+                         </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-gray-600">
