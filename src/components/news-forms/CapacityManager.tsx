@@ -138,8 +138,8 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-background rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl border">
+        <div className="p-6 border-b bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Settings className="h-6 w-6 text-primary" />
@@ -154,10 +154,10 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 bg-white">
           {eligibleComponents.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
+            <Card className="bg-white">
+              <CardContent className="p-8 text-center bg-white">
                 <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">No Eligible Components</h3>
                 <p className="text-muted-foreground">
@@ -167,22 +167,22 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
             </Card>
           ) : (
             eligibleComponents.map((component) => (
-              <Card key={component.id}>
-                <CardHeader>
+              <Card key={component.id} className="bg-white">
+                <CardHeader className="bg-white">
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
                     {component.label}
                     <Badge variant="secondary">{component.type}</Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 bg-white">
                   {getSelectOptions(component).map((option) => {
                     const capacity = getCapacityForOption(component.id, option);
                     const currentCapacity = capacity?.max_capacity || 0;
                     const currentCount = capacity?.current_count || 0;
                     
                     return (
-                      <div key={option} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={option} className="flex items-center justify-between p-4 border rounded-lg bg-white">
                         <div className="flex-1">
                           <div className="font-medium">{option}</div>
                           {capacity && (
