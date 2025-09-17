@@ -225,28 +225,34 @@ export const FormSubmissionsPage = () => {
                   {selectedSubmission?.id === submission.id && (
                     <CardContent className="border-t bg-muted/30">
                       <div className="space-y-4 pt-4">
-                        {Object.entries(submission.submission_data).map(([key, value]) => (
-                          <div key={key} className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                            <div className="font-medium text-sm">{key}:</div>
-                            <div className="md:col-span-2 text-sm text-muted-foreground">
-                              {Array.isArray(value) ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {value.map((item, index) => (
-                                    <Badge key={index} variant="outline" className="text-xs">
-                                      {String(item)}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              ) : typeof value === 'object' && value !== null ? (
-                                <pre className="text-xs bg-background p-2 rounded border overflow-auto">
-                                  {JSON.stringify(value, null, 2)}
-                                </pre>
-                              ) : (
-                                String(value || 'N/A')
-                              )}
+                        {Object.entries(submission.submission_data).map(([componentId, value]) => {
+                          // Find the component label from the form components
+                          const component = form?.form_components?.find(comp => comp.id === componentId);
+                          const label = component?.label || componentId;
+                          
+                          return (
+                            <div key={componentId} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <div className="font-medium text-sm">{label}:</div>
+                              <div className="md:col-span-2 text-sm text-muted-foreground">
+                                {Array.isArray(value) ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {value.map((item, index) => (
+                                      <Badge key={index} variant="outline" className="text-xs">
+                                        {String(item)}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : typeof value === 'object' && value !== null ? (
+                                  <pre className="text-xs bg-background p-2 rounded border overflow-auto">
+                                    {JSON.stringify(value, null, 2)}
+                                  </pre>
+                                ) : (
+                                  String(value || 'N/A')
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         
                         {submission.ip_address && (
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t">
