@@ -26,6 +26,7 @@ interface OptionCapacity {
 export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
   const [capacities, setCapacities] = useState<OptionCapacity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [displayTexts, setDisplayTexts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchCapacities();
@@ -41,6 +42,15 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
       if (error) throw error;
 
       setCapacities(data || []);
+      
+      // Initialize display texts from existing data
+      const displayTextMap: Record<string, string> = {};
+      (data || []).forEach(capacity => {
+        if (capacity.display_text) {
+          displayTextMap[`${capacity.component_id}-${capacity.option_value}`] = capacity.display_text;
+        }
+      });
+      setDisplayTexts(displayTextMap);
     } catch (error) {
       console.error('Error fetching capacities:', error);
       toast.error('Failed to load capacity settings');
@@ -127,7 +137,32 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
     }
   };
 
-  const eligibleComponents = form.form_components.filter(comp => 
+  const updateDisplayText = async (componentId: string, optionValue: string, displayText: string) => {
+    const key = `${componentId}-${optionValue}`;
+    setDisplayTexts(prev => ({ ...prev, [key]: displayText }));
+    
+    // Only update database if there's an existing capacity record
+    const existing = getCapacityForOption(componentId, optionValue);
+    if (existing?.id) {
+      try {
+        const { error } = await supabase
+          .from('form_option_capacity')
+          .update({ display_text: displayText || null })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+
+        setCapacities(prev => prev.map(c => 
+          c.id === existing.id ? { ...c, display_text: displayText || null } : c
+        ));
+      } catch (error) {
+        console.error('Error updating display text:', error);
+        toast.error('Failed to update display text');
+      }
+    }
+  };
+
+  const eligibleComponents = form.form_components.filter(comp =>
     ['dropdown', 'checkbox', 'radio'].includes(comp.type) && comp.options && comp.options.length > 0
   );
 
@@ -233,9 +268,9 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
                           <Input
                             id={`display-${component.id}-${option}`}
                             type="text"
-                            value={capacity?.display_text || ''}
+                            value={displayTexts[`${component.id}-${option}`] || ''}
                             onChange={(e) => {
-                              updateCapacity(component.id, option, currentCapacity, e.target.value);
+                              updateDisplayText(component.id, option, e.target.value);
                             }}
                             className="flex-1"
                             placeholder={`Short text for "${option}"`}
