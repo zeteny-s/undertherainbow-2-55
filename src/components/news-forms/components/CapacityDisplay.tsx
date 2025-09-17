@@ -13,6 +13,7 @@ interface OptionCapacity {
   option_value: string;
   max_capacity: number;
   current_count: number;
+  display_text?: string | null;
 }
 
 interface ParticipantInfo {
@@ -77,16 +78,29 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
       // Calculate real counts for each option from submissions
       const updatedCapacities = (capacities || []).map(capacity => {
         const component = form.form_components.find(c => c.id === capacity.component_id);
-        if (!component) return capacity;
+        if (!component) {
+          console.warn(`Component not found for capacity: ${capacity.component_id}`);
+          return capacity;
+        }
 
         // Count how many submissions have this option selected
         let actualCount = 0;
         
-        submissions?.forEach(submission => {
+        submissions?.forEach((submission, index) => {
           if (!submission.submission_data) return;
           
           const submissionData = submission.submission_data as Record<string, any>;
-          const componentValue = submissionData[component.id];
+          const componentValue = submissionData[capacity.component_id];
+          
+          // Debug logging for the first few submissions
+          if (index < 3) {
+            console.log(`Debug submission ${index}:`, {
+              componentId: capacity.component_id,
+              optionValue: capacity.option_value,
+              submissionValue: componentValue,
+              submissionData: submissionData
+            });
+          }
           
           if (Array.isArray(componentValue)) {
             // For checkboxes (multiple selections)
@@ -98,6 +112,8 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
             actualCount++;
           }
         });
+
+        console.log(`Final count for ${capacity.option_value}:`, actualCount);
 
         // Update the database with the real count
         supabase

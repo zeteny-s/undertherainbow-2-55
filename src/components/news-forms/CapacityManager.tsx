@@ -20,6 +20,7 @@ interface OptionCapacity {
   option_value: string;
   max_capacity: number;
   current_count: number;
+  display_text?: string | null;
 }
 
 export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
@@ -65,7 +66,7 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
     return capacities.find(c => c.component_id === componentId && c.option_value === optionValue) || null;
   };
 
-  const updateCapacity = async (componentId: string, optionValue: string, maxCapacity: number) => {
+  const updateCapacity = async (componentId: string, optionValue: string, maxCapacity: number, displayText?: string) => {
     if (maxCapacity < 0) return;
 
     try {
@@ -88,7 +89,10 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
         if (existing?.id) {
           const { error } = await supabase
             .from('form_option_capacity')
-            .update({ max_capacity: maxCapacity })
+            .update({ 
+              max_capacity: maxCapacity,
+              display_text: displayText || null
+            })
             .eq('id', existing.id);
 
           if (error) throw error;
@@ -104,7 +108,8 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
               component_id: componentId,
               option_value: optionValue,
               max_capacity: maxCapacity,
-              current_count: 0
+              current_count: 0,
+              display_text: displayText || null
             })
             .select()
             .single();
@@ -182,40 +187,61 @@ export const CapacityManager = ({ form, onClose }: CapacityManagerProps) => {
                     const currentCount = capacity?.current_count || 0;
                     
                     return (
-                      <div key={option} className="flex items-center justify-between p-4 border rounded-lg bg-white">
-                        <div className="flex-1">
-                          <div className="font-medium">{option}</div>
-                          {capacity && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant={currentCount >= currentCapacity ? "destructive" : "secondary"}>
-                                {currentCount} / {currentCapacity} participants
-                              </Badge>
-                              {currentCount >= currentCapacity && (
-                                <span className="text-sm text-destructive">Full</span>
-                              )}
+                      <div key={option} className="space-y-3 p-4 border rounded-lg bg-white">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium">{option}</div>
+                            {capacity && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant={currentCount >= currentCapacity ? "destructive" : "secondary"}>
+                                  {currentCount} / {currentCapacity} participants
+                                </Badge>
+                                {currentCount >= currentCapacity && (
+                                  <span className="text-sm text-destructive">Full</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <Label htmlFor={`capacity-${component.id}-${option}`} className="text-sm">
+                              Max capacity:
+                            </Label>
+                            <Input
+                              id={`capacity-${component.id}-${option}`}
+                              type="number"
+                              min="0"
+                              max="999"
+                              value={currentCapacity}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 0;
+                                updateCapacity(component.id, option, value);
+                              }}
+                              className="w-20"
+                              placeholder="0"
+                            />
+                            <div className="text-xs text-muted-foreground">
+                              (0 = unlimited)
                             </div>
-                          )}
+                          </div>
                         </div>
                         
                         <div className="flex items-center gap-3">
-                          <Label htmlFor={`capacity-${component.id}-${option}`} className="text-sm">
-                            Max capacity:
+                          <Label htmlFor={`display-${component.id}-${option}`} className="text-sm">
+                            Display text:
                           </Label>
                           <Input
-                            id={`capacity-${component.id}-${option}`}
-                            type="number"
-                            min="0"
-                            max="999"
-                            value={currentCapacity}
+                            id={`display-${component.id}-${option}`}
+                            type="text"
+                            value={capacity?.display_text || ''}
                             onChange={(e) => {
-                              const value = parseInt(e.target.value) || 0;
-                              updateCapacity(component.id, option, value);
+                              updateCapacity(component.id, option, currentCapacity, e.target.value);
                             }}
-                            className="w-20"
-                            placeholder="0"
+                            className="flex-1"
+                            placeholder={`Short text for "${option}"`}
                           />
                           <div className="text-xs text-muted-foreground">
-                            (0 = unlimited)
+                            (optional)
                           </div>
                         </div>
                       </div>

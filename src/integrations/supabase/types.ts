@@ -1067,6 +1067,7 @@ export type Database = {
           component_id: string
           created_at: string
           current_count: number
+          display_text: string | null
           form_id: string
           id: string
           max_capacity: number
@@ -1077,6 +1078,7 @@ export type Database = {
           component_id: string
           created_at?: string
           current_count?: number
+          display_text?: string | null
           form_id: string
           id?: string
           max_capacity: number
@@ -1087,6 +1089,7 @@ export type Database = {
           component_id?: string
           created_at?: string
           current_count?: number
+          display_text?: string | null
           form_id?: string
           id?: string
           max_capacity?: number
