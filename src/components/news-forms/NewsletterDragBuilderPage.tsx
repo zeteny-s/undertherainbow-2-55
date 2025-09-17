@@ -460,9 +460,17 @@ export const NewsletterDragBuilderPage = () => {
         const components = [...prev.components];
         const oldIndex = components.findIndex(item => item.id === active.id);
         const newIndex = components.findIndex(item => item.id === over.id);
+        const reorderedComponents = arrayMove(components, oldIndex, newIndex);
+        
+        // Update position property to match the new order
+        const updatedComponents = reorderedComponents.map((component, index) => ({
+          ...component,
+          position: index
+        }));
+        
         return {
           ...prev,
-          components: arrayMove(components, oldIndex, newIndex)
+          components: updatedComponents
         };
       });
     }
