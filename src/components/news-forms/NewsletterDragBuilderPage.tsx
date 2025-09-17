@@ -502,7 +502,10 @@ export const NewsletterDragBuilderPage = () => {
       selectedFormIds: checked ? [...prev.selectedFormIds, formId] : prev.selectedFormIds.filter(id => id !== formId)
     }));
   };
-  const selectedForms = availableForms.filter(form => newsletterState.selectedFormIds.includes(form.id));
+  const selectedForms = availableForms.filter(form => 
+    newsletterState.selectedFormIds.includes(form.id) && 
+    form.campuses.includes(newsletterState.campus)
+  );
   if (loading) {
     return <LoadingSpinner />;
   }
