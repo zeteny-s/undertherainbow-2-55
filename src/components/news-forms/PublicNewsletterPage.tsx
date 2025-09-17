@@ -13,10 +13,6 @@ import decoration3 from '../../assets/decoration-3.png';
 import decoration4 from '../../assets/decoration-4.png';
 import decoration5 from '../../assets/decoration-5.png';
 import decoration6 from '../../assets/decoration-6.png';
-import decorationDinosaur from '../../assets/decoration-dinosaur.png';
-import decorationRainbow from '../../assets/decoration-rainbow.png';
-import decorationHearts from '../../assets/decoration-hearts.png';
-import decorationHeartRed from '../../assets/decoration-heart-red.png';
 import kindergartenLogo from '../../assets/kindergarten-logo.png';
 
 export const PublicNewsletterPage = () => {
@@ -87,27 +83,50 @@ export const PublicNewsletterPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="fixed inset-0 bg-white">
+          <div className="absolute inset-0" 
+               style={{
+                 background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                             radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                             radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                             radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                             radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                             radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+               }} />
+        </div>
+        <div className="relative z-10">
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }
 
   if (!newsletter) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Hírlevél nem található</h1>
-          <p className="text-gray-600">A keresett hírlevél nem létezik vagy nem elérhető.</p>
+      <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="fixed inset-0 bg-white">
+          <div className="absolute inset-0" 
+               style={{
+                 background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                             radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                             radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                             radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                             radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                             radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+               }} />
+        </div>
+        <div className="relative z-10 bg-white rounded-[30px] shadow-2xl p-16 text-center max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Hírlevél nem található</h2>
+          <p className="text-gray-600">
+            A keresett hírlevél nem létezik vagy nem elérhető.
+          </p>
         </div>
       </div>
     );
   }
-
-  const decorationImages = [
-    decoration1, decoration2, decoration3, decoration4, decoration5, decoration6,
-    decorationDinosaur, decorationRainbow, decorationHearts, decorationHeartRed
-  ];
 
   const renderComponent = (component: NewsletterComponent) => {
     switch (component.type) {
@@ -308,210 +327,214 @@ export const PublicNewsletterPage = () => {
   };
 
   return (
-    <>
-      {/* Fixed background container - doesn't scroll */}
-      <div className="fixed inset-0 pointer-events-none" style={{
-        background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
-                     radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
-                     radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
-                     radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
-                     radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
-                     radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
-      }}>
-        {/* Background decorative images - fixed position, won't scroll */}
-        {decorationImages.map((img, index) => {
-          const positions = [
-            // Original positions - moved further to sides
-            { top: '8%', left: '2%', transform: 'rotate(-15deg)', width: '100px', zIndex: 1 },
-            { top: '15%', right: '2%', transform: 'rotate(25deg)', width: '80px', zIndex: 1 },
-            { top: '35%', left: '5%', transform: 'rotate(45deg)', width: '70px', zIndex: 1 },
-            { top: '55%', right: '5%', transform: 'rotate(-30deg)', width: '90px', zIndex: 1 },
-            { top: '75%', left: '8%', transform: 'rotate(60deg)', width: '60px', zIndex: 1 },
-            { top: '12%', left: '25%', transform: 'rotate(-45deg)', width: '110px', zIndex: 1 },
-            // New positions for additional images - more spread out
-            { top: '25%', left: '1%', transform: 'rotate(20deg)', width: '85px', zIndex: 1 },
-            { top: '40%', right: '1%', transform: 'rotate(-40deg)', width: '75px', zIndex: 1 },
-            { top: '65%', left: '3%', transform: 'rotate(35deg)', width: '65px', zIndex: 1 },
-            { top: '80%', right: '3%', transform: 'rotate(-25deg)', width: '95px', zIndex: 1 }
-          ];
-          const pos = positions[index % positions.length];
-          return (
-            <img
-              key={index}
-              src={img}
-              alt=""
-              className="fixed opacity-15 pointer-events-none hidden lg:block animate-pulse"
-              style={{
-                position: 'fixed',
-                top: pos.top,
-                left: pos.left,
-                right: pos.right,
-                transform: pos.transform,
-                width: pos.width,
-                opacity: 0.15,
-                zIndex: pos.zIndex
-              }}
-            />
-          );
-        })}
+    <div className="min-h-screen bg-white relative overflow-hidden">
+      {/* Background pattern */}
+      <div className="fixed inset-0 bg-white">
+        <div className="absolute inset-0" 
+             style={{
+               background: `radial-gradient(circle at 20% 30%, rgba(125, 211, 192, 0.15) 0%, transparent 50%),
+                           radial-gradient(circle at 80% 20%, rgba(107, 199, 181, 0.12) 0%, transparent 40%),
+                           radial-gradient(circle at 40% 70%, rgba(125, 211, 192, 0.1) 0%, transparent 60%),
+                           radial-gradient(circle at 90% 80%, rgba(107, 199, 181, 0.08) 0%, transparent 45%),
+                           radial-gradient(circle at 10% 90%, rgba(125, 211, 192, 0.13) 0%, transparent 55%),
+                           radial-gradient(circle at 60% 10%, rgba(107, 199, 181, 0.11) 0%, transparent 50%)`
+             }} />
       </div>
 
-      {/* Scrollable content area */}
-      <div className="h-full overflow-y-auto bg-transparent relative z-20">
-        <div className="relative z-30 max-w-4xl mx-auto px-4 py-6 md:px-5 md:py-10 min-h-screen flex flex-col justify-center items-center">
-          <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl relative w-full max-w-3xl z-40 border border-gray-200 max-h-[85vh] overflow-y-auto">
-            <div className="p-6 md:p-16">
-              {/* Logo - properly centered on all devices */}
-              <div className="flex justify-center mb-6 md:mb-8 relative z-50">
-                <img 
-                  src={kindergartenLogo} 
-                  alt="Under the Rainbow Kindergarten and Nursery" 
-                  className="w-full max-w-[250px] md:max-w-[300px] h-auto"
-                />
-              </div>
+      {/* Background decorative images - optimized for mobile */}
+      <img src={decoration1} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[8%] left-[5%] -rotate-[15deg] w-[60px] md:w-[120px] hidden sm:block" />
+      <img src={decoration2} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[15%] right-[8%] rotate-[25deg] w-[45px] md:w-[90px] hidden sm:block" />
+      <img src={decoration3} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[35%] left-[12%] rotate-[45deg] w-[40px] md:w-[80px] hidden sm:block" />
+      <img src={decoration4} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[55%] right-[15%] -rotate-[30deg] w-[55px] md:w-[110px] hidden sm:block" />
+      <img src={decoration5} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[75%] left-[20%] rotate-[60deg] w-[35px] md:w-[70px] hidden sm:block" />
+      <img src={decoration6} alt="" className="fixed z-[2] opacity-15 pointer-events-none top-[12%] left-[35%] -rotate-[45deg] w-[65px] md:w-[130px] hidden sm:block" />
 
-              {/* Newsletter Content */}
-              <div className="space-y-6 relative z-50">
-                {components && components.length > 0 ? (
-                  <div className="space-y-4">
-                    {components.map((component) => (
-                      <div key={component.id}>
-                        {renderComponent(component)}
-                      </div>
-                    ))}
+      {/* Main container */}
+      <div className="relative z-10 max-w-4xl mx-auto px-4 py-6 md:px-5 md:py-10 min-h-screen flex flex-col justify-center items-center">
+        <div className="text-center bg-white rounded-2xl md:rounded-[30px] shadow-2xl p-8 md:p-16 relative w-full max-h-[85vh] overflow-y-auto">
+          {/* Logo - properly centered */}
+          <div className="flex justify-center mb-6 md:mb-8">
+            <img 
+              src={kindergartenLogo} 
+              alt="Under the Rainbow Kindergarten and Nursery" 
+              className="w-full max-w-[250px] md:max-w-[400px] h-auto"
+            />
+          </div>
+
+          {/* Newsletter Content */}
+          <div className="space-y-6">
+            {components && components.length > 0 ? (
+              <div className="space-y-4">
+                {components.map((component) => (
+                  <div key={component.id}>
+                    {renderComponent(component)}
                   </div>
-                ) : newsletter.generated_html && newsletter.generated_html.trim() !== '' && !newsletter.generated_html.includes('Add your content here...') ? (
-                  <div dangerouslySetInnerHTML={{ __html: newsletter.generated_html }} />
-                ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <p>A hírlevél tartalma még nem került generálásra.</p>
-                  </div>
-                )}
+                ))}
               </div>
-            </div>
+            ) : newsletter.generated_html && newsletter.generated_html.trim() !== '' && !newsletter.generated_html.includes('Add your content here...') ? (
+              <div dangerouslySetInnerHTML={{ __html: newsletter.generated_html }} />
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <p>A hírlevél tartalma még nem került generálásra.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-    <style>{`
-      /* EXACT COPY of rich text editor styles for consistent formatting */
-      .newsletter-text-content * {
-        /* Allow all inline styles to be preserved */
-      }
+      <style>{`
+        /* EXACT COPY of rich text editor styles for consistent formatting */
+        .newsletter-text-content * {
+          /* Allow all inline styles to be preserved */
+        }
 
-      .newsletter-text-content ul,
-      .newsletter-text-content ol {
-        margin: 10px 0;
-        padding-left: 25px;
-      }
+        .newsletter-text-content ul,
+        .newsletter-text-content ol {
+          padding-left: 20px;
+          margin: 12px 0;
+        }
 
-      .newsletter-text-content ul {
-        list-style-type: disc;
-      }
+        .newsletter-text-content ul {
+          list-style-type: disc;
+        }
 
-      .newsletter-text-content ol {
-        list-style-type: decimal;
-      }
+        .newsletter-text-content ol {
+          list-style-type: decimal;
+        }
 
-      .newsletter-text-content li {
-        margin: 5px 0;
-        display: list-item;
-        list-style-position: outside;
-      }
+        .newsletter-text-content li {
+          margin: 6px 0;
+          line-height: 1.6;
+        }
 
-      .newsletter-text-content table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 10px 0;
-      }
+        .newsletter-text-content p {
+          margin: 12px 0;
+          line-height: 1.6;
+        }
 
-      .newsletter-text-content td,
-      .newsletter-text-content th {
-        border: 1px solid #ccc;
-        padding: 8px;
-        min-width: 50px;
-      }
+        .newsletter-text-content h1, 
+        .newsletter-text-content h2, 
+        .newsletter-text-content h3, 
+        .newsletter-text-content h4, 
+        .newsletter-text-content h5, 
+        .newsletter-text-content h6 {
+          margin: 16px 0 12px 0;
+          font-weight: bold;
+          line-height: 1.3;
+        }
 
-      .newsletter-text-content th {
-        background-color: #f5f5f5;
-        font-weight: bold;
-      }
+        .newsletter-text-content h1 { font-size: 2em; }
+        .newsletter-text-content h2 { font-size: 1.5em; }
+        .newsletter-text-content h3 { font-size: 1.17em; }
+        .newsletter-text-content h4 { font-size: 1em; }
+        .newsletter-text-content h5 { font-size: 0.83em; }
+        .newsletter-text-content h6 { font-size: 0.67em; }
 
-      .newsletter-text-content p {
-        margin: 8px 0;
-        line-height: 1.4;
-      }
+        .newsletter-text-content strong, 
+        .newsletter-text-content b {
+          font-weight: bold;
+        }
 
-      .newsletter-text-content h1,
-      .newsletter-text-content h2,
-      .newsletter-text-content h3,
-      .newsletter-text-content h4,
-      .newsletter-text-content h5,
-      .newsletter-text-content h6 {
-        margin: 12px 0 8px 0;
-        font-weight: bold;
-        line-height: 1.2;
-      }
+        .newsletter-text-content em, 
+        .newsletter-text-content i {
+          font-style: italic;
+        }
 
-      .newsletter-text-content h1 { font-size: 2em; }
-      .newsletter-text-content h2 { font-size: 1.5em; }
-      .newsletter-text-content h3 { font-size: 1.17em; }
-      .newsletter-text-content h4 { font-size: 1em; }
-      .newsletter-text-content h5 { font-size: 0.83em; }
-      .newsletter-text-content h6 { font-size: 0.67em; }
+        .newsletter-text-content u {
+          text-decoration: underline;
+        }
 
-      .newsletter-text-content strong,
-      .newsletter-text-content b {
-        font-weight: bold;
-      }
+        .newsletter-text-content blockquote {
+          margin: 16px 0;
+          padding: 12px 16px;
+          border-left: 4px solid #e2e8f0;
+          background-color: #f8fafc;
+          font-style: italic;
+        }
 
-      .newsletter-text-content em,
-      .newsletter-text-content i {
-        font-style: italic;
-      }
+        .newsletter-text-content code {
+          background-color: #f1f5f9;
+          padding: 2px 4px;
+          border-radius: 3px;
+          font-family: 'Courier New', monospace;
+          font-size: 0.9em;
+        }
 
-      .newsletter-text-content u {
-        text-decoration: underline;
-      }
+        .newsletter-text-content pre {
+          background-color: #1e293b;
+          color: #f1f5f9;
+          padding: 16px;
+          border-radius: 6px;
+          overflow-x: auto;
+          margin: 16px 0;
+        }
 
-      .newsletter-text-content a {
-        color: #0066cc;
-        text-decoration: underline;
-      }
+        .newsletter-text-content pre code {
+          background: none;
+          color: inherit;
+          padding: 0;
+        }
 
-      .newsletter-text-content a:hover {
-        color: #0056b3;
-      }
+        .newsletter-text-content a {
+          color: #3b82f6;
+          text-decoration: underline;
+        }
 
-      /* Preserve white space and line breaks exactly like Google Docs */
-      .newsletter-text-content {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        hyphens: auto;
-      }
+        .newsletter-text-content a:hover {
+          color: #1d4ed8;
+        }
 
-      /* Better spacing for nested lists */
-      .newsletter-text-content ul ul,
-      .newsletter-text-content ol ol,
-      .newsletter-text-content ul ol,
-      .newsletter-text-content ol ul {
-        margin: 0;
-        padding-left: 20px;
-      }
+        .newsletter-text-content table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 16px 0;
+        }
 
-      /* Let pasted styles take precedence - like Google Docs */
-      .newsletter-text-content [style] {
-        /* Preserve all inline styles from pasted content */
-      }
+        .newsletter-text-content th,
+        .newsletter-text-content td {
+          border: 1px solid #e2e8f0;
+          padding: 8px 12px;
+          text-align: left;
+        }
 
-      /* Ensure no overflow while keeping exact formatting */
-      .newsletter-text-content * {
-        max-width: 100%;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-      }
-    `}</style>
-    </>
+        .newsletter-text-content th {
+          background-color: #f8fafc;
+          font-weight: bold;
+        }
+
+        .newsletter-text-content hr {
+          border: none;
+          border-top: 1px solid #e2e8f0;
+          margin: 24px 0;
+        }
+
+        .newsletter-text-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 12px 0;
+        }
+
+        .newsletter-text-content .ql-indent-1 { margin-left: 3em; }
+        .newsletter-text-content .ql-indent-2 { margin-left: 6em; }
+        .newsletter-text-content .ql-indent-3 { margin-left: 9em; }
+        .newsletter-text-content .ql-indent-4 { margin-left: 12em; }
+        .newsletter-text-content .ql-indent-5 { margin-left: 15em; }
+        .newsletter-text-content .ql-indent-6 { margin-left: 18em; }
+        .newsletter-text-content .ql-indent-7 { margin-left: 21em; }
+        .newsletter-text-content .ql-indent-8 { margin-left: 24em; }
+
+        .newsletter-text-content .ql-align-center { text-align: center; }
+        .newsletter-text-content .ql-align-right { text-align: right; }
+        .newsletter-text-content .ql-align-justify { text-align: justify; }
+
+        .newsletter-text-content .ql-font-serif { font-family: Georgia, serif; }
+        .newsletter-text-content .ql-font-monospace { font-family: 'Courier New', monospace; }
+
+        .newsletter-text-content .ql-size-small { font-size: 0.75em; }
+        .newsletter-text-content .ql-size-large { font-size: 1.5em; }
+        .newsletter-text-content .ql-size-huge { font-size: 2.5em; }
+      `}</style>
+    </div>
   );
 };
