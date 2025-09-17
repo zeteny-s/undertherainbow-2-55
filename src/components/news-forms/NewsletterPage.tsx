@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, Mail, Edit, Eye, RefreshCw, Trash2, Search, Menu } from 'lucide-react';
+import { Plus, Calendar, Mail, Edit, Eye, Copy, Trash2, Search, Menu } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { EmptyState } from '../common/EmptyState';
@@ -83,21 +83,87 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
     }
   };
 
-  const handleRegenerateContent = async (newsletterId: string) => {
+  const handleDuplicate = async (newsletterId: string) => {
     try {
-      addNotification('info', 'Tartalom újragenerálása...');
+      addNotification('info', 'Newsletter duplicating...');
       
-      const { error } = await supabase.functions.invoke('newsletter-gemini', {
-        body: { newsletterId, action: 'regenerate' }
-      });
+      // Fetch original newsletter
+      const { data: originalNewsletter, error: fetchError } = await supabase
+        .from('newsletters')
+        .select('*')
+        .eq('id', newsletterId)
+        .single();
 
-      if (error) throw error;
-      
-      addNotification('success', 'Tartalom sikeresen újragenerálva');
+      if (fetchError) throw fetchError;
+
+      // Create new newsletter with copied data
+      const { data: newNewsletter, error: insertError } = await supabase
+        .from('newsletters')
+        .insert({
+          title: `Copy of ${originalNewsletter.title}`,
+          description: originalNewsletter.description,
+          campus: originalNewsletter.campus,
+          content_guidelines: originalNewsletter.content_guidelines,
+          generated_html: originalNewsletter.generated_html,
+          status: 'draft',
+          created_by: originalNewsletter.created_by
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Copy newsletter_forms relationships
+      const { data: originalForms, error: formsError } = await supabase
+        .from('newsletter_forms')
+        .select('form_id')
+        .eq('newsletter_id', newsletterId);
+
+      if (formsError) throw formsError;
+
+      if (originalForms && originalForms.length > 0) {
+        const formsToInsert = originalForms.map(form => ({
+          newsletter_id: newNewsletter.id,
+          form_id: form.form_id
+        }));
+
+        const { error: formsInsertError } = await supabase
+          .from('newsletter_forms')
+          .insert(formsToInsert);
+
+        if (formsInsertError) throw formsInsertError;
+      }
+
+      // Copy newsletter_images relationships
+      const { data: originalImages, error: imagesError } = await supabase
+        .from('newsletter_images')
+        .select('image_url, image_name')
+        .eq('newsletter_id', newsletterId);
+
+      if (imagesError) throw imagesError;
+
+      if (originalImages && originalImages.length > 0) {
+        const imagesToInsert = originalImages.map(image => ({
+          newsletter_id: newNewsletter.id,
+          image_url: image.image_url,
+          image_name: image.image_name
+        }));
+
+        const { error: imagesInsertError } = await supabase
+          .from('newsletter_images')
+          .insert(imagesToInsert);
+
+        if (imagesInsertError) throw imagesInsertError;
+      }
+
+      addNotification('success', 'Newsletter duplicated successfully');
       fetchNewsletters();
+      
+      // Navigate to the duplicated newsletter in builder
+      navigate(`/newsletter-builder/${newNewsletter.id}`);
     } catch (error) {
-      console.error('Error regenerating content:', error);
-      addNotification('error', 'Hiba a tartalom újragenerálása során');
+      console.error('Error duplicating newsletter:', error);
+      addNotification('error', 'Error duplicating newsletter');
     }
   };
 
@@ -226,9 +292,9 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
                           <Edit className="h-4 w-4 mr-3" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRegenerateContent(newsletter.id)} className="hover:bg-gray-100">
-                          <RefreshCw className="h-4 w-4 mr-3" />
-                          Regenerate
+                        <DropdownMenuItem onClick={() => handleDuplicate(newsletter.id)} className="hover:bg-gray-100">
+                          <Copy className="h-4 w-4 mr-3" />
+                          Duplicate
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="hover:bg-gray-100 p-0">
                           <EmailNewsletterButton
