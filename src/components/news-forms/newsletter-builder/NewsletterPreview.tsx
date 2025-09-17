@@ -99,10 +99,10 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
               }`}
               style={{
                 backgroundColor: button.buttonStyle === 'outline' ? 'transparent' : 
-                                button.buttonStyle === 'secondary' ? '#dfefe8' :
+                                button.buttonStyle === 'secondary' ? '#3BBFF7' :
                                 button.backgroundColor || '#3BBFF7',
                 color: button.buttonStyle === 'outline' ? (button.backgroundColor || '#3BBFF7') :
-                       button.buttonStyle === 'secondary' ? '#1f2937' :
+                       button.buttonStyle === 'secondary' ? '#3BBFF7' :
                        button.textColor || '#ffffff',
                 borderColor: button.buttonStyle === 'outline' ? (button.backgroundColor || '#3BBFF7') : 'transparent',
                 borderWidth: button.buttonStyle === 'outline' ? '2px' : '0'
@@ -140,10 +140,10 @@ export const NewsletterPreview = ({ components, selectedForms, onComponentSelect
               }`}
               style={{
                 backgroundColor: formButton.buttonStyle === 'outline' ? 'transparent' : 
-                                formButton.buttonStyle === 'secondary' ? '#dfefe8' :
+                                formButton.buttonStyle === 'secondary' ? '#3BBFF7' :
                                 formButton.backgroundColor || '#3BBFF7',
                 color: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3BBFF7') :
-                       formButton.buttonStyle === 'secondary' ? '#1f2937' :
+                       formButton.buttonStyle === 'secondary' ? '#3BBFF7' :
                        formButton.textColor || '#ffffff',
                 borderColor: formButton.buttonStyle === 'outline' ? (formButton.backgroundColor || '#3BBFF7') : 'transparent',
                 borderWidth: formButton.buttonStyle === 'outline' ? '2px' : '0'
