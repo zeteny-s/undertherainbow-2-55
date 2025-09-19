@@ -8,6 +8,7 @@ import { Form, FormComponent, CampusType } from '../../types/form-types';
 import { FormRenderer } from './components/FormRenderer';
 import { CapacityDisplay } from './components/CapacityDisplay';
 import { WaitlistDisplay } from './components/WaitlistDisplay';
+import { AllSubmissionsList } from './components/AllSubmissionsList';
 import { SubmissionAnimation } from './components/SubmissionAnimation';
 import { toast } from 'sonner';
 import kindergartenLogo from '../../assets/kindergarten-logo.png';
@@ -28,7 +29,26 @@ export const PublicFormPage = () => {
 
   useEffect(() => {
     fetchForm();
+    trackFormView();
   }, [formId]);
+
+  const trackFormView = async () => {
+    if (!formId) return;
+
+    try {
+      // Track the view
+      await supabase.from('form_views').insert({
+        form_id: formId,
+        ip_address: await getClientIP(),
+        user_agent: navigator.userAgent
+      });
+
+      // Increment view count
+      await supabase.rpc('increment_form_view_count', { form_id_param: formId });
+    } catch (error) {
+      console.error('Error tracking form view:', error);
+    }
+  };
 
   const fetchForm = async () => {
     if (!formId) return;
@@ -377,6 +397,9 @@ export const PublicFormPage = () => {
           
           {/* Waitlist Display */}
           {form && <WaitlistDisplay form={form} />}
+
+          {/* All Submissions List */}
+          {form && <AllSubmissionsList form={form} />}
           
           {/* Form Title */}
           <h1 className="text-2xl font-bold mb-2 text-gray-900">{form.title}</h1>

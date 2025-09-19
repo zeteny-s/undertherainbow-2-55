@@ -1139,6 +1139,38 @@ export type Database = {
           },
         ]
       }
+      form_views: {
+        Row: {
+          form_id: string | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          viewed_at: string
+        }
+        Insert: {
+          form_id?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          form_id?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_views_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forms: {
         Row: {
           campuses: string[]
@@ -1152,6 +1184,7 @@ export type Database = {
           title: string
           unlimited_capacity: boolean | null
           updated_at: string
+          view_count: number
         }
         Insert: {
           campuses?: string[]
@@ -1165,6 +1198,7 @@ export type Database = {
           title: string
           unlimited_capacity?: boolean | null
           updated_at?: string
+          view_count?: number
         }
         Update: {
           campuses?: string[]
@@ -1178,6 +1212,7 @@ export type Database = {
           title?: string
           unlimited_capacity?: boolean | null
           updated_at?: string
+          view_count?: number
         }
         Relationships: []
       }
@@ -1623,6 +1658,38 @@ export type Database = {
           },
         ]
       }
+      newsletter_views: {
+        Row: {
+          id: string
+          ip_address: string | null
+          newsletter_id: string | null
+          user_agent: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          newsletter_id?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          newsletter_id?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_views_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletters: {
         Row: {
           campus: Database["public"]["Enums"]["campus_type"]
@@ -1636,6 +1703,7 @@ export type Database = {
           status: string
           title: string
           updated_at: string
+          view_count: number
         }
         Insert: {
           campus: Database["public"]["Enums"]["campus_type"]
@@ -1649,6 +1717,7 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string
+          view_count?: number
         }
         Update: {
           campus?: Database["public"]["Enums"]["campus_type"]
@@ -1662,6 +1731,7 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
+          view_count?: number
         }
         Relationships: []
       }
