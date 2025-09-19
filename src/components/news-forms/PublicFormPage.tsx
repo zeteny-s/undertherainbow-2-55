@@ -43,8 +43,19 @@ export const PublicFormPage = () => {
         user_agent: navigator.userAgent
       });
 
-      // Increment view count
-      await supabase.rpc('increment_form_view_count', { form_id_param: formId });
+      // Increment view count directly with a separate call
+      const currentViewCount = await supabase
+        .from('forms')
+        .select('view_count')
+        .eq('id', formId)
+        .single();
+      
+      if (currentViewCount.data) {
+        await supabase
+          .from('forms')
+          .update({ view_count: (currentViewCount.data.view_count || 0) + 1 })
+          .eq('id', formId);
+      }
     } catch (error) {
       console.error('Error tracking form view:', error);
     }

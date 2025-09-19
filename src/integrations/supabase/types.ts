@@ -2710,6 +2710,14 @@ export type Database = {
         Args: { form_id_param: string }
         Returns: number
       }
+      increment_form_view_count: {
+        Args: { form_id_param: string }
+        Returns: undefined
+      }
+      increment_newsletter_view_count: {
+        Args: { newsletter_id_param: string }
+        Returns: undefined
+      }
       is_current_user_admin_or_manager: {
         Args: Record<PropertyKey, never>
         Returns: boolean

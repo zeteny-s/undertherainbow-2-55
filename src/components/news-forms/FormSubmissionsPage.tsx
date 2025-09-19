@@ -76,25 +76,44 @@ export const FormSubmissionsPage = () => {
     if (!submissions.length) return;
     
     try {
-      // Create CSV content
-      const headers = ['Submission Date', 'Family Name', 'IP Address'];
-      const formFields = form?.form_components?.map(comp => comp.label) || [];
-      const csvHeaders = [...headers, ...formFields];
-      
-      const csvRows = submissions.map(submission => {
-        const baseData = [
-          new Date(submission.submitted_at).toLocaleString(),
-          submission.family_name || 'N/A',
-          submission.ip_address || 'N/A'
-        ];
+        // Create CSV content with proper headers
+        const headers = ['Submission Date', 'Family Name', 'IP Address', 'Status'];
         
-        const fieldData = formFields.map(field => {
-          const value = submission.submission_data[field];
-          return Array.isArray(value) ? value.join(', ') : (value || 'N/A');
+        // Get all unique field IDs from form components and create proper headers
+        const fieldHeaders: string[] = [];
+        const fieldIds: string[] = [];
+        
+        if (form?.form_components) {
+          form.form_components.forEach(component => {
+            fieldHeaders.push(component.label || component.id);
+            fieldIds.push(component.id);
+          });
+        }
+        
+        const csvHeaders = [...headers, ...fieldHeaders];
+        
+        const csvRows = submissions.map(submission => {
+          const baseData = [
+            new Date(submission.submitted_at).toLocaleString(),
+            submission.family_name || 'Anonymous',
+            submission.ip_address || 'N/A',
+            submission.waitlisted ? 'Waitlisted' : 'Accepted'
+          ];
+          
+          // Map each form field to its corresponding value
+          const fieldData = fieldIds.map(fieldId => {
+            const value = submission.submission_data[fieldId];
+            if (Array.isArray(value)) {
+              return value.join('; ');
+            } else if (typeof value === 'object' && value !== null) {
+              return JSON.stringify(value);
+            } else {
+              return value || '';
+            }
+          });
+          
+          return [...baseData, ...fieldData];
         });
-        
-        return [...baseData, ...fieldData];
-      });
 
       const csvContent = [csvHeaders, ...csvRows]
         .map(row => row.map(field => `"${field}"`).join(','))

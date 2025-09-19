@@ -43,15 +43,27 @@ export const NewsFormsPage = () => {
     try {
       const { data, error } = await supabase
         .from('forms')
-        .select('*')
+        .select(`
+          *, 
+          view_count,
+          submission_count:form_submissions(count)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      const formsData = (data || []).map(form => ({
-        ...form,
-        form_components: (form.form_components as unknown as FormComponent[]) || [],
-        campuses: form.campuses as CampusType[]
-      }));
+      const formsData = (data || []).map(form => {
+        const submissionCount = Array.isArray(form.submission_count) 
+          ? form.submission_count[0]?.count || 0 
+          : 0;
+        
+        return {
+          ...form,
+          form_components: (form.form_components as unknown as FormComponent[]) || [],
+          campuses: form.campuses as CampusType[],
+          submission_count: submissionCount,
+          view_count: form.view_count || 0
+        };
+      });
       setForms(formsData);
     } catch (error) {
       console.error('Error fetching forms:', error);
@@ -307,7 +319,7 @@ export const NewsFormsPage = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-2">
                         <Badge variant="secondary" className="font-medium">
                           {form.campuses.join(', ')}
                         </Badge>
@@ -317,6 +329,16 @@ export const NewsFormsPage = () => {
                             day: 'numeric' 
                           })}
                         </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          <span>{form.submission_count || 0} submissions</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-4 w-4" />
+                          <span>{form.view_count || 0} views</span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

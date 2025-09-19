@@ -25,8 +25,49 @@ export const PublicNewsletterPage = () => {
   useEffect(() => {
     if (newsletterId) {
       fetchNewsletter();
+      trackNewsletterView();
     }
   }, [newsletterId]);
+
+  const trackNewsletterView = async () => {
+    if (!newsletterId) return;
+
+    try {
+      // Get client IP
+      const getClientIP = async () => {
+        try {
+          const response = await fetch('https://api.ipify.org?format=json');
+          const data = await response.json();
+          return data.ip;
+        } catch (error) {
+          return null;
+        }
+      };
+
+      // Track the view
+      await supabase.from('newsletter_views').insert({
+        newsletter_id: newsletterId,
+        ip_address: await getClientIP(),
+        user_agent: navigator.userAgent
+      });
+
+      // Increment view count
+      const currentViewCount = await supabase
+        .from('newsletters')
+        .select('view_count')
+        .eq('id', newsletterId)
+        .single();
+      
+      if (currentViewCount.data) {
+        await supabase
+          .from('newsletters')
+          .update({ view_count: (currentViewCount.data.view_count || 0) + 1 })
+          .eq('id', newsletterId);
+      }
+    } catch (error) {
+      console.error('Error tracking newsletter view:', error);
+    }
+  };
 
   const fetchNewsletter = async () => {
     if (!newsletterId) return;

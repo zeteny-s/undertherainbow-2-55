@@ -36,7 +36,7 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
       setLoading(true);
       const { data, error } = await supabase
         .from('newsletters')
-        .select('*')
+        .select('*, view_count')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -328,6 +328,12 @@ export const NewsletterPage = ({ showHeader = true }: NewsletterPageProps) => {
                     <Badge variant="secondary" className="font-medium">
                       {newsletter.campus}
                     </Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Eye className="h-4 w-4" />
+                      <span>{newsletter.view_count || 0} views</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

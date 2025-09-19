@@ -11,6 +11,7 @@ export interface Newsletter {
   created_by: string;
   created_at: string;
   updated_at: string;
+  view_count?: number;
 }
 
 export interface NewsletterForm {

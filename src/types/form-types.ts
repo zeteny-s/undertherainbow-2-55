@@ -42,6 +42,8 @@ export interface Form {
   updated_at: string;
   capacity?: number | null;
   unlimited_capacity?: boolean | null;
+  view_count?: number;
+  submission_count?: number;
 }
 
 export interface FormSubmission {
@@ -51,6 +53,8 @@ export interface FormSubmission {
   submitted_at: string;
   ip_address?: string;
   family_name?: string;
+  waitlisted?: boolean;
+  waitlist_position?: number | null;
 }
 
 export interface ComponentLibraryItem {
