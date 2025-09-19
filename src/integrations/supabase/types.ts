@@ -1106,6 +1106,8 @@ export type Database = {
           ip_address: string | null
           submission_data: Json
           submitted_at: string
+          waitlist_position: number | null
+          waitlisted: boolean
         }
         Insert: {
           family_name?: string | null
@@ -1114,6 +1116,8 @@ export type Database = {
           ip_address?: string | null
           submission_data?: Json
           submitted_at?: string
+          waitlist_position?: number | null
+          waitlisted?: boolean
         }
         Update: {
           family_name?: string | null
@@ -1122,6 +1126,8 @@ export type Database = {
           ip_address?: string | null
           submission_data?: Json
           submitted_at?: string
+          waitlist_position?: number | null
+          waitlisted?: boolean
         }
         Relationships: [
           {

@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Form, FormComponent, CampusType } from '../../types/form-types';
 import { FormRenderer } from './components/FormRenderer';
 import { CapacityDisplay } from './components/CapacityDisplay';
+import { WaitlistDisplay } from './components/WaitlistDisplay';
 import { SubmissionAnimation } from './components/SubmissionAnimation';
 import { toast } from 'sonner';
 import kindergartenLogo from '../../assets/kindergarten-logo.png';
@@ -193,34 +194,47 @@ export const PublicFormPage = () => {
       }
     }
 
-    // Check capacity before submitting
+    // Check capacity and determine if this will be a waitlisted submission
     const isFull = await checkFormCapacity();
-    if (isFull) {
-      toast.error('Sorry, this form has reached its capacity limit');
-      return;
-    }
-
+    
     setSubmitting(true);
     try {
+      let waitlistPosition = null;
+      
+      if (isFull) {
+        // Calculate waitlist position
+        const { count, error: countError } = await supabase
+          .from('form_submissions')
+          .select('*', { count: 'exact', head: true })
+          .eq('form_id', form.id)
+          .eq('waitlisted', true);
+          
+        if (countError) throw countError;
+        waitlistPosition = (count || 0) + 1;
+      }
+
       const { error } = await supabase
         .from('form_submissions')
         .insert({
           form_id: form.id,
           submission_data: formData,
           family_name: String(familyNameFromForm).trim(),
-          ip_address: await getClientIP()
+          ip_address: await getClientIP(),
+          waitlisted: isFull,
+          waitlist_position: waitlistPosition
         });
 
       if (error) throw error;
       
+      if (isFull) {
+        toast.success(`Form submitted successfully! You are #${waitlistPosition} on the waitlist.`);
+      } else {
+        toast.success('Form submitted successfully!');
+      }
       setSubmitted(true);
     } catch (error: any) {
       console.error('Error submitting form:', error);
-      if (error.message?.includes('capacity')) {
-        toast.error('Sorry, this form has reached its capacity limit');
-      } else {
-        toast.error('Error submitting form');
-      }
+      toast.error('Error submitting form. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -360,6 +374,9 @@ export const PublicFormPage = () => {
           
           {/* Capacity Display */}
           {form && <CapacityDisplay form={form} />}
+          
+          {/* Waitlist Display */}
+          {form && <WaitlistDisplay form={form} />}
           
           {/* Form Title */}
           <h1 className="text-2xl font-bold mb-2 text-gray-900">{form.title}</h1>

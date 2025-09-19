@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, AlertCircle } from 'lucide-react';
+import { Users, AlertCircle, Clock } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { supabase } from '../../../integrations/supabase/client';
 import { Form } from '../../../types/form-types';
@@ -19,6 +19,7 @@ interface OptionCapacity {
 
 export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
   const [totalSubmissions, setTotalSubmissions] = useState(0);
+  const [waitlistCount, setWaitlistCount] = useState(0);
   const [optionCapacities, setOptionCapacities] = useState<OptionCapacity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,14 +49,30 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
 
   const fetchCapacityData = async () => {
     try {
-      // Fetch overall form submission count using the database function (publicly accessible)
-      const { data: countData, error: countError } = await supabase
-        .rpc('get_form_submission_count', { form_id_param: form.id });
+      // Fetch overall form submission count (non-waitlisted)
+      const { count: totalCount, error: countError } = await supabase
+        .from('form_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('form_id', form.id)
+        .eq('waitlisted', false);
 
       if (countError) {
         console.error('Error fetching submissions count:', countError);
       } else {
-        setTotalSubmissions(countData || 0);
+        setTotalSubmissions(totalCount || 0);
+      }
+
+      // Fetch waitlist count
+      const { count: waitlistCountData, error: waitlistError } = await supabase
+        .from('form_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('form_id', form.id)
+        .eq('waitlisted', true);
+
+      if (waitlistError) {
+        console.error('Error fetching waitlist count:', waitlistError);
+      } else {
+        setWaitlistCount(waitlistCountData || 0);
       }
 
       // Fetch option capacities (publicly accessible)
@@ -97,8 +114,8 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
   // Filter option capacities that have capacity limits
   const limitedOptions = optionCapacities.filter(cap => cap.max_capacity > 0);
 
-  // Show display if there are submissions or capacity limits
-  if (totalSubmissions === 0 && !hasOverallLimit && limitedOptions.length === 0) {
+  // Show display if there are submissions, capacity limits, or waitlist
+  if (totalSubmissions === 0 && waitlistCount === 0 && !hasOverallLimit && limitedOptions.length === 0) {
     return null;
   }
 
@@ -190,11 +207,23 @@ export const CapacityDisplay = ({ form }: CapacityDisplayProps) => {
         )}
 
 
-        {/* Warning if form is completely full */}
+        {/* Waitlist information */}
+        {waitlistCount > 0 && (
+          <div className="border-t border-gray-200 pt-4">
+            <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded text-orange-700 text-sm">
+              <Clock className="h-4 w-4" />
+              <span>
+                <strong>{waitlistCount}</strong> family{waitlistCount !== 1 ? 'ies' : ''} currently on the waitlist
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Information about accepting submissions */}
         {isFormFull && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
             <AlertCircle className="h-4 w-4" />
-            This form has reached its capacity limit and is no longer accepting submissions.
+            This form is at capacity, but you can still submit to join the waitlist.
           </div>
         )}
       </div>
