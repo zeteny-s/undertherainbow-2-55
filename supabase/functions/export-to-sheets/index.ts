@@ -9,21 +9,7 @@ serve(async (req)=>{
       headers: corsHeaders
     });
   }
-  try {
-    const { invoiceData, organization } = await req.json();
-    const serviceAccountKey = {
-      "type": "service_account",
-      "project_id": "alert-ability-434512-h1",
-      "private_key_id": "37d9db96d27ad7ad3c5db7f7cc4298c5a6462130",
-      "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCZQu44w9dcjU1i\nsATweMaabxBAhEsacR11Cx+AsGtdxyEDYd3UCRA/ZkIcKz/rvRGE8pDGzWXbmHhs\nhQmhFoJBMHnXO+i6gl4Sx9uvSZlscOqh+G0FjGoOjFDEfNxxmwco2iiui4N7uM8I\n2D9UUP5Gtpev+4YSztPGjMy0vVhEGh0P19zr3V2vlKwDJzLzvlsWIk05+WdebpQm\nO4GZnGDGam5dS8vqxtKmkkdbkFzwh4jXrX6JZUXi5/jZ3UwaATlC3KZcVVZeQfer\ndauIDQZubnvOOTsW8rNjVMEeJPMAJyGeuMdqkEEqVpW4j4P/lQOgTeuUkOFpNZJI\n3LkApGuVAgMBAAECggEABQ/RV12cfMmL70D6AMk0YgBeDItyAY8P1oBGC5WIDkJX\n5Ek0rt6Xw0hI0a5Z/5qwe/AY+P/qp8yK2aaxMTlRlv6XX5TydEp++ebQ6iKnpw25\nqhzO2PqQvCdFOaAYFcZ1f5No+Y7RCmKJr/SYbtv38fTw4JaRkIh1NR8MWcHRKvqW\nupmqZ4W31yg/L1ORPTDL0C9DwcDCV7bsRPMmcXbMD275vToZgj+SJBUt2pe/UyDE\nbRXCcWX1Kbdwj0Pfa4rfgx1s96HCM9vmBzBL7wI0oSJ9nB8tBVvhtJu0dds24I1x\nlMfeFQuj/ee0FuBbK8i70Wb942HV3QRQFbj2UqYWZwKBgQDGFc1AOzUXWCTuj6KF\nS+v8MBJeiXnfk+1f1BmdJtjAbF+8PQp08yFqOlFCZl4ZxYGTLcN/ISR+QpwOI9SQ\nGOHKSrLVg5T2efRPACoU+8lP/43q+kvqBw44VGYaAe2dJzPOj2uEoLm8I10KbVHa\n5d8ojWNlLTbihVqik9WtZAO/uwKBgQDGEi5yrmVKMzwiCHPB98UBaCcAmwemfFrE\nkZhLoJDxovPKK6DgLlZqTAvN7dn7ZEGP95jM8g1D2bSdN/bLVKW5mbr8L8Xk0NXr\n9KUL5ZpFgItwpP+So82lhOtVQjhQI4rQsoX9E8pzk6LpEwJIRzKAo4a6ZjOWWuAR\ntMkQvliE7wKBgQDBhKci6zTw+4IJNnYWN5fyppwrk69nB8PN7Q6hA0SaqMXWxuOi\nYazxdMvSTOP91YDDYuAtIRnf5/9BqSuPI1/jG5sfEQ/ExFwzmfuCyIFiEE57k8/6\ncK4pxfqBygRzlcr9MAxgZA1QilPpTee8LPsZSRgjzkpiftmPH1KPtLgc5QKBgHo9\n+Fqg1TSRIFikvMSGZRi0LfYKuBMBBofwj3yFUU9AUZOBj50sG/soidSDKhgjzO7M\nUYqTDKrGbtjlFDRzPoCopyVDWrAYTx5782y/PJIOfoB75Juc6qtvuEn7P4P+G4sn\n0tfZYgYopM+SAsOW5U1NHzZlIwt1dHqZB8qEn18TAoGBAIFJg1glfm91N863hmHu\nxuK6KdASy4RENIbE2HyeC6hUz3f9R5n/tHiuEuCfIRvZSKZ3xTZ0n/2LhEbQajrj\npQfSPt9NtNKxMSX96MLgIvbR2G7I+eRUgMb0Bj+fUEbEnq+CmO+CP3b5slXVLNVI\nHXvSSNtrwEIex+3TuYTMIc9B\n-----END PRIVATE KEY-----\n",
-      "client_email": "feketerigo-iktato@alert-ability-434512-h1.iam.gserviceaccount.com",
-      "client_id": "118345220069273630953",
-      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-      "token_uri": "https://oauth2.googleapis.com/token",
-      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/feketerigo-iktato%40alert-ability-434512-h1.iam.gserviceaccount.com",
-      "universe_domain": "googleapis.com"
-    };
+  
     // Get access token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
